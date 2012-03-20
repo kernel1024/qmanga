@@ -17,16 +17,15 @@
 typedef QHash<int,QImage> QImageHash;
 typedef QList<int> QIntList;
 
-typedef enum ResizeFilter {
-    Nearest = 0,
-    Bilinear = 1,
-    Lanczos = 2
-} ZResizeFilter;
-
 class ZGlobal : public QObject
 {
     Q_OBJECT
 public:
+    enum ZResizeFilter {
+        Nearest = 0,
+        Bilinear = 1,
+        Lanczos = 2
+    };
     explicit ZGlobal(QObject *parent = 0);
 
     int cacheWidth;
@@ -34,6 +33,11 @@ public:
 
     void loadSettings();
     void saveSettings();
+
+    QString mysqlUser;
+    QString mysqlPassword;
+
+    QString savedAuxOpenDir;
     
     QString detectMIME(QString filename);
     QString detectMIME(QByteArray buf);

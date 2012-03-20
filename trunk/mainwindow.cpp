@@ -22,33 +22,30 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnZoomOriginal->setIcon(QIcon(":/img/zoom-original.png"));
     ui->btnZoomDynamic->setIcon(QIcon(":/img/zoom-draw.png"));
 
-    mangaView = new ZMangaView(this);
-    mangaView->scroller = ui->scrollArea;
-    QGridLayout* grid = new QGridLayout();
-    grid->addWidget(mangaView,1,1,1,1);
-    grid->addItem(new QSpacerItem(20,40,QSizePolicy::Minimum,QSizePolicy::Expanding),0,1,1,1);
-    grid->addItem(new QSpacerItem(20,40,QSizePolicy::Minimum,QSizePolicy::Expanding),2,1,1,1);
-    grid->addItem(new QSpacerItem(40,20,QSizePolicy::Expanding,QSizePolicy::Minimum),1,0,1,1);
-    grid->addItem(new QSpacerItem(40,20,QSizePolicy::Expanding,QSizePolicy::Minimum),1,2,1,1);
-    ui->scrollArea->setLayout(grid);
-
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
-    connect(mangaView,SIGNAL(loadPage(int)),this,SLOT(dispPage(int)));
+    connect(ui->mangaView,SIGNAL(loadPage(int)),this,SLOT(dispPage(int)));
 
-    connect(ui->btnNavFirst,SIGNAL(clicked()),mangaView,SLOT(navFirst()));
-    connect(ui->btnNavPrev,SIGNAL(clicked()),mangaView,SLOT(navPrev()));
-    connect(ui->btnNavNext,SIGNAL(clicked()),mangaView,SLOT(navNext()));
-    connect(ui->btnNavLast,SIGNAL(clicked()),mangaView,SLOT(navLast()));
+    connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
+    connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
+    connect(ui->btnNavNext,SIGNAL(clicked()),ui->mangaView,SLOT(navNext()));
+    connect(ui->btnNavLast,SIGNAL(clicked()),ui->mangaView,SLOT(navLast()));
 
-    connect(ui->btnZoomFit,SIGNAL(clicked()),mangaView,SLOT(setZoomFit()));
-    connect(ui->btnZoomHeight,SIGNAL(clicked()),mangaView,SLOT(setZoomHeight()));
-    connect(ui->btnZoomWidth,SIGNAL(clicked()),mangaView,SLOT(setZoomWidth()));
-    connect(ui->btnZoomOriginal,SIGNAL(clicked()),mangaView,SLOT(setZoomOriginal()));
-    connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),mangaView,SLOT(setZoomDynamic(bool)));
+    connect(ui->btnZoomFit,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomFit()));
+    connect(ui->btnZoomHeight,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomHeight()));
+    connect(ui->btnZoomWidth,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomWidth()));
+    connect(ui->btnZoomOriginal,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomOriginal()));
+    connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),ui->mangaView,SLOT(setZoomDynamic(bool)));
 
+    connect(ui->editMySqlLogin,SIGNAL(textChanged(QString)),this,SLOT(stLoginChanged(QString)));
+    connect(ui->editMySqlPassword,SIGNAL(textChanged(QString)),this,SLOT(stPassChanged(QString)));
+    connect(ui->spinCacheWidth,SIGNAL(valueChanged(int)),this,SLOT(stCacheWidthChanged(int)));
+    connect(ui->comboFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(stFilterChanged(int)));
+
+    ui->mangaView->scroller = ui->scrollArea;
     zGlobal->loadSettings();
+    updateSettingsPage();
     dispPage(-1);
 }
 
@@ -66,15 +63,55 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::openAux()
 {
-    QString filename = zGlobal->getOpenFileNameD(this,tr("Open manga archive"));
-    if (!filename.isEmpty())
-        mangaView->openFile(filename);
+    QString filename = zGlobal->getOpenFileNameD(this,tr("Open manga archive"),zGlobal->savedAuxOpenDir);
+    if (!filename.isEmpty()) {
+        QFileInfo fi(filename);
+        zGlobal->savedAuxOpenDir = fi.path();
+
+        ui->mangaView->openFile(filename);
+    }
 }
 
 void MainWindow::dispPage(int num)
 {
-    if (num<0 || mangaView->getPageCount()<=0)
+    if (num<0 || ui->mangaView->getPageCount()<=0)
         ui->lblPosition->clear();
     else
-        ui->lblPosition->setText(tr("%1 / %2").arg(num+1).arg(mangaView->getPageCount()));
+        ui->lblPosition->setText(tr("%1 / %2").arg(num+1).arg(ui->mangaView->getPageCount()));
+}
+
+void MainWindow::stLoginChanged(QString text)
+{
+    zGlobal->mysqlUser=text;
+}
+
+void MainWindow::stPassChanged(QString text)
+{
+    zGlobal->mysqlPassword=text;
+}
+
+void MainWindow::stCacheWidthChanged(int num)
+{
+    zGlobal->cacheWidth=num;
+}
+
+void MainWindow::stFilterChanged(int num)
+{
+    switch (num) {
+        case 0: zGlobal->resizeFilter = ZGlobal::Nearest; break;
+        case 1: zGlobal->resizeFilter = ZGlobal::Bilinear; break;
+        case 2: zGlobal->resizeFilter = ZGlobal::Lanczos; break;
+    }
+}
+
+void MainWindow::updateSettingsPage()
+{
+    ui->editMySqlLogin->setText(zGlobal->mysqlUser);
+    ui->editMySqlPassword->setText(zGlobal->mysqlPassword);
+    ui->spinCacheWidth->setValue(zGlobal->cacheWidth);
+    switch (zGlobal->resizeFilter) {
+        case ZGlobal::Nearest: ui->comboFilter->setCurrentIndex(0); break;
+        case ZGlobal::Bilinear: ui->comboFilter->setCurrentIndex(1); break;
+        case ZGlobal::Lanczos: ui->comboFilter->setCurrentIndex(2); break;
+    }
 }
