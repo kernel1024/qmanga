@@ -14,7 +14,6 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    ZMangaView* mangaView;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     
@@ -27,6 +26,11 @@ protected:
 public slots:
     void openAux();
     void dispPage(int num);
+    void stLoginChanged(QString text);
+    void stPassChanged(QString text);
+    void stCacheWidthChanged(int num);
+    void stFilterChanged(int num);
+    void updateSettingsPage();
 };
 
 #endif // MAINWINDOW_H

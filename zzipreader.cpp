@@ -26,6 +26,18 @@ bool ZZipReader::openFile()
         return false;
     }
 
+    sortList.clear();
+    int cnt = 0;
+    for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
+        QuaZipFileInfo zfi;
+        mainZFile.getCurrentFileInfo(&zfi);
+        if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
+        sortList << ZFileEntry(zfi.name,cnt);
+        cnt++;
+    }
+
+    qSort(sortList);
+
     opened = true;
     return true;
 }
@@ -45,15 +57,7 @@ int ZZipReader::getPageCountPrivate()
     if (!opened)
         return -1;
 
-    int cnt = 0;
-    for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
-        QuaZipFileInfo zfi;
-        mainZFile.getCurrentFileInfo(&zfi);
-        if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
-        cnt++;
-    }
-
-    return cnt;
+    return sortList.count();
 }
 
 QImage ZZipReader::loadPage(int num)
@@ -64,12 +68,15 @@ QImage ZZipReader::loadPage(int num)
 
     QuaZipFile zf(&mainZFile);
     int idx = 0;
+    int znum = -2;
+    if (num>=0 && num<sortList.count())
+        znum = sortList.at(num).idx;
     for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
         QuaZipFileInfo zfi;
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
 
-        if (idx==num) {
+        if (idx==znum) {
             QuaZipFileInfo zfi;
             mainZFile.getCurrentFileInfo(&zfi);
             if (zfi.uncompressedSize>(150*1024*1024)) {
@@ -97,6 +104,11 @@ QImageHash ZZipReader::loadPages(QIntList nums)
 
     QuaZipFile zf(&mainZFile);
     int idx = 0;
+    QIntList znums;
+    for (int i=0;i<nums.count();i++)
+        if (nums.at(i)>=0 && nums.at(i)<sortList.count())
+            znums << sortList.at(nums.at(i)).idx;
+
     for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
         QuaZipFileInfo zfi;
         mainZFile.getCurrentFileInfo(&zfi);
@@ -120,3 +132,43 @@ QImageHash ZZipReader::loadPages(QIntList nums)
     }
     return hash;
 }
+
+ZFileEntry::ZFileEntry()
+{
+    name = QString();
+    idx = -1;
+}
+
+ZFileEntry::ZFileEntry(QString aName, int aIdx)
+{
+    name = aName;
+    idx = aIdx;
+}
+
+ZFileEntry &ZFileEntry::operator =(const ZFileEntry &other)
+{
+    name = other.name;
+    idx = other.idx;
+    return *this;
+}
+
+bool ZFileEntry::operator ==(const ZFileEntry &ref) const
+{
+    return (name==ref.name);
+}
+
+bool ZFileEntry::operator !=(const ZFileEntry &ref) const
+{
+    return (name!=ref.name);
+}
+
+bool ZFileEntry::operator <(const ZFileEntry &ref) const
+{
+    return (name<ref.name);
+}
+
+bool ZFileEntry::operator >(const ZFileEntry &ref) const
+{
+    return (name>ref.name);
+}
+

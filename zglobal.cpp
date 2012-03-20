@@ -14,6 +14,9 @@ void ZGlobal::loadSettings()
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",5).toInt();
     resizeFilter = (ZResizeFilter)settings.value("resizeFilter",0).toInt();
+    mysqlUser = settings.value("mysqlUser",QString()).toString();
+    mysqlPassword = settings.value("mysqlPassword",QString()).toString();
+    savedAuxOpenDir = settings.value("savedAuxOpenDir",QString()).toString();
     settings.endGroup();
 }
 
@@ -23,6 +26,9 @@ void ZGlobal::saveSettings()
     settings.beginGroup("MainWindow");
     settings.setValue("cacheWidth",cacheWidth);
     settings.setValue("resizeFilter",(int)resizeFilter);
+    settings.setValue("mysqlUser",mysqlUser);
+    settings.setValue("mysqlPassword",mysqlPassword);
+    settings.setValue("savedAuxOpenDir",savedAuxOpenDir);
     settings.endGroup();
 }
 
