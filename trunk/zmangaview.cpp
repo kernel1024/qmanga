@@ -97,8 +97,22 @@ void ZMangaView::wheelEvent(QWheelEvent *event)
 void ZMangaView::paintEvent(QPaintEvent *)
 {
     QPainter w(this);
-    if (!currentPixmap.isNull())
-        w.drawPixmap(0,0,currentPixmap);
+    if (!currentPixmap.isNull()) {
+        int scb = 10;
+        if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
+            scb = scroller->verticalScrollBar()->width();
+        } else if (scroller->horizontalScrollBar() && scroller->horizontalScrollBar()->isVisible()) {
+            scb = scroller->horizontalScrollBar()->height();
+        }
+
+        int x=scb/3;
+        int y=scb/3;
+        if (currentPixmap.width()<scroller->size().width()-2*scb)
+            x=(scroller->size().width()-currentPixmap.width()-2*scb)/2;
+        if (currentPixmap.height()<scroller->size().height()-scb)
+            y=(scroller->size().height()-currentPixmap.height()-scb)/2;
+        w.drawPixmap(x,y,currentPixmap);
+    }
 }
 
 void ZMangaView::redrawPage()
@@ -109,6 +123,12 @@ void ZMangaView::redrawPage()
     // Cache management
     cacheDropUnusable();
     cacheFillNearest();
+    int scb = 10;
+    if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
+        scb = scroller->verticalScrollBar()->width();
+    } else if (scroller->horizontalScrollBar() && scroller->horizontalScrollBar()->isVisible()) {
+        scb = scroller->horizontalScrollBar()->height();
+    }
 
     // Draw current page
     currentPixmap = QPixmap();
@@ -117,7 +137,7 @@ void ZMangaView::redrawPage()
         QPixmap p = QPixmap::fromImage(iCache.value(currentPage));
         double pixAspect = (double)p.width()/(double)p.height();
         double myAspect = (double)width()/(double)height();
-        QSize sz(scroller->size().width()-5,scroller->size().height()-5);
+        QSize sz(scroller->size().width()-scb*2,scroller->size().height()-scb);
         QSize ssz = sz;
         if (zoomMode==Fit) {
             if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
@@ -133,6 +153,9 @@ void ZMangaView::redrawPage()
             p = zGlobal->resizeImage(p,sz);
         currentPixmap = p;
         setMinimumSize(currentPixmap.width(),currentPixmap.height());
+
+        if (sz.height()<ssz.height()) sz.setHeight(ssz.height());
+        if (sz.width()<ssz.width()) sz.setWidth(ssz.width());
         resize(sz);
         //scroller->ensureVisible(currentPixmap.width()/2,currentPixmap.height()/2,
         //                        scroller->width()/2,scroller->height()/2);
