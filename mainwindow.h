@@ -14,12 +14,19 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
+    ZMangaView* mangaView;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    QImageList manga;
     
 private:
     Ui::MainWindow *ui;
+
+protected:
+    void closeEvent(QCloseEvent * event);
+
+public slots:
+    void openAux();
+    void dispPage(int num);
 };
 
 #endif // MAINWINDOW_H

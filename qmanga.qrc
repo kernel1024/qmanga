@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>img/go-first.png</file>
+        <file>img/go-last.png</file>
+        <file>img/go-next.png</file>
+        <file>img/go-previous.png</file>
+        <file>img/zoom-draw.png</file>
+        <file>img/zoom-fit-best.png</file>
+        <file>img/zoom-fit-height.png</file>
+        <file>img/zoom-fit-width.png</file>
+        <file>img/zoom-original.png</file>
+        <file>img/document-open.png</file>
+    </qresource>
+</RCC>
