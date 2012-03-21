@@ -9,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    setWindowIcon(QIcon(":/img/Alien9.png"));
+
     bookmarksMenu = ui->menuBookmarks;
     fullScreen = false;
 
@@ -196,6 +198,6 @@ void MainWindow::openBookmark()
 void MainWindow::helpAbout()
 {
     QMessageBox::about(this, tr("QManga"),
-                       tr("Manga reader.\n\nLicensed under GPL v3 license.\\nAuthor: kilobax.\nApp icon (Alien9) designer: EXO"));
+                       tr("Manga reader with MySQL indexer.\n\nLicensed under GPL v3 license.\n\nAuthor: kilobax.\nApp icon (Alien9) designer: EXO."));
 
 }
