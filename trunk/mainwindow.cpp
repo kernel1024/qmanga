@@ -196,6 +196,6 @@ void MainWindow::openBookmark()
 void MainWindow::helpAbout()
 {
     QMessageBox::about(this, tr("QManga"),
-                       tr("Manga reader.\n\nAuthor: kilobax.\n\nLicensed under GPL v3 license"));
+                       tr("Manga reader.\n\nLicensed under GPL v3 license.\\nAuthor: kilobax.\nApp icon (Alien9) designer: EXO"));
 
 }
