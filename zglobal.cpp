@@ -1,4 +1,9 @@
 #include "zglobal.h"
+#include "mainwindow.h"
+#include "settingsdialog.h"
+#include <ImageMagick/Magick++.h>
+
+using namespace Magick;
 
 ZGlobal* zGlobal = NULL;
 
@@ -6,10 +11,13 @@ ZGlobal::ZGlobal(QObject *parent) :
     QObject(parent)
 {
     cacheWidth = 5;
+    bookmarks.clear();
 }
 
 void ZGlobal::loadSettings()
 {
+    MainWindow* w = qobject_cast<MainWindow *>(parent());
+
     QSettings settings("kilobax", "qmanga");
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",5).toInt();
@@ -17,7 +25,29 @@ void ZGlobal::loadSettings()
     mysqlUser = settings.value("mysqlUser",QString()).toString();
     mysqlPassword = settings.value("mysqlPassword",QString()).toString();
     savedAuxOpenDir = settings.value("savedAuxOpenDir",QString()).toString();
+    magnifySize = settings.value("magnifySize",150).toInt();
+
+    bool showMaximized = false;
+    if (w!=NULL)
+        showMaximized = settings.value("maximized",false).toBool();
+
+    int sz = settings.beginReadArray("bookmarks");
+    for (int i=0; i<sz; i++) {
+        settings.setArrayIndex(i);
+        QString t = settings.value("title").toString();
+        if (!t.isEmpty())
+            bookmarks[t]=settings.value("url").toString();
+    }
+    settings.endArray();
+
     settings.endGroup();
+
+    if (w!=NULL) {
+        if (showMaximized)
+            w->showMaximized();
+
+        w->updateBookmarks();
+    }
 }
 
 void ZGlobal::saveSettings()
@@ -29,6 +59,23 @@ void ZGlobal::saveSettings()
     settings.setValue("mysqlUser",mysqlUser);
     settings.setValue("mysqlPassword",mysqlPassword);
     settings.setValue("savedAuxOpenDir",savedAuxOpenDir);
+    settings.setValue("magnifySize",magnifySize);
+
+    MainWindow* w = qobject_cast<MainWindow *>(parent());
+    if (w!=NULL) {
+        settings.setValue("maximized",w->isMaximized());
+    }
+
+    settings.beginWriteArray("bookmarks");
+    int i=0;
+    foreach (const QString &t, bookmarks.keys()) {
+        settings.setArrayIndex(i);
+        settings.setValue("title",t);
+        settings.setValue("url",bookmarks.value(t));
+        i++;
+    }
+    settings.endArray();
+
     settings.endGroup();
 }
 
@@ -62,15 +109,115 @@ QString ZGlobal::detectMIME(QByteArray buf)
     return mag;
 }
 
-QPixmap ZGlobal::resizeImage(QPixmap src, QSize targetSize)
+QPixmap ZGlobal::resizeImage(QPixmap src, QSize targetSize, bool forceFilter, ZResizeFilter filter)
 {
-    if (resizeFilter==Nearest)
+    ZResizeFilter rf = resizeFilter;
+    if (forceFilter)
+        rf = filter;
+    if (rf==Nearest)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
-    else if (resizeFilter==Bilinear)
+    else if (rf==Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-    else
-        // TODO: Lanczos filter
-        return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    else {
+        QTime tmr;
+        tmr.start();
+
+        // Load QPixmap to ImageMagick image
+        QByteArray bufSrc;
+        QBuffer buf(&bufSrc);
+        buf.open(QIODevice::WriteOnly);
+        src.save(&buf,"BMP");
+        buf.close();
+        Blob iBlob(bufSrc.data(),bufSrc.size());
+        Image iImage(iBlob,Geometry(src.width(),src.height()),"BMP");
+
+        // Resize image
+        if (rf==Lanczos)
+            iImage.filterType(LanczosFilter);
+        else if (rf==Gaussian)
+            iImage.filterType(GaussianFilter);
+        else if (rf==Lanczos2)
+            iImage.filterType(Lanczos2Filter);
+        else if (rf==Cubic)
+            iImage.filterType(CubicFilter);
+        else if (rf==Sinc)
+            iImage.filterType(SincFilter);
+        else if (rf==Triangle)
+            iImage.filterType(TriangleFilter);
+        else if (rf==Mitchell)
+            iImage.filterType(MitchellFilter);
+        else
+            iImage.filterType(LanczosFilter);
+
+        iImage.resize(Geometry(targetSize.width(),targetSize.height()));
+
+        // Convert image to QPixmap
+        Blob oBlob;
+        iImage.magick("BMP");
+        iImage.write(&oBlob);
+        bufSrc.clear();
+        bufSrc=QByteArray::fromRawData((char*)(oBlob.data()),oBlob.length());
+        QPixmap dst;
+        dst.loadFromData(bufSrc);
+        bufSrc.clear();
+
+        //qDebug() << "ImageMagick ms: " << tmr.elapsed();
+        return dst;
+    }
+}
+
+void ZGlobal::settingsDlg()
+{
+    MainWindow* w = qobject_cast<MainWindow *>(parent());
+    SettingsDialog* dlg = new SettingsDialog(w);
+
+    dlg->editMySqlLogin->setText(mysqlUser);
+    dlg->editMySqlPassword->setText(mysqlPassword);
+    dlg->spinCacheWidth->setValue(cacheWidth);
+    dlg->spinMagnify->setValue(magnifySize);
+    switch (resizeFilter) {
+    case Nearest: dlg->comboFilter->setCurrentIndex(0); break;
+    case Bilinear: dlg->comboFilter->setCurrentIndex(1); break;
+    case Lanczos: dlg->comboFilter->setCurrentIndex(2); break;
+    case Gaussian: dlg->comboFilter->setCurrentIndex(3); break;
+    case Lanczos2: dlg->comboFilter->setCurrentIndex(4); break;
+    case Cubic: dlg->comboFilter->setCurrentIndex(5); break;
+    case Sinc: dlg->comboFilter->setCurrentIndex(6); break;
+    case Triangle: dlg->comboFilter->setCurrentIndex(7); break;
+    case Mitchell: dlg->comboFilter->setCurrentIndex(8); break;
+    }
+    foreach (const QString &t, bookmarks.keys()) {
+        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg(t).arg(bookmarks.value(t)));
+        li->setData(Qt::UserRole,t);
+        li->setData(Qt::UserRole+1,bookmarks.value(t));
+        dlg->listBookmarks->addItem(li);
+    }
+
+    if (dlg->exec()) {
+        mysqlUser=dlg->editMySqlLogin->text();
+        mysqlPassword=dlg->editMySqlPassword->text();
+        cacheWidth=dlg->spinCacheWidth->value();
+        magnifySize=dlg->spinMagnify->value();
+        switch (dlg->comboFilter->currentIndex()) {
+        case 0: resizeFilter = Nearest; break;
+        case 1: resizeFilter = Bilinear; break;
+        case 2: resizeFilter = Lanczos; break;
+        case 3: resizeFilter = Gaussian; break;
+        case 4: resizeFilter = Lanczos2; break;
+        case 5: resizeFilter = Cubic; break;
+        case 6: resizeFilter = Sinc; break;
+        case 7: resizeFilter = Triangle; break;
+        case 8: resizeFilter = Mitchell; break;
+        }
+        bookmarks.clear();
+        for (int i=0; i<dlg->listBookmarks->count(); i++)
+            bookmarks[dlg->listBookmarks->item(i)->data(Qt::UserRole).toString()]=
+                    dlg->listBookmarks->item(i)->data(Qt::UserRole+1).toString();
+        if (w!=NULL)
+            w->updateBookmarks();
+    }
+    dlg->setParent(NULL);
+    delete dlg;
 }
 
 #ifdef QB_KDEDIALOGS

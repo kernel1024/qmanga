@@ -10,5 +10,6 @@
         <file>img/zoom-fit-width.png</file>
         <file>img/zoom-original.png</file>
         <file>img/document-open.png</file>
+        <file>img/edit-delete.png</file>
     </qresource>
 </RCC>

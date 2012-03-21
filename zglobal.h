@@ -24,12 +24,20 @@ public:
     enum ZResizeFilter {
         Nearest = 0,
         Bilinear = 1,
-        Lanczos = 2
+        Lanczos = 2,
+        Gaussian = 3,
+        Lanczos2 = 4,
+        Cubic = 5,
+        Sinc = 6,
+        Triangle = 7,
+        Mitchell = 8
     };
     explicit ZGlobal(QObject *parent = 0);
 
     int cacheWidth;
+    int magnifySize;
     ZResizeFilter resizeFilter;
+    QMap<QString, QString> bookmarks;
 
     void loadSettings();
     void saveSettings();
@@ -41,7 +49,8 @@ public:
     
     QString detectMIME(QString filename);
     QString detectMIME(QByteArray buf);
-    QPixmap resizeImage(QPixmap src, QSize targetSize);
+    QPixmap resizeImage(QPixmap src, QSize targetSize,
+                        bool forceFilter = false, ZResizeFilter filter = Lanczos);
 
 #ifdef QB_KDEDIALOGS
     QString getKDEFilters(const QString & qfilter);
@@ -71,7 +80,8 @@ public:
 signals:
     
 public slots:
-    
+    void settingsDlg();
+
 };
 
 extern ZGlobal* zGlobal;
