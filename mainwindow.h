@@ -36,6 +36,7 @@ public slots:
     void updateTitle();
     void createBookmark();
     void openBookmark();
+    void helpAbout();
 };
 
 #endif // MAINWINDOW_H

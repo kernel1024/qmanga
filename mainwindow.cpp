@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionClose,SIGNAL(triggered()),this,SLOT(closeManga()));
     connect(ui->actionSettings,SIGNAL(triggered()),zGlobal,SLOT(settingsDlg()));
     connect(ui->actionAddBookmark,SIGNAL(triggered()),this,SLOT(createBookmark()));
+    connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(helpAbout()));
 
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
     connect(ui->mangaView,SIGNAL(loadPage(int)),this,SLOT(dispPage(int)));
@@ -190,4 +191,11 @@ void MainWindow::openBookmark()
     if (!fi.isReadable()) return;
 
     ui->mangaView->openFile(f);
+}
+
+void MainWindow::helpAbout()
+{
+    QMessageBox::about(this, tr("QManga"),
+                       tr("Manga reader.\n\nAuthor: kilobax.\n\nLicensed under GPL v3 license"));
+
 }
