@@ -14,23 +14,28 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
+    QMenu* bookmarksMenu;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void centerWindow();
     
 private:
     Ui::MainWindow *ui;
+    bool fullScreen;
 
 protected:
     void closeEvent(QCloseEvent * event);
 
 public slots:
     void openAux();
+    void closeManga();
     void dispPage(int num);
-    void stLoginChanged(QString text);
-    void stPassChanged(QString text);
-    void stCacheWidthChanged(int num);
-    void stFilterChanged(int num);
-    void updateSettingsPage();
+    void goFullscreen();
+
+    void updateBookmarks();
+    void updateTitle();
+    void createBookmark();
+    void openBookmark();
 };
 
 #endif // MAINWINDOW_H

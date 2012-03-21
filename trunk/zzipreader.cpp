@@ -104,17 +104,17 @@ QImageHash ZZipReader::loadPages(QIntList nums)
 
     QuaZipFile zf(&mainZFile);
     int idx = 0;
-    QIntList znums;
+    QHash<int,int> znums;
     for (int i=0;i<nums.count();i++)
         if (nums.at(i)>=0 && nums.at(i)<sortList.count())
-            znums << sortList.at(nums.at(i)).idx;
+            znums.insert(sortList.at(nums.at(i)).idx,nums.at(i));
 
     for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
         QuaZipFileInfo zfi;
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
 
-        if (nums.contains(idx)) {
+        if (znums.keys().contains(idx)) {
             QuaZipFileInfo zfi;
             mainZFile.getCurrentFileInfo(&zfi);
             if (zfi.uncompressedSize>(150*1024*1024)) {
@@ -123,7 +123,7 @@ QImageHash ZZipReader::loadPages(QIntList nums)
                 if (!zf.open(QIODevice::ReadOnly)) {
                     qDebug() << "Error while opening compressed image inside archive.";
                 } else {
-                    hash[idx] = QImage::fromData(zf.readAll());
+                    hash[znums[idx]] = QImage::fromData(zf.readAll());
                     zf.close();
                 }
             }

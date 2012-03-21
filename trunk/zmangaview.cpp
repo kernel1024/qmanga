@@ -1,6 +1,7 @@
 #include "zmangaview.h"
 #include "zzipreader.h"
 #include "zglobal.h"
+#include "mainwindow.h"
 
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
@@ -8,7 +9,13 @@ ZMangaView::ZMangaView(QWidget *parent) :
     currentPage = 0;
     mReader = NULL;
     zoomMode = Fit;
-    currentPixmap = QPixmap();
+    zoomDynamic = false;
+    zoomPos = QPoint();
+    curPixmap = QPixmap();
+    curUmPixmap = QPixmap();
+    openedFile = QString();
+    zoomAny = -1;
+    setMouseTracking(true);
     setBackgroundRole(QPalette::Dark);
     emit loadPage(-1);
 }
@@ -54,6 +61,8 @@ void ZMangaView::openFile(QString filename)
         return;
     }
     mReader = za;
+    iCache.clear();
+    openedFile = filename;
     setPage(0);
 }
 
@@ -65,6 +74,10 @@ void ZMangaView::closeFile()
     mReader->setParent(NULL);
     delete mReader;
     mReader = NULL;
+    iCache.clear();
+    curPixmap = QPixmap();
+    openedFile = QString();
+    update();
     emit loadPage(-1);
 }
 
@@ -97,8 +110,8 @@ void ZMangaView::wheelEvent(QWheelEvent *event)
 void ZMangaView::paintEvent(QPaintEvent *)
 {
     QPainter w(this);
-    if (!currentPixmap.isNull()) {
-        int scb = 10;
+    if (!curPixmap.isNull()) {
+        int scb = 6;
         if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
             scb = scroller->verticalScrollBar()->width();
         } else if (scroller->horizontalScrollBar() && scroller->horizontalScrollBar()->isVisible()) {
@@ -107,12 +120,77 @@ void ZMangaView::paintEvent(QPaintEvent *)
 
         int x=scb/3;
         int y=scb/3;
-        if (currentPixmap.width()<scroller->size().width()-2*scb)
-            x=(scroller->size().width()-currentPixmap.width()-2*scb)/2;
-        if (currentPixmap.height()<scroller->size().height()-scb)
-            y=(scroller->size().height()-currentPixmap.height()-scb)/2;
-        w.drawPixmap(x,y,currentPixmap);
+        if (curPixmap.width()<scroller->size().width()-2*scb)
+            x=(scroller->size().width()-curPixmap.width()-2*scb)/2;
+        if (curPixmap.height()<scroller->size().height()-2*scb)
+            y=(scroller->size().height()-curPixmap.height()-2*scb)/2;
+        w.drawPixmap(x,y,curPixmap);
+
+        if (zoomDynamic) {
+            QPoint mp(zoomPos.x()-x,zoomPos.y()-y);
+            QRect baseRect = curPixmap.rect();
+            if (baseRect.contains(mp,true)) {
+                mp.setX(mp.x()*curUmPixmap.width()/curPixmap.width());
+                mp.setY(mp.y()*curUmPixmap.height()/curPixmap.height());
+                int msz = zGlobal->magnifySize;
+
+                if (curPixmap.width()<curUmPixmap.width() || curPixmap.height()<curUmPixmap.height()) {
+                    QRect cutBox(mp.x()-msz/2,mp.y()-msz/2,msz,msz);
+                    baseRect = curUmPixmap.rect();
+                    if (cutBox.left()<baseRect.left()) cutBox.moveLeft(baseRect.left());
+                    if (cutBox.right()>baseRect.right()) cutBox.moveRight(baseRect.right());
+                    if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
+                    if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
+                    QPixmap zoomed = curUmPixmap.copy(cutBox);
+                    baseRect = QRect(QPoint(zoomPos.x()-zoomed.width()/2,zoomPos.y()-zoomed.height()/2),
+                                     zoomed.size());
+                    if (baseRect.left()<0) baseRect.moveLeft(0);
+                    if (baseRect.right()>width()) baseRect.moveRight(width());
+                    if (baseRect.top()<0) baseRect.moveTop(0);
+                    if (baseRect.bottom()>height()) baseRect.moveBottom(height());
+                    w.drawPixmap(baseRect,zoomed);
+                } else {
+                    QRect cutBox(mp.x()-msz/4,mp.y()-msz/4,msz/2,msz/2);
+                    baseRect = curUmPixmap.rect();
+                    if (cutBox.left()<baseRect.left()) cutBox.moveLeft(baseRect.left());
+                    if (cutBox.right()>baseRect.right()) cutBox.moveRight(baseRect.right());
+                    if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
+                    if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
+                    QPixmap zoomed = curUmPixmap.copy(cutBox);
+                    zoomed = zGlobal->resizeImage(zoomed,zoomed.size()*3.0,true,ZGlobal::Lanczos);
+                    baseRect = QRect(QPoint(zoomPos.x()-zoomed.width()/2,zoomPos.y()-zoomed.height()/2),
+                                     zoomed.size());
+                    if (baseRect.left()<0) baseRect.moveLeft(0);
+                    if (baseRect.right()>width()) baseRect.moveRight(width());
+                    if (baseRect.top()<0) baseRect.moveTop(0);
+                    if (baseRect.bottom()>height()) baseRect.moveBottom(height());
+                    w.drawPixmap(baseRect,zoomed);
+                }
+            }
+
+        }
+    } else {
+        if (!iCache.isEmpty()) {
+            QPixmap p(":/img/edit-delete.png");
+            w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
+            w.drawText(0,(height()-p.height())/2+p.height()+5,width(),w.fontMetrics().height(),Qt::AlignCenter,
+                       tr("Error loading page %1").arg(currentPage));
+        }
     }
+}
+
+void ZMangaView::mouseMoveEvent(QMouseEvent *event)
+{
+    if (zoomDynamic) {
+        zoomPos = event->pos();
+        update();
+    } else
+        zoomPos = QPoint();
+}
+
+void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
+{
+    emit doubleClicked();
 }
 
 void ZMangaView::redrawPage()
@@ -123,7 +201,7 @@ void ZMangaView::redrawPage()
     // Cache management
     cacheDropUnusable();
     cacheFillNearest();
-    int scb = 10;
+    int scb = 6;
     if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
         scb = scroller->verticalScrollBar()->width();
     } else if (scroller->horizontalScrollBar() && scroller->horizontalScrollBar()->isVisible()) {
@@ -131,36 +209,43 @@ void ZMangaView::redrawPage()
     }
 
     // Draw current page
-    currentPixmap = QPixmap();
+    curPixmap = QPixmap();
 
     if (iCache.contains(currentPage)) {
-        QPixmap p = QPixmap::fromImage(iCache.value(currentPage));
-        double pixAspect = (double)p.width()/(double)p.height();
-        double myAspect = (double)width()/(double)height();
-        QSize sz(scroller->size().width()-scb*2,scroller->size().height()-scb);
+        curUmPixmap = QPixmap::fromImage(iCache.value(currentPage));
+        QSize sz(scroller->size().width()-scb*2,scroller->size().height()-scb*2);
         QSize ssz = sz;
-        if (zoomMode==Fit) {
-            if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
+        curPixmap = curUmPixmap;
+        if (!curUmPixmap.isNull() && curUmPixmap.height()>0) {
+            double pixAspect = (double)curUmPixmap.width()/(double)curUmPixmap.height();
+            double myAspect = (double)width()/(double)height();
+            if (zoomAny>0) {
+                sz = curUmPixmap.size()*((double)(zoomAny)/100.0);
+            } else if (zoomMode==Fit) {
+                if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
+                    sz.setHeight(round(((double)sz.width())/pixAspect));
+                else
+                    sz.setWidth(round(((double)sz.height())*pixAspect));
+            } else if (zoomMode==Width) {
                 sz.setHeight(round(((double)sz.width())/pixAspect));
-            else
+            } else if (zoomMode==Height) {
                 sz.setWidth(round(((double)sz.height())*pixAspect));
-        } else if (zoomMode==Width) {
-            sz.setHeight(round(((double)sz.width())/pixAspect));
-        } else if (zoomMode==Height) {
-            sz.setWidth(round(((double)sz.height())*pixAspect));
+            }
+            if (sz!=ssz)
+                curPixmap = zGlobal->resizeImage(curUmPixmap,sz);
         }
-        if (sz!=ssz)
-            p = zGlobal->resizeImage(p,sz);
-        currentPixmap = p;
-        setMinimumSize(currentPixmap.width(),currentPixmap.height());
+        setMinimumSize(curPixmap.width(),curPixmap.height());
 
         if (sz.height()<ssz.height()) sz.setHeight(ssz.height());
         if (sz.width()<ssz.width()) sz.setWidth(ssz.width());
         resize(sz);
-        //scroller->ensureVisible(currentPixmap.width()/2,currentPixmap.height()/2,
-        //                        scroller->width()/2,scroller->height()/2);
     }
     update();
+}
+
+void ZMangaView::ownerResized(const QSize &)
+{
+    redrawPage();
 }
 
 void ZMangaView::navFirst()
@@ -219,7 +304,22 @@ void ZMangaView::setZoomOriginal()
 
 void ZMangaView::setZoomDynamic(bool state)
 {
-    if (state) { };
+    zoomDynamic = state;
+    redrawPage();
+}
+
+void ZMangaView::setZoomAny(QString proc)
+{
+    zoomAny = -1;
+    QString s = proc;
+    s.remove(QRegExp("[^0123456789]"));
+    bool okconv;
+    if (!s.isEmpty()) {
+        zoomAny = s.toInt(&okconv);
+        if (!okconv)
+            zoomAny = -1;
+    }
+    redrawPage();
 }
 
 ZAbstractReader* ZMangaView::readerFactory(QString filename)

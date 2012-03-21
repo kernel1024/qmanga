@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "zglobal.h"
+#include "bookmarkdlg.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -8,24 +9,45 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    bookmarksMenu = ui->menuBookmarks;
+    fullScreen = false;
+
     if (zGlobal==NULL)
         zGlobal = new ZGlobal(this);
 
+    int btnSize = 20;
     ui->btnOpen->setIcon(QIcon(":/img/document-open.png"));
+    ui->btnOpen->setIconSize(QSize(btnSize,btnSize));
     ui->btnNavFirst->setIcon(QIcon(":/img/go-first.png"));
+    ui->btnNavFirst->setIconSize(QSize(btnSize,btnSize));
     ui->btnNavPrev->setIcon(QIcon(":/img/go-previous.png"));
+    ui->btnNavPrev->setIconSize(QSize(btnSize,btnSize));
     ui->btnNavNext->setIcon(QIcon(":/img/go-next.png"));
+    ui->btnNavNext->setIconSize(QSize(btnSize,btnSize));
     ui->btnNavLast->setIcon(QIcon(":/img/go-last.png"));
+    ui->btnNavLast->setIconSize(QSize(btnSize,btnSize));
     ui->btnZoomFit->setIcon(QIcon(":/img/zoom-fit-best.png"));
+    ui->btnZoomFit->setIconSize(QSize(btnSize,btnSize));
     ui->btnZoomWidth->setIcon(QIcon(":/img/zoom-fit-width.png"));
+    ui->btnZoomWidth->setIconSize(QSize(btnSize,btnSize));
     ui->btnZoomHeight->setIcon(QIcon(":/img/zoom-fit-height.png"));
+    ui->btnZoomHeight->setIconSize(QSize(btnSize,btnSize));
     ui->btnZoomOriginal->setIcon(QIcon(":/img/zoom-original.png"));
+    ui->btnZoomOriginal->setIconSize(QSize(btnSize,btnSize));
     ui->btnZoomDynamic->setIcon(QIcon(":/img/zoom-draw.png"));
+    ui->btnZoomDynamic->setIconSize(QSize(btnSize,btnSize));
 
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
+    connect(ui->actionClose,SIGNAL(triggered()),this,SLOT(closeManga()));
+    connect(ui->actionSettings,SIGNAL(triggered()),zGlobal,SLOT(settingsDlg()));
+    connect(ui->actionAddBookmark,SIGNAL(triggered()),this,SLOT(createBookmark()));
+
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
     connect(ui->mangaView,SIGNAL(loadPage(int)),this,SLOT(dispPage(int)));
+    connect(ui->scrollArea,SIGNAL(sizeChanged(QSize)),ui->mangaView,SLOT(ownerResized(QSize)));
+    connect(ui->comboZoom,SIGNAL(currentIndexChanged(QString)),ui->mangaView,SLOT(setZoomAny(QString)));
+    connect(ui->mangaView,SIGNAL(doubleClicked()),this,SLOT(goFullscreen()));
 
     connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
     connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
@@ -38,20 +60,37 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnZoomOriginal,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomOriginal()));
     connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),ui->mangaView,SLOT(setZoomDynamic(bool)));
 
-    connect(ui->editMySqlLogin,SIGNAL(textChanged(QString)),this,SLOT(stLoginChanged(QString)));
-    connect(ui->editMySqlPassword,SIGNAL(textChanged(QString)),this,SLOT(stPassChanged(QString)));
-    connect(ui->spinCacheWidth,SIGNAL(valueChanged(int)),this,SLOT(stCacheWidthChanged(int)));
-    connect(ui->comboFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(stFilterChanged(int)));
-
     ui->mangaView->scroller = ui->scrollArea;
     zGlobal->loadSettings();
-    updateSettingsPage();
+    if (!isMaximized())
+        centerWindow();
     dispPage(-1);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::centerWindow()
+{
+    int screen = 0;
+    QWidget *w = window();
+    QDesktopWidget *desktop = QApplication::desktop();
+    if (w) {
+        screen = desktop->screenNumber(w);
+    } else if (desktop->isVirtualDesktop()) {
+        screen = desktop->screenNumber(QCursor::pos());
+    } else {
+        screen = desktop->screenNumber(this);
+    }
+    QRect rect(desktop->availableGeometry(screen));
+    int h = 80*rect.height()/100;
+    QSize nw(135*h/100,h);
+    if (nw.width()<1000) nw.setWidth(80*rect.width()/100);
+    resize(nw);
+    move(rect.width()/2 - frameGeometry().width()/2,
+         rect.height()/2 - frameGeometry().height()/2);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -72,46 +111,83 @@ void MainWindow::openAux()
     }
 }
 
+void MainWindow::closeManga()
+{
+    ui->mangaView->closeFile();
+}
+
 void MainWindow::dispPage(int num)
 {
+    updateTitle();
     if (num<0 || ui->mangaView->getPageCount()<=0)
         ui->lblPosition->clear();
     else
         ui->lblPosition->setText(tr("%1 / %2").arg(num+1).arg(ui->mangaView->getPageCount()));
 }
 
-void MainWindow::stLoginChanged(QString text)
+void MainWindow::goFullscreen()
 {
-    zGlobal->mysqlUser=text;
+    fullScreen = !fullScreen;
+
+    statusBar()->setVisible(!fullScreen);
+    menuBar()->setVisible(!fullScreen);
+    ui->tabWidget->tabBar()->setVisible(!fullScreen);
+    ui->toolbar->setVisible(!fullScreen);
+    if (fullScreen)
+        showFullScreen();
+    else
+        showNormal();
 }
 
-void MainWindow::stPassChanged(QString text)
+void MainWindow::updateBookmarks()
 {
-    zGlobal->mysqlPassword=text;
-}
-
-void MainWindow::stCacheWidthChanged(int num)
-{
-    zGlobal->cacheWidth=num;
-}
-
-void MainWindow::stFilterChanged(int num)
-{
-    switch (num) {
-        case 0: zGlobal->resizeFilter = ZGlobal::Nearest; break;
-        case 1: zGlobal->resizeFilter = ZGlobal::Bilinear; break;
-        case 2: zGlobal->resizeFilter = ZGlobal::Lanczos; break;
+    while (bookmarksMenu->actions().count()>2)
+        bookmarksMenu->removeAction(bookmarksMenu->actions().last());
+    foreach (const QString &t, zGlobal->bookmarks.keys()) {
+        QAction* a = bookmarksMenu->addAction(t,this,SLOT(openBookmark()));
+        a->setData(zGlobal->bookmarks.value(t));
+        a->setStatusTip(zGlobal->bookmarks.value(t));
     }
 }
 
-void MainWindow::updateSettingsPage()
+void MainWindow::updateTitle()
 {
-    ui->editMySqlLogin->setText(zGlobal->mysqlUser);
-    ui->editMySqlPassword->setText(zGlobal->mysqlPassword);
-    ui->spinCacheWidth->setValue(zGlobal->cacheWidth);
-    switch (zGlobal->resizeFilter) {
-        case ZGlobal::Nearest: ui->comboFilter->setCurrentIndex(0); break;
-        case ZGlobal::Bilinear: ui->comboFilter->setCurrentIndex(1); break;
-        case ZGlobal::Lanczos: ui->comboFilter->setCurrentIndex(2); break;
+    QString t(tr("QManga"));
+    if (!ui->mangaView->openedFile.isEmpty()) {
+        QFileInfo fi(ui->mangaView->openedFile);
+        t += tr(" - %1").arg(fi.fileName());
+    } else {
+        t += tr(" - Manga viewer and indexer");
     }
+    setWindowTitle(t);
+}
+
+void MainWindow::createBookmark()
+{
+    if (ui->mangaView->openedFile.isEmpty()) return;
+    QFileInfo fi(ui->mangaView->openedFile);
+    QBookmarkDlg *dlg = new QBookmarkDlg(this,fi.fileName(),ui->mangaView->openedFile);
+    if (dlg->exec()) {
+        QString t = dlg->getBkTitle();
+        if (!t.isEmpty() && !zGlobal->bookmarks.contains(t)) {
+            zGlobal->bookmarks[t]=dlg->getBkFilename();
+            updateBookmarks();
+        } else
+            QMessageBox::warning(this,tr("QManga"),
+                                 tr("Unable to add bookmark (frame is empty or duplicate title). Try again."));
+    }
+    dlg->setParent(NULL);
+    delete dlg;
+}
+
+void MainWindow::openBookmark()
+{
+    QAction* a = qobject_cast<QAction *>(sender());
+    if (a==NULL) return;
+
+    QString f = a->data().toString();
+    QFileInfo fi(f);
+    if (!fi.isReadable()) return;
+
+    ui->mangaView->openFile(f);
 }
