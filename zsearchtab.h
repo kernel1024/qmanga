@@ -22,13 +22,18 @@ public:
 private:
     Ui::ZSearchTab *ui;
     SQLMangaList mangaList;
+    void updateModel(SQLMangaList* list);
+    QSize gridSize(int ref);
 
 public slots:
     void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
+    void albumClicked(QListWidgetItem * item);
     void mangaClicked(const QModelIndex &index);
     void mangaOpen(const QModelIndex &index);
     void mangaAdd();
     void mangaDel();
+    void listModeChanged();
+    void iconSizeChanged(int ref);
 signals:
     void mangaDblClick(QString filename);
 };

@@ -16,6 +16,7 @@
 
 class SQLMangaEntry {
 public:
+    int dbid;
     QString name;
     QString filename;
     QString album;
@@ -28,7 +29,7 @@ public:
     SQLMangaEntry();
     SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
                   const QPixmap& aCover, const int aPagesCount, const qint64 aFileSize,
-                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT);
+                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT, int aDbid);
     SQLMangaEntry &operator=(const SQLMangaEntry& other);
     bool operator==(const SQLMangaEntry& ref) const;
     bool operator!=(const SQLMangaEntry& ref) const;
@@ -90,6 +91,8 @@ public:
     SQLMangaList sqlGetFiles(QString album, SQLMangaOrder order, bool reverseOrder);
     SQLMangaList sqlGetSearch(QString ref, SQLMangaOrder order, bool reverseOrder);
     void sqlAddFiles(QStringList files, QString album);
+    void sqlDelFiles(QIntList dbids);
+    void sqlDelEmptyAlbums();
 
 
 #ifdef QB_KDEDIALOGS

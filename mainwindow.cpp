@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowIcon(QIcon(":/img/Alien9.png"));
 
     bookmarksMenu = ui->menuBookmarks;
+    srcWidget = ui->srcWidget;
     fullScreen = false;
 
     if (zGlobal==NULL)

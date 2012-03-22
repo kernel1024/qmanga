@@ -169,11 +169,25 @@ bool ZFileEntry::operator !=(const ZFileEntry &ref) const
 
 bool ZFileEntry::operator <(const ZFileEntry &ref) const
 {
+    QFileInfo fi1(name);
+    QFileInfo fi2(ref.name);
+    bool okconv1, okconv2;
+    int v1 = fi1.completeBaseName().toInt(&okconv1);
+    int v2 = fi2.completeBaseName().toInt(&okconv2);
+    if (okconv1 && okconv2)
+        return (v1<v2);
     return (name<ref.name);
 }
 
 bool ZFileEntry::operator >(const ZFileEntry &ref) const
 {
+    QFileInfo fi1(name);
+    QFileInfo fi2(ref.name);
+    bool okconv1, okconv2;
+    int v1 = fi1.completeBaseName().toInt(&okconv1);
+    int v2 = fi2.completeBaseName().toInt(&okconv2);
+    if (okconv1 && okconv2)
+        return (v1<v2);
     return (name>ref.name);
 }
 
