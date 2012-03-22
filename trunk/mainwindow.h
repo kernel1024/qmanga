@@ -4,6 +4,7 @@
 #include <QtCore>
 #include <QtGui>
 #include "zmangaview.h"
+#include "zsearchtab.h"
 
 namespace Ui {
 class MainWindow;
@@ -15,6 +16,7 @@ class MainWindow : public QMainWindow
     
 public:
     QMenu* bookmarksMenu;
+    ZSearchTab* srcWidget;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void centerWindow();
