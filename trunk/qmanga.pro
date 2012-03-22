@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui sql
 
 TARGET = qmanga
 TEMPLATE = app
@@ -18,7 +18,10 @@ SOURCES += main.cpp\
     zzipreader.cpp \
     zscrollarea.cpp \
     settingsdialog.cpp \
-    bookmarkdlg.cpp
+    bookmarkdlg.cpp \
+    global.cpp \
+    zmangamodel.cpp \
+    zsearchtab.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -29,11 +32,15 @@ HEADERS  += mainwindow.h \
     zzipreader.h \
     zscrollarea.h \
     settingsdialog.h \
-    bookmarkdlg.h
+    bookmarkdlg.h \
+    global.h \
+    zmangamodel.h \
+    zsearchtab.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
-    bookmarkdlg.ui
+    bookmarkdlg.ui \
+    zsearchtab.ui
 
 RESOURCES += \
     qmanga.qrc

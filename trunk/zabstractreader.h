@@ -25,6 +25,7 @@ public:
     virtual void closeFile();
     virtual QImage loadPage(int num) = 0;
     virtual QImageHash loadPages(QIntList nums) = 0;
+    virtual QString getMagic() = 0;
     
 signals:
     

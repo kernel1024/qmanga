@@ -1,5 +1,4 @@
 #include "zmangaview.h"
-#include "zzipreader.h"
 #include "zglobal.h"
 #include "mainwindow.h"
 
@@ -16,7 +15,12 @@ ZMangaView::ZMangaView(QWidget *parent) :
     openedFile = QString();
     zoomAny = -1;
     setMouseTracking(true);
+
     setBackgroundRole(QPalette::Dark);
+    QPalette p = palette();
+    p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
+    setPalette(p);
+
     emit loadPage(-1);
 }
 
@@ -49,7 +53,7 @@ void ZMangaView::openFile(QString filename)
     if (mReader!=NULL)
         closeFile();
 
-    ZAbstractReader* za = readerFactory(filename);
+    ZAbstractReader* za = readerFactory(this,filename);
     if (za == NULL) {
         QMessageBox::critical(this,tr("QManga"),tr("File format not supported"));
         return;
@@ -96,6 +100,7 @@ void ZMangaView::setPage(int page)
     currentPage = page;
     redrawPage();
     emit loadPage(page);
+    setFocus();
 }
 
 void ZMangaView::wheelEvent(QWheelEvent *event)
@@ -193,8 +198,83 @@ void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
     emit doubleClicked();
 }
 
+void ZMangaView::keyPressEvent(QKeyEvent *event)
+{
+    QScrollBar* vb = scroller->verticalScrollBar();
+    QScrollBar* hb = scroller->horizontalScrollBar();
+    switch (event->key()) {
+        case Qt::Key_Up:
+            if (vb) vb->setValue(vb->value()-vb->singleStep());
+            break;
+        case Qt::Key_Down:
+            if (vb) vb->setValue(vb->value()+vb->singleStep());
+            break;
+        case Qt::Key_Left:
+            if (hb) hb->setValue(hb->value()-hb->singleStep());
+            break;
+        case Qt::Key_Right:
+            if (hb) hb->setValue(hb->value()+hb->singleStep());
+            break;
+        case Qt::Key_Space:
+        case Qt::Key_PageDown:
+            navNext();
+            break;
+        case Qt::Key_Backspace:
+        case Qt::Key_PageUp:
+            navPrev();
+            break;
+        case Qt::Key_Home:
+            navFirst();
+            break;
+        case Qt::Key_End:
+            navLast();
+            break;
+        default:
+            emit keyPressed(event->key());
+            break;
+    }
+    event->accept();
+}
+
+void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
+{
+    QMenu cm(this);
+    QAction* nt = new QAction(QIcon(":/img/zoom-fit-best.png"),tr("Zoom fit"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomFit()));
+    cm.addAction(nt);
+    nt = new QAction(QIcon(":/img/zoom-fit-width.png"),tr("Zoom width"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomWidth()));
+    cm.addAction(nt);
+    nt = new QAction(QIcon(":/img/zoom-fit-height.png"),tr("Zoom height"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomHeight()));
+    cm.addAction(nt);
+    nt = new QAction(QIcon(":/img/zoom-original.png"),tr("Zoom original"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomOriginal()));
+    cm.addAction(nt);
+    cm.addSeparator();
+    nt = new QAction(QIcon(":/img/zoom-draw.png"),tr("Zoom dynamic"),NULL);
+    nt->setCheckable(true);
+    nt->setChecked(zoomDynamic);
+    connect(nt,SIGNAL(triggered(bool)),this,SLOT(setZoomDynamic(bool)));
+    cm.addAction(nt);
+    cm.addSeparator();
+    nt = new QAction(QIcon::fromTheme("view-refresh"),tr("Redraw page"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(redrawPage()));
+    cm.addAction(nt);
+    cm.addSeparator();
+    nt = new QAction(QIcon::fromTheme("go-down"),tr("Minimize window"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(minimizeWindowCtx()));
+    cm.addAction(nt);
+    cm.exec(event->globalPos());
+    event->accept();
+}
+
 void ZMangaView::redrawPage()
 {
+    QPalette p = palette();
+    p.setBrush(QPalette::Dark,QBrush(zGlobal->backgroundColor));
+    setPalette(p);
+
     if (!mReader) return;
     if (!mReader->isOpened()) return;
 
@@ -246,6 +326,11 @@ void ZMangaView::redrawPage()
 void ZMangaView::ownerResized(const QSize &)
 {
     redrawPage();
+}
+
+void ZMangaView::minimizeWindowCtx()
+{
+    emit keyPressed(Qt::Key_F4);
 }
 
 void ZMangaView::navFirst()
@@ -320,16 +405,6 @@ void ZMangaView::setZoomAny(QString proc)
             zoomAny = -1;
     }
     redrawPage();
-}
-
-ZAbstractReader* ZMangaView::readerFactory(QString filename)
-{
-    QString mime = zGlobal->detectMIME(filename).toLower();
-    if (mime.contains("application/zip",Qt::CaseInsensitive)) {
-        return new ZZipReader(this,filename);
-    } else {
-        return NULL;
-    }
 }
 
 void ZMangaView::cacheDropUnusable()

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>607</width>
-    <height>337</height>
+    <width>634</width>
+    <height>437</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
       <attribute name="title">
        <string>Main</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
@@ -38,8 +38,8 @@
         </spacer>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
           <widget class="QGroupBox" name="groupBox">
            <property name="title">
             <string>Rendering</string>
@@ -162,13 +162,26 @@
            </layout>
           </widget>
          </item>
-         <item>
+         <item row="0" column="1">
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
             <string>MySQL login</string>
            </property>
            <layout class="QFormLayout" name="formLayout_2">
             <item row="0" column="0">
+             <widget class="QLabel" name="label_7">
+              <property name="text">
+               <string>Base</string>
+              </property>
+              <property name="buddy">
+               <cstring>editMySqlBase</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="editMySqlBase"/>
+            </item>
+            <item row="1" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
                <string>Login</string>
@@ -178,10 +191,10 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
+            <item row="1" column="1">
              <widget class="QLineEdit" name="editMySqlLogin"/>
             </item>
-            <item row="1" column="0">
+            <item row="2" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
                <string>Password</string>
@@ -191,7 +204,7 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="2" column="1">
              <widget class="QLineEdit" name="editMySqlPassword">
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>
@@ -200,6 +213,59 @@
             </item>
            </layout>
           </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>Colors</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Main background</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frameBkColor">
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Sunken</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnBkColor">
+                <property name="text">
+                 <string>Color...</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <spacer name="verticalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
@@ -295,6 +361,8 @@
   <tabstop>comboFilter</tabstop>
   <tabstop>spinCacheWidth</tabstop>
   <tabstop>spinMagnify</tabstop>
+  <tabstop>btnBkColor</tabstop>
+  <tabstop>editMySqlBase</tabstop>
   <tabstop>editMySqlLogin</tabstop>
   <tabstop>editMySqlPassword</tabstop>
   <tabstop>pushButton_2</tabstop>
