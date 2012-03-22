@@ -28,9 +28,12 @@ protected:
 
 public slots:
     void openAux();
+    void openFromIndex(QString filename);
     void closeManga();
     void dispPage(int num);
-    void goFullscreen();
+    void switchFullscreen();
+    void viewerKeyPressed(int key);
+    void updateViewer();
 
     void updateBookmarks();
     void updateTitle();

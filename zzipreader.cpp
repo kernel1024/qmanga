@@ -133,6 +133,11 @@ QImageHash ZZipReader::loadPages(QIntList nums)
     return hash;
 }
 
+QString ZZipReader::getMagic()
+{
+    return QString("ZIP");
+}
+
 ZFileEntry::ZFileEntry()
 {
     name = QString();

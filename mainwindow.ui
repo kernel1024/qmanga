@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>771</width>
-    <height>594</height>
+    <width>797</width>
+    <height>554</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -359,9 +359,12 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>734</width>
-             <height>506</height>
+             <width>760</width>
+             <height>466</height>
             </rect>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::StrongFocus</enum>
            </property>
           </widget>
          </widget>
@@ -372,6 +375,17 @@
        <attribute name="title">
         <string>Search</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <property name="margin">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="ZSearchTab" name="srcWidget" native="true"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -382,7 +396,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>771</width>
+     <width>797</width>
      <height>25</height>
     </rect>
    </property>
@@ -410,8 +424,17 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionFullscreen"/>
+    <addaction name="separator"/>
+    <addaction name="actionMinimize"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuBookmarks"/>
+   <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -465,6 +488,38 @@
     <string>About...</string>
    </property>
   </action>
+  <action name="actionFullscreen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="view-fullscreen">
+     <normaloff/>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Fullscreen</string>
+   </property>
+   <property name="shortcut">
+    <string>F9</string>
+   </property>
+  </action>
+  <action name="actionMinimize">
+   <property name="icon">
+    <iconset theme="go-down">
+     <normaloff/>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Minimize</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -484,6 +539,12 @@
    <class>ZTabWidget</class>
    <extends>QTabWidget</extends>
    <header>zscrollarea.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ZSearchTab</class>
+   <extends>QWidget</extends>
+   <header>zsearchtab.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

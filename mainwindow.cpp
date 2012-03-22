@@ -45,12 +45,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSettings,SIGNAL(triggered()),zGlobal,SLOT(settingsDlg()));
     connect(ui->actionAddBookmark,SIGNAL(triggered()),this,SLOT(createBookmark()));
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(helpAbout()));
+    connect(ui->actionFullscreen,SIGNAL(triggered()),this,SLOT(switchFullscreen()));
+    connect(ui->actionMinimize,SIGNAL(triggered()),this,SLOT(showMinimized()));
 
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
     connect(ui->mangaView,SIGNAL(loadPage(int)),this,SLOT(dispPage(int)));
     connect(ui->scrollArea,SIGNAL(sizeChanged(QSize)),ui->mangaView,SLOT(ownerResized(QSize)));
     connect(ui->comboZoom,SIGNAL(currentIndexChanged(QString)),ui->mangaView,SLOT(setZoomAny(QString)));
-    connect(ui->mangaView,SIGNAL(doubleClicked()),this,SLOT(goFullscreen()));
+    connect(ui->mangaView,SIGNAL(doubleClicked()),this,SLOT(switchFullscreen()));
+    connect(ui->mangaView,SIGNAL(keyPressed(int)),this,SLOT(viewerKeyPressed(int)));
+    connect(ui->srcWidget,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
 
     connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
     connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
@@ -110,8 +114,15 @@ void MainWindow::openAux()
         QFileInfo fi(filename);
         zGlobal->savedAuxOpenDir = fi.path();
 
+        ui->tabWidget->setCurrentIndex(0);
         ui->mangaView->openFile(filename);
     }
+}
+
+void MainWindow::openFromIndex(QString filename)
+{
+    ui->tabWidget->setCurrentIndex(0);
+    ui->mangaView->openFile(filename);
 }
 
 void MainWindow::closeManga()
@@ -128,7 +139,7 @@ void MainWindow::dispPage(int num)
         ui->lblPosition->setText(tr("%1 / %2").arg(num+1).arg(ui->mangaView->getPageCount()));
 }
 
-void MainWindow::goFullscreen()
+void MainWindow::switchFullscreen()
 {
     fullScreen = !fullScreen;
 
@@ -140,6 +151,18 @@ void MainWindow::goFullscreen()
         showFullScreen();
     else
         showNormal();
+    ui->actionFullscreen->setChecked(fullScreen);
+}
+
+void MainWindow::viewerKeyPressed(int key)
+{
+    if (key==Qt::Key_Escape && fullScreen) switchFullscreen();
+    if (key==Qt::Key_F4) showMinimized();
+}
+
+void MainWindow::updateViewer()
+{
+    ui->mangaView->redrawPage();
 }
 
 void MainWindow::updateBookmarks()
@@ -192,12 +215,14 @@ void MainWindow::openBookmark()
     QFileInfo fi(f);
     if (!fi.isReadable()) return;
 
+    ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(f);
 }
 
 void MainWindow::helpAbout()
 {
     QMessageBox::about(this, tr("QManga"),
-                       tr("Manga reader with MySQL indexer.\n\nLicensed under GPL v3 license.\n\nAuthor: kilobax.\nApp icon (Alien9) designer: EXO."));
+                       tr("Manga reader with MySQL indexer.\n\nLicensed under GPL v3 license.\n\n"
+                          "Author: kilobax.\nApp icon (Alien9) designer: EXO."));
 
 }

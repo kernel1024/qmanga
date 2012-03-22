@@ -35,6 +35,7 @@ public:
     void closeFile();
     QImage loadPage(int num);
     QImageHash loadPages(QIntList nums);
+    QString getMagic();
 };
 
 #endif // ZZIPREADER_H

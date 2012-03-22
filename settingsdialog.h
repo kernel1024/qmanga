@@ -18,16 +18,21 @@ public:
     QSpinBox* spinMagnify;
     QLineEdit* editMySqlLogin;
     QLineEdit* editMySqlPassword;
+    QLineEdit* editMySqlBase;
     QListWidget* listBookmarks;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
+    QColor getBkColor();
     
 private:
+    QColor bkColor;
     Ui::SettingsDialog *ui;
 
 public slots:
     void delBookmark();
+    void bkColorDlg();
+    void updateBkColor(QColor c);
 
 };
 
