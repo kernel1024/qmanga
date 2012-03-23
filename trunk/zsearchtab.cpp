@@ -29,6 +29,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcAlbums,SIGNAL(itemActivated(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
     connect(ui->srcList,SIGNAL(clicked(QModelIndex)),this,SLOT(mangaClicked(QModelIndex)));
     connect(ui->srcList,SIGNAL(activated(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
+    connect(ui->srcList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
     connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
     connect(ui->srcAddDirBtn,SIGNAL(clicked()),this,SLOT(mangaAddDir()));
     connect(ui->srcDelBtn,SIGNAL(clicked()),this,SLOT(mangaDel()));
@@ -40,8 +41,13 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     connect(&loader,SIGNAL(finished()),this,SLOT(loaderFinished()));
 
+    order = ZGlobal::FileName;
+    reverseOrder = false;
+
     model = new ZMangaModel(this,&mangaList,ui->srcIconSize,ui->srcList,&listUpdating);
     ui->srcList->setModel(model);
+
+    ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
 
     updateSplitters();
     updateWidgetsState();
@@ -59,6 +65,79 @@ void ZSearchTab::updateSplitters()
     widths << 65;
     widths << width()-widths[0];
     ui->splitter->setSizes(widths);
+}
+
+void ZSearchTab::ctxMenu(QPoint pos)
+{
+    QMenu cm(ui->srcList);
+    QMenu* smenu = cm.addMenu(QIcon::fromTheme("view-sort-ascending"),tr("Sort"));
+    QAction* acm;
+    acm = smenu->addAction(tr("By name"));
+    acm->setCheckable(true);
+    acm->setChecked(order==ZGlobal::FileName);
+    connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortName()));
+    acm = smenu->addAction(tr("By album"));
+    acm->setCheckable(true);
+    acm->setChecked(order==ZGlobal::Album);
+    connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortAlbum()));
+    acm = smenu->addAction(tr("By page count"));
+    acm->setCheckable(true);
+    acm->setChecked(order==ZGlobal::PagesCount);
+    connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortPage()));
+    acm = smenu->addAction(tr("By added date"));
+    acm->setCheckable(true);
+    acm->setChecked(order==ZGlobal::AddingDate);
+    connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortAdded()));
+    acm = smenu->addAction(tr("By file creation date"));
+    acm->setCheckable(true);
+    acm->setChecked(order==ZGlobal::FileDate);
+    connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortCreated()));
+    smenu->addSeparator();
+    acm = smenu->addAction(tr("Reverse order"));
+    connect(acm,SIGNAL(triggered()),this,SLOT(ctxReverseOrder()));
+    acm->setCheckable(true);
+    acm->setChecked(reverseOrder);
+    cm.addSeparator();
+    acm = cm.addAction(QIcon::fromTheme("edit-delete"),tr("Delete selected"),this,SLOT(mangaDel()));
+    acm->setEnabled(ui->srcList->selectionModel()->selectedIndexes().count()>0);
+
+    cm.exec(ui->srcList->mapToGlobal(pos));
+}
+
+void ZSearchTab::ctxSortName()
+{
+    order = ZGlobal::FileName;
+    albumClicked(ui->srcAlbums->currentItem());
+}
+
+void ZSearchTab::ctxSortAlbum()
+{
+    order = ZGlobal::Album;
+    albumClicked(ui->srcAlbums->currentItem());
+}
+
+void ZSearchTab::ctxSortPage()
+{
+    order = ZGlobal::PagesCount;
+    albumClicked(ui->srcAlbums->currentItem());
+}
+
+void ZSearchTab::ctxSortAdded()
+{
+    order = ZGlobal::AddingDate;
+    albumClicked(ui->srcAlbums->currentItem());
+}
+
+void ZSearchTab::ctxSortCreated()
+{
+    order = ZGlobal::FileDate;
+    albumClicked(ui->srcAlbums->currentItem());
+}
+
+void ZSearchTab::ctxReverseOrder()
+{
+    reverseOrder = !reverseOrder;
+    albumClicked(ui->srcAlbums->currentItem());
 }
 
 void ZSearchTab::updateAlbumsList()
@@ -109,7 +188,7 @@ void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
 
     loadingNow = true;
     updateWidgetsState();
-    loader.setParams(&mangaList,&listUpdating,model,current->text(),QString());
+    loader.setParams(&mangaList,&listUpdating,model,current->text(),QString(),order,reverseOrder);
     searchTimer.start();
     loader.start();
 }
@@ -129,7 +208,7 @@ void ZSearchTab::mangaSearch()
 
     loadingNow = true;
     updateWidgetsState();
-    loader.setParams(&mangaList,&listUpdating,model,QString(),ui->srcEdit->text());
+    loader.setParams(&mangaList,&listUpdating,model,QString(),ui->srcEdit->text(),order,reverseOrder);
     searchTimer.start();
     loader.start();
 }
@@ -274,5 +353,5 @@ void ZSearchTab::loaderFinished()
     listUpdating.lock();
     int cnt = mangaList.count();
     listUpdating.unlock();
-    emit statusBarMsg(QString("Found %1 results in %2 ms").arg(cnt).arg((double)el/1000.0,1,'f',2));
+    emit statusBarMsg(QString("Found %1 results in %2s").arg(cnt).arg((double)el/1000.0,1,'f',2));
 }

@@ -5,6 +5,7 @@
 #include <QtGui>
 #include "zglobal.h"
 #include "zsearchloader.h"
+#include "zmangamodel.h"
 
 namespace Ui {
 class ZSearchTab;
@@ -18,6 +19,8 @@ public:
     QSlider* srclIconSize;
     QRadioButton* srclModeIcon;
     QRadioButton* srclModeList;
+    ZGlobal::ZOrdering order;
+    bool reverseOrder;
 
     explicit ZSearchTab(QWidget *parent = 0);
     ~ZSearchTab();
@@ -50,6 +53,14 @@ public slots:
     void iconSizeChanged(int ref);
     void loaderFinished();
     void updateSplitters();
+    void ctxMenu(QPoint pos);
+
+    void ctxSortName();
+    void ctxSortAlbum();
+    void ctxSortPage();
+    void ctxSortAdded();
+    void ctxSortCreated();
+    void ctxReverseOrder();
 signals:
     void mangaDblClick(QString filename);
     void statusBarMsg(QString msg);
