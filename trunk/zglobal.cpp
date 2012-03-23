@@ -14,7 +14,6 @@ ZGlobal::ZGlobal(QObject *parent) :
 {
     cacheWidth = 5;
     bookmarks.clear();
-    db = QSqlDatabase::addDatabase("QMYSQL");
     dbBase = QString("qmanga");
     dbUser = QString();
     dbPass = QString();
@@ -63,8 +62,7 @@ void ZGlobal::loadSettings()
         if (w->srcWidget->isEnabled())
             w->srcWidget->updateAlbumsList();
     }
-    sqlCloseBase();
-    sqlCheckBase(true);
+    sqlCheckBase();
 }
 
 void ZGlobal::saveSettings()
@@ -188,22 +186,22 @@ QPixmap ZGlobal::resizeImage(QPixmap src, QSize targetSize, bool forceFilter, ZR
     }
 }
 
-bool ZGlobal::sqlCheckBase(bool interactive)
+bool ZGlobal::sqlCheckBase()
 {
     if (dbUser.isEmpty()) return false;
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
-    if (!sqlOpenBase()) {
-        if (interactive)
-            QMessageBox::critical(w,tr("QManga"),tr("Unable to open MySQL connection. Check login info."));
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) {
+        QMessageBox::critical(w,tr("QManga"),tr("Unable to open MySQL connection. Check login info."));
         return false;
     }
     bool noTables = (!db.tables().contains("files",Qt::CaseInsensitive) ||
             !db.tables().contains("albums",Qt::CaseInsensitive));
-    db.close();
+    sqlCloseBase(db);
     if (noTables) {
         if (QMessageBox::question(w,tr("QManga"),tr("Database is empty. Recreate tables and structures?"),
-                                  QMessageBox::Yes,QMessageBox::No)==QMessageBox::Yes && interactive)
+                                  QMessageBox::Yes,QMessageBox::No)==QMessageBox::Yes)
             return sqlCreateTables();
         else
             return false;
@@ -215,7 +213,8 @@ bool ZGlobal::sqlCreateTables()
 {
     MainWindow* w = qobject_cast<MainWindow *>(parent());
 
-    if (!sqlOpenBase()) return false;
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return false;
 
     QSqlQuery qr(db);
     if (!qr.exec("CREATE TABLE IF NOT EXISTS `albums` ("
@@ -223,7 +222,7 @@ bool ZGlobal::sqlCreateTables()
                  "`name` varchar(2048) NOT NULL,"
                  "PRIMARY KEY (`id`)"
                  ") ENGINE=InnoDB DEFAULT CHARSET=utf8;")) {
-        db.close();
+        sqlCloseBase(db);
         QMessageBox::critical(w,tr("QManga"),tr("Unable to create table `albums`\n\n%1\n%2").
                               arg(qr.lastError().databaseText()).arg(qr.lastError().driverText()));
         return false;
@@ -241,27 +240,31 @@ bool ZGlobal::sqlCreateTables()
       "`addingDT` datetime NOT NULL,"
       "PRIMARY KEY (`id`)"
     ") ENGINE=InnoDB  DEFAULT CHARSET=utf8")) {
-        db.close();
+        sqlCloseBase(db);
         QMessageBox::critical(w,tr("QManga"),tr("Unable to create table `albums`\n\n%1\n%2").
                               arg(qr.lastError().databaseText()).arg(qr.lastError().driverText()));
         return false;
     }
-    db.close();
+    sqlCloseBase(db);
     return true;
 }
 
-bool ZGlobal::sqlOpenBase()
+QSqlDatabase ZGlobal::sqlOpenBase()
 {
-    if (dbUser.isEmpty()) return false;
-    if (db.isOpen()) return true;
-    db.setHostName("localhost");
-    db.setDatabaseName(dbBase);
-    db.setUserName(dbUser);
-    db.setPassword(dbPass);
-    return db.open();
+    if (dbUser.isEmpty()) return QSqlDatabase();
+    QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
+    if (db.isValid()) {
+        db.setHostName("localhost");
+        db.setDatabaseName(dbBase);
+        db.setUserName(dbUser);
+        db.setPassword(dbPass);
+        if (!db.open())
+            db = QSqlDatabase();
+    }
+    return db;
 }
 
-void ZGlobal::sqlCloseBase()
+void ZGlobal::sqlCloseBase(QSqlDatabase &db)
 {
     if (db.isOpen())
         db.close();
@@ -271,13 +274,14 @@ QStringList ZGlobal::sqlGetAlbums()
 {
     QStringList res;
     res.clear();
-    if (!sqlOpenBase()) return res;
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return res;
 
     QSqlQuery qr("SELECT name FROM `albums` ORDER BY name ASC",db);
     while (qr.next()) {
         res << qr.value(0).toString();
     }
-    sqlCloseBase();
+    sqlCloseBase(db);
     return res;
 }
 
@@ -285,7 +289,8 @@ SQLMangaList ZGlobal::sqlGetFiles(QString album, SQLMangaOrder order, bool rever
 {
     SQLMangaList res;
     res.clear();
-    if (!sqlOpenBase()) return res;
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return res;
 
     QSqlQuery qr(db);
     QString tqr = QString("SELECT name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, addingDT, id "
@@ -323,7 +328,7 @@ SQLMangaList ZGlobal::sqlGetFiles(QString album, SQLMangaOrder order, bool rever
                                  qr.value(8).toInt());
         }
     }
-    sqlCloseBase();
+    sqlCloseBase(db);
     return res;
 }
 
@@ -331,7 +336,8 @@ SQLMangaList ZGlobal::sqlGetSearch(QString ref, ZGlobal::SQLMangaOrder order, bo
 {
     SQLMangaList res;
     res.clear();
-    if (!sqlOpenBase()) return res;
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return res;
 
     QSqlQuery qr(db);
     QString tqr = "SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
@@ -369,15 +375,19 @@ SQLMangaList ZGlobal::sqlGetSearch(QString ref, ZGlobal::SQLMangaOrder order, bo
                                  qr.value(8).toInt());
         }
     }
-    sqlCloseBase();
+    sqlCloseBase(db);
     return res;
 }
 
-void ZGlobal::sqlAddFiles(QStringList files, QString album)
+void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
 {
     MainWindow* w = qobject_cast<MainWindow *>(parent());
 
-    if (!sqlOpenBase()) return;
+    QStringList files = aFiles;
+    files.removeDuplicates();
+
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
 
     int ialbum = -1;
 
@@ -392,13 +402,21 @@ void ZGlobal::sqlAddFiles(QStringList files, QString album)
         qr.prepare("INSERT INTO albums (name) VALUES (?);");
         qr.bindValue(0,album);
         if (!qr.exec()) {
-            QMessageBox::critical(w,tr("QManga"),tr("Unable to create album `%1`\n%2\n%3").arg(album).arg(qr.lastError().databaseText()).
+            QMessageBox::critical(w,tr("QManga"),tr("Unable to create album `%1`\n%2\n%3").
+                                  arg(album).
+                                  arg(qr.lastError().databaseText()).
                                   arg(qr.lastError().driverText()));
-            sqlCloseBase();
+            sqlCloseBase(db);
             return;
         }
         ialbum = qr.lastInsertId().toInt();
     }
+
+    QProgressDialog pd(tr("Adding files"),QString("Cancel"),0,100,w,Qt::Dialog);
+    pd.setWindowModality(Qt::WindowModal);
+    pd.setValue(0);
+    pd.show();
+
     for (int i=0;i<files.count();i++) {
         QFileInfo fi(files.at(i));
         if (!fi.isReadable()) {
@@ -415,7 +433,7 @@ void ZGlobal::sqlAddFiles(QStringList files, QString album)
             qDebug() << files.at(i) << "Unable to open file. Broken archive.";
             za->setParent(NULL);
             delete za;
-            return;
+            continue;
         }
         int idx = 0;
         QPixmap p = QPixmap();
@@ -451,14 +469,26 @@ void ZGlobal::sqlAddFiles(QStringList files, QString album)
         qr.bindValue(6,za->getMagic());
         qr.bindValue(7,fi.created());
         if (!qr.exec())
-            qDebug() << files.at(i) << "unable to add" << qr.lastError().databaseText() << qr.lastError().driverText();
+            qDebug() << files.at(i) << "unable to add" << qr.lastError().databaseText() <<
+                        qr.lastError().driverText();
         pba.clear();
         p = QPixmap();
         za->closeFile();
         za->setParent(NULL);
         delete za;
+
+        QApplication::processEvents();
+        pd.setValue(100*i/files.count());
+        QString s = fi.completeBaseName();
+        if (s.length()>60) s = s.left(60)+"...";
+        pd.setLabelText(s);
+
+        if (pd.wasCanceled())
+            break;
+        QApplication::processEvents();
     }
-    sqlCloseBase();
+    pd.hide();
+    sqlCloseBase(db);
 }
 
 void ZGlobal::sqlDelFiles(QIntList dbids)
@@ -472,28 +502,33 @@ void ZGlobal::sqlDelFiles(QIntList dbids)
         delqr+=QString("%1").arg(dbids.at(i));
     }
     delqr+=");";
-    if (!sqlOpenBase()) return;
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
     QSqlQuery qr(db);
     qr.prepare(delqr);
     if (!qr.exec()) {
-        QMessageBox::critical(w,tr("QManga"),tr("Unable to delete manga\n%2\n%3").arg(qr.lastError().databaseText()).
+        QMessageBox::critical(w,tr("QManga"),
+                              tr("Unable to delete manga\n%2\n%3").
+                              arg(qr.lastError().databaseText()).
                               arg(qr.lastError().driverText()));
-        sqlCloseBase();
+        sqlCloseBase(db);
         return;
     }
-    sqlCloseBase();
+    sqlCloseBase(db);
     sqlDelEmptyAlbums();
 }
 
 void ZGlobal::sqlDelEmptyAlbums()
 {
     QString delqr = QString("DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album FROM files);");
-    if (!sqlOpenBase()) return;
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
     QSqlQuery qr(db);
     qr.prepare(delqr);
     if (!qr.exec())
-        qDebug() << "Unable to delete empty albums" << qr.lastError().databaseText() << qr.lastError().driverText();
-    sqlCloseBase();
+        qDebug() << "Unable to delete empty albums" << qr.lastError().databaseText() <<
+                    qr.lastError().driverText();
+    sqlCloseBase(db);
 }
 
 void ZGlobal::settingsDlg()
@@ -554,8 +589,7 @@ void ZGlobal::settingsDlg()
             if (w->srcWidget->isEnabled())
                 w->srcWidget->updateAlbumsList();
         }
-        sqlCloseBase();
-        sqlCheckBase(true);
+        sqlCheckBase();
     }
     dlg->setParent(NULL);
     delete dlg;
