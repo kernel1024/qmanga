@@ -11,6 +11,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     descTemplate = ui->srcDesc->toHtml();
     ui->srcDesc->clear();
+    loadingNow = false;
 
     ui->srcIconSize->setMinimum(16);
     ui->srcIconSize->setMaximum(maxPreviewSize);
@@ -30,6 +31,11 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcModeIcon,SIGNAL(clicked()),this,SLOT(listModeChanged()));
     connect(ui->srcModeList,SIGNAL(clicked()),this,SLOT(listModeChanged()));
     connect(ui->srcIconSize,SIGNAL(valueChanged(int)),this,SLOT(iconSizeChanged(int)));
+
+    connect(&loader,SIGNAL(finished()),this,SLOT(loaderFinished()));
+
+    model = new ZMangaModel(this,&mangaList,ui->srcIconSize,ui->srcList,&listUpdating);
+    ui->srcList->setModel(model);
 }
 
 ZSearchTab::~ZSearchTab()
@@ -41,26 +47,35 @@ void ZSearchTab::updateAlbumsList()
 {
     ui->srcAlbums->clear();
     ui->srcAlbums->addItems(zGlobal->sqlGetAlbums());
+
+    listUpdating.lock();
+    int cnt = mangaList.count()-1;
+    listUpdating.unlock();
+
+    model->rowsAboutToDeleted(0,cnt);
+
+    listUpdating.lock();
     mangaList.clear();
-    updateModel(NULL);
+    listUpdating.unlock();
+
+    model->rowsDeleted();
 }
 
-void ZSearchTab::updateModel(SQLMangaList *list)
+void ZSearchTab::updateWidgetsState()
 {
-    QItemSelectionModel *m = ui->srcList->selectionModel();
-    QAbstractItemModel *n = ui->srcList->model();
-    ui->srcList->setModel(new ZMangaModel(this,list,ui->srcIconSize,ui->srcList));
-    m->deleteLater();
-    n->deleteLater();
-
-    ui->srcDesc->clear();
+    ui->srcAddBtn->setEnabled(!loadingNow);
+    ui->srcAddDirBtn->setEnabled(!loadingNow);
+    ui->srcDelBtn->setEnabled(!loadingNow);
+    ui->srcEditBtn->setEnabled(!loadingNow);
+    ui->srcEdit->setEnabled(!loadingNow);
+    ui->srcAlbums->setEnabled(!loadingNow);
 }
 
 QSize ZSearchTab::gridSize(int ref)
 {
     QFontMetrics fm(font());
     if (ui->srcList->viewMode()==QListView::IconMode)
-        return QSize(ref,5*ref/4+fm.height()*3);
+        return QSize(ref+25,ref*previewProps+fm.height()*3);
 
     return QSize(ui->srcList->width()/3,25*fm.height()/10);
 }
@@ -68,10 +83,14 @@ QSize ZSearchTab::gridSize(int ref)
 void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
 {
     if (current==NULL) return;
+    if (loadingNow) return;
 
-    mangaList = zGlobal->sqlGetFiles(current->text(),ZGlobal::smName,false);
+    ui->srcDesc->clear();
 
-    updateModel(&mangaList);
+    loadingNow = true;
+    updateWidgetsState();
+    loader.setParams(&mangaList,&listUpdating,model,current->text(),QString());
+    loader.start();
 }
 
 void ZSearchTab::albumClicked(QListWidgetItem *item)
@@ -82,9 +101,19 @@ void ZSearchTab::albumClicked(QListWidgetItem *item)
 void ZSearchTab::mangaClicked(const QModelIndex &index)
 {
     if (!index.isValid()) return;
-    if (index.row()>=mangaList.length()) return;
+
+    listUpdating.lock();
+    int maxl = mangaList.length();
+    listUpdating.unlock();
+
+    if (index.row()>=maxl) return;
+
     ui->srcDesc->clear();
-    const SQLMangaEntry m = mangaList.at(index.row());
+
+    int idx = index.row();
+    listUpdating.lock();
+    const SQLMangaEntry m = mangaList.at(idx);
+    listUpdating.unlock();
 
     QString msg = QString(descTemplate).
             arg(m.name).arg(m.pagesCount).arg(formatSize(m.fileSize)).arg(m.album).arg(m.fileMagic).
@@ -96,15 +125,24 @@ void ZSearchTab::mangaClicked(const QModelIndex &index)
 void ZSearchTab::mangaOpen(const QModelIndex &index)
 {
     if (!index.isValid()) return;
-    if (index.row()>=mangaList.length()) return;
-    emit mangaDblClick(mangaList.at(index.row()).filename);
 
-    for(int i=0;i<mangaList.count();i++)
-        qDebug() << i << mangaList.at(i).name;
+    listUpdating.lock();
+    int maxl = mangaList.length();
+    listUpdating.unlock();
+
+    int idx = index.row();
+    if (idx>=maxl) return;
+
+    listUpdating.lock();
+    QString filename = mangaList.at(idx).filename;
+    listUpdating.unlock();
+
+    emit mangaDblClick(filename);
 }
 
 void ZSearchTab::mangaAdd()
 {
+    if (loadingNow) return;
     QStringList fl = zGlobal->getOpenFileNamesD(this,tr("Add manga to index"),zGlobal->savedIndexOpenDir);
     if (fl.isEmpty()) return;
     QFileInfo fi(fl.first());
@@ -122,6 +160,7 @@ void ZSearchTab::mangaAdd()
 
 void ZSearchTab::mangaAddDir()
 {
+    if (loadingNow) return;
     QString fi = zGlobal->getExistingDirectoryD(this,tr("Add manga to index from directory"),
                                                     zGlobal->savedIndexOpenDir);
     zGlobal->savedIndexOpenDir = fi;
@@ -144,19 +183,33 @@ void ZSearchTab::mangaAddDir()
 
 void ZSearchTab::mangaDel()
 {
+    if (loadingNow) return;
     QIntList dl;
     QStringList albums = zGlobal->sqlGetAlbums();
     QModelIndexList li = ui->srcList->selectionModel()->selectedIndexes();
+
+    listUpdating.lock();
     for (int i=0;i<li.count();i++) {
         if (li.at(i).row()>=0 && li.at(i).row()<mangaList.count())
             dl << mangaList.at(li.at(i).row()).dbid;
     }
+    listUpdating.unlock();
+
     zGlobal->sqlDelFiles(dl);
-    if (ui->srcAlbums->count()>0) {
-        ui->srcAlbums->setCurrentRow(0);
-        updateModel(&mangaList);
-    } else
-        updateModel(NULL);
+
+    for (int i=0;i<dl.count();i++) {
+        listUpdating.lock();
+        int idx = mangaList.indexOf(SQLMangaEntry(dl.at(i)));
+        listUpdating.unlock();
+        if (idx>=0) {
+            model->rowsAboutToDeleted(idx,idx+1);
+            listUpdating.lock();
+            mangaList.removeAt(idx);
+            listUpdating.unlock();
+            model->rowsDeleted();
+        }
+    }
+
     if (albums.count()!=zGlobal->sqlGetAlbums().count())
         updateAlbumsList();
 }
@@ -175,4 +228,10 @@ void ZSearchTab::listModeChanged()
 void ZSearchTab::iconSizeChanged(int ref)
 {
     ui->srcList->setGridSize(gridSize(ref));
+}
+
+void ZSearchTab::loaderFinished()
+{
+    loadingNow = false;
+    updateWidgetsState();
 }

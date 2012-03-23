@@ -20,15 +20,16 @@ public:
     QString name;
     QString filename;
     QString album;
-    QPixmap cover;
+    QImage cover;
     int pagesCount;
     qint64 fileSize;
     QString fileMagic;
     QDateTime fileDT;
     QDateTime addingDT;
     SQLMangaEntry();
+    SQLMangaEntry(int aDbid);
     SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
-                  const QPixmap& aCover, const int aPagesCount, const qint64 aFileSize,
+                  const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
                   const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT, int aDbid);
     SQLMangaEntry &operator=(const SQLMangaEntry& other);
     bool operator==(const SQLMangaEntry& ref) const;
@@ -36,6 +37,8 @@ public:
 };
 
 typedef QList<SQLMangaEntry> SQLMangaList;
+
+class ZMangaModel;
 
 class ZGlobal : public QObject
 {
@@ -51,14 +54,6 @@ public:
         Sinc = 6,
         Triangle = 7,
         Mitchell = 8
-    };
-    enum SQLMangaOrder {
-        smUnordered = 0,
-        smName = 1,
-        smFileDate = 2,
-        smAddingDate = 3,
-        smFileSize = 4,
-        smPagesCount = 5
     };
 
     explicit ZGlobal(QObject *parent = 0);
@@ -87,8 +82,8 @@ public:
     QSqlDatabase sqlOpenBase();
     void sqlCloseBase(QSqlDatabase& db);
     QStringList sqlGetAlbums();
-    SQLMangaList sqlGetFiles(QString album, SQLMangaOrder order, bool reverseOrder);
-    SQLMangaList sqlGetSearch(QString ref, SQLMangaOrder order, bool reverseOrder);
+    void sqlGetFiles(QString album, QString search, SQLMangaList* mList,
+                     QMutex* listUpdating, ZMangaModel *model);
     void sqlAddFiles(QStringList aFiles, QString album);
     void sqlDelFiles(QIntList dbids);
     void sqlDelEmptyAlbums();

@@ -4,6 +4,7 @@
 #include <QtCore>
 #include <QtGui>
 #include "zglobal.h"
+#include "zsearchloader.h"
 
 namespace Ui {
 class ZSearchTab;
@@ -18,13 +19,18 @@ public:
     ~ZSearchTab();
 
     void updateAlbumsList();
+    void updateWidgetsState();
     
 private:
     Ui::ZSearchTab *ui;
     SQLMangaList mangaList;
-    void updateModel(SQLMangaList* list);
-    QSize gridSize(int ref);
+    QMutex listUpdating;
+    bool loadingNow;
     QString descTemplate;
+    ZSearchLoader loader;
+    ZMangaModel* model;
+
+    QSize gridSize(int ref);
 
 public slots:
     void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
@@ -36,6 +42,7 @@ public slots:
     void mangaDel();
     void listModeChanged();
     void iconSizeChanged(int ref);
+    void loaderFinished();
 signals:
     void mangaDblClick(QString filename);
 };

@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     bookmarkdlg.cpp \
     global.cpp \
     zmangamodel.cpp \
-    zsearchtab.cpp
+    zsearchtab.cpp \
+    zsearchloader.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -35,7 +36,8 @@ HEADERS  += mainwindow.h \
     bookmarkdlg.h \
     global.h \
     zmangamodel.h \
-    zsearchtab.h
+    zsearchtab.h \
+    zsearchloader.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
