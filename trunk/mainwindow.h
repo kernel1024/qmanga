@@ -17,6 +17,7 @@ class MainWindow : public QMainWindow
 public:
     QMenu* bookmarksMenu;
     ZSearchTab* srcWidget;
+    QLabel* lblSearchStatus;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void centerWindow();
@@ -42,6 +43,7 @@ public slots:
     void createBookmark();
     void openBookmark();
     void helpAbout();
+    void msgFromIndexer(QString msg);
 };
 
 #endif // MAINWINDOW_H

@@ -18,6 +18,11 @@ MainWindow::MainWindow(QWidget *parent) :
     if (zGlobal==NULL)
         zGlobal = new ZGlobal(this);
 
+    QApplication::setWheelScrollLines(1);
+
+    lblSearchStatus = new QLabel(tr("Ready"));
+    statusBar()->addPermanentWidget(lblSearchStatus);
+
     int btnSize = 20;
     ui->btnOpen->setIcon(QIcon(":/img/document-open.png"));
     ui->btnOpen->setIconSize(QSize(btnSize,btnSize));
@@ -56,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->mangaView,SIGNAL(doubleClicked()),this,SLOT(switchFullscreen()));
     connect(ui->mangaView,SIGNAL(keyPressed(int)),this,SLOT(viewerKeyPressed(int)));
     connect(ui->srcWidget,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
+    connect(ui->srcWidget,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
 
     connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
     connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
@@ -99,6 +105,7 @@ void MainWindow::centerWindow()
     resize(nw);
     move(rect.width()/2 - frameGeometry().width()/2,
          rect.height()/2 - frameGeometry().height()/2);
+    srcWidget->updateSplitters();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -226,4 +233,9 @@ void MainWindow::helpAbout()
                        tr("Manga reader with MySQL indexer.\n\nLicensed under GPL v3 license.\n\n"
                           "Author: kilobax.\nApp icon (Alien9) designer: EXO."));
 
+}
+
+void MainWindow::msgFromIndexer(QString msg)
+{
+    lblSearchStatus->setText(msg);
 }

@@ -21,14 +21,15 @@
     <number>2</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,5">
-     <property name="spacing">
-      <number>4</number>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-     <item>
-      <widget class="QListWidget" name="srcAlbums"/>
-     </item>
-     <item>
+     <property name="childrenCollapsible">
+      <bool>false</bool>
+     </property>
+     <widget class="QListWidget" name="srcAlbums"/>
+     <widget class="QWidget" name="">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -73,8 +74,8 @@
         </widget>
        </item>
       </layout>
-     </item>
-    </layout>
+     </widget>
+    </widget>
    </item>
    <item>
     <widget class="QTextBrowser" name="srcDesc">

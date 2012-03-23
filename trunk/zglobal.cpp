@@ -51,6 +51,14 @@ void ZGlobal::loadSettings()
     }
     settings.endArray();
 
+    if (w!=NULL) {
+        if (settings.value("listMode",false).toBool())
+            w->srcWidget->srclModeList->setChecked(true);
+        else
+            w->srcWidget->srclModeIcon->setChecked(true);
+        w->srcWidget->srclIconSize->setValue(settings.value("iconSize",128).toInt());
+    }
+
     settings.endGroup();
 
     if (w!=NULL) {
@@ -83,6 +91,9 @@ void ZGlobal::saveSettings()
     MainWindow* w = qobject_cast<MainWindow *>(parent());
     if (w!=NULL) {
         settings.setValue("maximized",w->isMaximized());
+
+        settings.setValue("listMode",w->srcWidget->srclModeList->isChecked());
+        settings.setValue("iconSize",w->srcWidget->srclIconSize->value());
     }
 
     settings.beginWriteArray("bookmarks");
@@ -185,6 +196,17 @@ QPixmap ZGlobal::resizeImage(QPixmap src, QSize targetSize, bool forceFilter, ZR
         //qDebug() << "ImageMagick ms: " << tmr.elapsed();
         return dst;
     }
+}
+
+QColor ZGlobal::foregroundColor()
+{
+    qreal r,g,b;
+    backgroundColor.getRgbF(&r,&g,&b);
+    qreal br = r*0.2989+g*0.5870+b*0.1140;
+    if (br>0.5)
+        return QColor(Qt::black);
+    else
+        return QColor(Qt::white);
 }
 
 bool ZGlobal::sqlCheckBase()
@@ -300,15 +322,14 @@ void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
                       "FROM files "
                       "WHERE (album="
                       "  (SELECT id FROM albums WHERE (name = '%1'))"
-                      ");").arg(album);
+                      ");").arg(escapeParam(album));
         qr.prepare(tqr);
     } else {
-        tqr = "SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
+        tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
                 "addingDT, albums.name, files.id "
                 "FROM files LEFT JOIN albums ON files.album=albums.id "
-                "WHERE (name LIKE '%?%');";
+                "WHERE (files.name LIKE '%%%1%%');").arg(escapeParam(search));
         qr.prepare(tqr);
-        qr.bindValue(0,search);
     }
 
     if (qr.exec()) {
@@ -341,7 +362,8 @@ void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
             QMetaObject::invokeMethod(model,"rowsAppended",Qt::QueuedConnection);
             idx++;
         }
-    }
+    } else
+        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
     sqlCloseBase(db);
     return;
 }
@@ -426,7 +448,6 @@ void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
         QSqlQuery qr(db);
         qr.prepare("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
                    "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW());");
-        qDebug() << fi.completeBaseName();
         qr.bindValue(0,fi.completeBaseName());
         qr.bindValue(1,files.at(i));
         qr.bindValue(2,ialbum);

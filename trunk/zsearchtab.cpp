@@ -13,6 +13,10 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcDesc->clear();
     loadingNow = false;
 
+    srclIconSize = ui->srcIconSize;
+    srclModeIcon = ui->srcModeIcon;
+    srclModeList = ui->srcModeList;
+
     ui->srcIconSize->setMinimum(16);
     ui->srcIconSize->setMaximum(maxPreviewSize);
     ui->srcIconSize->setValue(128);
@@ -28,19 +32,33 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
     connect(ui->srcAddDirBtn,SIGNAL(clicked()),this,SLOT(mangaAddDir()));
     connect(ui->srcDelBtn,SIGNAL(clicked()),this,SLOT(mangaDel()));
-    connect(ui->srcModeIcon,SIGNAL(clicked()),this,SLOT(listModeChanged()));
-    connect(ui->srcModeList,SIGNAL(clicked()),this,SLOT(listModeChanged()));
+    connect(ui->srcModeIcon,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
+    connect(ui->srcModeList,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
     connect(ui->srcIconSize,SIGNAL(valueChanged(int)),this,SLOT(iconSizeChanged(int)));
+    connect(ui->srcEdit,SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
+    connect(ui->srcEditBtn,SIGNAL(clicked()),this,SLOT(mangaSearch()));
 
     connect(&loader,SIGNAL(finished()),this,SLOT(loaderFinished()));
 
     model = new ZMangaModel(this,&mangaList,ui->srcIconSize,ui->srcList,&listUpdating);
     ui->srcList->setModel(model);
+
+    updateSplitters();
+    updateWidgetsState();
 }
 
 ZSearchTab::~ZSearchTab()
 {
     delete ui;
+}
+
+void ZSearchTab::updateSplitters()
+{
+    QList<int> widths;
+    ui->splitter->setCollapsible(0,true);
+    widths << 65;
+    widths << width()-widths[0];
+    ui->splitter->setSizes(widths);
 }
 
 void ZSearchTab::updateAlbumsList()
@@ -75,7 +93,7 @@ QSize ZSearchTab::gridSize(int ref)
 {
     QFontMetrics fm(font());
     if (ui->srcList->viewMode()==QListView::IconMode)
-        return QSize(ref+25,ref*previewProps+fm.height()*3);
+        return QSize(ref+25,ref*previewProps+fm.height()*4);
 
     return QSize(ui->srcList->width()/3,25*fm.height()/10);
 }
@@ -85,17 +103,35 @@ void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
     if (current==NULL) return;
     if (loadingNow) return;
 
+    emit statusBarMsg(tr("Searching..."));
+
     ui->srcDesc->clear();
 
     loadingNow = true;
     updateWidgetsState();
     loader.setParams(&mangaList,&listUpdating,model,current->text(),QString());
+    searchTimer.start();
     loader.start();
 }
 
 void ZSearchTab::albumClicked(QListWidgetItem *item)
 {
     albumChanged(item,NULL);
+}
+
+void ZSearchTab::mangaSearch()
+{
+    if (loadingNow) return;
+
+    emit statusBarMsg(tr("Searching..."));
+
+    ui->srcDesc->clear();
+
+    loadingNow = true;
+    updateWidgetsState();
+    loader.setParams(&mangaList,&listUpdating,model,QString(),ui->srcEdit->text());
+    searchTimer.start();
+    loader.start();
 }
 
 void ZSearchTab::mangaClicked(const QModelIndex &index)
@@ -214,7 +250,7 @@ void ZSearchTab::mangaDel()
         updateAlbumsList();
 }
 
-void ZSearchTab::listModeChanged()
+void ZSearchTab::listModeChanged(bool)
 {
     if (ui->srcModeIcon->isChecked()) {
         ui->srcList->setViewMode(QListView::IconMode);
@@ -233,5 +269,10 @@ void ZSearchTab::iconSizeChanged(int ref)
 void ZSearchTab::loaderFinished()
 {
     loadingNow = false;
+    int el = searchTimer.elapsed();
     updateWidgetsState();
+    listUpdating.lock();
+    int cnt = mangaList.count();
+    listUpdating.unlock();
+    emit statusBarMsg(QString("Found %1 results in %2 ms").arg(cnt).arg((double)el/1000.0,1,'f',2));
 }
