@@ -178,6 +178,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
         if (!iCache.isEmpty()) {
             QPixmap p(":/img/edit-delete.png");
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
+            w.setPen(QPen(zGlobal->foregroundColor()));
             w.drawText(0,(height()-p.height())/2+p.height()+5,width(),w.fontMetrics().height(),Qt::AlignCenter,
                        tr("Error loading page %1").arg(currentPage));
         }

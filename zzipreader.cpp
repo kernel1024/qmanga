@@ -171,23 +171,17 @@ bool ZFileEntry::operator <(const ZFileEntry &ref) const
 {
     QFileInfo fi1(name);
     QFileInfo fi2(ref.name);
-    bool okconv1, okconv2;
-    int v1 = fi1.completeBaseName().toInt(&okconv1);
-    int v2 = fi2.completeBaseName().toInt(&okconv2);
-    if (okconv1 && okconv2)
-        return (v1<v2);
-    return (name<ref.name);
+    if (fi1.path()==fi2.path())
+        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
+    return (compareWithNumerics(fi1.path(),fi2.path())<0);
 }
 
 bool ZFileEntry::operator >(const ZFileEntry &ref) const
 {
     QFileInfo fi1(name);
     QFileInfo fi2(ref.name);
-    bool okconv1, okconv2;
-    int v1 = fi1.completeBaseName().toInt(&okconv1);
-    int v2 = fi2.completeBaseName().toInt(&okconv2);
-    if (okconv1 && okconv2)
-        return (v1<v2);
-    return (name>ref.name);
+    if (fi1.path()==fi2.path())
+        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())>0);
+    return (compareWithNumerics(fi1.path(),fi2.path())>0);
 }
 

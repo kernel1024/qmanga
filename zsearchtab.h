@@ -15,6 +15,10 @@ class ZSearchTab : public QWidget
     Q_OBJECT
     
 public:
+    QSlider* srclIconSize;
+    QRadioButton* srclModeIcon;
+    QRadioButton* srclModeList;
+
     explicit ZSearchTab(QWidget *parent = 0);
     ~ZSearchTab();
 
@@ -29,22 +33,26 @@ private:
     QString descTemplate;
     ZSearchLoader loader;
     ZMangaModel* model;
+    QTime searchTimer;
 
     QSize gridSize(int ref);
 
 public slots:
     void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
     void albumClicked(QListWidgetItem * item);
+    void mangaSearch();
     void mangaClicked(const QModelIndex &index);
     void mangaOpen(const QModelIndex &index);
     void mangaAdd();
     void mangaAddDir();
     void mangaDel();
-    void listModeChanged();
+    void listModeChanged(bool state);
     void iconSizeChanged(int ref);
     void loaderFinished();
+    void updateSplitters();
 signals:
     void mangaDblClick(QString filename);
+    void statusBarMsg(QString msg);
 };
 
 #endif // ZSEARCHTAB_H

@@ -18,5 +18,7 @@ class ZAbstractReader;
 extern ZAbstractReader *readerFactory(QObject* parent, QString filename);
 
 QString formatSize(qint64 size);
+QString escapeParam(QString param);
+int compareWithNumerics(QString ref1, QString ref2);
 
 #endif // GLOBAL_H

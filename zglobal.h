@@ -76,6 +76,7 @@ public:
     QString detectMIME(QByteArray buf);
     QPixmap resizeImage(QPixmap src, QSize targetSize,
                         bool forceFilter = false, ZResizeFilter filter = Lanczos);
+    QColor foregroundColor();
 
     bool sqlCheckBase();
     bool sqlCreateTables();

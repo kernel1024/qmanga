@@ -34,11 +34,9 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
         else
             rp = QPixmap(pixmapSize->value(),pixmapSize->value()*previewProps); // B4 paper proportions
         QPainter cp(&rp);
-        cp.fillRect(0,0,rp.width(),rp.height(),QBrush(Qt::lightGray));
-                    //view->palette().base());
+        cp.fillRect(0,0,rp.width(),rp.height(),view->palette().base());
 
         listUpdating->lock();
-        qDebug() << mList->at(idx).name;
         QPixmap p = QPixmap::fromImage(mList->at(idx).cover);
         if (p.isNull())
             p = QPixmap(":/img/edit-delete.png");
@@ -61,12 +59,24 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
         QString t = mList->at(index.row()).name;
         listUpdating->unlock();
         return t;
+    } else if (role == Qt::TextColorRole) {
+        return zGlobal->foregroundColor();
+    } else if (role == Qt::FontRole) {
+        QFont f = view->font();
+        f.setPointSizeF(f.pointSizeF()-2.0);
+        return f;
     }
     return QVariant();
 }
 
 int ZMangaModel::rowCount(const QModelIndex &) const
 {
+    if (view->palette().base().color()!=zGlobal->backgroundColor) {
+        QPalette pl = view->palette();
+        pl.setBrush(QPalette::Base,QBrush(zGlobal->backgroundColor));
+        view->setPalette(pl);
+    }
+
     if (mList==NULL)
         return 0;
     listUpdating->lock();
