@@ -22,6 +22,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcList,SIGNAL(clicked(QModelIndex)),this,SLOT(mangaClicked(QModelIndex)));
     connect(ui->srcList,SIGNAL(activated(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
     connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
+    connect(ui->srcAddDirBtn,SIGNAL(clicked()),this,SLOT(mangaAddDir()));
     connect(ui->srcDelBtn,SIGNAL(clicked()),this,SLOT(mangaDel()));
     connect(ui->srcModeIcon,SIGNAL(clicked()),this,SLOT(listModeChanged()));
     connect(ui->srcModeList,SIGNAL(clicked()),this,SLOT(listModeChanged()));
@@ -130,6 +131,28 @@ void ZSearchTab::mangaAdd()
     updateAlbumsList();
 }
 
+void ZSearchTab::mangaAddDir()
+{
+    QString fi = zGlobal->getExistingDirectoryD(this,tr("Add manga to index from directory"),
+                                                    zGlobal->savedIndexOpenDir);
+    zGlobal->savedIndexOpenDir = fi;
+
+    QDir d(fi);
+    QFileInfoList fl = d.entryInfoList(QStringList("*"));
+    QStringList files;
+    for (int i=0;i<fl.count();i++)
+        if (fl.at(i).isReadable() && fl.at(i).isFile())
+            files << fl.at(i).absoluteFilePath();
+    QString album = d.dirName();
+
+    bool ok;
+    album = QInputDialog::getText(this,tr("QManga"),tr("Album name"),QLineEdit::Normal,album,&ok);
+    if (ok)
+        zGlobal->sqlAddFiles(files,album);
+
+    updateAlbumsList();
+}
+
 void ZSearchTab::mangaDel()
 {
     QIntList dl;
@@ -154,7 +177,6 @@ void ZSearchTab::listModeChanged()
     if (ui->srcModeIcon->isChecked()) {
         ui->srcList->setViewMode(QListView::IconMode);
         ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
-
     } else {
         ui->srcList->setViewMode(QListView::ListMode);
         ui->srcList->setGridSize(gridSize(0));

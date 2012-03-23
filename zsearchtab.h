@@ -31,6 +31,7 @@ public slots:
     void mangaClicked(const QModelIndex &index);
     void mangaOpen(const QModelIndex &index);
     void mangaAdd();
+    void mangaAddDir();
     void mangaDel();
     void listModeChanged();
     void iconSizeChanged(int ref);

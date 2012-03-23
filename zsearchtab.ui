@@ -93,6 +93,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="srcAddDirBtn">
+        <property name="text">
+         <string>Add dir...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="srcDelBtn">
         <property name="text">
          <string>Delete</string>

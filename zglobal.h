@@ -72,7 +72,6 @@ public:
 
     QColor backgroundColor;
 
-    QSqlDatabase db;
     QString dbBase, dbUser, dbPass;
 
     void loadSettings();
@@ -83,14 +82,14 @@ public:
     QPixmap resizeImage(QPixmap src, QSize targetSize,
                         bool forceFilter = false, ZResizeFilter filter = Lanczos);
 
-    bool sqlCheckBase(bool interactive = false);
+    bool sqlCheckBase();
     bool sqlCreateTables();
-    bool sqlOpenBase();
-    void sqlCloseBase();
+    QSqlDatabase sqlOpenBase();
+    void sqlCloseBase(QSqlDatabase& db);
     QStringList sqlGetAlbums();
     SQLMangaList sqlGetFiles(QString album, SQLMangaOrder order, bool reverseOrder);
     SQLMangaList sqlGetSearch(QString ref, SQLMangaOrder order, bool reverseOrder);
-    void sqlAddFiles(QStringList files, QString album);
+    void sqlAddFiles(QStringList aFiles, QString album);
     void sqlDelFiles(QIntList dbids);
     void sqlDelEmptyAlbums();
 
