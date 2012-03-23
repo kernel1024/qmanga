@@ -14,10 +14,12 @@ private:
     ZMangaModel* model;
     QMutex* listUpdating;
     QString album, search;
+    ZGlobal::ZOrdering order;
+    bool reverseOrder;
 public:
     explicit ZSearchLoader(QObject *parent = 0);
     void setParams(SQLMangaList* aList, QMutex* aListUpdating, ZMangaModel* aModel, QString aAlbum,
-                   QString aSearch);
+                   QString aSearch, ZGlobal::ZOrdering aOrder, bool aReverseOrder);
     void run();
     
 signals:

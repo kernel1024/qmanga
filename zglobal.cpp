@@ -309,7 +309,7 @@ QStringList ZGlobal::sqlGetAlbums()
 }
 
 void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
-                          QMutex* listUpdating, ZMangaModel* model)
+                          QMutex* listUpdating, ZMangaModel* model, ZOrdering order, bool reverseOrder)
 
 {
     QSqlDatabase db = sqlOpenBase();
@@ -318,19 +318,30 @@ void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
     QSqlQuery qr(db);
     QString tqr;
     if (!album.isEmpty()) {
-        tqr = QString("SELECT name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, addingDT, id "
-                      "FROM files "
+        tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
+                      "addingDT, files.id, albums.name "
+                      "FROM files LEFT JOIN albums ON files.album=albums.id "
                       "WHERE (album="
                       "  (SELECT id FROM albums WHERE (name = '%1'))"
-                      ");").arg(escapeParam(album));
-        qr.prepare(tqr);
+                      ") ").arg(escapeParam(album));
     } else {
         tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                "addingDT, albums.name, files.id "
+                "addingDT, files.id, albums.name "
                 "FROM files LEFT JOIN albums ON files.album=albums.id "
-                "WHERE (files.name LIKE '%%%1%%');").arg(escapeParam(search));
-        qr.prepare(tqr);
+                "WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
     }
+    if (order!=Unordered) {
+        tqr+="ORDER BY ";
+        if (order==FileDate) tqr+="fileDT";
+        else if (order==AddingDate) tqr+="addingDT";
+        else if (order==Album) tqr+="albums.name";
+        else if (order==PagesCount) tqr+="pagesCount";
+        else tqr+="files.name";
+        if (reverseOrder) tqr+=" DESC";
+        else tqr+=" ASC";
+    }
+    tqr+=";";
+    qr.prepare(tqr);
 
     if (qr.exec()) {
         //int resCnt = qr.size();

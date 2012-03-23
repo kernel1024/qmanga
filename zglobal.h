@@ -56,6 +56,15 @@ public:
         Mitchell = 8
     };
 
+    enum ZOrdering {
+        Unordered = 0,
+        FileName = 1,
+        FileDate = 2,
+        AddingDate = 3,
+        Album = 4,
+        PagesCount = 5
+    };
+
     explicit ZGlobal(QObject *parent = 0);
 
     int cacheWidth;
@@ -84,7 +93,7 @@ public:
     void sqlCloseBase(QSqlDatabase& db);
     QStringList sqlGetAlbums();
     void sqlGetFiles(QString album, QString search, SQLMangaList* mList,
-                     QMutex* listUpdating, ZMangaModel *model);
+                     QMutex* listUpdating, ZMangaModel *model, ZOrdering order, bool reverseOrder);
     void sqlAddFiles(QStringList aFiles, QString album);
     void sqlDelFiles(QIntList dbids);
     void sqlDelEmptyAlbums();

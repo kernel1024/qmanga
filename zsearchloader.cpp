@@ -11,13 +11,15 @@ ZSearchLoader::ZSearchLoader(QObject *parent) :
     search = QString();
 }
 
-void ZSearchLoader::setParams(SQLMangaList *aList, QMutex *aListUpdating, ZMangaModel *aModel, QString aAlbum, QString aSearch)
+void ZSearchLoader::setParams(SQLMangaList *aList, QMutex *aListUpdating, ZMangaModel *aModel, QString aAlbum, QString aSearch, ZGlobal::ZOrdering aOrder, bool aReverseOrder)
 {
     mList = aList;
     listUpdating = aListUpdating;
     model = aModel;
     album = aAlbum;
     search = aSearch;
+    order = aOrder;
+    reverseOrder = aReverseOrder;
 }
 
 void ZSearchLoader::run()
@@ -34,5 +36,5 @@ void ZSearchLoader::run()
     listUpdating->unlock();
     QMetaObject::invokeMethod(model,"rowsDeleted",Qt::QueuedConnection);
 
-    zGlobal->sqlGetFiles(album,search,mList,listUpdating,model);
+    zGlobal->sqlGetFiles(album,search,mList,listUpdating,model,order,reverseOrder);
 }
