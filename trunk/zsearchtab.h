@@ -24,6 +24,7 @@ private:
     SQLMangaList mangaList;
     void updateModel(SQLMangaList* list);
     QSize gridSize(int ref);
+    QString descTemplate;
 
 public slots:
     void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
