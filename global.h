@@ -8,6 +8,7 @@
 #endif
 
 #define maxPreviewSize 500
+#define previewProps 364/257
 
 typedef QHash<int,QImage> QImageHash;
 typedef QList<int> QIntList;

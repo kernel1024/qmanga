@@ -3,6 +3,7 @@
 #include "mainwindow.h"
 #include "settingsdialog.h"
 #include "zzipreader.h"
+#include "zmangamodel.h"
 #include <ImageMagick/Magick++.h>
 
 using namespace Magick;
@@ -252,7 +253,7 @@ bool ZGlobal::sqlCreateTables()
 QSqlDatabase ZGlobal::sqlOpenBase()
 {
     if (dbUser.isEmpty()) return QSqlDatabase();
-    QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
+    QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL",QUuid::createUuid().toString());
     if (db.isValid()) {
         db.setHostName("localhost");
         db.setDatabaseName(dbBase);
@@ -285,98 +286,64 @@ QStringList ZGlobal::sqlGetAlbums()
     return res;
 }
 
-SQLMangaList ZGlobal::sqlGetFiles(QString album, SQLMangaOrder order, bool reverseOrder)
+void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
+                          QMutex* listUpdating, ZMangaModel* model)
+
 {
-    SQLMangaList res;
-    res.clear();
     QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return res;
+    if (!db.isValid()) return;
 
     QSqlQuery qr(db);
-    QString tqr = QString("SELECT name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, addingDT, id "
-                          "FROM files "
-                          "WHERE (album="
-                          "  (SELECT id FROM albums WHERE (name = '%1'))"
-                          ") ").arg(album);
-    if (order!=smUnordered) {
-        tqr+="ORDER BY ";
-        if (order==smFileDate) tqr+="fileDT";
-        else if (order==smAddingDate) tqr+="addingDT";
-        else if (order==smFileSize) tqr+="fileSize";
-        else if (order==smPagesCount) tqr+="pagesCount";
-        else tqr+="name";
-        if (reverseOrder) tqr+=" DESC";
-        else tqr+=" ASC";
+    QString tqr;
+    if (!album.isEmpty()) {
+        tqr = QString("SELECT name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, addingDT, id "
+                      "FROM files "
+                      "WHERE (album="
+                      "  (SELECT id FROM albums WHERE (name = '%1'))"
+                      ");").arg(album);
+        qr.prepare(tqr);
+    } else {
+        tqr = "SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
+                "addingDT, albums.name, files.id "
+                "FROM files LEFT JOIN albums ON files.album=albums.id "
+                "WHERE (name LIKE '%?%');";
+        qr.prepare(tqr);
+        qr.bindValue(0,search);
     }
-    tqr+=";";
-    qr.prepare(tqr);
+
     if (qr.exec()) {
+        //int resCnt = qr.size();
+        int idx = 0;
         while (qr.next()) {
-            QPixmap p = QPixmap();
+            QImage p = QImage();
             QByteArray ba = qr.value(2).toByteArray();
             if (!ba.isEmpty())
                 p.loadFromData(ba);
-            res << SQLMangaEntry(qr.value(0).toString(),
-                                 qr.value(1).toString(),
-                                 album,
-                                 p,
-                                 qr.value(3).toInt(),
-                                 qr.value(4).toInt(),
-                                 qr.value(5).toString(),
-                                 qr.value(6).toDateTime(),
-                                 qr.value(7).toDateTime(),
-                                 qr.value(8).toInt());
+
+            listUpdating->lock();
+            int posidx = mList->count();
+            listUpdating->unlock();
+            QMetaObject::invokeMethod(model,"rowsAboutToAppended",Qt::QueuedConnection,
+                                      Q_ARG(int,posidx),
+                                      Q_ARG(int,posidx+1));
+            listUpdating->lock();
+            *mList << SQLMangaEntry(qr.value(0).toString(),
+                                    qr.value(1).toString(),
+                                    album,
+                                    p,
+                                    qr.value(3).toInt(),
+                                    qr.value(4).toInt(),
+                                    qr.value(5).toString(),
+                                    qr.value(6).toDateTime(),
+                                    qr.value(7).toDateTime(),
+                                    qr.value(8).toInt());
+            listUpdating->unlock();
+            QMetaObject::invokeMethod(model,"rowsAppended",Qt::QueuedConnection);
+            idx++;
         }
     }
     sqlCloseBase(db);
-    return res;
-}
-
-SQLMangaList ZGlobal::sqlGetSearch(QString ref, ZGlobal::SQLMangaOrder order, bool reverseOrder)
-{
-    SQLMangaList res;
-    res.clear();
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return res;
-
-    QSqlQuery qr(db);
-    QString tqr = "SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-            "addingDT, albums.name, files.id "
-            "FROM files LEFT JOIN albums ON files.album=albums.id "
-            "WHERE (name LIKE '%?%')";
-    if (order!=smUnordered) {
-        tqr+="ORDER BY ";
-        if (order==smFileDate) tqr+="fileDT";
-        else if (order==smAddingDate) tqr+="addingDT";
-        else if (order==smFileSize) tqr+="fileSize";
-        else if (order==smPagesCount) tqr+="pagesCount";
-        else tqr+="files.name";
-        if (reverseOrder) tqr+=" DESC";
-        else tqr+=" ASC";
-    }
-    tqr+=";";
-    qr.prepare(tqr);
-    qr.bindValue(0,ref);
-    if (qr.exec()) {
-        while (qr.next()) {
-            QPixmap p = QPixmap();
-            QByteArray ba = qr.value(2).toByteArray();
-            if (!ba.isEmpty())
-                p.loadFromData(ba);
-            res << SQLMangaEntry(qr.value(0).toString(),
-                                 qr.value(1).toString(),
-                                 qr.value(8).toString(),
-                                 p,
-                                 qr.value(3).toInt(),
-                                 qr.value(4).toInt(),
-                                 qr.value(5).toString(),
-                                 qr.value(6).toDateTime(),
-                                 qr.value(7).toDateTime(),
-                                 qr.value(8).toInt());
-        }
-    }
-    sqlCloseBase(db);
-    return res;
+    return;
 }
 
 void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
@@ -502,6 +469,7 @@ void ZGlobal::sqlDelFiles(QIntList dbids)
         delqr+=QString("%1").arg(dbids.at(i));
     }
     delqr+=");";
+
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
     QSqlQuery qr(db);
@@ -678,7 +646,7 @@ SQLMangaEntry::SQLMangaEntry()
 {
     name = QString();
     filename = QString();
-    cover = QPixmap();
+    cover = QImage();
     album = QString();
     pagesCount = -1;
     fileSize = -1;
@@ -688,9 +656,24 @@ SQLMangaEntry::SQLMangaEntry()
     dbid = -1;
 }
 
+SQLMangaEntry::SQLMangaEntry(int aDbid)
+{
+    name = QString();
+    filename = QString();
+    cover = QImage();
+    album = QString();
+    pagesCount = -1;
+    fileSize = -1;
+    fileMagic = QString();
+    fileDT = QDateTime();
+    addingDT = QDateTime();
+    dbid = aDbid;
+}
+
 SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, const QString &aAlbum,
-                             const QPixmap &aCover, const int aPagesCount, const qint64 aFileSize,
-                             const QString &aFileMagic, const QDateTime &aFileDT, const QDateTime &aAddingDT, int aDbid)
+                             const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
+                             const QString &aFileMagic, const QDateTime &aFileDT,
+                             const QDateTime &aAddingDT, int aDbid)
 {
     name = aName;
     filename = aFilename;
