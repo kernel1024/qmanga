@@ -24,15 +24,19 @@ public:
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
     QColor getBkColor();
+    QFont getIdxFont();
     
 private:
     QColor bkColor;
+    QFont idxFont;
     Ui::SettingsDialog *ui;
 
 public slots:
     void delBookmark();
     void bkColorDlg();
+    void idxFontDlg();
     void updateBkColor(QColor c);
+    void updateIdxFont(QFont f);
 
 };
 

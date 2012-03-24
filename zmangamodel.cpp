@@ -57,9 +57,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
     } else if (role == Qt::TextColorRole) {
         return zGlobal->foregroundColor();
     } else if (role == Qt::FontRole) {
-        QFont f = view->font();
-        f.setPointSizeF(f.pointSizeF()-2.0);
-        return f;
+        return zGlobal->idxFont;
     } else if (role == Qt::DisplayRole) {
         listUpdating->lock();
         SQLMangaEntry t = mList->at(index.row());

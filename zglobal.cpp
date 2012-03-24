@@ -44,6 +44,8 @@ void ZGlobal::loadSettings()
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
+    if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
+        idxFont = QApplication::font("QListView");
     if (!backgroundColor.isValid())
         backgroundColor = QApplication::palette("QWidget").dark().color();
 
@@ -96,6 +98,7 @@ void ZGlobal::saveSettings()
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
     settings.setValue("magnifySize",magnifySize);
     settings.setValue("backgroundColor",backgroundColor.name());
+    settings.setValue("idxFont",idxFont.toString());
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
     if (w!=NULL) {
@@ -575,19 +578,23 @@ void ZGlobal::settingsDlg()
     dlg->spinCacheWidth->setValue(cacheWidth);
     dlg->spinMagnify->setValue(magnifySize);
     dlg->updateBkColor(backgroundColor);
+    dlg->updateIdxFont(idxFont);
     switch (resizeFilter) {
-    case Nearest: dlg->comboFilter->setCurrentIndex(0); break;
-    case Bilinear: dlg->comboFilter->setCurrentIndex(1); break;
-    case Lanczos: dlg->comboFilter->setCurrentIndex(2); break;
-    case Gaussian: dlg->comboFilter->setCurrentIndex(3); break;
-    case Lanczos2: dlg->comboFilter->setCurrentIndex(4); break;
-    case Cubic: dlg->comboFilter->setCurrentIndex(5); break;
-    case Sinc: dlg->comboFilter->setCurrentIndex(6); break;
-    case Triangle: dlg->comboFilter->setCurrentIndex(7); break;
-    case Mitchell: dlg->comboFilter->setCurrentIndex(8); break;
+        case Nearest: dlg->comboFilter->setCurrentIndex(0); break;
+        case Bilinear: dlg->comboFilter->setCurrentIndex(1); break;
+        case Lanczos: dlg->comboFilter->setCurrentIndex(2); break;
+        case Gaussian: dlg->comboFilter->setCurrentIndex(3); break;
+        case Lanczos2: dlg->comboFilter->setCurrentIndex(4); break;
+        case Cubic: dlg->comboFilter->setCurrentIndex(5); break;
+        case Sinc: dlg->comboFilter->setCurrentIndex(6); break;
+        case Triangle: dlg->comboFilter->setCurrentIndex(7); break;
+        case Mitchell: dlg->comboFilter->setCurrentIndex(8); break;
     }
     foreach (const QString &t, bookmarks.keys()) {
-        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg(t).arg(bookmarks.value(t)));
+        QString st = bookmarks.value(t);
+        if (st.split('\n').count()>0)
+            st = st.split('\n').at(0);
+        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg(t).arg(st));
         li->setData(Qt::UserRole,t);
         li->setData(Qt::UserRole+1,bookmarks.value(t));
         dlg->listBookmarks->addItem(li);
@@ -600,16 +607,17 @@ void ZGlobal::settingsDlg()
         cacheWidth=dlg->spinCacheWidth->value();
         magnifySize=dlg->spinMagnify->value();
         backgroundColor=dlg->getBkColor();
+        idxFont=dlg->getIdxFont();
         switch (dlg->comboFilter->currentIndex()) {
-        case 0: resizeFilter = Nearest; break;
-        case 1: resizeFilter = Bilinear; break;
-        case 2: resizeFilter = Lanczos; break;
-        case 3: resizeFilter = Gaussian; break;
-        case 4: resizeFilter = Lanczos2; break;
-        case 5: resizeFilter = Cubic; break;
-        case 6: resizeFilter = Sinc; break;
-        case 7: resizeFilter = Triangle; break;
-        case 8: resizeFilter = Mitchell; break;
+            case 0: resizeFilter = Nearest; break;
+            case 1: resizeFilter = Bilinear; break;
+            case 2: resizeFilter = Lanczos; break;
+            case 3: resizeFilter = Gaussian; break;
+            case 4: resizeFilter = Lanczos2; break;
+            case 5: resizeFilter = Cubic; break;
+            case 6: resizeFilter = Sinc; break;
+            case 7: resizeFilter = Triangle; break;
+            case 8: resizeFilter = Mitchell; break;
         }
         bookmarks.clear();
         for (int i=0; i<dlg->listBookmarks->count(); i++)

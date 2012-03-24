@@ -48,7 +48,7 @@ int ZMangaView::getPageCount()
     return mReader->getPageCount();
 }
 
-void ZMangaView::openFile(QString filename)
+void ZMangaView::openFile(QString filename, int page)
 {
     if (mReader!=NULL)
         closeFile();
@@ -67,7 +67,7 @@ void ZMangaView::openFile(QString filename)
     mReader = za;
     iCache.clear();
     openedFile = filename;
-    setPage(0);
+    setPage(page);
 }
 
 void ZMangaView::closeFile()

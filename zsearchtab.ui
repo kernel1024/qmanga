@@ -29,7 +29,7 @@
       <bool>false</bool>
      </property>
      <widget class="QListWidget" name="srcAlbums"/>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -79,6 +79,9 @@
    </item>
    <item>
     <widget class="QTextBrowser" name="srcDesc">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
      <property name="html">
       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -174,6 +177,19 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>srcAlbums</tabstop>
+  <tabstop>srcEdit</tabstop>
+  <tabstop>srcEditBtn</tabstop>
+  <tabstop>srcList</tabstop>
+  <tabstop>srcDesc</tabstop>
+  <tabstop>srcAddBtn</tabstop>
+  <tabstop>srcAddDirBtn</tabstop>
+  <tabstop>srcDelBtn</tabstop>
+  <tabstop>srcIconSize</tabstop>
+  <tabstop>srcModeIcon</tabstop>
+  <tabstop>srcModeList</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

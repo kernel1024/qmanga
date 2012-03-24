@@ -8,6 +8,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui->setupUi(this);
 
     bkColor = QApplication::palette("QWidget").dark().color();
+    idxFont = QApplication::font("QListView");
 
     comboFilter = ui->comboFilter;
     spinCacheWidth = ui->spinCacheWidth;
@@ -19,6 +20,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 
     connect(ui->btnDeleteBookmark,SIGNAL(clicked()),this,SLOT(delBookmark()));
     connect(ui->btnBkColor,SIGNAL(clicked()),this,SLOT(bkColorDlg()));
+    connect(ui->btnFontIndexer,SIGNAL(clicked()),this,SLOT(idxFontDlg()));
 }
 
 SettingsDialog::~SettingsDialog()
@@ -29,6 +31,11 @@ SettingsDialog::~SettingsDialog()
 QColor SettingsDialog::getBkColor()
 {
     return bkColor;
+}
+
+QFont SettingsDialog::getIdxFont()
+{
+    return idxFont;
 }
 
 void SettingsDialog::delBookmark()
@@ -47,10 +54,25 @@ void SettingsDialog::bkColorDlg()
     updateBkColor(c);
 }
 
+void SettingsDialog::idxFontDlg()
+{
+    bool ok;
+    QFont f = QFontDialog::getFont(&ok,idxFont,this);
+    if (!ok) return;
+    updateIdxFont(f);
+}
+
 void SettingsDialog::updateBkColor(QColor c)
 {
     bkColor = c;
     QPalette p = ui->frameBkColor->palette();
     p.setBrush(QPalette::Window,QBrush(bkColor));
     ui->frameBkColor->setPalette(p);
+}
+
+void SettingsDialog::updateIdxFont(QFont f)
+{
+    idxFont = f;
+    ui->labelIdxFont->setFont(idxFont);
+    ui->labelIdxFont->setText(QString("%1, %2").arg(f.family()).arg(f.pointSize()));
 }

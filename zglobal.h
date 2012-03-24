@@ -66,15 +66,14 @@ public:
 
     explicit ZGlobal(QObject *parent = 0);
 
-    int cacheWidth;
-    int magnifySize;
-    ZResizeFilter resizeFilter;
     QMap<QString, QString> bookmarks;
 
+    ZResizeFilter resizeFilter;
+    int cacheWidth;
+    int magnifySize;
     QString savedAuxOpenDir, savedIndexOpenDir;
-
     QColor backgroundColor;
-
+    QFont idxFont;
     QString dbBase, dbUser, dbPass;
 
     int dpiX, dpiY;
