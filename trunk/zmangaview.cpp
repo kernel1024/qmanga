@@ -444,7 +444,7 @@ QIntList ZMangaView::cacheGetActivePages()
             l << mReader->getPageCount()-i-1;
     }
     for (int i=(currentPage-zGlobal->cacheWidth);i<(currentPage+zGlobal->cacheWidth);i++) {
-        if (i>=0 && !l.contains(i))
+        if (i>=0 && i<mReader->getPageCount() && !l.contains(i))
             l << i;
     }
     return l;

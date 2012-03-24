@@ -97,9 +97,9 @@ public:
     void sqlAddFiles(QStringList aFiles, QString album);
     void sqlDelFiles(QIntList dbids);
     void sqlDelEmptyAlbums();
+    void sqlRenameAlbum(QString oldName, QString newName);
 
 
-#ifdef QB_KDEDIALOGS
     QString getKDEFilters(const QString & qfilter);
     QString getOpenFileNameD ( QWidget * parent = 0,
                                const QString & caption = QString(),
@@ -123,13 +123,25 @@ public:
                                     const QString & caption = QString(),
                                     const QString & dir = QString(),
                                     QFileDialog::Options options = QFileDialog::ShowDirsOnly );
-#endif
-signals:
     
 public slots:
     void settingsDlg();
 
 };
+
+class ZFileEntry {
+public:
+    QString name;
+    int idx;
+    ZFileEntry();
+    ZFileEntry(QString aName, int aIdx);
+    ZFileEntry &operator=(const ZFileEntry& other);
+    bool operator==(const ZFileEntry& ref) const;
+    bool operator!=(const ZFileEntry& ref) const;
+    bool operator<(const ZFileEntry& ref) const;
+    bool operator>(const ZFileEntry& ref) const;
+};
+
 
 extern ZGlobal* zGlobal;
 

@@ -392,7 +392,7 @@ void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
     int ialbum = -1;
 
     QSqlQuery aqr(db);
-    aqr.prepare(QString("SELECT id FROM albums WHERE (name='%1');").arg(album));
+    aqr.prepare(QString("SELECT id FROM albums WHERE (name='%1');").arg(escapeParam(album)));
     if (aqr.exec())
         if (aqr.next())
             ialbum = aqr.value(0).toInt();
@@ -414,6 +414,7 @@ void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
 
     QProgressDialog pd(tr("Adding files"),QString("Cancel"),0,100,w,Qt::Dialog);
     pd.setWindowModality(Qt::WindowModal);
+    pd.setWindowTitle(tr("Adding files to index..."));
     pd.setValue(0);
     pd.show();
 
@@ -528,6 +529,29 @@ void ZGlobal::sqlDelEmptyAlbums()
     if (!qr.exec())
         qDebug() << "Unable to delete empty albums" << qr.lastError().databaseText() <<
                     qr.lastError().driverText();
+    sqlCloseBase(db);
+}
+
+void ZGlobal::sqlRenameAlbum(QString oldName, QString newName)
+{
+    MainWindow* w = qobject_cast<MainWindow *>(parent());
+
+    if (oldName==newName) return;
+    QString delqr = QString("UPDATE albums SET name='%1' WHERE name='%2';").
+            arg(escapeParam(newName)).arg(escapeParam(oldName));
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
+    QSqlQuery qr(db);
+    qr.prepare(delqr);
+    if (!qr.exec()) {
+        qDebug() << "Unable to rename album" <<
+                    qr.lastError().databaseText() <<
+                    qr.lastError().driverText();
+        QMessageBox::critical(w,tr("QManga"),tr("Unable to rename album `%1`\n%2\n%3").
+                              arg(oldName).
+                              arg(qr.lastError().databaseText()).
+                              arg(qr.lastError().driverText()));
+    }
     sqlCloseBase(db);
 }
 
@@ -742,4 +766,51 @@ bool SQLMangaEntry::operator ==(const SQLMangaEntry &ref) const
 bool SQLMangaEntry::operator !=(const SQLMangaEntry &ref) const
 {
     return (ref.dbid!=dbid);
+}
+
+ZFileEntry::ZFileEntry()
+{
+    name = QString();
+    idx = -1;
+}
+
+ZFileEntry::ZFileEntry(QString aName, int aIdx)
+{
+    name = aName;
+    idx = aIdx;
+}
+
+ZFileEntry &ZFileEntry::operator =(const ZFileEntry &other)
+{
+    name = other.name;
+    idx = other.idx;
+    return *this;
+}
+
+bool ZFileEntry::operator ==(const ZFileEntry &ref) const
+{
+    return (name==ref.name);
+}
+
+bool ZFileEntry::operator !=(const ZFileEntry &ref) const
+{
+    return (name!=ref.name);
+}
+
+bool ZFileEntry::operator <(const ZFileEntry &ref) const
+{
+    QFileInfo fi1(name);
+    QFileInfo fi2(ref.name);
+    if (fi1.path()==fi2.path())
+        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
+    return (compareWithNumerics(fi1.path(),fi2.path())<0);
+}
+
+bool ZFileEntry::operator >(const ZFileEntry &ref) const
+{
+    QFileInfo fi1(name);
+    QFileInfo fi2(ref.name);
+    if (fi1.path()==fi2.path())
+        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())>0);
+    return (compareWithNumerics(fi1.path(),fi2.path())>0);
 }
