@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     zmangamodel.cpp \
     zsearchtab.cpp \
     zsearchloader.cpp \
-    zrarreader.cpp
+    zrarreader.cpp \
+    zpdfreader.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -39,7 +40,8 @@ HEADERS  += mainwindow.h \
     zmangamodel.h \
     zsearchtab.h \
     zsearchloader.h \
-    zrarreader.h
+    zrarreader.h \
+    zpdfreader.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
@@ -55,6 +57,9 @@ MAGICK_CXX = $$system(Magick++-config --cxxflags)
 MAGICK_LIBS = $$system(Magick++-config --libs)
 QMAKE_CXXFLAGS += $$MAGICK_CXX
 LIBS += $$MAGICK_LIBS
+
+INCLUDEPATH += /usr/include/poppler/qt4
+LIBS += -lpoppler-qt4
 
 use_kde_dialogs {
     DEFINES += QB_KDEDIALOGS=1

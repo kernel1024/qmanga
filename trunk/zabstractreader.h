@@ -12,7 +12,7 @@ protected:
     bool opened;
     int pageCount;
     QString fileName;
-    virtual int getPageCountPrivate() = 0;
+    QList<ZFileEntry> sortList;
 
 public:
     explicit ZAbstractReader(QObject *parent, QString filename);

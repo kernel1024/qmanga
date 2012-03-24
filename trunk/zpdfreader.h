@@ -1,23 +1,24 @@
-#ifndef ZRARREADER_H
-#define ZRARREADER_H
+#ifndef ZPDFREADER_H
+#define ZPDFREADER_H
 
 #include <QtCore>
+#include <poppler-qt4.h>
 #include "zabstractreader.h"
 
-class ZRarReader : public ZAbstractReader
+class ZPdfReader : public ZAbstractReader
 {
     Q_OBJECT
 protected:
-    QString rarExec;
+    Poppler::Document* doc;
 
 public:
-    explicit ZRarReader(QObject *parent, QString filename);
+    explicit ZPdfReader(QObject *parent, QString filename);
     bool openFile();
     void closeFile();
     QImage loadPage(int num);
     QImageHash loadPages(QIntList nums);
     QString getMagic();
-
+    
 };
 
-#endif // ZRARREADER_H
+#endif // ZPDFREADER_H

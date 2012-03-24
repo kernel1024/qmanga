@@ -10,11 +10,9 @@
 
 class ZZipReader : public ZAbstractReader
 {
-private:
+protected:
     QuaZip mainZFile;
     QFile mainFile;
-    int getPageCountPrivate();
-    QList<ZFileEntry> sortList;
 
 public:
     explicit ZZipReader(QObject *parent, QString filename);

@@ -2,6 +2,7 @@
 #include "zabstractreader.h"
 #include "zzipreader.h"
 #include "zrarreader.h"
+#include "zpdfreader.h"
 #include "zglobal.h"
 
 ZAbstractReader *readerFactory(QObject* parent, QString filename)
@@ -12,6 +13,8 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename)
     } else if (mime.contains("application/x-rar",Qt::CaseInsensitive) ||
                mime.contains("application/rar",Qt::CaseInsensitive)) {
         return new ZRarReader(parent,filename);
+    } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
+        return new ZPdfReader(parent,filename);
     } else {
         return NULL;
     }
