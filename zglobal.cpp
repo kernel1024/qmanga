@@ -18,6 +18,15 @@ ZGlobal::ZGlobal(QObject *parent) :
     dbBase = QString("qmanga");
     dbUser = QString();
     dbPass = QString();
+
+    int screen = 0;
+    QDesktopWidget *desktop = QApplication::desktop();
+    if (desktop->isVirtualDesktop()) {
+        screen = desktop->screenNumber(QCursor::pos());
+    }
+
+    dpiX = desktop->screen(screen)->physicalDpiX();
+    dpiY = desktop->screen(screen)->physicalDpiY();
 }
 
 void ZGlobal::loadSettings()

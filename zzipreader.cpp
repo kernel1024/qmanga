@@ -11,6 +11,7 @@ bool ZZipReader::openFile()
     if (opened)
         return false;
 
+    sortList.clear();
     QFileInfo fi(fileName);
     if (!fi.isFile() || !fi.isReadable()) {
         return false;
@@ -26,7 +27,6 @@ bool ZZipReader::openFile()
         return false;
     }
 
-    sortList.clear();
     int cnt = 0;
     for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
         QuaZipFileInfo zfi;
@@ -51,14 +51,6 @@ void ZZipReader::closeFile()
     mainFile.close();
     opened = false;
     sortList.clear();
-}
-
-int ZZipReader::getPageCountPrivate()
-{
-    if (!opened)
-        return -1;
-
-    return sortList.count();
 }
 
 QImage ZZipReader::loadPage(int num)

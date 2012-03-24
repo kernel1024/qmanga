@@ -6,12 +6,14 @@ ZAbstractReader::ZAbstractReader(QObject *parent, QString filename) :
     opened = false;
     fileName = filename;
     pageCount = -1;
+    sortList.clear();
 }
 
 ZAbstractReader::~ZAbstractReader()
 {
     if (opened)
         closeFile();
+    sortList.clear();
 }
 
 bool ZAbstractReader::openFile(QString filename)
@@ -33,7 +35,7 @@ int ZAbstractReader::getPageCount()
 {
     if (!opened) return -1;
     if (pageCount<0)
-        pageCount = getPageCountPrivate();
+        pageCount = sortList.count();
     return pageCount;
 }
 

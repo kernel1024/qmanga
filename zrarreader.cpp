@@ -10,6 +10,7 @@ bool ZRarReader::openFile()
 {
     if (opened)
         return false;
+    sortList.clear();
     QStringList supportedImg;
     supportedImg << "jpg" << "jpeg" << "gif" << "png" << "tiff" << "tif" << "bmp";
 
@@ -27,8 +28,6 @@ bool ZRarReader::openFile()
     } else
         rarExec = QString("rar");
 
-
-    sortList.clear();
     int cnt = 0;
     QProcess rar;
     rar.start(rarExec,QStringList() << "vb" << "--" << fileName);
@@ -98,12 +97,4 @@ QImageHash ZRarReader::loadPages(QIntList nums)
 QString ZRarReader::getMagic()
 {
     return QString("RAR");
-}
-
-int ZRarReader::getPageCountPrivate()
-{
-    if (!opened)
-        return -1;
-
-    return sortList.count();
 }

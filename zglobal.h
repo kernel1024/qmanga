@@ -12,7 +12,6 @@
 #endif
 
 #include "global.h"
-#include "zabstractreader.h"
 
 class SQLMangaEntry {
 public:
@@ -77,6 +76,8 @@ public:
     QColor backgroundColor;
 
     QString dbBase, dbUser, dbPass;
+
+    int dpiX, dpiY;
 
     void loadSettings();
     void saveSettings();

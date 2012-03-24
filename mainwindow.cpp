@@ -98,6 +98,7 @@ void MainWindow::centerWindow()
     } else {
         screen = desktop->screenNumber(this);
     }
+
     QRect rect(desktop->availableGeometry(screen));
     int h = 80*rect.height()/100;
     QSize nw(135*h/100,h);
