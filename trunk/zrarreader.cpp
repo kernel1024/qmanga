@@ -4,6 +4,7 @@ ZRarReader::ZRarReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
 {
     rarExec = QString();
+    supportedImg << "jpg" << "jpeg" << "gif" << "png" << "tiff" << "tif" << "bmp";
 }
 
 bool ZRarReader::openFile()
@@ -11,8 +12,6 @@ bool ZRarReader::openFile()
     if (opened)
         return false;
     sortList.clear();
-    QStringList supportedImg;
-    supportedImg << "jpg" << "jpeg" << "gif" << "png" << "tiff" << "tif" << "bmp";
 
     QFileInfo fi(fileName);
     if (!fi.isFile() || !fi.isReadable()) {
@@ -20,8 +19,8 @@ bool ZRarReader::openFile()
     }
 
     rarExec = QString();
-    if (QProcess::execute("rar")<0) {
-        if (QProcess::execute("unrar")<0)
+    if (QProcess::execute("rar",QStringList() << "-inul")<0) {
+        if (QProcess::execute("unrar",QStringList() << "-inul")<0)
             return false;
         else
             rarExec = QString("unrar");
@@ -68,8 +67,7 @@ QImage ZRarReader::loadPage(int num)
     QString picName = sortList.at(num).name;
 
     QProcess rar;
-    rar.start(rarExec,QStringList() << "p" << "-kb" << "-p-" << "-o-" << "-inul" << "--" <<
-              fileName << picName);
+    rar.start(rarExec,QStringList() << "p" << "-kb" << "-p-" << "-o-" << "-inul" << "--" << fileName << picName);
     rar.waitForFinished(60000);
     QByteArray buf = rar.readAll();
     if (buf.isEmpty()) return res;
@@ -77,8 +75,11 @@ QImage ZRarReader::loadPage(int num)
         qDebug() << "Image file is too big (over 150Mb). Unable to load.";
         return res;
     }
-    res = QImage::fromData(buf);
+
+    bool ok = res.loadFromData(buf);
     buf.clear();
+
+    if (!ok) res = QImage();
     return res;
 }
 

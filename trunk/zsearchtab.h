@@ -44,7 +44,7 @@ public slots:
     void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
     void albumClicked(QListWidgetItem * item);
     void mangaSearch();
-    void mangaClicked(const QModelIndex &index);
+    void mangaSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
     void mangaOpen(const QModelIndex &index);
     void mangaAdd();
     void mangaAddDir();
