@@ -336,11 +336,15 @@ void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
                       "WHERE (album="
                       "  (SELECT id FROM albums WHERE (name = '%1'))"
                       ") ").arg(escapeParam(album));
-    } else {
+    } else if (!search.isEmpty()){
         tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
                 "addingDT, files.id, albums.name "
                 "FROM files LEFT JOIN albums ON files.album=albums.id "
                 "WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
+    } else {
+        tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
+                "addingDT, files.id, albums.name "
+                "FROM files LEFT JOIN albums ON files.album=albums.id ");
     }
     if (order!=Unordered) {
         tqr+="ORDER BY ";
@@ -391,15 +395,19 @@ void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
     return;
 }
 
-void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
+int ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
 {
     MainWindow* w = qobject_cast<MainWindow *>(parent());
 
+    if (album.isEmpty()) {
+        QMessageBox::critical(w,tr("QManga"),tr("Album name cannot be empty"));
+        return 0;
+    }
     QStringList files = aFiles;
     files.removeDuplicates();
 
     QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
+    if (!db.isValid()) return 0;
 
     int ialbum = -1;
 
@@ -419,7 +427,7 @@ void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
                                   arg(qr.lastError().databaseText()).
                                   arg(qr.lastError().driverText()));
             sqlCloseBase(db);
-            return;
+            return 0;
         }
         ialbum = qr.lastInsertId().toInt();
     }
@@ -430,6 +438,7 @@ void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
     pd.setValue(0);
     pd.show();
 
+    int cnt = 0;
     for (int i=0;i<files.count();i++) {
         QFileInfo fi(files.at(i));
         if (!fi.isReadable()) {
@@ -483,6 +492,8 @@ void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
         if (!qr.exec())
             qDebug() << files.at(i) << "unable to add" << qr.lastError().databaseText() <<
                         qr.lastError().driverText();
+        else
+            cnt++;
         pba.clear();
         p = QPixmap();
         za->closeFile();
@@ -501,6 +512,7 @@ void ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
     }
     pd.hide();
     sqlCloseBase(db);
+    return cnt;
 }
 
 void ZGlobal::sqlDelFiles(QIntList dbids)
@@ -548,7 +560,7 @@ void ZGlobal::sqlRenameAlbum(QString oldName, QString newName)
 {
     MainWindow* w = qobject_cast<MainWindow *>(parent());
 
-    if (oldName==newName) return;
+    if (oldName==newName || oldName.isEmpty() || newName.isEmpty()) return;
     QString delqr = QString("UPDATE albums SET name='%1' WHERE name='%2';").
             arg(escapeParam(newName)).arg(escapeParam(oldName));
     QSqlDatabase db = sqlOpenBase();

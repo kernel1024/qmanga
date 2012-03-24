@@ -94,7 +94,7 @@ public:
     QStringList sqlGetAlbums();
     void sqlGetFiles(QString album, QString search, SQLMangaList* mList,
                      QMutex* listUpdating, ZMangaModel *model, ZOrdering order, bool reverseOrder);
-    void sqlAddFiles(QStringList aFiles, QString album);
+    int sqlAddFiles(QStringList aFiles, QString album);
     void sqlDelFiles(QIntList dbids);
     void sqlDelEmptyAlbums();
     void sqlRenameAlbum(QString oldName, QString newName);

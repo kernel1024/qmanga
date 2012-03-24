@@ -30,7 +30,6 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcAlbums,SIGNAL(itemActivated(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
     connect(ui->srcAlbums,SIGNAL(customContextMenuRequested(QPoint)),
             this,SLOT(albumCtxMenu(QPoint)));
-    connect(ui->srcList,SIGNAL(clicked(QModelIndex)),this,SLOT(mangaClicked(QModelIndex)));
     connect(ui->srcList,SIGNAL(activated(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
     connect(ui->srcList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
     connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
@@ -49,6 +48,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     model = new ZMangaModel(this,&mangaList,ui->srcIconSize,ui->srcList,&listUpdating);
     ui->srcList->setModel(model);
+    connect(ui->srcList->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
 
     ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -246,19 +247,20 @@ void ZSearchTab::mangaSearch()
     loader.start();
 }
 
-void ZSearchTab::mangaClicked(const QModelIndex &index)
+void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)
 {
-    if (!index.isValid()) return;
+    ui->srcDesc->clear();
+    if (!current.isValid()) return;
 
     listUpdating.lock();
     int maxl = mangaList.length();
     listUpdating.unlock();
 
-    if (index.row()>=maxl) return;
+    if (current.row()>=maxl) return;
 
     ui->srcDesc->clear();
 
-    int idx = index.row();
+    int idx = current.row();
     listUpdating.lock();
     const SQLMangaEntry m = mangaList.at(idx);
     listUpdating.unlock();
@@ -293,6 +295,7 @@ void ZSearchTab::mangaAdd()
     if (loadingNow) return;
     QStringList fl = zGlobal->getOpenFileNamesD(this,tr("Add manga to index"),zGlobal->savedIndexOpenDir);
     if (fl.isEmpty()) return;
+    fl.removeDuplicates();
     QFileInfo fi(fl.first());
     zGlobal->savedIndexOpenDir = fi.path();
 
@@ -300,10 +303,19 @@ void ZSearchTab::mangaAdd()
     QString album = d.dirName();
     bool ok;
     album = QInputDialog::getText(this,tr("QManga"),tr("Album name"),QLineEdit::Normal,album,&ok);
-    if (ok)
-        zGlobal->sqlAddFiles(fl,album);
+    int cnt = 0;
+    int el = 0;
+    if (ok) {
+        QTime tmr;
+        tmr.start();
+        cnt = zGlobal->sqlAddFiles(fl,album);
+        el = tmr.elapsed();
+    } else
+        return;
 
     updateAlbumsList();
+
+    emit statusBarMsg(QString("Added %1 out of %2 found files in %3s").arg(cnt).arg(fl.count()).arg((double)el/1000.0,1,'f',2));
 }
 
 void ZSearchTab::mangaAddDir()
@@ -311,6 +323,7 @@ void ZSearchTab::mangaAddDir()
     if (loadingNow) return;
     QString fi = zGlobal->getExistingDirectoryD(this,tr("Add manga to index from directory"),
                                                     zGlobal->savedIndexOpenDir);
+    if (fi.isEmpty()) return;
     zGlobal->savedIndexOpenDir = fi;
 
     QDir d(fi);
@@ -323,10 +336,19 @@ void ZSearchTab::mangaAddDir()
 
     bool ok;
     album = QInputDialog::getText(this,tr("QManga"),tr("Album name"),QLineEdit::Normal,album,&ok);
-    if (ok)
-        zGlobal->sqlAddFiles(files,album);
+    int cnt = 0;
+    int el = 0;
+    if (ok) {
+        QTime tmr;
+        tmr.start();
+        cnt = zGlobal->sqlAddFiles(files,album);
+        el = tmr.elapsed();
+    } else
+        return;
 
     updateAlbumsList();
+
+    emit statusBarMsg(QString("Added %1 out of %2 found files in %3s").arg(cnt).arg(files.count()).arg((double)el/1000.0,1,'f',2));
 }
 
 void ZSearchTab::mangaDel()
@@ -335,6 +357,8 @@ void ZSearchTab::mangaDel()
     QIntList dl;
     QStringList albums = zGlobal->sqlGetAlbums();
     QModelIndexList li = ui->srcList->selectionModel()->selectedIndexes();
+
+    ui->srcDesc->clear();
 
     listUpdating.lock();
     for (int i=0;i<li.count();i++) {
