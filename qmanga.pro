@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     global.cpp \
     zmangamodel.cpp \
     zsearchtab.cpp \
-    zsearchloader.cpp
+    zsearchloader.cpp \
+    zrarreader.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -37,7 +38,8 @@ HEADERS  += mainwindow.h \
     global.h \
     zmangamodel.h \
     zsearchtab.h \
-    zsearchloader.h
+    zsearchloader.h \
+    zrarreader.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
@@ -47,7 +49,8 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig use_kde_dialogs
+CONFIG += warn_on link_pkgconfig
+# use_kde_dialogs
 
 MAGICK_CXX = $$system(Magick++-config --cxxflags)
 MAGICK_LIBS = $$system(Magick++-config --libs)

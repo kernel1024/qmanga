@@ -50,6 +50,7 @@ void ZZipReader::closeFile()
     mainZFile.close();
     mainFile.close();
     opened = false;
+    sortList.clear();
 }
 
 int ZZipReader::getPageCountPrivate()
@@ -137,51 +138,3 @@ QString ZZipReader::getMagic()
 {
     return QString("ZIP");
 }
-
-ZFileEntry::ZFileEntry()
-{
-    name = QString();
-    idx = -1;
-}
-
-ZFileEntry::ZFileEntry(QString aName, int aIdx)
-{
-    name = aName;
-    idx = aIdx;
-}
-
-ZFileEntry &ZFileEntry::operator =(const ZFileEntry &other)
-{
-    name = other.name;
-    idx = other.idx;
-    return *this;
-}
-
-bool ZFileEntry::operator ==(const ZFileEntry &ref) const
-{
-    return (name==ref.name);
-}
-
-bool ZFileEntry::operator !=(const ZFileEntry &ref) const
-{
-    return (name!=ref.name);
-}
-
-bool ZFileEntry::operator <(const ZFileEntry &ref) const
-{
-    QFileInfo fi1(name);
-    QFileInfo fi2(ref.name);
-    if (fi1.path()==fi2.path())
-        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
-    return (compareWithNumerics(fi1.path(),fi2.path())<0);
-}
-
-bool ZFileEntry::operator >(const ZFileEntry &ref) const
-{
-    QFileInfo fi1(name);
-    QFileInfo fi2(ref.name);
-    if (fi1.path()==fi2.path())
-        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())>0);
-    return (compareWithNumerics(fi1.path(),fi2.path())>0);
-}
-

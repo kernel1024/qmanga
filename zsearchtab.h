@@ -54,6 +54,7 @@ public slots:
     void loaderFinished();
     void updateSplitters();
     void ctxMenu(QPoint pos);
+    void albumCtxMenu(QPoint pos);
 
     void ctxSortName();
     void ctxSortAlbum();
@@ -61,6 +62,7 @@ public slots:
     void ctxSortAdded();
     void ctxSortCreated();
     void ctxReverseOrder();
+    void ctxRenameAlbum();
 signals:
     void mangaDblClick(QString filename);
     void statusBarMsg(QString msg);

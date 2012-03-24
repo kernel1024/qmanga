@@ -23,10 +23,13 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     ui->srcModeIcon->setChecked(ui->srcList->viewMode()==QListView::IconMode);
     ui->srcModeList->setChecked(ui->srcList->viewMode()==QListView::ListMode);
+    ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(ui->srcAlbums,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),
             this,SLOT(albumChanged(QListWidgetItem*,QListWidgetItem*)));
     connect(ui->srcAlbums,SIGNAL(itemActivated(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
+    connect(ui->srcAlbums,SIGNAL(customContextMenuRequested(QPoint)),
+            this,SLOT(albumCtxMenu(QPoint)));
     connect(ui->srcList,SIGNAL(clicked(QModelIndex)),this,SLOT(mangaClicked(QModelIndex)));
     connect(ui->srcList,SIGNAL(activated(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
     connect(ui->srcList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
@@ -104,6 +107,19 @@ void ZSearchTab::ctxMenu(QPoint pos)
     cm.exec(ui->srcList->mapToGlobal(pos));
 }
 
+void ZSearchTab::albumCtxMenu(QPoint pos)
+{
+    QListWidgetItem* itm = ui->srcAlbums->itemAt(pos);
+    if (itm==NULL) return;
+
+    QMenu cm(ui->srcAlbums);
+    QAction* acm;
+    acm = cm.addAction(QIcon::fromTheme("edit-rename"),tr("Rename album"),this,SLOT(ctxRenameAlbum()));
+    acm->setData(itm->text());
+
+    cm.exec(ui->srcAlbums->mapToGlobal(pos));
+}
+
 void ZSearchTab::ctxSortName()
 {
     order = ZGlobal::FileName;
@@ -138,6 +154,23 @@ void ZSearchTab::ctxReverseOrder()
 {
     reverseOrder = !reverseOrder;
     albumClicked(ui->srcAlbums->currentItem());
+}
+
+void ZSearchTab::ctxRenameAlbum()
+{
+    QAction* nt = qobject_cast<QAction *>(sender());
+    if (nt==NULL) return;
+    QString s = nt->data().toString();
+    if (s.isEmpty()) return;
+
+    bool ok;
+    QString n = QInputDialog::getText(this,tr("Rename album"),tr("New name for album '%1'").arg(s),
+                                      QLineEdit::Normal,s,&ok);
+    if (!ok) return;
+
+    zGlobal->sqlRenameAlbum(s,n);
+
+    updateAlbumsList();
 }
 
 void ZSearchTab::updateAlbumsList()
