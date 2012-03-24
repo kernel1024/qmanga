@@ -9,7 +9,6 @@ class ZRarReader : public ZAbstractReader
     Q_OBJECT
 protected:
     QString rarExec;
-    QStringList supportedImg;
 
 public:
     explicit ZRarReader(QObject *parent, QString filename);
@@ -18,6 +17,7 @@ public:
     QImage loadPage(int num);
     QImageHash loadPages(QIntList nums);
     QString getMagic();
+    QString getInternalPath(int idx);
 
 };
 

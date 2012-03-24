@@ -4,7 +4,6 @@ ZRarReader::ZRarReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
 {
     rarExec = QString();
-    supportedImg << "jpg" << "jpeg" << "gif" << "png" << "tiff" << "tif" << "bmp";
 }
 
 bool ZRarReader::openFile()
@@ -98,4 +97,15 @@ QImageHash ZRarReader::loadPages(QIntList nums)
 QString ZRarReader::getMagic()
 {
     return QString("RAR");
+}
+
+QString ZRarReader::getInternalPath(int idx)
+{
+    if (!opened)
+        return QString();
+
+    if (idx>=0 && idx<sortList.count())
+        return sortList.at(idx).name;
+
+    return QString();
 }

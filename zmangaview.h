@@ -42,7 +42,7 @@ public:
     int getPageCount();
     
 signals:
-    void loadPage(int num);
+    void loadedPage(int num, QString msg);
     void doubleClicked();
     void keyPressed(int key);
 

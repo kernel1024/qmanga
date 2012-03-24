@@ -33,7 +33,7 @@ public slots:
     void openAux();
     void openFromIndex(QString filename);
     void closeManga();
-    void dispPage(int num);
+    void dispPage(int num, QString msg);
     void switchFullscreen();
     void viewerKeyPressed(int key);
     void updateViewer();

@@ -102,8 +102,9 @@ void ZSearchTab::ctxMenu(QPoint pos)
     acm->setCheckable(true);
     acm->setChecked(reverseOrder);
     cm.addSeparator();
-    acm = cm.addAction(QIcon::fromTheme("edit-delete"),tr("Delete selected"),this,SLOT(mangaDel()));
-    acm->setEnabled(ui->srcList->selectionModel()->selectedIndexes().count()>0);
+    int cnt = ui->srcList->selectionModel()->selectedIndexes().count();
+    acm = cm.addAction(QIcon::fromTheme("edit-delete"),tr("Delete selected %1 files").arg(cnt),this,SLOT(mangaDel()));
+    acm->setEnabled(cnt>0);
 
     cm.exec(ui->srcList->mapToGlobal(pos));
 }
