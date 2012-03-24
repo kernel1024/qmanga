@@ -13,6 +13,7 @@ protected:
     int pageCount;
     QString fileName;
     QList<ZFileEntry> sortList;
+    QStringList supportedImg;
 
 public:
     explicit ZAbstractReader(QObject *parent, QString filename);
@@ -26,6 +27,7 @@ public:
     virtual QImage loadPage(int num) = 0;
     virtual QImageHash loadPages(QIntList nums) = 0;
     virtual QString getMagic() = 0;
+    virtual QString getInternalPath(int idx);
     
 signals:
     

@@ -21,6 +21,7 @@ public:
     QImage loadPage(int num);
     QImageHash loadPages(QIntList nums);
     QString getMagic();
+    QString getInternalPath(int idx);
 };
 
 #endif // ZZIPREADER_H

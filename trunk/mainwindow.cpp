@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionMinimize,SIGNAL(triggered()),this,SLOT(showMinimized()));
 
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
-    connect(ui->mangaView,SIGNAL(loadPage(int)),this,SLOT(dispPage(int)));
+    connect(ui->mangaView,SIGNAL(loadedPage(int,QString)),this,SLOT(dispPage(int,QString)));
     connect(ui->scrollArea,SIGNAL(sizeChanged(QSize)),ui->mangaView,SLOT(ownerResized(QSize)));
     connect(ui->comboZoom,SIGNAL(currentIndexChanged(QString)),ui->mangaView,SLOT(setZoomAny(QString)));
     connect(ui->mangaView,SIGNAL(doubleClicked()),this,SLOT(switchFullscreen()));
@@ -78,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
     zGlobal->loadSettings();
     if (!isMaximized())
         centerWindow();
-    dispPage(-1);
+    dispPage(-1,QString());
 }
 
 MainWindow::~MainWindow()
@@ -139,13 +139,18 @@ void MainWindow::closeManga()
     ui->mangaView->closeFile();
 }
 
-void MainWindow::dispPage(int num)
+void MainWindow::dispPage(int num, QString msg)
 {
     updateTitle();
     if (num<0 || ui->mangaView->getPageCount()<=0)
         ui->lblPosition->clear();
     else
         ui->lblPosition->setText(tr("%1 / %2").arg(num+1).arg(ui->mangaView->getPageCount()));
+
+    if (!msg.isEmpty())
+        statusBar()->showMessage(msg);
+    else
+        statusBar()->clearMessage();
 }
 
 void MainWindow::switchFullscreen()

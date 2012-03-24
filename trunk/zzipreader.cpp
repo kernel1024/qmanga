@@ -32,6 +32,8 @@ bool ZZipReader::openFile()
         QuaZipFileInfo zfi;
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
+        QFileInfo fi(zfi.name);
+        if (!supportedImg.contains(fi.completeSuffix(),Qt::CaseInsensitive)) continue;
         sortList << ZFileEntry(zfi.name,cnt);
         cnt++;
     }
@@ -68,6 +70,8 @@ QImage ZZipReader::loadPage(int num)
         QuaZipFileInfo zfi;
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
+        QFileInfo fi(zfi.name);
+        if (!supportedImg.contains(fi.completeSuffix(),Qt::CaseInsensitive)) continue;
 
         if (idx==znum) {
             QuaZipFileInfo zfi;
@@ -106,6 +110,8 @@ QImageHash ZZipReader::loadPages(QIntList nums)
         QuaZipFileInfo zfi;
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
+        QFileInfo fi(zfi.name);
+        if (!supportedImg.contains(fi.completeSuffix(),Qt::CaseInsensitive)) continue;
 
         if (znums.keys().contains(idx)) {
             QuaZipFileInfo zfi;
@@ -129,4 +135,15 @@ QImageHash ZZipReader::loadPages(QIntList nums)
 QString ZZipReader::getMagic()
 {
     return QString("ZIP");
+}
+
+QString ZZipReader::getInternalPath(int idx)
+{
+    if (!opened)
+        return QString();
+
+    if (idx>=0 && idx<sortList.count())
+        return sortList.at(idx).name;
+
+    return QString();
 }

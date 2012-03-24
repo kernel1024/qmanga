@@ -21,7 +21,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
     p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
     setPalette(p);
 
-    emit loadPage(-1);
+    emit loadedPage(-1,QString());
 }
 
 ZMangaView::~ZMangaView()
@@ -82,24 +82,24 @@ void ZMangaView::closeFile()
     curPixmap = QPixmap();
     openedFile = QString();
     update();
-    emit loadPage(-1);
+    emit loadedPage(-1,QString());
 }
 
 void ZMangaView::setPage(int page)
 {
     if (!mReader) {
-        emit loadPage(-1);
+        emit loadedPage(-1,QString());
         return;
     }
     if (!mReader->isOpened()) {
-        emit loadPage(-1);
+        emit loadedPage(-1,QString());
         return;
     }
     if (page<0 || page>=mReader->getPageCount()) return;
 
     currentPage = page;
     redrawPage();
-    emit loadPage(page);
+    emit loadedPage(page,mReader->getInternalPath(page));
     setFocus();
 }
 
