@@ -49,8 +49,7 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig
-# use_kde_dialogs
+CONFIG += warn_on link_pkgconfig use_kde_dialogs
 
 MAGICK_CXX = $$system(Magick++-config --cxxflags)
 MAGICK_LIBS = $$system(Magick++-config --libs)
