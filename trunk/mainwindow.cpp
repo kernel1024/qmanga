@@ -181,7 +181,10 @@ void MainWindow::updateBookmarks()
     foreach (const QString &t, zGlobal->bookmarks.keys()) {
         QAction* a = bookmarksMenu->addAction(t,this,SLOT(openBookmark()));
         a->setData(zGlobal->bookmarks.value(t));
-        a->setStatusTip(zGlobal->bookmarks.value(t));
+        QString st = zGlobal->bookmarks.value(t);
+        if (st.split('\n').count()>0)
+            st = st.split('\n').at(0);
+        a->setStatusTip(st);
     }
 }
 
@@ -205,7 +208,7 @@ void MainWindow::createBookmark()
     if (dlg->exec()) {
         QString t = dlg->getBkTitle();
         if (!t.isEmpty() && !zGlobal->bookmarks.contains(t)) {
-            zGlobal->bookmarks[t]=dlg->getBkFilename();
+            zGlobal->bookmarks[t]=QString("%1\n%2").arg(dlg->getBkFilename()).arg(ui->mangaView->currentPage);
             updateBookmarks();
         } else
             QMessageBox::warning(this,tr("QManga"),
@@ -221,11 +224,19 @@ void MainWindow::openBookmark()
     if (a==NULL) return;
 
     QString f = a->data().toString();
+    QStringList sl = a->data().toString().split('\n');
+    int page = 0;
+    if (sl.count()>1) {
+        f = sl.at(0);
+        bool okconv;
+        page = sl.at(1).toInt(&okconv);
+        if (!okconv) page = 0;
+    }
     QFileInfo fi(f);
     if (!fi.isReadable()) return;
 
     ui->tabWidget->setCurrentIndex(0);
-    ui->mangaView->openFile(f);
+    ui->mangaView->openFile(f,page);
 }
 
 void MainWindow::helpAbout()

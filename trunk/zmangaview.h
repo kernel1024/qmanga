@@ -47,7 +47,7 @@ signals:
     void keyPressed(int key);
 
 public slots:
-    void openFile(QString filename);
+    void openFile(QString filename, int page = 0);
     void closeFile();
     void setPage(int page);
     void redrawPage();
