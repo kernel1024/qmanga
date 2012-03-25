@@ -18,8 +18,6 @@ bool ZZipReader::openFile()
     }
 
     mainFile.setFileName(fileName);
-    if (!mainFile.open(QIODevice::ReadOnly))
-        return false;
 
     mainZFile.setIoDevice(&mainFile);
     if (!mainZFile.open(QuaZip::mdUnzip)) {

@@ -23,7 +23,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
     listUpdating->lock();
     int maxl = mList->length();
     listUpdating->unlock();
-    if (idx>=maxl)
+    if (idx<0 || idx>=maxl)
         return QVariant();
 
     if (role == Qt::DecorationRole && index.column()==0) {

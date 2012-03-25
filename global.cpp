@@ -40,10 +40,15 @@ QString escapeParam(QString param)
 
 int compareWithNumerics(QString ref1, QString ref2)
 {
+    qDebug() << ref1 << ref2;
     // find common part of both strings
     int mlen = qMin(ref1.length(),ref2.length());
     int diffs = 0;
     for (int i=0;i<mlen;i++) {
+        if (ref1.at(i).isDigit() || ref2.at(i).isDigit()) {
+            diffs = i;
+            break;
+        }
         if (ref1.at(i)!=ref2.at(i)) {
             diffs = i;
             break;
