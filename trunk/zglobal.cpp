@@ -377,7 +377,7 @@ void ZGlobal::sqlGetFiles(QString album, QString search, SQLMangaList* mList,
             listUpdating->lock();
             *mList << SQLMangaEntry(qr.value(0).toString(),
                                     qr.value(1).toString(),
-                                    album,
+                                    qr.value(9).toString(),
                                     p,
                                     qr.value(3).toInt(),
                                     qr.value(4).toInt(),
@@ -502,7 +502,7 @@ int ZGlobal::sqlAddFiles(QStringList aFiles, QString album)
 
         QApplication::processEvents();
         pd.setValue(100*i/files.count());
-        QString s = fi.completeBaseName();
+        QString s = fi.fileName();
         if (s.length()>60) s = s.left(60)+"...";
         pd.setLabelText(s);
 

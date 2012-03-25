@@ -53,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(helpAbout()));
     connect(ui->actionFullscreen,SIGNAL(triggered()),this,SLOT(switchFullscreen()));
     connect(ui->actionMinimize,SIGNAL(triggered()),this,SLOT(showMinimized()));
+    connect(ui->actionSaveSettings,SIGNAL(triggered()),zGlobal,SLOT(saveSettings()));
 
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
     connect(ui->mangaView,SIGNAL(loadedPage(int,QString)),this,SLOT(dispPage(int,QString)));
@@ -209,7 +210,7 @@ void MainWindow::createBookmark()
 {
     if (ui->mangaView->openedFile.isEmpty()) return;
     QFileInfo fi(ui->mangaView->openedFile);
-    QBookmarkDlg *dlg = new QBookmarkDlg(this,fi.fileName(),ui->mangaView->openedFile);
+    QBookmarkDlg *dlg = new QBookmarkDlg(this,fi.completeBaseName(),ui->mangaView->openedFile);
     if (dlg->exec()) {
         QString t = dlg->getBkTitle();
         if (!t.isEmpty() && !zGlobal->bookmarks.contains(t)) {

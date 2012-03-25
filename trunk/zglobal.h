@@ -78,9 +78,6 @@ public:
 
     int dpiX, dpiY;
 
-    void loadSettings();
-    void saveSettings();
-
     QString detectMIME(QString filename);
     QString detectMIME(QByteArray buf);
     QPixmap resizeImage(QPixmap src, QSize targetSize,
@@ -126,6 +123,8 @@ public:
     
 public slots:
     void settingsDlg();
+    void loadSettings();
+    void saveSettings();
 
 };
 

@@ -12,6 +12,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     descTemplate = ui->srcDesc->toHtml();
     ui->srcDesc->clear();
     loadingNow = false;
+    ui->srcLoading->hide();
 
     srclIconSize = ui->srcIconSize;
     srclModeIcon = ui->srcModeIcon;
@@ -201,6 +202,7 @@ void ZSearchTab::updateWidgetsState()
     ui->srcEditBtn->setEnabled(!loadingNow);
     ui->srcEdit->setEnabled(!loadingNow);
     ui->srcAlbums->setEnabled(!loadingNow);
+    ui->srcLoading->setVisible(loadingNow);
 }
 
 QSize ZSearchTab::gridSize(int ref)
