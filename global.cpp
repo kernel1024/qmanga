@@ -40,7 +40,6 @@ QString escapeParam(QString param)
 
 int compareWithNumerics(QString ref1, QString ref2)
 {
-    qDebug() << ref1 << ref2;
     // find common part of both strings
     int mlen = qMin(ref1.length(),ref2.length());
     int diffs = 0;
