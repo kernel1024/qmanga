@@ -76,7 +76,7 @@ public:
     QFont idxFont;
     QString dbBase, dbUser, dbPass;
 
-    int dpiX, dpiY;
+    int pdfRenderWidth;
 
     QString detectMIME(QString filename);
     QString detectMIME(QByteArray buf);

@@ -25,8 +25,9 @@ ZGlobal::ZGlobal(QObject *parent) :
         screen = desktop->screenNumber(QCursor::pos());
     }
 
-    dpiX = desktop->screen(screen)->physicalDpiX();
-    dpiY = desktop->screen(screen)->physicalDpiY();
+    pdfRenderWidth = 2*desktop->screen(screen)->width()/3;
+    if (pdfRenderWidth<1000)
+        pdfRenderWidth = 1000;
 }
 
 void ZGlobal::loadSettings()
