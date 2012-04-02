@@ -31,7 +31,7 @@ bool ZZipReader::openFile()
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
         QFileInfo fi(zfi.name);
-        if (!supportedImg.contains(fi.completeSuffix(),Qt::CaseInsensitive)) continue;
+        if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
         sortList << ZFileEntry(zfi.name,cnt);
         cnt++;
     }
@@ -69,7 +69,7 @@ QImage ZZipReader::loadPage(int num)
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
         QFileInfo fi(zfi.name);
-        if (!supportedImg.contains(fi.completeSuffix(),Qt::CaseInsensitive)) continue;
+        if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
 
         if (idx==znum) {
             QuaZipFileInfo zfi;
@@ -109,7 +109,7 @@ QImageHash ZZipReader::loadPages(QIntList nums)
         mainZFile.getCurrentFileInfo(&zfi);
         if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
         QFileInfo fi(zfi.name);
-        if (!supportedImg.contains(fi.completeSuffix(),Qt::CaseInsensitive)) continue;
+        if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
 
         if (znums.keys().contains(idx)) {
             QuaZipFileInfo zfi;
