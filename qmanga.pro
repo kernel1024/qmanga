@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     zsearchtab.cpp \
     zsearchloader.cpp \
     zrarreader.cpp \
-    zpdfreader.cpp
+    zpdfreader.cpp \
+    albumselectordlg.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -41,12 +42,14 @@ HEADERS  += mainwindow.h \
     zsearchtab.h \
     zsearchloader.h \
     zrarreader.h \
-    zpdfreader.h
+    zpdfreader.h \
+    albumselectordlg.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
     bookmarkdlg.ui \
-    zsearchtab.ui
+    zsearchtab.ui \
+    albumselectordlg.ui
 
 RESOURCES += \
     qmanga.qrc
