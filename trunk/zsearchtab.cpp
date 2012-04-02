@@ -2,6 +2,7 @@
 #include "ui_zsearchtab.h"
 #include "zglobal.h"
 #include "zmangamodel.h"
+#include "albumselectordlg.h"
 
 ZSearchTab::ZSearchTab(QWidget *parent) :
     QWidget(parent),
@@ -214,6 +215,18 @@ QSize ZSearchTab::gridSize(int ref)
     return QSize(ui->srcList->width()/3,25*fm.height()/10);
 }
 
+QString ZSearchTab::getAlbumNameToAdd(QString suggest)
+{
+    AlbumSelectorDlg* dlg = new AlbumSelectorDlg(this,zGlobal->sqlGetAlbums(),suggest);
+    QString ret = QString();
+    if (dlg->exec()) {
+        ret = dlg->listAlbums->lineEdit()->text();
+    }
+    dlg->setParent(NULL);
+    delete dlg;
+    return ret;
+}
+
 void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
 {
     if (current==NULL) return;
@@ -304,17 +317,13 @@ void ZSearchTab::mangaAdd()
 
     QDir d(fi.path());
     QString album = d.dirName();
-    bool ok;
-    album = QInputDialog::getText(this,tr("QManga"),tr("Album name"),QLineEdit::Normal,album,&ok);
-    int cnt = 0;
-    int el = 0;
-    if (ok) {
-        QTime tmr;
-        tmr.start();
-        cnt = zGlobal->sqlAddFiles(fl,album);
-        el = tmr.elapsed();
-    } else
-        return;
+    album = getAlbumNameToAdd(album);
+    if (album.isEmpty()) return;
+
+    QTime tmr;
+    tmr.start();
+    int cnt = zGlobal->sqlAddFiles(fl,album);
+    int el = tmr.elapsed();
 
     updateAlbumsList();
 
@@ -337,17 +346,13 @@ void ZSearchTab::mangaAddDir()
             files << fl.at(i).absoluteFilePath();
     QString album = d.dirName();
 
-    bool ok;
-    album = QInputDialog::getText(this,tr("QManga"),tr("Album name"),QLineEdit::Normal,album,&ok);
-    int cnt = 0;
-    int el = 0;
-    if (ok) {
-        QTime tmr;
-        tmr.start();
-        cnt = zGlobal->sqlAddFiles(files,album);
-        el = tmr.elapsed();
-    } else
-        return;
+    album = getAlbumNameToAdd(album);
+    if (album.isEmpty()) return;
+
+    QTime tmr;
+    tmr.start();
+    int cnt = zGlobal->sqlAddFiles(files,album);
+    int el = tmr.elapsed();
 
     updateAlbumsList();
 

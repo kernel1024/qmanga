@@ -39,6 +39,7 @@ private:
     QTime searchTimer;
 
     QSize gridSize(int ref);
+    QString getAlbumNameToAdd(QString suggest);
 
 public slots:
     void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
