@@ -20,7 +20,6 @@ ZGlobal::ZGlobal(QObject *parent) :
             db,SLOT(setCredentials(QString,QString,QString)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbCheckBase()),db,SLOT(sqlCheckBase()),Qt::QueuedConnection);
     connect(this,SIGNAL(dbCheckEmptyAlbums()),db,SLOT(sqlDelEmptyAlbums()),Qt::QueuedConnection);
-    // connect stuff here
     db->moveToThread(threadDB);
     threadDB->start();
 
@@ -84,6 +83,8 @@ void ZGlobal::loadSettings()
 
     settings.endGroup();
 
+    emit dbSetCredentials(dbBase,dbUser,dbPass);
+
     if (w!=NULL) {
         if (showMaximized)
             w->showMaximized();
@@ -94,7 +95,6 @@ void ZGlobal::loadSettings()
         if (w->srcWidget->isEnabled())
             w->srcWidget->updateAlbumsList();
     }
-    emit dbSetCredentials(dbBase,dbUser,dbPass);
     emit dbCheckBase();
 }
 
@@ -203,6 +203,7 @@ void ZGlobal::settingsDlg()
         for (int i=0; i<dlg->listBookmarks->count(); i++)
             bookmarks[dlg->listBookmarks->item(i)->data(Qt::UserRole).toString()]=
                     dlg->listBookmarks->item(i)->data(Qt::UserRole+1).toString();
+        emit dbSetCredentials(dbBase,dbUser,dbPass);
         if (w!=NULL) {
             w->updateBookmarks();
             w->updateViewer();
@@ -210,7 +211,6 @@ void ZGlobal::settingsDlg()
             if (w->srcWidget->isEnabled())
                 w->srcWidget->updateAlbumsList();
         }
-        emit dbSetCredentials(dbBase,dbUser,dbPass);
         emit dbCheckBase();
     }
     dlg->setParent(NULL);

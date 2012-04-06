@@ -63,6 +63,9 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
             default: return QVariant();
         }
         return QVariant();
+    } else if (role == Qt::ToolTipRole || role == Qt::StatusTipRole) {
+        SQLMangaEntry t = zg->db->getResultItem(idx);
+        return t.name;
     }
     return QVariant();
 }

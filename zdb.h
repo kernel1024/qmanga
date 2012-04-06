@@ -65,7 +65,7 @@ signals:
     void listRowsAboutToAppended(int pos, int last);
     void listRowsDeleted();
     void listRowsAboutToDeleted(int pos, int last);
-    void gotAlbums(QStringList& albums);
+    void gotAlbums(const QStringList& albums);
     void filesLoaded(const int count, const int elapsed);
 
 public slots:
@@ -79,7 +79,7 @@ public slots:
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
     void sqlClearList();
-    void sqlGetFiles(const QString& album, const QString& search, Z::Ordering order, bool reverseOrder);
+    void sqlGetFiles(const QString& album, const QString& search, const int sortOrder, const bool reverseOrder);
 
 };
 
