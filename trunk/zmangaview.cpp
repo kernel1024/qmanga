@@ -1,12 +1,13 @@
 #include "zmangaview.h"
 #include "zglobal.h"
 #include "mainwindow.h"
+#include "zmangacache.h"
 
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
 {
     currentPage = 0;
-    mReader = NULL;
+    privPageCount = 0;
     zoomMode = Fit;
     zoomDynamic = false;
     zoomPos = QPoint();
@@ -21,13 +22,26 @@ ZMangaView::ZMangaView(QWidget *parent) :
     p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
     setPalette(p);
 
+    threadCache = new QThread();
+    ZMangaCache* iCache = new ZMangaCache();
+    connect(iCache,SIGNAL(gotPage(const QImage&,const int&,const QString&)),
+            this,SLOT(cacheGotPage(const QImage&,const int&,const QString&)),Qt::QueuedConnection);
+    connect(iCache,SIGNAL(gotPageCount(const int&, const int&)),
+            this,SLOT(cacheGotPageCount(const int&, const int&)),Qt::QueuedConnection);
+    connect(iCache,SIGNAL(gotError(const QString&)),
+            this,SLOT(cacheGotError(const QString&)),Qt::QueuedConnection);
+    connect(this,SIGNAL(cacheOpenFile(QString,int)),iCache,SLOT(openFile(QString,int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(cacheGetPage(int)),iCache,SLOT(getPage(int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(cacheCloseFile()),iCache,SLOT(closeFile()),Qt::QueuedConnection);
+    iCache->moveToThread(threadCache);
+    threadCache->start();
+
     emit loadedPage(-1,QString());
 }
 
 ZMangaView::~ZMangaView()
 {
-    if (mReader!=NULL)
-        closeFile();
+    threadCache->quit();
 }
 
 void ZMangaView::setZoomMode(ZMangaView::ZoomMode mode)
@@ -43,42 +57,18 @@ ZMangaView::ZoomMode ZMangaView::getZoomMode()
 
 int ZMangaView::getPageCount()
 {
-    if (!mReader) return -1;
-    if (!mReader->isOpened()) return -1;
-    return mReader->getPageCount();
+    return privPageCount;
 }
 
 void ZMangaView::openFile(QString filename, int page)
 {
-    if (mReader!=NULL)
-        closeFile();
-
-    ZAbstractReader* za = readerFactory(this,filename);
-    if (za == NULL) {
-        QMessageBox::critical(this,tr("QManga"),tr("File format not supported"));
-        return;
-    }
-    if (!za->openFile()) {
-        QMessageBox::critical(this,tr("QManga"),tr("Unable to open file"));
-        za->setParent(NULL);
-        delete za;
-        return;
-    }
-    mReader = za;
-    iCache.clear();
+    emit cacheOpenFile(filename,page);
     openedFile = filename;
-    setPage(page);
 }
 
 void ZMangaView::closeFile()
 {
-    if (mReader!=NULL) {
-        mReader->closeFile();
-    }
-    mReader->setParent(NULL);
-    delete mReader;
-    mReader = NULL;
-    iCache.clear();
+    emit cacheCloseFile();
     curPixmap = QPixmap();
     openedFile = QString();
     update();
@@ -87,20 +77,8 @@ void ZMangaView::closeFile()
 
 void ZMangaView::setPage(int page)
 {
-    if (!mReader) {
-        emit loadedPage(-1,QString());
-        return;
-    }
-    if (!mReader->isOpened()) {
-        emit loadedPage(-1,QString());
-        return;
-    }
-    if (page<0 || page>=mReader->getPageCount()) return;
-
-    currentPage = page;
-    redrawPage();
-    emit loadedPage(page,mReader->getInternalPath(page));
-    setFocus();
+    if (page<0 || page>=privPageCount) return;
+    emit cacheGetPage(page);
 }
 
 void ZMangaView::wheelEvent(QWheelEvent *event)
@@ -175,7 +153,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
 
         }
     } else {
-        if (!iCache.isEmpty()) {
+        if (currentPage>=0 && currentPage<privPageCount && curUmPixmap.isNull()) {
             QPixmap p(":/img/edit-delete.png");
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
             w.setPen(QPen(zGlobal->foregroundColor()));
@@ -276,12 +254,9 @@ void ZMangaView::redrawPage()
     p.setBrush(QPalette::Dark,QBrush(zGlobal->backgroundColor));
     setPalette(p);
 
-    if (!mReader) return;
-    if (!mReader->isOpened()) return;
+    if (openedFile.isEmpty()) return;
+    if (currentPage<0 || currentPage>=privPageCount) return;
 
-    // Cache management
-    cacheDropUnusable();
-    cacheFillNearest();
     int scb = 6;
     if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
         scb = scroller->verticalScrollBar()->width();
@@ -292,8 +267,7 @@ void ZMangaView::redrawPage()
     // Draw current page
     curPixmap = QPixmap();
 
-    if (iCache.contains(currentPage)) {
-        curUmPixmap = QPixmap::fromImage(iCache.value(currentPage));
+    if (!curUmPixmap.isNull()) {
         QSize sz(scroller->size().width()-scb*2,scroller->size().height()-scb*2);
         QSize ssz = sz;
         curPixmap = curUmPixmap;
@@ -336,36 +310,24 @@ void ZMangaView::minimizeWindowCtx()
 
 void ZMangaView::navFirst()
 {
-    if (!mReader) return;
-    if (!mReader->isOpened()) return;
-
     setPage(0);
 }
 
 void ZMangaView::navPrev()
 {
-    if (!mReader) return;
-    if (!mReader->isOpened()) return;
-
     if (currentPage>0)
         setPage(currentPage-1);
 }
 
 void ZMangaView::navNext()
 {
-    if (!mReader) return;
-    if (!mReader->isOpened()) return;
-
-    if (currentPage<mReader->getPageCount()-1)
+    if (currentPage<privPageCount-1)
         setPage(currentPage+1);
 }
 
 void ZMangaView::navLast()
 {
-    if (!mReader) return;
-    if (!mReader->isOpened()) return;
-
-    setPage(mReader->getPageCount()-1);
+    setPage(privPageCount-1);
 }
 
 void ZMangaView::setZoomFit()
@@ -408,44 +370,22 @@ void ZMangaView::setZoomAny(QString proc)
     redrawPage();
 }
 
-void ZMangaView::cacheDropUnusable()
+void ZMangaView::cacheGotPage(const QImage &page, const int &num, const QString &internalPath)
 {
-    QIntList toCache = cacheGetActivePages();
-    QIntList cached = iCache.keys();
-    for (int i=0;i<cached.count();i++) {
-        if (!toCache.contains(i))
-            iCache.remove(i);
-    }
+    currentPage = num;
+    curUmPixmap = QPixmap::fromImage(page);
+    emit loadedPage(num,internalPath);
+    setFocus();
+    redrawPage();
 }
 
-void ZMangaView::cacheFillNearest()
+void ZMangaView::cacheGotPageCount(const int &num, const int &preferred)
 {
-    QIntList toCache = cacheGetActivePages();
-    int idx = 0;
-    while (idx<toCache.count()) {
-        if (iCache.contains(toCache.at(idx)))
-            toCache.removeAt(idx);
-        else
-            idx++;
-    }
-
-    iCache.unite(mReader->loadPages(toCache));
+    privPageCount = num;
+    setPage(preferred);
 }
 
-QIntList ZMangaView::cacheGetActivePages()
+void ZMangaView::cacheGotError(const QString &msg)
 {
-    QIntList l;
-    if (!mReader) return l;
-    if (!mReader->isOpened()) return l;
-
-    for (int i=0;i<zGlobal->cacheWidth-1;i++) {
-        l << i;
-        if (!l.contains(mReader->getPageCount()-i-1))
-            l << mReader->getPageCount()-i-1;
-    }
-    for (int i=(currentPage-zGlobal->cacheWidth);i<(currentPage+zGlobal->cacheWidth);i++) {
-        if (i>=0 && i<mReader->getPageCount() && !l.contains(i))
-            l << i;
-    }
-    return l;
+    QMessageBox::critical(this,tr("QManga"),msg);
 }

@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     zsearchloader.cpp \
     zrarreader.cpp \
     zpdfreader.cpp \
-    albumselectordlg.cpp
+    albumselectordlg.cpp \
+    zmangacache.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -43,7 +44,8 @@ HEADERS  += mainwindow.h \
     zsearchloader.h \
     zrarreader.h \
     zpdfreader.h \
-    albumselectordlg.h
+    albumselectordlg.h \
+    zmangacache.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
