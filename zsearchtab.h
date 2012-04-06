@@ -25,11 +25,10 @@ public:
     ~ZSearchTab();
 
     void updateAlbumsList();
-    void updateWidgetsState();
     
 private:
     Ui::ZSearchTab *ui;
-    bool loadingNow;
+    QStateMachine loadingState;
     QString descTemplate;
     ZMangaModel* model;
     QProgressDialog progressDlg;
@@ -41,28 +40,25 @@ private:
 public slots:
     void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
     void albumClicked(QListWidgetItem * item);
+
     void mangaSearch();
     void mangaSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
     void mangaOpen(const QModelIndex &index);
     void mangaAdd();
     void mangaAddDir();
     void mangaDel();
+
     void listModeChanged(bool state);
     void iconSizeChanged(int ref);
     void updateSplitters();
-    void ctxMenu(QPoint pos);
-    void albumCtxMenu(QPoint pos);
 
-    void ctxSortName();
-    void ctxSortAlbum();
-    void ctxSortPage();
-    void ctxSortAdded();
-    void ctxSortCreated();
-    void ctxReverseOrder();
+    void ctxMenu(QPoint pos);
+    void ctxAlbumMenu(QPoint pos);
+    void ctxSorting();
     void ctxRenameAlbum();
 
-    void showProgressDialog(const bool visible);
-    void showProgressState(const int value, const QString& msg);
+    void dbShowProgressDialog(const bool visible);
+    void dbShowProgressState(const int value, const QString& msg);
     void dbAlbumsListUpdated();
     void dbAlbumsListReady(const QStringList& albums);
     void dbFilesAdded(const int count, const int total, const int elapsed);
