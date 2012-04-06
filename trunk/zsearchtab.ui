@@ -199,6 +199,54 @@ p, li { white-space: pre-wrap; }
     </widget>
    </item>
   </layout>
+  <action name="actionSortByName">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>By name</string>
+   </property>
+  </action>
+  <action name="actionSortByAlbum">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>By album</string>
+   </property>
+  </action>
+  <action name="actionSortByPageCount">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>By page count</string>
+   </property>
+  </action>
+  <action name="actionSortByAdded">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>By added date</string>
+   </property>
+  </action>
+  <action name="actionSortByCreation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>By file creation date</string>
+   </property>
+  </action>
+  <action name="actionSortReverse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Reverse order</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>srcAlbums</tabstop>
