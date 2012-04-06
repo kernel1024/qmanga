@@ -1,13 +1,10 @@
 #include "zmangamodel.h"
 
-ZMangaModel::ZMangaModel(QObject *parent, SQLMangaList *aList, QSlider* aPixmapSize, QListView* aView,
-                         QMutex* aListUpdating) :
+ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QListView *aView) :
     QAbstractListModel(parent)
 {
-    mList = aList;
     pixmapSize = aPixmapSize;
     view = aView;
-    listUpdating = aListUpdating;
 }
 
 Qt::ItemFlags ZMangaModel::flags(const QModelIndex &) const
@@ -17,12 +14,10 @@ Qt::ItemFlags ZMangaModel::flags(const QModelIndex &) const
 
 QVariant ZMangaModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || mList==NULL || zGlobal==NULL) return QVariant();
+    if (!index.isValid() || zg==NULL || zg->db==NULL) return QVariant();
     int idx = index.row();
 
-    listUpdating->lock();
-    int maxl = mList->length();
-    listUpdating->unlock();
+    int maxl = zg->db->getResultCount();
     if (idx<0 || idx>=maxl)
         return QVariant();
 
@@ -36,12 +31,11 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
         QPainter cp(&rp);
         cp.fillRect(0,0,rp.width(),rp.height(),view->palette().base());
 
-        listUpdating->lock();
-        QPixmap p = QPixmap::fromImage(mList->at(idx).cover);
+        SQLMangaEntry itm = zg->db->getResultItem(idx);
+        QPixmap p = QPixmap::fromImage(itm.cover);
         if (p.isNull())
             p = QPixmap(":/img/edit-delete.png");
         p.detach();
-        listUpdating->unlock();
 
         p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
         if (p.height()<rp.height())
@@ -55,13 +49,11 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
         cp.drawLine(0,rp.height()-1,0,0);
         return rp;
     } else if (role == Qt::TextColorRole) {
-        return zGlobal->foregroundColor();
+        return zg->foregroundColor();
     } else if (role == Qt::FontRole) {
-        return zGlobal->idxFont;
+        return zg->idxFont;
     } else if (role == Qt::DisplayRole) {
-        listUpdating->lock();
-        SQLMangaEntry t = mList->at(index.row());
-        listUpdating->unlock();
+        SQLMangaEntry t = zg->db->getResultItem(idx);
         switch (index.column()) {
             case 0: return t.name;
             case 1: return t.album;
@@ -93,19 +85,15 @@ QVariant ZMangaModel::headerData(int section, Qt::Orientation, int role) const
 
 int ZMangaModel::rowCount(const QModelIndex &) const
 {
-    if (zGlobal==NULL) return 0;
-    if (view->palette().base().color()!=zGlobal->backgroundColor) {
+    if (zg==NULL) return 0;
+    if (view->palette().base().color()!=zg->backgroundColor) {
         QPalette pl = view->palette();
-        pl.setBrush(QPalette::Base,QBrush(zGlobal->backgroundColor));
+        pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
         view->setPalette(pl);
     }
 
-    if (mList==NULL)
-        return 0;
-    listUpdating->lock();
-    int cnt = mList->count();
-    listUpdating->unlock();
-    return cnt;
+    if (zg->db==NULL) return 0;
+    return zg->db->getResultCount();
 }
 
 int ZMangaModel::columnCount(const QModelIndex &) const

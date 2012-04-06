@@ -115,7 +115,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
             if (baseRect.contains(mp,true)) {
                 mp.setX(mp.x()*curUmPixmap.width()/curPixmap.width());
                 mp.setY(mp.y()*curUmPixmap.height()/curPixmap.height());
-                int msz = zGlobal->magnifySize;
+                int msz = zg->magnifySize;
 
                 if (curPixmap.width()<curUmPixmap.width() || curPixmap.height()<curUmPixmap.height()) {
                     QRect cutBox(mp.x()-msz/2,mp.y()-msz/2,msz,msz);
@@ -140,7 +140,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
                     if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
                     if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
                     QPixmap zoomed = curUmPixmap.copy(cutBox);
-                    zoomed = zGlobal->resizeImage(zoomed,zoomed.size()*3.0,true,ZGlobal::Lanczos);
+                    zoomed = resizeImage(zoomed,zoomed.size()*3.0,true,Z::Lanczos);
                     baseRect = QRect(QPoint(zoomPos.x()-zoomed.width()/2,zoomPos.y()-zoomed.height()/2),
                                      zoomed.size());
                     if (baseRect.left()<0) baseRect.moveLeft(0);
@@ -156,7 +156,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
         if (currentPage>=0 && currentPage<privPageCount && curUmPixmap.isNull()) {
             QPixmap p(":/img/edit-delete.png");
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
-            w.setPen(QPen(zGlobal->foregroundColor()));
+            w.setPen(QPen(zg->foregroundColor()));
             w.drawText(0,(height()-p.height())/2+p.height()+5,width(),w.fontMetrics().height(),Qt::AlignCenter,
                        tr("Error loading page %1").arg(currentPage));
         }
@@ -251,7 +251,7 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
 void ZMangaView::redrawPage()
 {
     QPalette p = palette();
-    p.setBrush(QPalette::Dark,QBrush(zGlobal->backgroundColor));
+    p.setBrush(QPalette::Dark,QBrush(zg->backgroundColor));
     setPalette(p);
 
     if (openedFile.isEmpty()) return;
@@ -287,7 +287,7 @@ void ZMangaView::redrawPage()
                 sz.setWidth(round(((double)sz.height())*pixAspect));
             }
             if (sz!=ssz)
-                curPixmap = zGlobal->resizeImage(curUmPixmap,sz);
+                curPixmap = resizeImage(curUmPixmap,sz);
         }
         setMinimumSize(curPixmap.width(),curPixmap.height());
 
