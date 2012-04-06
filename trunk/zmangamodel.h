@@ -3,18 +3,16 @@
 
 #include <QAbstractListModel>
 #include "zglobal.h"
+#include "zdb.h"
 
 class ZMangaModel : public QAbstractListModel
 {
     Q_OBJECT
 private:
-    SQLMangaList *mList;
     QSlider *pixmapSize;
     QListView *view;
-    QMutex *listUpdating;
 public:
-    explicit ZMangaModel(QObject *parent, SQLMangaList *aList, QSlider *aPixmapSize,
-                         QListView *aView, QMutex *aListUpdating);
+    explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, QListView *aView);
 
     Qt::ItemFlags flags(const QModelIndex & index) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;

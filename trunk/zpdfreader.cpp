@@ -57,7 +57,7 @@ QImage ZPdfReader::loadPage(int num)
     int idx = sortList.at(num).idx;
     Poppler::Page* page = doc->page(idx);
     if (page!=NULL) {
-        double dpi = 72.0*((double)zGlobal->pdfRenderWidth)/page->pageSizeF().width();
+        double dpi = 72.0*((double)zg->pdfRenderWidth)/page->pageSizeF().width();
         res = page->renderToImage(dpi,dpi);
         delete page;
     }

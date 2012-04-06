@@ -4,7 +4,6 @@
 #include <QtCore>
 #include <QtGui>
 #include "zglobal.h"
-#include "zsearchloader.h"
 #include "zmangamodel.h"
 
 namespace Ui {
@@ -19,7 +18,7 @@ public:
     QSlider* srclIconSize;
     QRadioButton* srclModeIcon;
     QRadioButton* srclModeList;
-    ZGlobal::ZOrdering order;
+    Z::Ordering order;
     bool reverseOrder;
 
     explicit ZSearchTab(QWidget *parent = 0);
@@ -30,13 +29,11 @@ public:
     
 private:
     Ui::ZSearchTab *ui;
-    SQLMangaList mangaList;
-    QMutex listUpdating;
     bool loadingNow;
     QString descTemplate;
-    ZSearchLoader loader;
     ZMangaModel* model;
-    QTime searchTimer;
+    QProgressDialog progressDlg;
+    QStringList cachedAlbums;
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(QString suggest);
@@ -52,7 +49,6 @@ public slots:
     void mangaDel();
     void listModeChanged(bool state);
     void iconSizeChanged(int ref);
-    void loaderFinished();
     void updateSplitters();
     void ctxMenu(QPoint pos);
     void albumCtxMenu(QPoint pos);
@@ -64,9 +60,26 @@ public slots:
     void ctxSortCreated();
     void ctxReverseOrder();
     void ctxRenameAlbum();
+
+    void showProgressDialog(const bool visible);
+    void showProgressState(const int value, const QString& msg);
+    void dbAlbumsListUpdated();
+    void dbAlbumsListReady(QStringList& albums);
+    void dbFilesAdded(const int count, const int total, const int elapsed);
+    void dbFilesLoaded(const int count, const int elapsed);
+    void dbErrorMsg(const QString& msg);
+    void dbNeedTableCreation();
+
 signals:
     void mangaDblClick(QString filename);
     void statusBarMsg(QString msg);
+    void dbRenameAlbum(const QString& oldName, const QString& newName);
+    void dbClearList();
+    void dbGetAlbums();
+    void dbCreateTables();
+    void dbAddFiles(const QStringList& aFiles, const QString& album);
+    void dbDelFiles(const QIntList& dbids);
+    void dbGetFiles(const QString& album, const QString& search, Z::Ordering order, bool reverseOrder);
 };
 
 #endif // ZSEARCHTAB_H

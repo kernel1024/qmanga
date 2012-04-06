@@ -10,6 +10,14 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    cachedAlbums.clear();
+
+    progressDlg.setParent(this,Qt::Dialog);
+    progressDlg.setMinimum(0);
+    progressDlg.setMaximum(100);
+    progressDlg.setCancelButtonText(tr("Cancel"));
+    progressDlg.setLabelText(tr("Adding files"));
+
     descTemplate = ui->srcDesc->toHtml();
     ui->srcDesc->clear();
     loadingNow = false;
@@ -43,15 +51,54 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcEdit,SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
     connect(ui->srcEditBtn,SIGNAL(clicked()),this,SLOT(mangaSearch()));
 
-    connect(&loader,SIGNAL(finished()),this,SLOT(loaderFinished()));
+    connect(&progressDlg,SIGNAL(canceled()),
+            zg->db,SLOT(sqlCancelAdding()),Qt::QueuedConnection);
 
-    order = ZGlobal::FileName;
+    connect(zg->db,SIGNAL(albumsListUpdated()),
+            this,SLOT(dbAlbumsListUpdated()),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(gotAlbums(QStringList&)),
+            this,SLOT(dbAlbumsListReady(QStringList&)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbRenameAlbum(QString,QString)),
+            zg->db,SLOT(sqlRenameAlbum(QString,QString)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(filesAdded(int,int,int)),
+            this,SLOT(dbFilesAdded(int,int,int)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(filesLoaded(int,int)),
+            this,SLOT(dbFilesLoaded(int,int)),Qt::QueuedConnection);
+
+    connect(this,SIGNAL(dbAddFiles(QStringList,QString)),
+            zg->db,SLOT(sqlAddFiles(QStringList,QString)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbDelFiles(QIntList)),
+            zg->db,SLOT(sqlDelFiles(QIntList)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbClearList()),
+            zg->db,SLOT(sqlClearList()),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbGetAlbums()),
+            zg->db,SLOT(sqlGetAlbums()),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbGetFiles(QString,QString,Z::Ordering,bool)),
+            zg->db,SLOT(sqlGetFiles(QString,QString,Z::Ordering,bool)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbRenameAlbum(QString,QString)),
+            zg->db,SLOT(sqlRenameAlbum(QString,QString)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(errorMsg(QString)),
+            this,SLOT(dbErrorMsg(QString)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(needTableCreation()),
+            this,SLOT(dbNeedTableCreation()),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbCreateTables()),
+            zg->db,SLOT(sqlCreateTables()),Qt::QueuedConnection);
+
+
+    order = Z::FileName;
     reverseOrder = false;
 
-    model = new ZMangaModel(this,&mangaList,ui->srcIconSize,ui->srcList,&listUpdating);
+    model = new ZMangaModel(this,ui->srcIconSize,ui->srcList);
     ui->srcList->setModel(model);
     connect(ui->srcList->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
+
+    connect(zg->db,SIGNAL(listRowsAboutToAppended(int,int)),
+            model,SLOT(rowsAboutToAppended(int,int)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(listRowsAppended()),model,SLOT(rowsAppended()),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(listRowsAboutToDeleted(int,int)),
+            model,SLOT(rowsAboutToDeleted(int,int)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(listRowsDeleted()),model,SLOT(rowsDeleted()),Qt::QueuedConnection);
 
     ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -80,23 +127,23 @@ void ZSearchTab::ctxMenu(QPoint pos)
     QAction* acm;
     acm = smenu->addAction(tr("By name"));
     acm->setCheckable(true);
-    acm->setChecked(order==ZGlobal::FileName);
+    acm->setChecked(order==Z::FileName);
     connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortName()));
     acm = smenu->addAction(tr("By album"));
     acm->setCheckable(true);
-    acm->setChecked(order==ZGlobal::Album);
+    acm->setChecked(order==Z::Album);
     connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortAlbum()));
     acm = smenu->addAction(tr("By page count"));
     acm->setCheckable(true);
-    acm->setChecked(order==ZGlobal::PagesCount);
+    acm->setChecked(order==Z::PagesCount);
     connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortPage()));
     acm = smenu->addAction(tr("By added date"));
     acm->setCheckable(true);
-    acm->setChecked(order==ZGlobal::AddingDate);
+    acm->setChecked(order==Z::AddingDate);
     connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortAdded()));
     acm = smenu->addAction(tr("By file creation date"));
     acm->setCheckable(true);
-    acm->setChecked(order==ZGlobal::FileDate);
+    acm->setChecked(order==Z::FileDate);
     connect(acm,SIGNAL(triggered()),this,SLOT(ctxSortCreated()));
     smenu->addSeparator();
     acm = smenu->addAction(tr("Reverse order"));
@@ -105,7 +152,8 @@ void ZSearchTab::ctxMenu(QPoint pos)
     acm->setChecked(reverseOrder);
     cm.addSeparator();
     int cnt = ui->srcList->selectionModel()->selectedIndexes().count();
-    acm = cm.addAction(QIcon::fromTheme("edit-delete"),tr("Delete selected %1 files").arg(cnt),this,SLOT(mangaDel()));
+    acm = cm.addAction(QIcon::fromTheme("edit-delete"),
+                       tr("Delete selected %1 files").arg(cnt),this,SLOT(mangaDel()));
     acm->setEnabled(cnt>0);
 
     cm.exec(ui->srcList->mapToGlobal(pos));
@@ -118,7 +166,8 @@ void ZSearchTab::albumCtxMenu(QPoint pos)
 
     QMenu cm(ui->srcAlbums);
     QAction* acm;
-    acm = cm.addAction(QIcon::fromTheme("edit-rename"),tr("Rename album"),this,SLOT(ctxRenameAlbum()));
+    acm = cm.addAction(QIcon::fromTheme("edit-rename"),tr("Rename album"),
+                       this,SLOT(ctxRenameAlbum()));
     acm->setData(itm->text());
 
     cm.exec(ui->srcAlbums->mapToGlobal(pos));
@@ -126,31 +175,31 @@ void ZSearchTab::albumCtxMenu(QPoint pos)
 
 void ZSearchTab::ctxSortName()
 {
-    order = ZGlobal::FileName;
+    order = Z::FileName;
     albumClicked(ui->srcAlbums->currentItem());
 }
 
 void ZSearchTab::ctxSortAlbum()
 {
-    order = ZGlobal::Album;
+    order = Z::Album;
     albumClicked(ui->srcAlbums->currentItem());
 }
 
 void ZSearchTab::ctxSortPage()
 {
-    order = ZGlobal::PagesCount;
+    order = Z::PagesCount;
     albumClicked(ui->srcAlbums->currentItem());
 }
 
 void ZSearchTab::ctxSortAdded()
 {
-    order = ZGlobal::AddingDate;
+    order = Z::AddingDate;
     albumClicked(ui->srcAlbums->currentItem());
 }
 
 void ZSearchTab::ctxSortCreated()
 {
-    order = ZGlobal::FileDate;
+    order = Z::FileDate;
     albumClicked(ui->srcAlbums->currentItem());
 }
 
@@ -172,27 +221,49 @@ void ZSearchTab::ctxRenameAlbum()
                                       QLineEdit::Normal,s,&ok);
     if (!ok) return;
 
-    zGlobal->sqlRenameAlbum(s,n);
+    emit dbRenameAlbum(s,n);
+}
 
+void ZSearchTab::showProgressDialog(const bool visible)
+{
+    if (visible) {
+        progressDlg.setWindowModality(Qt::WindowModal);
+        progressDlg.setWindowTitle(tr("Adding files to index..."));
+        progressDlg.setValue(0);
+        progressDlg.show();
+    } else {
+        progressDlg.hide();
+    }
+}
+
+void ZSearchTab::showProgressState(const int value, const QString &msg)
+{
+    progressDlg.setValue(value);
+    progressDlg.setLabelText(msg);
+}
+
+void ZSearchTab::dbAlbumsListUpdated()
+{
     updateAlbumsList();
+}
+
+void ZSearchTab::dbAlbumsListReady(QStringList &albums)
+{
+    emit dbClearList();
+    cachedAlbums.clear();
+    cachedAlbums.append(albums);
+    ui->srcAlbums->clear();
+    ui->srcAlbums->addItems(albums);
+}
+
+void ZSearchTab::dbFilesAdded(const int count, const int total, const int elapsed)
+{
+    emit statusBarMsg(QString("Added %1 out of %2 found files in %3s").arg(count).arg(total).arg((double)elapsed/1000.0,1,'f',2));
 }
 
 void ZSearchTab::updateAlbumsList()
 {
-    ui->srcAlbums->clear();
-    ui->srcAlbums->addItems(zGlobal->sqlGetAlbums());
-
-    listUpdating.lock();
-    int cnt = mangaList.count()-1;
-    listUpdating.unlock();
-
-    model->rowsAboutToDeleted(0,cnt);
-
-    listUpdating.lock();
-    mangaList.clear();
-    listUpdating.unlock();
-
-    model->rowsDeleted();
+    emit dbGetAlbums();
 }
 
 void ZSearchTab::updateWidgetsState()
@@ -217,7 +288,7 @@ QSize ZSearchTab::gridSize(int ref)
 
 QString ZSearchTab::getAlbumNameToAdd(QString suggest)
 {
-    AlbumSelectorDlg* dlg = new AlbumSelectorDlg(this,zGlobal->sqlGetAlbums(),suggest);
+    AlbumSelectorDlg* dlg = new AlbumSelectorDlg(this,cachedAlbums,suggest);
     QString ret = QString();
     if (dlg->exec()) {
         ret = dlg->listAlbums->lineEdit()->text();
@@ -238,9 +309,7 @@ void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
 
     loadingNow = true;
     updateWidgetsState();
-    loader.setParams(&mangaList,&listUpdating,model,current->text(),QString(),order,reverseOrder);
-    searchTimer.start();
-    loader.start();
+    emit dbGetFiles(current->text(),QString(),order,reverseOrder);
 }
 
 void ZSearchTab::albumClicked(QListWidgetItem *item)
@@ -258,9 +327,7 @@ void ZSearchTab::mangaSearch()
 
     loadingNow = true;
     updateWidgetsState();
-    loader.setParams(&mangaList,&listUpdating,model,QString(),ui->srcEdit->text(),order,reverseOrder);
-    searchTimer.start();
-    loader.start();
+    emit dbGetFiles(QString(),ui->srcEdit->text(),order,reverseOrder);
 }
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)
@@ -268,18 +335,14 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     ui->srcDesc->clear();
     if (!current.isValid()) return;
 
-    listUpdating.lock();
-    int maxl = mangaList.length();
-    listUpdating.unlock();
+    int maxl = zg->db->getResultCount();
 
     if (current.row()>=maxl) return;
 
     ui->srcDesc->clear();
 
     int idx = current.row();
-    listUpdating.lock();
-    const SQLMangaEntry m = mangaList.at(idx);
-    listUpdating.unlock();
+    const SQLMangaEntry m = zg->db->getResultItem(idx);
 
     QString msg = QString(descTemplate).
             arg(m.name).arg(m.pagesCount).arg(formatSize(m.fileSize)).arg(m.album).arg(m.fileMagic).
@@ -292,16 +355,12 @@ void ZSearchTab::mangaOpen(const QModelIndex &index)
 {
     if (!index.isValid()) return;
 
-    listUpdating.lock();
-    int maxl = mangaList.length();
-    listUpdating.unlock();
+    int maxl = zg->db->getResultCount();
 
     int idx = index.row();
     if (idx>=maxl) return;
 
-    listUpdating.lock();
-    QString filename = mangaList.at(idx).filename;
-    listUpdating.unlock();
+    QString filename = zg->db->getResultItem(idx).filename;
 
     emit mangaDblClick(filename);
 }
@@ -309,34 +368,27 @@ void ZSearchTab::mangaOpen(const QModelIndex &index)
 void ZSearchTab::mangaAdd()
 {
     if (loadingNow) return;
-    QStringList fl = zGlobal->getOpenFileNamesD(this,tr("Add manga to index"),zGlobal->savedIndexOpenDir);
+    QStringList fl = getOpenFileNamesD(this,tr("Add manga to index"),zg->savedIndexOpenDir);
     if (fl.isEmpty()) return;
     fl.removeDuplicates();
     QFileInfo fi(fl.first());
-    zGlobal->savedIndexOpenDir = fi.path();
+    zg->savedIndexOpenDir = fi.path();
 
     QDir d(fi.path());
     QString album = d.dirName();
     album = getAlbumNameToAdd(album);
     if (album.isEmpty()) return;
 
-    QTime tmr;
-    tmr.start();
-    int cnt = zGlobal->sqlAddFiles(fl,album);
-    int el = tmr.elapsed();
-
-    updateAlbumsList();
-
-    emit statusBarMsg(QString("Added %1 out of %2 found files in %3s").arg(cnt).arg(fl.count()).arg((double)el/1000.0,1,'f',2));
+    emit dbAddFiles(fl,album);
 }
 
 void ZSearchTab::mangaAddDir()
 {
     if (loadingNow) return;
-    QString fi = zGlobal->getExistingDirectoryD(this,tr("Add manga to index from directory"),
-                                                    zGlobal->savedIndexOpenDir);
+    QString fi = getExistingDirectoryD(this,tr("Add manga to index from directory"),
+                                                    zg->savedIndexOpenDir);
     if (fi.isEmpty()) return;
-    zGlobal->savedIndexOpenDir = fi;
+    zg->savedIndexOpenDir = fi;
 
     QDir d(fi);
     QFileInfoList fl = d.entryInfoList(QStringList("*"));
@@ -349,48 +401,26 @@ void ZSearchTab::mangaAddDir()
     album = getAlbumNameToAdd(album);
     if (album.isEmpty()) return;
 
-    QTime tmr;
-    tmr.start();
-    int cnt = zGlobal->sqlAddFiles(files,album);
-    int el = tmr.elapsed();
-
-    updateAlbumsList();
-
-    emit statusBarMsg(QString("Added %1 out of %2 found files in %3s").arg(cnt).arg(files.count()).arg((double)el/1000.0,1,'f',2));
+    emit dbAddFiles(files,album);
 }
 
 void ZSearchTab::mangaDel()
 {
     if (loadingNow) return;
     QIntList dl;
-    QStringList albums = zGlobal->sqlGetAlbums();
+    int cnt = zg->db->getAlbumsCount();
     QModelIndexList li = ui->srcList->selectionModel()->selectedIndexes();
 
     ui->srcDesc->clear();
 
-    listUpdating.lock();
     for (int i=0;i<li.count();i++) {
-        if (li.at(i).row()>=0 && li.at(i).row()<mangaList.count())
-            dl << mangaList.at(li.at(i).row()).dbid;
-    }
-    listUpdating.unlock();
-
-    zGlobal->sqlDelFiles(dl);
-
-    for (int i=0;i<dl.count();i++) {
-        listUpdating.lock();
-        int idx = mangaList.indexOf(SQLMangaEntry(dl.at(i)));
-        listUpdating.unlock();
-        if (idx>=0) {
-            model->rowsAboutToDeleted(idx,idx+1);
-            listUpdating.lock();
-            mangaList.removeAt(idx);
-            listUpdating.unlock();
-            model->rowsDeleted();
-        }
+        if (li.at(i).row()>=0 && li.at(i).row()<zg->db->getResultCount())
+            dl << zg->db->getResultItem(li.at(i).row()).dbid;
     }
 
-    if (albums.count()!=zGlobal->sqlGetAlbums().count())
+    emit dbDelFiles(dl);
+
+    if (cnt!=zg->db->getAlbumsCount())
         updateAlbumsList();
 }
 
@@ -410,13 +440,21 @@ void ZSearchTab::iconSizeChanged(int ref)
     ui->srcList->setGridSize(gridSize(ref));
 }
 
-void ZSearchTab::loaderFinished()
+void ZSearchTab::dbFilesLoaded(const int count, const int elapsed)
 {
     loadingNow = false;
-    int el = searchTimer.elapsed();
     updateWidgetsState();
-    listUpdating.lock();
-    int cnt = mangaList.count();
-    listUpdating.unlock();
-    emit statusBarMsg(QString("Found %1 results in %2s").arg(cnt).arg((double)el/1000.0,1,'f',2));
+    emit statusBarMsg(QString("Found %1 results in %2s").arg(count).arg((double)elapsed/1000.0,1,'f',2));
+}
+
+void ZSearchTab::dbErrorMsg(const QString &msg)
+{
+    QMessageBox::critical(this,tr("QManga"),msg);
+}
+
+void ZSearchTab::dbNeedTableCreation()
+{
+    if (QMessageBox::question(this,tr("QManga"),tr("Database is empty. Recreate tables and structures?"),
+                              QMessageBox::Yes,QMessageBox::No)==QMessageBox::Yes)
+        emit dbCreateTables();
 }

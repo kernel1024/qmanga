@@ -3,128 +3,46 @@
 
 #include <QtCore>
 #include <QtGui>
-#include <QtSql>
-#include <magic.h>
-
-#ifdef QB_KDEDIALOGS
-#include <kfiledialog.h>
-#include <kurl.h>
-#endif
 
 #include "global.h"
 
-class SQLMangaEntry {
-public:
-    int dbid;
-    QString name;
-    QString filename;
-    QString album;
-    QImage cover;
-    int pagesCount;
-    qint64 fileSize;
-    QString fileMagic;
-    QDateTime fileDT;
-    QDateTime addingDT;
-    SQLMangaEntry();
-    SQLMangaEntry(int aDbid);
-    SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
-                  const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
-                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT, int aDbid);
-    SQLMangaEntry &operator=(const SQLMangaEntry& other);
-    bool operator==(const SQLMangaEntry& ref) const;
-    bool operator!=(const SQLMangaEntry& ref) const;
-};
-
-typedef QList<SQLMangaEntry> SQLMangaList;
-
 class ZMangaModel;
+class ZDB;
 
 class ZGlobal : public QObject
 {
     Q_OBJECT
+protected:
+    QThread* threadDB;
+    QString dbBase, dbUser, dbPass;
 public:
-    enum ZResizeFilter {
-        Nearest = 0,
-        Bilinear = 1,
-        Lanczos = 2,
-        Gaussian = 3,
-        Lanczos2 = 4,
-        Cubic = 5,
-        Sinc = 6,
-        Triangle = 7,
-        Mitchell = 8
-    };
-
-    enum ZOrdering {
-        Unordered = 0,
-        FileName = 1,
-        FileDate = 2,
-        AddingDate = 3,
-        Album = 4,
-        PagesCount = 5
-    };
+    ZDB* db;
 
     explicit ZGlobal(QObject *parent = 0);
+    ~ZGlobal();
 
     QMap<QString, QString> bookmarks;
 
-    ZResizeFilter resizeFilter;
+    Z::ResizeFilter resizeFilter;
     int cacheWidth;
     int magnifySize;
     QString savedAuxOpenDir, savedIndexOpenDir;
     QColor backgroundColor;
     QFont idxFont;
-    QString dbBase, dbUser, dbPass;
 
     int pdfRenderWidth;
 
-    QString detectMIME(QString filename);
-    QString detectMIME(QByteArray buf);
-    QPixmap resizeImage(QPixmap src, QSize targetSize,
-                        bool forceFilter = false, ZResizeFilter filter = Lanczos);
     QColor foregroundColor();
-
-    bool sqlCheckBase();
-    bool sqlCreateTables();
-    QSqlDatabase sqlOpenBase();
-    void sqlCloseBase(QSqlDatabase& db);
-    QStringList sqlGetAlbums();
-    void sqlGetFiles(QString album, QString search, SQLMangaList* mList,
-                     QMutex* listUpdating, ZMangaModel *model, ZOrdering order, bool reverseOrder);
-    int sqlAddFiles(QStringList aFiles, QString album);
-    void sqlDelFiles(QIntList dbids);
-    void sqlDelEmptyAlbums();
-    void sqlRenameAlbum(QString oldName, QString newName);
-
-
-    QString getKDEFilters(const QString & qfilter);
-    QString getOpenFileNameD ( QWidget * parent = 0,
-                               const QString & caption = QString(),
-                               const QString & dir = QString(),
-                               const QString & filter = QString(),
-                               QString * selectedFilter = 0,
-                               QFileDialog::Options options = 0 );
-    QStringList getOpenFileNamesD ( QWidget * parent = 0,
-                                    const QString & caption = QString(),
-                                    const QString & dir = QString(),
-                                    const QString & filter = QString(),
-                                    QString * selectedFilter = 0,
-                                    QFileDialog::Options options = 0 );
-    QString getSaveFileNameD ( QWidget * parent = 0,
-                               const QString & caption = QString(),
-                               const QString & dir = QString(),
-                               const QString & filter = QString(),
-                               QString * selectedFilter = 0,
-                               QFileDialog::Options options = 0 );
-    QString	getExistingDirectoryD ( QWidget * parent = 0,
-                                    const QString & caption = QString(),
-                                    const QString & dir = QString(),
-                                    QFileDialog::Options options = QFileDialog::ShowDirsOnly );
     
 public slots:
     void settingsDlg();
     void loadSettings();
     void saveSettings();
+
+signals:
+    void dbSetCredentials(const QString& base, const QString& user, const QString& password);
+    void dbCheckBase();
+    void dbCheckEmptyAlbums();
 
 };
 
@@ -142,6 +60,6 @@ public:
 };
 
 
-extern ZGlobal* zGlobal;
+extern ZGlobal* zg;
 
 #endif // ZGLOBAL_H

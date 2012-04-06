@@ -15,8 +15,8 @@ MainWindow::MainWindow(QWidget *parent) :
     srcWidget = ui->srcWidget;
     fullScreen = false;
 
-    if (zGlobal==NULL)
-        zGlobal = new ZGlobal(this);
+    if (zg==NULL)
+        zg = new ZGlobal(this);
 
     QApplication::setWheelScrollLines(1);
 
@@ -48,12 +48,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
     connect(ui->actionClose,SIGNAL(triggered()),this,SLOT(closeManga()));
-    connect(ui->actionSettings,SIGNAL(triggered()),zGlobal,SLOT(settingsDlg()));
+    connect(ui->actionSettings,SIGNAL(triggered()),zg,SLOT(settingsDlg()));
     connect(ui->actionAddBookmark,SIGNAL(triggered()),this,SLOT(createBookmark()));
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(helpAbout()));
     connect(ui->actionFullscreen,SIGNAL(triggered()),this,SLOT(switchFullscreen()));
     connect(ui->actionMinimize,SIGNAL(triggered()),this,SLOT(showMinimized()));
-    connect(ui->actionSaveSettings,SIGNAL(triggered()),zGlobal,SLOT(saveSettings()));
+    connect(ui->actionSaveSettings,SIGNAL(triggered()),zg,SLOT(saveSettings()));
 
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
     connect(ui->mangaView,SIGNAL(loadedPage(int,QString)),this,SLOT(dispPage(int,QString)));
@@ -76,7 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),ui->mangaView,SLOT(setZoomDynamic(bool)));
 
     ui->mangaView->scroller = ui->scrollArea;
-    zGlobal->loadSettings();
+    zg->loadSettings();
     if (!isMaximized())
         centerWindow();
     dispPage(-1,QString());
@@ -112,17 +112,17 @@ void MainWindow::centerWindow()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (zGlobal!=NULL)
-        zGlobal->saveSettings();
+    if (zg!=NULL)
+        zg->saveSettings();
     event->accept();
 }
 
 void MainWindow::openAux()
 {
-    QString filename = zGlobal->getOpenFileNameD(this,tr("Open manga archive"),zGlobal->savedAuxOpenDir);
+    QString filename = getOpenFileNameD(this,tr("Open manga archive"),zg->savedAuxOpenDir);
     if (!filename.isEmpty()) {
         QFileInfo fi(filename);
-        zGlobal->savedAuxOpenDir = fi.path();
+        zg->savedAuxOpenDir = fi.path();
 
         ui->tabWidget->setCurrentIndex(0);
         ui->mangaView->openFile(filename);
@@ -184,10 +184,10 @@ void MainWindow::updateBookmarks()
 {
     while (bookmarksMenu->actions().count()>2)
         bookmarksMenu->removeAction(bookmarksMenu->actions().last());
-    foreach (const QString &t, zGlobal->bookmarks.keys()) {
+    foreach (const QString &t, zg->bookmarks.keys()) {
         QAction* a = bookmarksMenu->addAction(t,this,SLOT(openBookmark()));
-        a->setData(zGlobal->bookmarks.value(t));
-        QString st = zGlobal->bookmarks.value(t);
+        a->setData(zg->bookmarks.value(t));
+        QString st = zg->bookmarks.value(t);
         if (st.split('\n').count()>0)
             st = st.split('\n').at(0);
         a->setStatusTip(st);
@@ -213,8 +213,8 @@ void MainWindow::createBookmark()
     QBookmarkDlg *dlg = new QBookmarkDlg(this,fi.completeBaseName(),ui->mangaView->openedFile);
     if (dlg->exec()) {
         QString t = dlg->getBkTitle();
-        if (!t.isEmpty() && !zGlobal->bookmarks.contains(t)) {
-            zGlobal->bookmarks[t]=QString("%1\n%2").arg(dlg->getBkFilename()).arg(ui->mangaView->currentPage);
+        if (!t.isEmpty() && !zg->bookmarks.contains(t)) {
+            zg->bookmarks[t]=QString("%1\n%2").arg(dlg->getBkFilename()).arg(ui->mangaView->currentPage);
             updateBookmarks();
         } else
             QMessageBox::warning(this,tr("QManga"),

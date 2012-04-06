@@ -88,12 +88,12 @@ QIntList ZMangaCache::cacheGetActivePages()
     if (!mReader->isOpened()) return l;
     if (currentPage==-1) return l;
 
-    for (int i=0;i<zGlobal->cacheWidth-1;i++) {
+    for (int i=0;i<zg->cacheWidth-1;i++) {
         l << i;
         if (!l.contains(mReader->getPageCount()-i-1))
             l << mReader->getPageCount()-i-1;
     }
-    for (int i=(currentPage-zGlobal->cacheWidth);i<(currentPage+zGlobal->cacheWidth);i++) {
+    for (int i=(currentPage-zg->cacheWidth);i<(currentPage+zg->cacheWidth);i++) {
         if (i>=0 && i<mReader->getPageCount() && !l.contains(i))
             l << i;
     }

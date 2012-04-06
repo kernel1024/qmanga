@@ -22,11 +22,11 @@ SOURCES += main.cpp\
     global.cpp \
     zmangamodel.cpp \
     zsearchtab.cpp \
-    zsearchloader.cpp \
     zrarreader.cpp \
     zpdfreader.cpp \
     albumselectordlg.cpp \
-    zmangacache.cpp
+    zmangacache.cpp \
+    zdb.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -41,11 +41,11 @@ HEADERS  += mainwindow.h \
     global.h \
     zmangamodel.h \
     zsearchtab.h \
-    zsearchloader.h \
     zrarreader.h \
     zpdfreader.h \
     albumselectordlg.h \
-    zmangacache.h
+    zmangacache.h \
+    zdb.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
