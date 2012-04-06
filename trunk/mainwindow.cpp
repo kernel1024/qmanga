@@ -7,6 +7,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    if (zg==NULL)
+        zg = new ZGlobal(this);
+
     ui->setupUi(this);
 
     setWindowIcon(QIcon(":/img/Alien9.png"));
@@ -14,9 +17,6 @@ MainWindow::MainWindow(QWidget *parent) :
     bookmarksMenu = ui->menuBookmarks;
     srcWidget = ui->srcWidget;
     fullScreen = false;
-
-    if (zg==NULL)
-        zg = new ZGlobal(this);
 
     QApplication::setWheelScrollLines(1);
 

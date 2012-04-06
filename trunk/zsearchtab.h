@@ -64,7 +64,7 @@ public slots:
     void showProgressDialog(const bool visible);
     void showProgressState(const int value, const QString& msg);
     void dbAlbumsListUpdated();
-    void dbAlbumsListReady(QStringList& albums);
+    void dbAlbumsListReady(const QStringList& albums);
     void dbFilesAdded(const int count, const int total, const int elapsed);
     void dbFilesLoaded(const int count, const int elapsed);
     void dbErrorMsg(const QString& msg);
@@ -79,7 +79,7 @@ signals:
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
     void dbDelFiles(const QIntList& dbids);
-    void dbGetFiles(const QString& album, const QString& search, Z::Ordering order, bool reverseOrder);
+    void dbGetFiles(const QString& album, const QString& search, const int order, const bool reverseOrder);
 };
 
 #endif // ZSEARCHTAB_H

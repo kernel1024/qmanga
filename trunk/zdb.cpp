@@ -146,18 +146,18 @@ void ZDB::sqlGetAlbums()
     emit gotAlbums(res);
 }
 
-void ZDB::sqlGetFiles(const QString &album, const QString &search, Z::Ordering order, bool reverseOrder)
-
+void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sortOrder, const bool reverseOrder)
 {
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
+    Z::Ordering order = (Z::Ordering)sortOrder;
 
-    listRowsAboutToDeleted(0,mListCount-1);
+    emit listRowsAboutToDeleted(0,mListCount-1);
     mLock.lock();
     mList.clear();
     mListCount = 0;
     mLock.unlock();
-    listRowsDeleted();
+    emit listRowsDeleted();
 
     QTime tmr;
     tmr.start();
@@ -206,7 +206,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, Z::Ordering o
             mLock.lock();
             int posidx = mList.count();
             mLock.unlock();
-            listRowsAboutToAppended(posidx,posidx+1);
+            emit listRowsAboutToAppended(posidx,posidx+1);
             mLock.lock();
             mList << SQLMangaEntry(qr.value(0).toString(),
                                    qr.value(1).toString(),
@@ -220,7 +220,8 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, Z::Ordering o
                                    qr.value(8).toInt());
             mListCount++;
             mLock.unlock();
-            listRowsAppended();
+            emit listRowsAppended();
+            QApplication::processEvents();
             idx++;
         }
     } else
@@ -293,7 +294,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         int idx = 0;
         QImage p = QImage();
         while (idx<za->getPageCount()) {
-            QImage p = za->loadPage(idx);
+            p = za->loadPage(idx);
             if (!p.isNull()) {
                 break;
             }
@@ -355,7 +356,7 @@ void ZDB::sqlCancelAdding()
 
 void ZDB::sqlClearList()
 {
-    emit listRowsAboutToDeleted(0,mListCount);
+    emit listRowsAboutToDeleted(0,mListCount-1);
     mLock.lock();
     mList.clear();
     mListCount = 0;
