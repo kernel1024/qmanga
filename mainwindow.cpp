@@ -196,12 +196,13 @@ void MainWindow::updateBookmarks()
 
 void MainWindow::updateTitle()
 {
-    QString t(tr("QManga"));
+    QString t;
+    t.clear();
     if (!ui->mangaView->openedFile.isEmpty()) {
         QFileInfo fi(ui->mangaView->openedFile);
-        t += tr(" - %1").arg(fi.fileName());
+        t = tr("%1 - QManga").arg(fi.fileName());
     } else {
-        t += tr(" - Manga viewer and indexer");
+        t = tr("QManga - Manga viewer and indexer");
     }
     setWindowTitle(t);
 }

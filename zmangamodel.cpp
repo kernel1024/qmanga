@@ -5,6 +5,12 @@ ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QListView *aView
 {
     pixmapSize = aPixmapSize;
     view = aView;
+    mList.clear();
+}
+
+ZMangaModel::~ZMangaModel()
+{
+    mList.clear();
 }
 
 Qt::ItemFlags ZMangaModel::flags(const QModelIndex &) const
@@ -14,10 +20,10 @@ Qt::ItemFlags ZMangaModel::flags(const QModelIndex &) const
 
 QVariant ZMangaModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || zg==NULL || zg->db==NULL) return QVariant();
+    if (!index.isValid() || zg==NULL) return QVariant();
     int idx = index.row();
 
-    int maxl = zg->db->getResultCount();
+    int maxl = mList.count();
     if (idx<0 || idx>=maxl)
         return QVariant();
 
@@ -31,7 +37,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
         QPainter cp(&rp);
         cp.fillRect(0,0,rp.width(),rp.height(),view->palette().base());
 
-        SQLMangaEntry itm = zg->db->getResultItem(idx);
+        SQLMangaEntry itm = mList.at(idx);
         QPixmap p = QPixmap::fromImage(itm.cover);
         if (p.isNull())
             p = QPixmap(":/img/edit-delete.png");
@@ -53,7 +59,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
     } else if (role == Qt::FontRole) {
         return zg->idxFont;
     } else if (role == Qt::DisplayRole) {
-        SQLMangaEntry t = zg->db->getResultItem(idx);
+        SQLMangaEntry t = mList.at(idx);
         switch (index.column()) {
             case 0: return t.name;
             case 1: return t.album;
@@ -64,8 +70,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
         }
         return QVariant();
     } else if (role == Qt::ToolTipRole || role == Qt::StatusTipRole) {
-        SQLMangaEntry t = zg->db->getResultItem(idx);
-        return t.name;
+        return mList.at(idx).name;
     }
     return QVariant();
 }
@@ -88,15 +93,15 @@ QVariant ZMangaModel::headerData(int section, Qt::Orientation, int role) const
 
 int ZMangaModel::rowCount(const QModelIndex &) const
 {
-    if (zg==NULL) return 0;
+    if (zg==NULL) return mList.count();
+
     if (view->palette().base().color()!=zg->backgroundColor) {
         QPalette pl = view->palette();
         pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
         view->setPalette(pl);
     }
 
-    if (zg->db==NULL) return 0;
-    return zg->db->getResultCount();
+    return mList.count();
 }
 
 int ZMangaModel::columnCount(const QModelIndex &) const
@@ -109,22 +114,42 @@ void ZMangaModel::setPixmapSize(QSlider* aPixmapSize)
     pixmapSize = aPixmapSize;
 }
 
-void ZMangaModel::rowsAppended()
+int ZMangaModel::getItemsCount()
 {
-    endInsertRows();
+    return mList.count();
 }
 
-void ZMangaModel::rowsAboutToAppended(int pos, int last)
+SQLMangaEntry ZMangaModel::getItem(int idx)
 {
-    beginInsertRows(QModelIndex(),pos,last);
+    if (idx<0 || idx>=mList.count())
+        return SQLMangaEntry();
+
+    return mList.at(idx);
 }
 
-void ZMangaModel::rowsDeleted()
+void ZMangaModel::deleteAllItems()
 {
+    beginRemoveRows(QModelIndex(),0,mList.count()-1);
+    mList.clear();
     endRemoveRows();
 }
 
-void ZMangaModel::rowsAboutToDeleted(int pos, int last)
+void ZMangaModel::deleteItems(const QIntList &dbids)
 {
-    beginRemoveRows(QModelIndex(),pos,last);
+    for (int i=0;i<dbids.count();i++) {
+        int idx = mList.indexOf(SQLMangaEntry(dbids.at(i)));
+        if (idx>=0) {
+            beginRemoveRows(QModelIndex(),idx,idx+1);
+            mList.removeAt(idx);
+            endRemoveRows();
+        }
+    }
+}
+
+void ZMangaModel::addItem(const SQLMangaEntry &file)
+{
+    int posidx = mList.count();
+    beginInsertRows(QModelIndex(),posidx,posidx+1);
+    mList.append(file);
+    endInsertRows();
 }

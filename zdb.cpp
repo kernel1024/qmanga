@@ -7,23 +7,6 @@ ZDB::ZDB(QObject *parent) :
     dbUser = QString();
     dbPass = QString();
     wasCanceled = false;
-    mListCount = 0;
-    mList.clear();
-}
-
-int ZDB::getResultCount()
-{
-    return mListCount;
-}
-
-SQLMangaEntry ZDB::getResultItem(int idx)
-{
-    mLock.lock();
-    SQLMangaEntry m = SQLMangaEntry();
-    if (idx>=0 && idx<mList.count())
-        m = mList.at(idx);
-    mLock.unlock();
-    return m;
 }
 
 int ZDB::getAlbumsCount()
@@ -152,13 +135,6 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
     if (!db.isValid()) return;
     Z::Ordering order = (Z::Ordering)sortOrder;
 
-    emit listRowsAboutToDeleted(0,mListCount-1);
-    mLock.lock();
-    mList.clear();
-    mListCount = 0;
-    mLock.unlock();
-    emit listRowsDeleted();
-
     QTime tmr;
     tmr.start();
 
@@ -203,24 +179,16 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
             if (!ba.isEmpty())
                 p.loadFromData(ba);
 
-            mLock.lock();
-            int posidx = mList.count();
-            mLock.unlock();
-            emit listRowsAboutToAppended(posidx,posidx+1);
-            mLock.lock();
-            mList << SQLMangaEntry(qr.value(0).toString(),
-                                   qr.value(1).toString(),
-                                   qr.value(9).toString(),
-                                   p,
-                                   qr.value(3).toInt(),
-                                   qr.value(4).toInt(),
-                                   qr.value(5).toString(),
-                                   qr.value(6).toDateTime(),
-                                   qr.value(7).toDateTime(),
-                                   qr.value(8).toInt());
-            mListCount++;
-            mLock.unlock();
-            emit listRowsAppended();
+            emit gotFile(SQLMangaEntry(qr.value(0).toString(),
+                                       qr.value(1).toString(),
+                                       qr.value(9).toString(),
+                                       p,
+                                       qr.value(3).toInt(),
+                                       qr.value(4).toInt(),
+                                       qr.value(5).toString(),
+                                       qr.value(6).toDateTime(),
+                                       qr.value(7).toDateTime(),
+                                       qr.value(8).toInt()));
             QApplication::processEvents();
             idx++;
         }
@@ -354,16 +322,6 @@ void ZDB::sqlCancelAdding()
     wasCanceled = true;
 }
 
-void ZDB::sqlClearList()
-{
-    emit listRowsAboutToDeleted(0,mListCount-1);
-    mLock.lock();
-    mList.clear();
-    mListCount = 0;
-    mLock.unlock();
-    emit listRowsDeleted();
-}
-
 void ZDB::sqlDelFiles(const QIntList &dbids)
 {
     if (dbids.count()==0) return;
@@ -389,18 +347,7 @@ void ZDB::sqlDelFiles(const QIntList &dbids)
     sqlCloseBase(db);
     sqlDelEmptyAlbums();
 
-    for (int i=0;i<dbids.count();i++) {
-        mLock.lock();
-        int idx = mList.indexOf(SQLMangaEntry(dbids.at(i)));
-        mLock.unlock();
-        if (idx>=0) {
-            emit listRowsAboutToDeleted(idx,idx+1);
-            mLock.lock();
-            mList.removeAt(idx);
-            mLock.unlock();
-            emit listRowsDeleted();
-        }
-    }
+    emit deleteItemsFromModel(dbids);
 }
 
 void ZDB::sqlDelEmptyAlbums()
@@ -437,74 +384,4 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
     }
     sqlCloseBase(db);
     emit albumsListUpdated();
-}
-
-SQLMangaEntry::SQLMangaEntry()
-{
-    name = QString();
-    filename = QString();
-    cover = QImage();
-    album = QString();
-    pagesCount = -1;
-    fileSize = -1;
-    fileMagic = QString();
-    fileDT = QDateTime();
-    addingDT = QDateTime();
-    dbid = -1;
-}
-
-SQLMangaEntry::SQLMangaEntry(int aDbid)
-{
-    name = QString();
-    filename = QString();
-    cover = QImage();
-    album = QString();
-    pagesCount = -1;
-    fileSize = -1;
-    fileMagic = QString();
-    fileDT = QDateTime();
-    addingDT = QDateTime();
-    dbid = aDbid;
-}
-
-SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, const QString &aAlbum,
-                             const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
-                             const QString &aFileMagic, const QDateTime &aFileDT,
-                             const QDateTime &aAddingDT, int aDbid)
-{
-    name = aName;
-    filename = aFilename;
-    album = aAlbum;
-    cover = aCover;
-    pagesCount = aPagesCount;
-    fileSize = aFileSize;
-    fileMagic = aFileMagic;
-    fileDT = aFileDT;
-    addingDT = aAddingDT;
-    dbid = aDbid;
-}
-
-SQLMangaEntry &SQLMangaEntry::operator =(const SQLMangaEntry &other)
-{
-    name = other.name;
-    filename = other.filename;
-    album = other.album;
-    cover = other.cover;
-    pagesCount = other.pagesCount;
-    fileSize = other.fileSize;
-    fileMagic = other.fileMagic;
-    fileDT = other.fileDT;
-    addingDT = other.addingDT;
-    dbid = other.dbid;
-    return *this;
-}
-
-bool SQLMangaEntry::operator ==(const SQLMangaEntry &ref) const
-{
-    return (ref.dbid==dbid);
-}
-
-bool SQLMangaEntry::operator !=(const SQLMangaEntry &ref) const
-{
-    return (ref.dbid!=dbid);
 }

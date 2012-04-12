@@ -6,38 +6,11 @@
 #include "zabstractreader.h"
 #include "global.h"
 
-class SQLMangaEntry {
-public:
-    int dbid;
-    QString name;
-    QString filename;
-    QString album;
-    QImage cover;
-    int pagesCount;
-    qint64 fileSize;
-    QString fileMagic;
-    QDateTime fileDT;
-    QDateTime addingDT;
-    SQLMangaEntry();
-    SQLMangaEntry(int aDbid);
-    SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
-                  const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
-                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT, int aDbid);
-    SQLMangaEntry &operator=(const SQLMangaEntry& other);
-    bool operator==(const SQLMangaEntry& ref) const;
-    bool operator!=(const SQLMangaEntry& ref) const;
-};
-
-typedef QList<SQLMangaEntry> SQLMangaList;
-
 class ZDB : public QObject
 {
     Q_OBJECT
 protected:
     QString dbBase, dbUser, dbPass;
-    SQLMangaList mList;
-    QMutex mLock;
-    int mListCount;
 
     bool wasCanceled;
 
@@ -48,11 +21,7 @@ protected:
 public:
     explicit ZDB(QObject *parent = 0);
 
-    // ----- thread-safe -----
-    int getResultCount();
-    SQLMangaEntry getResultItem(int idx);
     int getAlbumsCount();
-    // -----------------------
 
 signals:
     void errorMsg(const QString& msg);
@@ -61,12 +30,10 @@ signals:
     void albumsListUpdated();
     void showProgressDialog(const bool visible);
     void showProgressState(const int value, const QString& msg);
-    void listRowsAppended();
-    void listRowsAboutToAppended(int pos, int last);
-    void listRowsDeleted();
-    void listRowsAboutToDeleted(int pos, int last);
     void gotAlbums(const QStringList& albums);
+    void gotFile(const SQLMangaEntry& file);
     void filesLoaded(const int count, const int elapsed);
+    void deleteItemsFromModel(const QIntList& dbids);
 
 public slots:
     void setCredentials(const QString& base, const QString& user, const QString& password);
@@ -78,7 +45,6 @@ public slots:
     void sqlDelFiles(const QIntList& dbids);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
-    void sqlClearList();
     void sqlGetFiles(const QString& album, const QString& search, const int sortOrder, const bool reverseOrder);
 
 };

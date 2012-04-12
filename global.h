@@ -45,6 +45,30 @@ enum Ordering {
 
 }
 
+class SQLMangaEntry {
+public:
+    int dbid;
+    QString name;
+    QString filename;
+    QString album;
+    QImage cover;
+    int pagesCount;
+    qint64 fileSize;
+    QString fileMagic;
+    QDateTime fileDT;
+    QDateTime addingDT;
+    SQLMangaEntry();
+    SQLMangaEntry(int aDbid);
+    SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
+                  const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
+                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT, int aDbid);
+    SQLMangaEntry &operator=(const SQLMangaEntry& other);
+    bool operator==(const SQLMangaEntry& ref) const;
+    bool operator!=(const SQLMangaEntry& ref) const;
+};
+
+typedef QList<SQLMangaEntry> SQLMangaList;
+
 class ZAbstractReader;
 
 extern ZAbstractReader *readerFactory(QObject* parent, QString filename);
