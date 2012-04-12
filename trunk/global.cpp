@@ -238,3 +238,73 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFi
         return dst;
     }
 }
+
+SQLMangaEntry::SQLMangaEntry()
+{
+    name = QString();
+    filename = QString();
+    cover = QImage();
+    album = QString();
+    pagesCount = -1;
+    fileSize = -1;
+    fileMagic = QString();
+    fileDT = QDateTime();
+    addingDT = QDateTime();
+    dbid = -1;
+}
+
+SQLMangaEntry::SQLMangaEntry(int aDbid)
+{
+    name = QString();
+    filename = QString();
+    cover = QImage();
+    album = QString();
+    pagesCount = -1;
+    fileSize = -1;
+    fileMagic = QString();
+    fileDT = QDateTime();
+    addingDT = QDateTime();
+    dbid = aDbid;
+}
+
+SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, const QString &aAlbum,
+                             const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
+                             const QString &aFileMagic, const QDateTime &aFileDT,
+                             const QDateTime &aAddingDT, int aDbid)
+{
+    name = aName;
+    filename = aFilename;
+    album = aAlbum;
+    cover = aCover;
+    pagesCount = aPagesCount;
+    fileSize = aFileSize;
+    fileMagic = aFileMagic;
+    fileDT = aFileDT;
+    addingDT = aAddingDT;
+    dbid = aDbid;
+}
+
+SQLMangaEntry &SQLMangaEntry::operator =(const SQLMangaEntry &other)
+{
+    name = other.name;
+    filename = other.filename;
+    album = other.album;
+    cover = other.cover;
+    pagesCount = other.pagesCount;
+    fileSize = other.fileSize;
+    fileMagic = other.fileMagic;
+    fileDT = other.fileDT;
+    addingDT = other.addingDT;
+    dbid = other.dbid;
+    return *this;
+}
+
+bool SQLMangaEntry::operator ==(const SQLMangaEntry &ref) const
+{
+    return (ref.dbid==dbid);
+}
+
+bool SQLMangaEntry::operator !=(const SQLMangaEntry &ref) const
+{
+    return (ref.dbid!=dbid);
+}

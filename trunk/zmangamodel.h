@@ -2,6 +2,7 @@
 #define ZMANGAMODEL_H
 
 #include <QAbstractListModel>
+#include "global.h"
 #include "zglobal.h"
 #include "zdb.h"
 
@@ -11,8 +12,12 @@ class ZMangaModel : public QAbstractListModel
 private:
     QSlider *pixmapSize;
     QListView *view;
+
+    SQLMangaList mList;
+
 public:
     explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, QListView *aView);
+    ~ZMangaModel();
 
     Qt::ItemFlags flags(const QModelIndex & index) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
@@ -21,12 +26,13 @@ public:
     int columnCount(const QModelIndex &parent) const;
 
     void setPixmapSize(QSlider *aPixmapSize);
+    int getItemsCount();
+    SQLMangaEntry getItem(int idx);
 
 public slots:
-    void rowsAppended();
-    void rowsAboutToAppended(int pos, int last);
-    void rowsDeleted();
-    void rowsAboutToDeleted(int pos, int last);
+    void deleteAllItems();
+    void deleteItems(const QIntList& dbids);
+    void addItem(const SQLMangaEntry& file);
 };
 
 #endif // ZMANGAMODEL_H

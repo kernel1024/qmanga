@@ -30,7 +30,7 @@ private:
     Ui::ZSearchTab *ui;
     QStateMachine loadingState;
     QString descTemplate;
-    ZMangaModel* model;
+    QPointer<ZMangaModel> model;
     QProgressDialog progressDlg;
     QStringList cachedAlbums;
 
@@ -70,12 +70,11 @@ signals:
     void mangaDblClick(QString filename);
     void statusBarMsg(QString msg);
     void dbRenameAlbum(const QString& oldName, const QString& newName);
-    void dbClearList();
     void dbGetAlbums();
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
-    void dbDelFiles(const QIntList& dbids);
     void dbGetFiles(const QString& album, const QString& search, const int order, const bool reverseOrder);
+    void dbDelFiles(const QIntList& dbids);
 };
 
 #endif // ZSEARCHTAB_H

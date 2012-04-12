@@ -6,6 +6,7 @@ int main(int argc, char *argv[])
 {
     qRegisterMetaType<QIntList>("QIntList");
     qRegisterMetaType<QImageHash>("QImageHash");
+    qRegisterMetaType<SQLMangaEntry>("SQLMangaEntry");
 
     QApplication a(argc, argv);
     MainWindow w;

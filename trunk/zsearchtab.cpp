@@ -67,17 +67,15 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
             this,SLOT(dbErrorMsg(QString)),Qt::QueuedConnection);
     connect(zg->db,SIGNAL(needTableCreation()),
             this,SLOT(dbNeedTableCreation()),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(dbShowProgressDialog(bool)),
+    connect(zg->db,SIGNAL(showProgressDialog(bool)),
             this,SLOT(dbShowProgressDialog(bool)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(dbShowProgressState(int,QString)),
+    connect(zg->db,SIGNAL(showProgressState(int,QString)),
             this,SLOT(dbShowProgressState(int,QString)),Qt::QueuedConnection);
 
     connect(this,SIGNAL(dbAddFiles(QStringList,QString)),
             zg->db,SLOT(sqlAddFiles(QStringList,QString)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbDelFiles(QIntList)),
             zg->db,SLOT(sqlDelFiles(QIntList)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbClearList()),
-            zg->db,SLOT(sqlClearList()),Qt::QueuedConnection);
     connect(this,SIGNAL(dbGetAlbums()),
             zg->db,SLOT(sqlGetAlbums()),Qt::QueuedConnection);
     connect(this,SIGNAL(dbGetFiles(QString,QString,int,bool)),
@@ -118,17 +116,16 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     loadingState.setInitialState(sLoaded);
     loadingState.start();
 
-    model = new ZMangaModel(this,ui->srcIconSize,ui->srcList);
-    ui->srcList->setModel(model);
+    ZMangaModel* aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcList);
+    ui->srcList->setModel(aModel);
     connect(ui->srcList->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
 
-    connect(zg->db,SIGNAL(listRowsAboutToAppended(int,int)),
-            model,SLOT(rowsAboutToAppended(int,int)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(listRowsAppended()),model,SLOT(rowsAppended()),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(listRowsAboutToDeleted(int,int)),
-            model,SLOT(rowsAboutToDeleted(int,int)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(listRowsDeleted()),model,SLOT(rowsDeleted()),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(gotFile(SQLMangaEntry)),
+            aModel,SLOT(addItem(SQLMangaEntry)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(deleteItemsFromModel(QIntList)),
+            aModel,SLOT(deleteItems(QIntList)),Qt::QueuedConnection);
+    model = aModel;
 
     ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -275,6 +272,8 @@ void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
 
     ui->srcDesc->clear();
 
+    if (model)
+        model->deleteAllItems();
     emit dbGetFiles(current->text(),QString(),(int)order,reverseOrder);
 }
 
@@ -289,6 +288,8 @@ void ZSearchTab::mangaSearch()
 
     ui->srcDesc->clear();
 
+    if (model)
+        model->deleteAllItems();
     emit dbGetFiles(QString(),ui->srcEdit->text(),(int)order,reverseOrder);
 }
 
@@ -296,15 +297,16 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
 {
     ui->srcDesc->clear();
     if (!current.isValid()) return;
+    if (!model) return;
 
-    int maxl = zg->db->getResultCount();
+    int maxl = model->getItemsCount();
 
     if (current.row()>=maxl) return;
 
     ui->srcDesc->clear();
 
     int idx = current.row();
-    const SQLMangaEntry m = zg->db->getResultItem(idx);
+    const SQLMangaEntry m = model->getItem(idx);
 
     QString msg = QString(descTemplate).
             arg(m.name).arg(m.pagesCount).arg(formatSize(m.fileSize)).arg(m.album).arg(m.fileMagic).
@@ -316,13 +318,14 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
 void ZSearchTab::mangaOpen(const QModelIndex &index)
 {
     if (!index.isValid()) return;
+    if (!model) return;
 
-    int maxl = zg->db->getResultCount();
+    int maxl = model->getItemsCount();
 
     int idx = index.row();
     if (idx>=maxl) return;
 
-    QString filename = zg->db->getResultItem(idx).filename;
+    QString filename = model->getItem(idx).filename;
 
     emit mangaDblClick(filename);
 }
@@ -366,8 +369,10 @@ void ZSearchTab::mangaAddDir()
 
 void ZSearchTab::mangaDel()
 {
+    if (!model) return;
     QIntList dl;
     int cnt = zg->db->getAlbumsCount();
+    // remove other selected columns
     QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
     QModelIndexList li;
     for (int i=0;i<lii.count();i++) {
@@ -378,8 +383,8 @@ void ZSearchTab::mangaDel()
     ui->srcDesc->clear();
 
     for (int i=0;i<li.count();i++) {
-        if (li.at(i).row()>=0 && li.at(i).row()<zg->db->getResultCount())
-            dl << zg->db->getResultItem(li.at(i).row()).dbid;
+        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount())
+            dl << model->getItem(li.at(i).row()).dbid;
     }
 
     emit dbDelFiles(dl);
@@ -411,11 +416,12 @@ void ZSearchTab::dbAlbumsListUpdated()
 
 void ZSearchTab::dbAlbumsListReady(const QStringList &albums)
 {
-    emit dbClearList();
     cachedAlbums.clear();
     cachedAlbums.append(albums);
     ui->srcAlbums->clear();
     ui->srcAlbums->addItems(albums);
+    if (model)
+        model->deleteAllItems();
 }
 
 void ZSearchTab::dbFilesAdded(const int count, const int total, const int elapsed)
