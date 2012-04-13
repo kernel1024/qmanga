@@ -13,9 +13,11 @@ protected:
 
 public:
     explicit ZMangaLoader(QObject *parent = 0);
-    
+    QUuid threadID;
+
 signals:
-    void gotPage(const QByteArray& page, const int& num, const QString& internalPath);
+    void gotPage(const QByteArray& page, const int& num, const QString& internalPath,
+                 const QUuid& aThreadID);
     void gotPageCount(const int& num, const int& preferred);
     void gotError(const QString& msg);
     

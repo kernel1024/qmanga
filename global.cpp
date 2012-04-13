@@ -1,3 +1,4 @@
+#include "zmangaloader.h"
 #include "global.h"
 #include "zabstractreader.h"
 #include "zzipreader.h"
@@ -307,4 +308,62 @@ bool SQLMangaEntry::operator ==(const SQLMangaEntry &ref) const
 bool SQLMangaEntry::operator !=(const SQLMangaEntry &ref) const
 {
     return (ref.dbid!=dbid);
+}
+
+ZLoaderHelper::ZLoaderHelper()
+{
+    id = QUuid::createUuid();
+    jobCount = 0;
+}
+
+ZLoaderHelper::ZLoaderHelper(QUuid aThreadID)
+{
+    id = aThreadID;
+    jobCount = 0;
+}
+
+ZLoaderHelper::ZLoaderHelper(QThread *aThread, ZMangaLoader *aLoader)
+{
+    id = QUuid::createUuid();
+    thread = aThread;
+    loader = aLoader;
+    jobCount = 0;
+}
+
+ZLoaderHelper::ZLoaderHelper(QPointer<QThread> aThread, QPointer<ZMangaLoader> aLoader)
+{
+    id = QUuid::createUuid();
+    thread = aThread;
+    loader = aLoader;
+    jobCount = 0;
+}
+
+ZLoaderHelper &ZLoaderHelper::operator =(const ZLoaderHelper &other)
+{
+    id = other.id;
+    thread = other.thread;
+    loader = other.loader;
+    jobCount = other.jobCount;
+    return *this;
+}
+
+bool ZLoaderHelper::operator ==(const ZLoaderHelper &ref) const
+{
+    return (id == ref.id);
+}
+
+bool ZLoaderHelper::operator !=(const ZLoaderHelper &ref) const
+{
+    return (id != ref.id);
+}
+
+void ZLoaderHelper::addJob()
+{
+    jobCount++;
+}
+
+void ZLoaderHelper::delJob()
+{
+    if (jobCount>0)
+        jobCount--;
 }
