@@ -5,9 +5,12 @@
 #include "zrarreader.h"
 #include "zpdfreader.h"
 #include "zglobal.h"
+
+#ifdef WITH_MAGICK
 #include <ImageMagick/Magick++.h>
 
 using namespace Magick;
+#endif
 
 ZAbstractReader *readerFactory(QObject* parent, QString filename)
 {
@@ -17,8 +20,10 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename)
     } else if (mime.contains("application/x-rar",Qt::CaseInsensitive) ||
                mime.contains("application/rar",Qt::CaseInsensitive)) {
         return new ZRarReader(parent,filename);
+#ifdef WITH_POPPLER
     } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
         return new ZPdfReader(parent,filename);
+#endif
     } else {
         return NULL;
     }
@@ -74,7 +79,7 @@ int compareWithNumerics(QString ref1, QString ref2)
     return QString::compare(ref1,ref2);
 }
 
-#ifdef QB_KDEDIALOGS
+#ifdef WITH_KDEDIALOGS
 QString getKDEFilters(const QString & qfilter)
 {
     QStringList f = qfilter.split(";;",QString::SkipEmptyParts);
@@ -112,7 +117,7 @@ QString getKDEFilters(const QString & qfilter)
 
 QString getOpenFileNameD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
 {
-#ifdef QB_KDEDIALOGS
+#ifdef WITH_KDEDIALOGS
     ARGUNUSED(selectedFilter);
     ARGUNUSED(options);
     return KFileDialog::getOpenFileName(KUrl(dir),getKDEFilters(filter),parent,caption);
@@ -123,7 +128,7 @@ QString getOpenFileNameD ( QWidget * parent, const QString & caption, const QStr
 
 QStringList getOpenFileNamesD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
 {
-#ifdef QB_KDEDIALOGS
+#ifdef WITH_KDEDIALOGS
     ARGUNUSED(selectedFilter);
     ARGUNUSED(options);
     return KFileDialog::getOpenFileNames(KUrl(dir),getKDEFilters(filter),parent,caption);
@@ -134,7 +139,7 @@ QStringList getOpenFileNamesD ( QWidget * parent, const QString & caption, const
 
 QString getSaveFileNameD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
 {
-#ifdef QB_KDEDIALOGS
+#ifdef WITH_KDEDIALOGS
     ARGUNUSED(selectedFilter);
     ARGUNUSED(options);
     return KFileDialog::getSaveFileName(KUrl(dir),getKDEFilters(filter),parent,caption);
@@ -145,7 +150,7 @@ QString getSaveFileNameD ( QWidget * parent, const QString & caption, const QStr
 
 QString	getExistingDirectoryD ( QWidget * parent, const QString & caption, const QString & dir, QFileDialog::Options options )
 {
-#ifdef QB_KDEDIALOGS
+#ifdef WITH_KDEDIALOGS
     ARGUNUSED(options);
     return KFileDialog::getExistingDirectory(KUrl(dir),parent,caption);
 #else
@@ -192,6 +197,10 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFi
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
     else if (rf==Z::Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+#ifndef WITH_MAGICK
+    else
+        return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
+#else
     else {
         QTime tmr;
         tmr.start();
@@ -238,6 +247,7 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFi
         //qDebug() << "ImageMagick ms: " << tmr.elapsed();
         return dst;
     }
+#endif
 }
 
 SQLMangaEntry::SQLMangaEntry()

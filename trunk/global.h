@@ -5,7 +5,7 @@
 #include <QtGui>
 #include <magic.h>
 
-#ifdef QB_KDEDIALOGS
+#ifdef WITH_KDEDIALOGS
 #include <kfiledialog.h>
 #include <kurl.h>
 #endif
