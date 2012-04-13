@@ -18,6 +18,11 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     editMySqlPassword = ui->editMySqlPassword;
     listBookmarks = ui->listBookmarks;
 
+#ifndef WITH_MAGICK
+    while (ui->comboFilter->count()>2)
+        ui->comboFilter->removeItem(ui->comboFilter->count()-1);
+#endif
+
     connect(ui->btnDeleteBookmark,SIGNAL(clicked()),this,SLOT(delBookmark()));
     connect(ui->btnBkColor,SIGNAL(clicked()),this,SLOT(bkColorDlg()));
     connect(ui->btnFontIndexer,SIGNAL(clicked()),this,SLOT(idxFontDlg()));

@@ -3,11 +3,14 @@
 ZPdfReader::ZPdfReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
 {
+#ifdef WITH_POPPLER
     doc = NULL;
+#endif
 }
 
 bool ZPdfReader::openFile()
 {
+#ifdef WITH_POPPLER
     if (opened)
         return false;
 
@@ -31,16 +34,21 @@ bool ZPdfReader::openFile()
 
     opened = true;
     return true;
+#else
+    return false;
+#endif
 }
 
 void ZPdfReader::closeFile()
 {
+#ifdef WITH_POPPLER
     if (!opened)
         return;
 
     if (doc!=NULL)
         delete doc;
     doc = NULL;
+#endif
 
     opened = false;
     sortList.clear();
@@ -49,6 +57,7 @@ void ZPdfReader::closeFile()
 QByteArray ZPdfReader::loadPage(int num)
 {
     QByteArray res;
+#ifdef WITH_POPPLER
     if (!opened || doc==NULL)
         return res;
 
@@ -65,6 +74,7 @@ QByteArray ZPdfReader::loadPage(int num)
         img.save(&buf,"BMP");
         img = QImage();
     }
+#endif
     return res;
 }
 
