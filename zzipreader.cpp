@@ -53,9 +53,9 @@ void ZZipReader::closeFile()
     sortList.clear();
 }
 
-QImage ZZipReader::loadPage(int num)
+QByteArray ZZipReader::loadPage(int num)
 {
-    QImage res;
+    QByteArray res;
     if (!opened)
         return res;
 
@@ -82,7 +82,7 @@ QImage ZZipReader::loadPage(int num)
                 qDebug() << "Error while opening compressed image inside archive.";
                 return res;
             }
-            res = QImage::fromData(zf.readAll());
+            res = zf.readAll();
             zf.close();
             return res;
         }
@@ -91,9 +91,9 @@ QImage ZZipReader::loadPage(int num)
     return res;
 }
 
-QImageHash ZZipReader::loadPages(QIntList nums)
+QByteHash ZZipReader::loadPages(QIntList nums)
 {
-    QImageHash hash;
+    QByteHash hash;
     if (!opened)
         return hash;
 
@@ -120,7 +120,7 @@ QImageHash ZZipReader::loadPages(QIntList nums)
                 if (!zf.open(QIODevice::ReadOnly)) {
                     qDebug() << "Error while opening compressed image inside archive.";
                 } else {
-                    hash[znums[idx]] = QImage::fromData(zf.readAll());
+                    hash[znums[idx]] = zf.readAll();
                     zf.close();
                 }
             }

@@ -5,7 +5,7 @@
 #include <QtGui>
 #include "global.h"
 #include "zabstractreader.h"
-#include "zmangacache.h"
+#include "zmangaloader.h"
 
 class ZMangaView : public QWidget
 {
@@ -18,13 +18,22 @@ public:
         Original
     };
 
-private:
+protected:
     ZoomMode zoomMode;
     QPixmap curPixmap, curUmPixmap;
     QPoint zoomPos;
 
     QThread* threadCache;
     int privPageCount;
+
+    QHash<int,QPixmap> iCache;
+    QHash<int,QString> pathCache;
+    QIntList processingPages;
+
+    void cacheDropUnusable();
+    void cacheFillNearest();
+    QIntList cacheGetActivePages();
+    void displayCurrentPage();
 
 public:
     int currentPage;
@@ -38,6 +47,7 @@ public:
     void setZoomMode(ZoomMode mode);
     ZoomMode getZoomMode();
     int getPageCount();
+    void getPage(int num);
     
 signals:
     void loadedPage(int num, QString msg);
@@ -70,7 +80,7 @@ public slots:
     void setZoomAny(QString proc);
 
     // cache slots
-    void cacheGotPage(const QImage& page, const int& num, const QString& internalPath);
+    void cacheGotPage(const QByteArray& page, const int& num, const QString& internalPath);
     void cacheGotPageCount(const int& num, const int& preferred);
     void cacheGotError(const QString& msg);
 

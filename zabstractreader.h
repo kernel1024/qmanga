@@ -24,8 +24,8 @@ public:
 
     virtual bool openFile() = 0;
     virtual void closeFile();
-    virtual QImage loadPage(int num) = 0;
-    virtual QImageHash loadPages(QIntList nums) = 0;
+    virtual QByteArray loadPage(int num) = 0;
+    virtual QByteHash loadPages(QIntList nums) = 0;
     virtual QString getMagic() = 0;
     virtual QString getInternalPath(int idx);
     

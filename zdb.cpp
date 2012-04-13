@@ -261,9 +261,11 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         }
         int idx = 0;
         QImage p = QImage();
+        QByteArray pb;
         while (idx<za->getPageCount()) {
-            p = za->loadPage(idx);
-            if (!p.isNull()) {
+            p = QImage();
+            pb = za->loadPage(idx);
+            if (p.loadFromData(pb)) {
                 break;
             }
             idx++;

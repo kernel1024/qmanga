@@ -55,9 +55,9 @@ void ZRarReader::closeFile()
     sortList.clear();
 }
 
-QImage ZRarReader::loadPage(int num)
+QByteArray ZRarReader::loadPage(int num)
 {
-    QImage res;
+    QByteArray res;
     if (!opened)
         return res;
 
@@ -75,16 +75,15 @@ QImage ZRarReader::loadPage(int num)
         return res;
     }
 
-    bool ok = res.loadFromData(buf);
+    res = buf;
     buf.clear();
 
-    if (!ok) res = QImage();
     return res;
 }
 
-QImageHash ZRarReader::loadPages(QIntList nums)
+QByteHash ZRarReader::loadPages(QIntList nums)
 {
-    QImageHash hash;
+    QByteHash hash;
     if (!opened)
         return hash;
 
