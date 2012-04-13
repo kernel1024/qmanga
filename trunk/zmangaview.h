@@ -23,7 +23,7 @@ protected:
     QPixmap curPixmap, curUmPixmap;
     QPoint zoomPos;
 
-    QThread* threadCache;
+    QList<ZLoaderHelper> cacheLoaders;
     int privPageCount;
 
     QHash<int,QPixmap> iCache;
@@ -34,6 +34,7 @@ protected:
     void cacheFillNearest();
     QIntList cacheGetActivePages();
     void displayCurrentPage();
+    void cacheGetPage(int num);
 
 public:
     int currentPage;
@@ -56,7 +57,6 @@ signals:
 
     // cache signals
     void cacheOpenFile(QString filename, int preferred);
-    void cacheGetPage(int num);
     void cacheCloseFile();
 
 public slots:
@@ -80,7 +80,8 @@ public slots:
     void setZoomAny(QString proc);
 
     // cache slots
-    void cacheGotPage(const QByteArray& page, const int& num, const QString& internalPath);
+    void cacheGotPage(const QByteArray& page, const int& num, const QString& internalPath,
+                      const QUuid& threadID);
     void cacheGotPageCount(const int& num, const int& preferred);
     void cacheGotError(const QString& msg);
 

@@ -32,7 +32,7 @@ void ZMangaLoader::getPage(int num)
     QString ipt = mReader->getInternalPath(num);
     QByteArray img = mReader->loadPage(num);
 
-    emit gotPage(img,num,ipt);
+    emit gotPage(img,num,ipt,threadID);
 }
 
 void ZMangaLoader::closeFile()

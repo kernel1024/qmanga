@@ -21,6 +21,9 @@ typedef QHash<int,QImage> QImageHash;
 typedef QHash<int,QByteArray> QByteHash;
 typedef QList<int> QIntList;
 
+class ZAbstractReader;
+class ZMangaLoader;
+
 namespace Z {
 
 enum ResizeFilter {
@@ -68,9 +71,26 @@ public:
     bool operator!=(const SQLMangaEntry& ref) const;
 };
 
+class ZLoaderHelper {
+public:
+    QUuid id;
+    QPointer<QThread> thread;
+    QPointer<ZMangaLoader> loader;
+    int jobCount;
+
+    ZLoaderHelper();
+    ZLoaderHelper(QUuid aThreadID);
+    ZLoaderHelper(QThread* aThread, ZMangaLoader* aLoader);
+    ZLoaderHelper(QPointer<QThread> aThread, QPointer<ZMangaLoader> aLoader);
+    ZLoaderHelper &operator=(const ZLoaderHelper& other);
+    bool operator==(const ZLoaderHelper& ref) const;
+    bool operator!=(const ZLoaderHelper& ref) const;
+    void addJob();
+    void delJob();
+};
+
 typedef QList<SQLMangaEntry> SQLMangaList;
 
-class ZAbstractReader;
 
 extern ZAbstractReader *readerFactory(QObject* parent, QString filename);
 

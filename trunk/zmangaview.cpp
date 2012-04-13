@@ -1,7 +1,8 @@
+#include <limits.h>
+#include "zmangaloader.h"
 #include "zmangaview.h"
 #include "zglobal.h"
 #include "mainwindow.h"
-#include "zmangaloader.h"
 
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
@@ -18,6 +19,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
     iCache.clear();
     pathCache.clear();
     processingPages.clear();
+    cacheLoaders.clear();
     setMouseTracking(true);
 
     setBackgroundRole(QPalette::Dark);
@@ -25,26 +27,54 @@ ZMangaView::ZMangaView(QWidget *parent) :
     p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
     setPalette(p);
 
-    threadCache = new QThread();
-    ZMangaLoader* ld = new ZMangaLoader();
-    connect(ld,SIGNAL(gotPage(const QByteArray&,const int&,const QString&)),
-            this,SLOT(cacheGotPage(const QByteArray&,const int&,const QString&)),Qt::QueuedConnection);
-    connect(ld,SIGNAL(gotPageCount(const int&, const int&)),
-            this,SLOT(cacheGotPageCount(const int&, const int&)),Qt::QueuedConnection);
-    connect(ld,SIGNAL(gotError(const QString&)),
-            this,SLOT(cacheGotError(const QString&)),Qt::QueuedConnection);
-    connect(this,SIGNAL(cacheOpenFile(QString,int)),ld,SLOT(openFile(QString,int)),Qt::QueuedConnection);
-    connect(this,SIGNAL(cacheGetPage(int)),ld,SLOT(getPage(int)),Qt::QueuedConnection);
-    connect(this,SIGNAL(cacheCloseFile()),ld,SLOT(closeFile()),Qt::QueuedConnection);
-    ld->moveToThread(threadCache);
-    threadCache->start();
+    int cnt = QThread::idealThreadCount()+1;
+    if (cnt<2) cnt=2;
+    for (int i=0;i<cnt;i++) {
+        QThread* th = new QThread();
+        ZMangaLoader* ld = new ZMangaLoader();
+
+        connect(ld,SIGNAL(gotPage(QByteArray,int,QString,QUuid)),
+                this,SLOT(cacheGotPage(QByteArray,int,QString,QUuid)),Qt::QueuedConnection);
+        connect(ld,SIGNAL(gotError(QString)),
+                this,SLOT(cacheGotError(QString)),Qt::QueuedConnection);
+
+        connect(this,SIGNAL(cacheOpenFile(QString,int)),ld,SLOT(openFile(QString,int)),Qt::QueuedConnection);
+        connect(this,SIGNAL(cacheCloseFile()),ld,SLOT(closeFile()),Qt::QueuedConnection);
+
+        if (i==0) {
+            connect(ld,SIGNAL(gotPageCount(int,int)),
+                    this,SLOT(cacheGotPageCount(int, int)),Qt::QueuedConnection);
+        }
+        ZLoaderHelper h = ZLoaderHelper(th,ld);
+        ld->threadID = h.id;
+
+        cacheLoaders << h;
+
+        ld->moveToThread(th);
+        th->start();
+    }
 
     emit loadedPage(-1,QString());
 }
 
 ZMangaView::~ZMangaView()
 {
-    threadCache->quit();
+    for (int i=0;i<cacheLoaders.count();i++)
+        cacheLoaders.at(i).thread->quit();
+    cacheLoaders.clear();
+}
+
+void ZMangaView::cacheGetPage(int num)
+{
+    int idx = 0, jcnt = INT_MAX;
+    for (int i=0;i<cacheLoaders.count();i++)
+        if (cacheLoaders.at(i).jobCount<jcnt) {
+            idx=i;
+            jcnt=cacheLoaders.at(i).jobCount;
+        }
+
+    cacheLoaders[idx].addJob();
+    QMetaObject::invokeMethod(cacheLoaders.at(idx).loader,"getPage",Qt::QueuedConnection,Q_ARG(int,num));
 }
 
 void ZMangaView::setZoomMode(ZMangaView::ZoomMode mode)
@@ -88,6 +118,7 @@ void ZMangaView::openFile(QString filename, int page)
     pathCache.clear();
     currentPage = 0;
     curUmPixmap = QPixmap();
+    privPageCount = 0;
     redrawPage();
     emit loadedPage(-1,QString());
 
@@ -101,6 +132,7 @@ void ZMangaView::closeFile()
     emit cacheCloseFile();
     curPixmap = QPixmap();
     openedFile = QString();
+    privPageCount = 0;
     update();
     emit loadedPage(-1,QString());
     processingPages.clear();
@@ -401,8 +433,15 @@ void ZMangaView::setZoomAny(QString proc)
     redrawPage();
 }
 
-void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QString &internalPath)
+void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QString &internalPath,
+                              const QUuid &threadID)
 {
+    if (cacheLoaders.contains(ZLoaderHelper(threadID))) {
+        cacheLoaders[cacheLoaders.indexOf(ZLoaderHelper(threadID))].delJob();
+    }
+    if (processingPages.contains(num))
+        processingPages.removeOne(num);
+
     if (iCache.contains(num)) return;
 
     QPixmap p;
@@ -414,16 +453,17 @@ void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QStr
 
     iCache[num]=p;
     pathCache[num]=internalPath;
-    if (processingPages.contains(num))
-        processingPages.removeOne(num);
+
     if (num==currentPage)
         displayCurrentPage();
 }
 
 void ZMangaView::cacheGotPageCount(const int &num, const int &preferred)
 {
-    privPageCount = num;
-    setPage(preferred);
+    if (privPageCount<=0) {
+        privPageCount = num;
+        setPage(preferred);
+    }
 }
 
 void ZMangaView::cacheGotError(const QString &msg)
@@ -457,7 +497,7 @@ void ZMangaView::cacheFillNearest()
     for (int i=0;i<toCache.count();i++)
         if (!processingPages.contains(toCache.at(i))) {
             processingPages << toCache.at(i);
-            emit cacheGetPage(toCache.at(i));
+            cacheGetPage(toCache.at(i));
         }
 }
 
