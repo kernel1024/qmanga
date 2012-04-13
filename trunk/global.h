@@ -18,6 +18,7 @@
 #define previewProps 364/257
 
 typedef QHash<int,QImage> QImageHash;
+typedef QHash<int,QByteArray> QByteHash;
 typedef QList<int> QIntList;
 
 namespace Z {

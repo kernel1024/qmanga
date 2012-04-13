@@ -18,8 +18,8 @@ public:
     explicit ZZipReader(QObject *parent, QString filename);
     bool openFile();
     void closeFile();
-    QImage loadPage(int num);
-    QImageHash loadPages(QIntList nums);
+    QByteArray loadPage(int num);
+    QByteHash loadPages(QIntList nums);
     QString getMagic();
     QString getInternalPath(int idx);
 };

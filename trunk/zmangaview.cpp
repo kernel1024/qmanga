@@ -1,7 +1,7 @@
 #include "zmangaview.h"
 #include "zglobal.h"
 #include "mainwindow.h"
-#include "zmangacache.h"
+#include "zmangaloader.h"
 
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
@@ -15,6 +15,9 @@ ZMangaView::ZMangaView(QWidget *parent) :
     curUmPixmap = QPixmap();
     openedFile = QString();
     zoomAny = -1;
+    iCache.clear();
+    pathCache.clear();
+    processingPages.clear();
     setMouseTracking(true);
 
     setBackgroundRole(QPalette::Dark);
@@ -23,17 +26,17 @@ ZMangaView::ZMangaView(QWidget *parent) :
     setPalette(p);
 
     threadCache = new QThread();
-    ZMangaCache* iCache = new ZMangaCache();
-    connect(iCache,SIGNAL(gotPage(const QImage&,const int&,const QString&)),
-            this,SLOT(cacheGotPage(const QImage&,const int&,const QString&)),Qt::QueuedConnection);
-    connect(iCache,SIGNAL(gotPageCount(const int&, const int&)),
+    ZMangaLoader* ld = new ZMangaLoader();
+    connect(ld,SIGNAL(gotPage(const QByteArray&,const int&,const QString&)),
+            this,SLOT(cacheGotPage(const QByteArray&,const int&,const QString&)),Qt::QueuedConnection);
+    connect(ld,SIGNAL(gotPageCount(const int&, const int&)),
             this,SLOT(cacheGotPageCount(const int&, const int&)),Qt::QueuedConnection);
-    connect(iCache,SIGNAL(gotError(const QString&)),
+    connect(ld,SIGNAL(gotError(const QString&)),
             this,SLOT(cacheGotError(const QString&)),Qt::QueuedConnection);
-    connect(this,SIGNAL(cacheOpenFile(QString,int)),iCache,SLOT(openFile(QString,int)),Qt::QueuedConnection);
-    connect(this,SIGNAL(cacheGetPage(int)),iCache,SLOT(getPage(int)),Qt::QueuedConnection);
-    connect(this,SIGNAL(cacheCloseFile()),iCache,SLOT(closeFile()),Qt::QueuedConnection);
-    iCache->moveToThread(threadCache);
+    connect(this,SIGNAL(cacheOpenFile(QString,int)),ld,SLOT(openFile(QString,int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(cacheGetPage(int)),ld,SLOT(getPage(int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(cacheCloseFile()),ld,SLOT(closeFile()),Qt::QueuedConnection);
+    ld->moveToThread(threadCache);
     threadCache->start();
 
     emit loadedPage(-1,QString());
@@ -60,10 +63,37 @@ int ZMangaView::getPageCount()
     return privPageCount;
 }
 
+void ZMangaView::getPage(int num)
+{
+    currentPage = num;
+    cacheDropUnusable();
+    if (iCache.contains(currentPage))
+        displayCurrentPage();
+    cacheFillNearest();
+}
+
+void ZMangaView::displayCurrentPage()
+{
+    if (iCache.contains(currentPage)) {
+        curUmPixmap = iCache[currentPage];
+        emit loadedPage(currentPage,pathCache[currentPage]);
+        setFocus();
+        redrawPage();
+    }
+}
+
 void ZMangaView::openFile(QString filename, int page)
 {
+    iCache.clear();
+    pathCache.clear();
+    currentPage = 0;
+    curUmPixmap = QPixmap();
+    redrawPage();
+    emit loadedPage(-1,QString());
+
     emit cacheOpenFile(filename,page);
     openedFile = filename;
+    processingPages.clear();
 }
 
 void ZMangaView::closeFile()
@@ -73,12 +103,13 @@ void ZMangaView::closeFile()
     openedFile = QString();
     update();
     emit loadedPage(-1,QString());
+    processingPages.clear();
 }
 
 void ZMangaView::setPage(int page)
 {
     if (page<0 || page>=privPageCount) return;
-    emit cacheGetPage(page);
+    getPage(page);
 }
 
 void ZMangaView::wheelEvent(QWheelEvent *event)
@@ -153,12 +184,12 @@ void ZMangaView::paintEvent(QPaintEvent *)
 
         }
     } else {
-        if (currentPage>=0 && currentPage<privPageCount && curUmPixmap.isNull()) {
+        if (iCache.contains(currentPage) && curUmPixmap.isNull()) {
             QPixmap p(":/img/edit-delete.png");
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
             w.setPen(QPen(zg->foregroundColor()));
             w.drawText(0,(height()-p.height())/2+p.height()+5,width(),w.fontMetrics().height(),Qt::AlignCenter,
-                       tr("Error loading page %1").arg(currentPage));
+                       tr("Error loading page %1").arg(currentPage+1));
         }
     }
 }
@@ -370,13 +401,23 @@ void ZMangaView::setZoomAny(QString proc)
     redrawPage();
 }
 
-void ZMangaView::cacheGotPage(const QImage &page, const int &num, const QString &internalPath)
+void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QString &internalPath)
 {
-    currentPage = num;
-    curUmPixmap = QPixmap::fromImage(page);
-    emit loadedPage(num,internalPath);
-    setFocus();
-    redrawPage();
+    if (iCache.contains(num)) return;
+
+    QPixmap p;
+    if (!page.isEmpty()) {
+        if (!p.loadFromData(page))
+            p = QPixmap();
+    } else
+        p = QPixmap();
+
+    iCache[num]=p;
+    pathCache[num]=internalPath;
+    if (processingPages.contains(num))
+        processingPages.removeOne(num);
+    if (num==currentPage)
+        displayCurrentPage();
 }
 
 void ZMangaView::cacheGotPageCount(const int &num, const int &preferred)
@@ -388,4 +429,55 @@ void ZMangaView::cacheGotPageCount(const int &num, const int &preferred)
 void ZMangaView::cacheGotError(const QString &msg)
 {
     QMessageBox::critical(this,tr("QManga"),msg);
+}
+
+void ZMangaView::cacheDropUnusable()
+{
+    QIntList toCache = cacheGetActivePages();
+    QIntList cached = iCache.keys();
+    for (int i=0;i<cached.count();i++) {
+        if (!toCache.contains(cached.at(i))) {
+            iCache.remove(cached.at(i));
+            pathCache.remove(cached.at(i));
+        }
+    }
+}
+
+void ZMangaView::cacheFillNearest()
+{
+    QIntList toCache = cacheGetActivePages();
+    int idx = 0;
+    while (idx<toCache.count()) {
+        if (iCache.contains(toCache.at(idx)))
+            toCache.removeAt(idx);
+        else
+            idx++;
+    }
+
+    for (int i=0;i<toCache.count();i++)
+        if (!processingPages.contains(toCache.at(i))) {
+            processingPages << toCache.at(i);
+            emit cacheGetPage(toCache.at(i));
+        }
+}
+
+QIntList ZMangaView::cacheGetActivePages()
+{
+    QIntList l;
+    if (currentPage==-1) return l;
+    if (privPageCount<=0) {
+        l << currentPage;
+        return l;
+    }
+
+    for (int i=0;i<zg->cacheWidth-1;i++) {
+        l << i;
+        if (!l.contains(privPageCount-i-1))
+            l << privPageCount-i-1;
+    }
+    for (int i=(currentPage-zg->cacheWidth);i<(currentPage+zg->cacheWidth);i++) {
+        if (i>=0 && i<privPageCount && !l.contains(i))
+            l << i;
+    }
+    return l;
 }

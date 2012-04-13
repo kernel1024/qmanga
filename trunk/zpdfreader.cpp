@@ -46,9 +46,9 @@ void ZPdfReader::closeFile()
     sortList.clear();
 }
 
-QImage ZPdfReader::loadPage(int num)
+QByteArray ZPdfReader::loadPage(int num)
 {
-    QImage res;
+    QByteArray res;
     if (!opened || doc==NULL)
         return res;
 
@@ -58,15 +58,19 @@ QImage ZPdfReader::loadPage(int num)
     Poppler::Page* page = doc->page(idx);
     if (page!=NULL) {
         double dpi = 72.0*((double)zg->pdfRenderWidth)/page->pageSizeF().width();
-        res = page->renderToImage(dpi,dpi);
+        QImage img = page->renderToImage(dpi,dpi);
         delete page;
+        QBuffer buf(&res);
+        buf.open(QIODevice::WriteOnly);
+        img.save(&buf,"BMP");
+        img = QImage();
     }
     return res;
 }
 
-QImageHash ZPdfReader::loadPages(QIntList nums)
+QByteHash ZPdfReader::loadPages(QIntList nums)
 {
-    QImageHash hash;
+    QByteHash hash;
     if (!opened)
         return hash;
 
