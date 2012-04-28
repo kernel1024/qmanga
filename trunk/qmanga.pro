@@ -56,7 +56,7 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig use_kde_dialogs use_magick use_poppler
+CONFIG += warn_on link_pkgconfig use_magick use_poppler
 
 use_magick {
     DEFINES += WITH_MAGICK=1

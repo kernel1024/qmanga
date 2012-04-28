@@ -103,23 +103,24 @@ QString getOpenFileNameD ( QWidget * parent = 0,
                            const QString & dir = QString(),
                            const QString & filter = QString(),
                            QString * selectedFilter = 0,
-                           QFileDialog::Options options = 0 );
+                           QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
 QStringList getOpenFileNamesD ( QWidget * parent = 0,
                                 const QString & caption = QString(),
                                 const QString & dir = QString(),
                                 const QString & filter = QString(),
                                 QString * selectedFilter = 0,
-                                QFileDialog::Options options = 0 );
+                                QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
 QString getSaveFileNameD ( QWidget * parent = 0,
                            const QString & caption = QString(),
                            const QString & dir = QString(),
                            const QString & filter = QString(),
                            QString * selectedFilter = 0,
-                           QFileDialog::Options options = 0 );
+                           QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
 QString	getExistingDirectoryD ( QWidget * parent = 0,
                                 const QString & caption = QString(),
                                 const QString & dir = QString(),
-                                QFileDialog::Options options = QFileDialog::ShowDirsOnly );
+                                QFileDialog::Options options = QFileDialog::ShowDirsOnly |
+        QFileDialog::DontUseNativeDialog);
 
 QString detectMIME(QString filename);
 QString detectMIME(QByteArray buf);
