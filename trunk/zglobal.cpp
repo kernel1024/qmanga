@@ -44,7 +44,7 @@ void ZGlobal::loadSettings()
 {
     MainWindow* w = qobject_cast<MainWindow *>(parent());
 
-    QSettings settings("kilobax", "qmanga");
+    QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",5).toInt();
     resizeFilter = (Z::ResizeFilter)settings.value("resizeFilter",0).toInt();
@@ -100,7 +100,7 @@ void ZGlobal::loadSettings()
 
 void ZGlobal::saveSettings()
 {
-    QSettings settings("kilobax", "qmanga");
+    QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
     settings.setValue("cacheWidth",cacheWidth);
     settings.setValue("resizeFilter",(int)resizeFilter);
