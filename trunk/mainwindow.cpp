@@ -23,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
     lblSearchStatus = new QLabel(tr("Ready"));
     statusBar()->addPermanentWidget(lblSearchStatus);
 
+    ui->spinPosition->hide();
+
     int btnSize = 20;
     ui->btnOpen->setIcon(QIcon(":/img/document-open.png"));
     ui->btnOpen->setIconSize(QSize(btnSize,btnSize));
@@ -63,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->mangaView,SIGNAL(keyPressed(int)),this,SLOT(viewerKeyPressed(int)));
     connect(ui->srcWidget,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
     connect(ui->srcWidget,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
+    connect(ui->spinPosition,SIGNAL(editingFinished()),this,SLOT(pageNumEdited()));
 
     connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
     connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
@@ -138,15 +141,26 @@ void MainWindow::openFromIndex(QString filename)
 void MainWindow::closeManga()
 {
     ui->mangaView->closeFile();
+    ui->spinPosition->hide();
 }
 
 void MainWindow::dispPage(int num, QString msg)
 {
     updateTitle();
-    if (num<0 || ui->mangaView->getPageCount()<=0)
+    if (num<0 || ui->mangaView->getPageCount()<=0) {
+        if (ui->spinPosition->isVisible()) {
+            ui->spinPosition->hide();
+        }
         ui->lblPosition->clear();
-    else
-        ui->lblPosition->setText(tr("%1 / %2").arg(num+1).arg(ui->mangaView->getPageCount()));
+    } else {
+        if (!ui->spinPosition->isVisible()) {
+            ui->spinPosition->show();
+            ui->spinPosition->setMinimum(1);
+            ui->spinPosition->setMaximum(ui->mangaView->getPageCount());
+        }
+        ui->spinPosition->setValue(num+1);
+        ui->lblPosition->setText(tr("  /  %1").arg(ui->mangaView->getPageCount()));
+    }
 
     if (!msg.isEmpty())
         statusBar()->showMessage(msg);
@@ -257,4 +271,10 @@ void MainWindow::helpAbout()
 void MainWindow::msgFromIndexer(QString msg)
 {
     lblSearchStatus->setText(msg);
+}
+
+void MainWindow::pageNumEdited()
+{
+    if (ui->spinPosition->value()!=ui->mangaView->currentPage)
+        ui->mangaView->setPage(ui->spinPosition->value()-1);
 }

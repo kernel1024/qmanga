@@ -34,6 +34,7 @@ public slots:
     void openFromIndex(QString filename);
     void closeManga();
     void dispPage(int num, QString msg);
+    void pageNumEdited();
     void switchFullscreen();
     void viewerKeyPressed(int key);
     void updateViewer();
