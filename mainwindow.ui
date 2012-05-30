@@ -56,6 +56,16 @@
             <number>0</number>
            </property>
            <item>
+            <widget class="QPushButton" name="btnSearchTab">
+             <property name="toolTip">
+              <string>Search tab</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="btnOpen">
              <property name="toolTip">
               <string>Open...</string>

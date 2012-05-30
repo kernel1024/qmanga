@@ -46,6 +46,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnZoomOriginal->setIconSize(QSize(btnSize,btnSize));
     ui->btnZoomDynamic->setIcon(QIcon(":/img/zoom-draw.png"));
     ui->btnZoomDynamic->setIconSize(QSize(btnSize,btnSize));
+    ui->btnSearchTab->setIcon(QIcon(":/img/book.png"));
+    ui->btnSearchTab->setIconSize(QSize(btnSize,btnSize));
 
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
@@ -77,6 +79,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnZoomWidth,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomWidth()));
     connect(ui->btnZoomOriginal,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomOriginal()));
     connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),ui->mangaView,SLOT(setZoomDynamic(bool)));
+
+    connect(ui->btnSearchTab,SIGNAL(clicked()),this,SLOT(openSearchTab()));
 
     ui->mangaView->scroller = ui->scrollArea;
     zg->loadSettings();
@@ -258,6 +262,11 @@ void MainWindow::openBookmark()
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(f,page);
+}
+
+void MainWindow::openSearchTab()
+{
+    ui->tabWidget->setCurrentIndex(1);
 }
 
 void MainWindow::helpAbout()

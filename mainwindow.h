@@ -43,6 +43,7 @@ public slots:
     void updateTitle();
     void createBookmark();
     void openBookmark();
+    void openSearchTab();
     void helpAbout();
     void msgFromIndexer(QString msg);
 };
