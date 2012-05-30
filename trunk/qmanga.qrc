@@ -12,5 +12,6 @@
         <file>img/document-open.png</file>
         <file>img/edit-delete.png</file>
         <file>img/Alien9.png</file>
+        <file>img/book.png</file>
     </qresource>
 </RCC>

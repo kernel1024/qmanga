@@ -510,12 +510,19 @@ QIntList ZMangaView::cacheGetActivePages()
         return l;
     }
 
-    for (int i=0;i<zg->cacheWidth-1;i++) {
+    int cacheRadius = 1;
+    if (zg->cacheWidth>=2) {
+        if ((zg->cacheWidth % 2)==0)
+            cacheRadius = zg->cacheWidth / 2;
+        else
+            cacheRadius = (zg->cacheWidth+1) / 2;
+    }
+    for (int i=0;i<cacheRadius;i++) {
         l << i;
         if (!l.contains(privPageCount-i-1))
             l << privPageCount-i-1;
     }
-    for (int i=(currentPage-zg->cacheWidth);i<(currentPage+zg->cacheWidth);i++) {
+    for (int i=(currentPage-cacheRadius);i<(currentPage+cacheRadius);i++) {
         if (i>=0 && i<privPageCount && !l.contains(i))
             l << i;
     }

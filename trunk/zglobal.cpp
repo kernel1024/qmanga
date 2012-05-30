@@ -11,7 +11,7 @@ ZGlobal* zg = NULL;
 ZGlobal::ZGlobal(QObject *parent) :
     QObject(parent)
 {
-    cacheWidth = 5;
+    cacheWidth = 6;
     bookmarks.clear();
 
     threadDB = new QThread();
@@ -46,7 +46,7 @@ void ZGlobal::loadSettings()
 
     QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
-    cacheWidth = settings.value("cacheWidth",5).toInt();
+    cacheWidth = settings.value("cacheWidth",6).toInt();
     resizeFilter = (Z::ResizeFilter)settings.value("resizeFilter",0).toInt();
     dbUser = settings.value("mysqlUser",QString()).toString();
     dbPass = settings.value("mysqlPassword",QString()).toString();
