@@ -26,7 +26,8 @@ protected:
     QList<ZLoaderHelper> cacheLoaders;
     int privPageCount;
 
-    QHash<int,QByteArray> iCache;
+    QHash<int,QPixmap> iCachePixmaps;
+    QHash<int,QByteArray> iCacheData;
     QHash<int,QString> pathCache;
     QIntList processingPages;
 

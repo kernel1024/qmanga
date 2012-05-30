@@ -13,6 +13,7 @@ ZGlobal::ZGlobal(QObject *parent) :
 {
     cacheWidth = 6;
     bookmarks.clear();
+    cachePixmaps = false;
 
     threadDB = new QThread();
     db = new ZDB();
@@ -55,6 +56,7 @@ void ZGlobal::loadSettings()
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
+    cachePixmaps = settings.value("cachePixmaps",false).toBool();
     if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
         idxFont = QApplication::font("QListView");
     if (!backgroundColor.isValid())
@@ -111,6 +113,7 @@ void ZGlobal::saveSettings()
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
     settings.setValue("magnifySize",magnifySize);
     settings.setValue("backgroundColor",backgroundColor.name());
+    settings.setValue("cachePixmaps",cachePixmaps);
     settings.setValue("idxFont",idxFont.toString());
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
@@ -157,6 +160,10 @@ void ZGlobal::settingsDlg()
     dlg->editMySqlBase->setText(dbBase);
     dlg->spinCacheWidth->setValue(cacheWidth);
     dlg->spinMagnify->setValue(magnifySize);
+    if (cachePixmaps)
+        dlg->radioCachePixmaps->setChecked(true);
+    else
+        dlg->radioCacheData->setChecked(true);
     dlg->updateBkColor(backgroundColor);
     dlg->updateIdxFont(idxFont);
     switch (resizeFilter) {
@@ -188,6 +195,7 @@ void ZGlobal::settingsDlg()
         magnifySize=dlg->spinMagnify->value();
         backgroundColor=dlg->getBkColor();
         idxFont=dlg->getIdxFont();
+        cachePixmaps=dlg->radioCachePixmaps->isChecked();
         switch (dlg->comboFilter->currentIndex()) {
             case 0: resizeFilter = Z::Nearest; break;
             case 1: resizeFilter = Z::Bilinear; break;

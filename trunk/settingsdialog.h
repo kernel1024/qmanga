@@ -20,6 +20,8 @@ public:
     QLineEdit* editMySqlPassword;
     QLineEdit* editMySqlBase;
     QListWidget* listBookmarks;
+    QRadioButton* radioCachePixmaps;
+    QRadioButton* radioCacheData;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();

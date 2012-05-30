@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>634</width>
-    <height>437</height>
+    <width>586</width>
+    <height>395</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
       <attribute name="title">
        <string>Main</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
+      <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
@@ -214,6 +214,38 @@
            </layout>
           </widget>
          </item>
+         <item row="1" column="1">
+          <widget class="QGroupBox" name="groupBox_4">
+           <property name="title">
+            <string>Fonts</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QPushButton" name="btnFontIndexer">
+              <property name="text">
+               <string>Indexer list...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="labelIdxFont">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
          <item row="1" column="0">
           <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
@@ -254,32 +286,23 @@
            </layout>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QGroupBox" name="groupBox_4">
+         <item row="2" column="0" rowspan="2" colspan="2">
+          <widget class="QGroupBox" name="groupBox_5">
            <property name="title">
-            <string>Fonts</string>
+            <string>Cache policy</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
-             <widget class="QPushButton" name="btnFontIndexer">
+             <widget class="QRadioButton" name="rbCachePixmaps">
               <property name="text">
-               <string>Indexer list...</string>
+               <string>Cache prerendered pixmaps (faster, but memory expensive)</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="labelIdxFont">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
+             <widget class="QRadioButton" name="rbCacheData">
               <property name="text">
-               <string>TextLabel</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               <string>Cache file data (slower, conservative memory usage)</string>
               </property>
              </widget>
             </item>
@@ -385,6 +408,8 @@
   <tabstop>editMySqlLogin</tabstop>
   <tabstop>editMySqlPassword</tabstop>
   <tabstop>btnFontIndexer</tabstop>
+  <tabstop>rbCachePixmaps</tabstop>
+  <tabstop>rbCacheData</tabstop>
   <tabstop>pushButton_2</tabstop>
   <tabstop>pushButton_3</tabstop>
   <tabstop>listBookmarks</tabstop>
@@ -399,8 +424,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>484</x>
-     <y>313</y>
+     <x>490</x>
+     <y>384</y>
     </hint>
     <hint type="destinationlabel">
      <x>342</x>
@@ -415,8 +440,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>548</x>
-     <y>314</y>
+     <x>575</x>
+     <y>384</y>
     </hint>
     <hint type="destinationlabel">
      <x>252</x>

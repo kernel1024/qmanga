@@ -16,7 +16,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     curUmPixmap = QPixmap();
     openedFile = QString();
     zoomAny = -1;
-    iCache.clear();
+    iCachePixmaps.clear();
+    iCacheData.clear();
     pathCache.clear();
     processingPages.clear();
     cacheLoaders.clear();
@@ -99,27 +100,29 @@ void ZMangaView::getPage(int num)
 {
     currentPage = num;
     cacheDropUnusable();
-    if (iCache.contains(currentPage))
+    if ((zg->cachePixmaps && iCachePixmaps.contains(currentPage)) ||
+            (!zg->cachePixmaps && iCacheData.contains(currentPage)))
         displayCurrentPage();
     cacheFillNearest();
 }
 
 void ZMangaView::displayCurrentPage()
 {
-    if (iCache.contains(currentPage)) {
-        QPixmap p;
-        QByteArray img;
+    if ((zg->cachePixmaps && iCachePixmaps.contains(currentPage)) ||
+            (!zg->cachePixmaps && iCacheData.contains(currentPage))) {
+        QPixmap p = QPixmap();
         qint64 ffsz = 0;
-        if (iCache.contains(currentPage)) {
-            QByteArray img = iCache.value(currentPage);
+        if (!zg->cachePixmaps) {
+            QByteArray img = iCacheData.value(currentPage);
             ffsz = img.size();
             if (!p.loadFromData(img))
                 p = QPixmap();
-        } else
-            p = QPixmap();
-        img.clear();
+            img.clear();
+        } else {
+            p = iCachePixmaps.value(currentPage);
+        }
 
-        if (!p.isNull() && (ffsz>0)) {
+        if (!p.isNull()) {
             if (lastFileSizes.count()>10)
                 lastFileSizes.removeFirst();
             if (lastSizes.count()>10)
@@ -154,7 +157,8 @@ void ZMangaView::displayCurrentPage()
 
 void ZMangaView::openFile(QString filename, int page)
 {
-    iCache.clear();
+    iCachePixmaps.clear();
+    iCacheData.clear();
     pathCache.clear();
     currentPage = 0;
     curUmPixmap = QPixmap();
@@ -256,7 +260,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
 
         }
     } else {
-        if (iCache.contains(currentPage) && curUmPixmap.isNull()) {
+        if ((iCacheData.contains(currentPage) || iCachePixmaps.contains(currentPage)) && curUmPixmap.isNull()) {
             QPixmap p(":/img/edit-delete.png");
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
             w.setPen(QPen(zg->foregroundColor()));
@@ -482,9 +486,17 @@ void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QStr
     if (processingPages.contains(num))
         processingPages.removeOne(num);
 
-    if (iCache.contains(num)) return;
+    if ((zg->cachePixmaps && iCachePixmaps.contains(num)) ||
+            (!zg->cachePixmaps && iCacheData.contains(num))) return;
 
-    iCache[num]=page;
+    if (!zg->cachePixmaps)
+        iCacheData[num]=page;
+    else {
+        QPixmap p = QPixmap();
+        if (!p.loadFromData(page))
+            p = QPixmap();
+        iCachePixmaps[num]=p;
+    }
     pathCache[num]=internalPath;
 
     if (num==currentPage)
@@ -506,11 +518,23 @@ void ZMangaView::cacheGotError(const QString &msg)
 
 void ZMangaView::cacheDropUnusable()
 {
+    if (zg->cachePixmaps)
+        iCacheData.clear();
+    else
+        iCachePixmaps.clear();
+
     QIntList toCache = cacheGetActivePages();
-    QIntList cached = iCache.keys();
+    QIntList cached;
+    if (zg->cachePixmaps)
+        cached = iCachePixmaps.keys();
+    else
+        cached = iCacheData.keys();
     for (int i=0;i<cached.count();i++) {
         if (!toCache.contains(cached.at(i))) {
-            iCache.remove(cached.at(i));
+            if (zg->cachePixmaps)
+                iCachePixmaps.remove(cached.at(i));
+            else
+                iCacheData.remove(cached.at(i));
             pathCache.remove(cached.at(i));
         }
     }
@@ -521,7 +545,12 @@ void ZMangaView::cacheFillNearest()
     QIntList toCache = cacheGetActivePages();
     int idx = 0;
     while (idx<toCache.count()) {
-        if (iCache.contains(toCache.at(idx)))
+        bool contains = false;
+        if (zg->cachePixmaps)
+            contains = iCachePixmaps.contains(toCache.at(idx));
+        else
+            contains = iCacheData.contains(toCache.at(idx));
+        if (contains)
             toCache.removeAt(idx);
         else
             idx++;
