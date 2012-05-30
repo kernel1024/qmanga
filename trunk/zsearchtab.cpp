@@ -92,6 +92,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->actionSortByPageCount,SIGNAL(triggered()),this,SLOT(ctxSorting()));
     connect(ui->actionSortByAdded,SIGNAL(triggered()),this,SLOT(ctxSorting()));
     connect(ui->actionSortByCreation,SIGNAL(triggered()),this,SLOT(ctxSorting()));
+    connect(ui->actionSortReverse,SIGNAL(triggered()),this,SLOT(ctxSorting()));
     ctxSorting();
 
     QState* sLoaded = new QState(); QState* sLoading = new QState();
