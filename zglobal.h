@@ -31,6 +31,7 @@ public:
     QFont idxFont;
 
     int pdfRenderWidth;
+    bool cachePixmaps;
 
     QColor foregroundColor();
     

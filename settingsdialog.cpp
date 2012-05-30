@@ -17,6 +17,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     editMySqlLogin = ui->editMySqlLogin;
     editMySqlPassword = ui->editMySqlPassword;
     listBookmarks = ui->listBookmarks;
+    radioCachePixmaps = ui->rbCachePixmaps;
+    radioCacheData = ui->rbCacheData;
 
 #ifndef WITH_MAGICK
     while (ui->comboFilter->count()>2)

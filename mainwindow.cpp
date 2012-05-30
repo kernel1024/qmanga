@@ -287,10 +287,7 @@ void MainWindow::msgFromIndexer(QString msg)
 
 void MainWindow::msgFromMangaView(QSize sz, qint64 fsz)
 {
-    if (fsz <= 0)
-        lblAverageSizes->clear();
-    else
-        lblAverageSizes->setText(tr("Avg: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
+    lblAverageSizes->setText(tr("Avg: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
 }
 
 void MainWindow::pageNumEdited()
