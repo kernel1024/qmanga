@@ -18,6 +18,7 @@ public:
     QMenu* bookmarksMenu;
     ZSearchTab* srcWidget;
     QLabel* lblSearchStatus;
+    QLabel* lblAverageSizes;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void centerWindow();
@@ -46,6 +47,7 @@ public slots:
     void openSearchTab();
     void helpAbout();
     void msgFromIndexer(QString msg);
+    void msgFromMangaView(QSize sz, qint64 fsz);
 };
 
 #endif // MAINWINDOW_H

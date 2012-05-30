@@ -21,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QApplication::setWheelScrollLines(1);
 
     lblSearchStatus = new QLabel(tr("Ready"));
+    lblAverageSizes = new QLabel();
+    statusBar()->addPermanentWidget(lblAverageSizes);
     statusBar()->addPermanentWidget(lblSearchStatus);
 
     ui->spinPosition->hide();
@@ -67,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->mangaView,SIGNAL(keyPressed(int)),this,SLOT(viewerKeyPressed(int)));
     connect(ui->srcWidget,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
     connect(ui->srcWidget,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
+    connect(ui->mangaView,SIGNAL(averageSizes(QSize,qint64)),this,SLOT(msgFromMangaView(QSize,qint64)));
     connect(ui->spinPosition,SIGNAL(editingFinished()),this,SLOT(pageNumEdited()));
 
     connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
@@ -280,6 +283,14 @@ void MainWindow::helpAbout()
 void MainWindow::msgFromIndexer(QString msg)
 {
     lblSearchStatus->setText(msg);
+}
+
+void MainWindow::msgFromMangaView(QSize sz, qint64 fsz)
+{
+    if (fsz <= 0)
+        lblAverageSizes->clear();
+    else
+        lblAverageSizes->setText(tr("Avg: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
 }
 
 void MainWindow::pageNumEdited()
