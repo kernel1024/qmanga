@@ -26,9 +26,12 @@ protected:
     QList<ZLoaderHelper> cacheLoaders;
     int privPageCount;
 
-    QHash<int,QPixmap> iCache;
+    QHash<int,QByteArray> iCache;
     QHash<int,QString> pathCache;
     QIntList processingPages;
+
+    QList<QSize> lastSizes;
+    QList<int> lastFileSizes;
 
     void cacheDropUnusable();
     void cacheFillNearest();
@@ -54,6 +57,7 @@ signals:
     void loadedPage(int num, QString msg);
     void doubleClicked();
     void keyPressed(int key);
+    void averageSizes(QSize sz, qint64 fsz);
 
     // cache signals
     void cacheOpenFile(QString filename, int preferred);

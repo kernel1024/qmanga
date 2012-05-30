@@ -20,6 +20,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     pathCache.clear();
     processingPages.clear();
     cacheLoaders.clear();
+    lastSizes.clear();
+    lastFileSizes.clear();
     setMouseTracking(true);
 
     setBackgroundRole(QPalette::Dark);
@@ -105,8 +107,46 @@ void ZMangaView::getPage(int num)
 void ZMangaView::displayCurrentPage()
 {
     if (iCache.contains(currentPage)) {
-        curUmPixmap = iCache[currentPage];
-        emit loadedPage(currentPage,pathCache[currentPage]);
+        QPixmap p;
+        QByteArray img;
+        qint64 ffsz = 0;
+        if (iCache.contains(currentPage)) {
+            QByteArray img = iCache.value(currentPage);
+            ffsz = img.size();
+            if (!p.loadFromData(img))
+                p = QPixmap();
+        } else
+            p = QPixmap();
+        img.clear();
+
+        if (!p.isNull() && (ffsz>0)) {
+            if (lastFileSizes.count()>10)
+                lastFileSizes.removeFirst();
+            if (lastSizes.count()>10)
+                lastSizes.removeFirst();
+
+            lastFileSizes << ffsz;
+            lastSizes << p.size();
+
+            if (lastFileSizes.count()>0 && lastSizes.count()>0) {
+                qint64 sum = 0;
+                for (int i=0;i<lastFileSizes.count();i++)
+                    sum += lastFileSizes.at(i);
+                sum = sum / lastFileSizes.count();
+                qint64 sumx = 0;
+                qint64 sumy = 0;
+                for (int i=0;i<lastSizes.count();i++) {
+                    sumx += lastSizes.at(i).width();
+                    sumy += lastSizes.at(i).height();
+                }
+                sumx = sumx / lastSizes.count();
+                sumy = sumy / lastSizes.count();
+                emit averageSizes(QSize(sumx,sumy),sum);
+            }
+        }
+
+        curUmPixmap = p;
+        emit loadedPage(currentPage,pathCache.value(currentPage));
         setFocus();
         redrawPage();
     }
@@ -444,14 +484,7 @@ void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QStr
 
     if (iCache.contains(num)) return;
 
-    QPixmap p;
-    if (!page.isEmpty()) {
-        if (!p.loadFromData(page))
-            p = QPixmap();
-    } else
-        p = QPixmap();
-
-    iCache[num]=p;
+    iCache[num]=page;
     pathCache[num]=internalPath;
 
     if (num==currentPage)
