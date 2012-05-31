@@ -279,6 +279,15 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
         zoomPos = QPoint();
 }
 
+void ZMangaView::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button()==Qt::MiddleButton) {
+        emit minimizeRequested();
+        event->accept();
+    }
+
+}
+
 void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
 {
     emit doubleClicked();
@@ -315,6 +324,9 @@ void ZMangaView::keyPressEvent(QKeyEvent *event)
         case Qt::Key_End:
             navLast();
             break;
+        case Qt::Key_Escape:
+            emit minimizeRequested();
+            break;
         default:
             emit keyPressed(event->key());
             break;
@@ -348,6 +360,10 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     connect(nt,SIGNAL(triggered()),this,SLOT(redrawPage()));
     cm.addAction(nt);
     cm.addSeparator();
+    nt = new QAction(QIcon::fromTheme("document-close"),tr("Close manga"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(closeFileCtx()));
+    cm.addAction(nt);
+    cm.addSeparator();
     nt = new QAction(QIcon::fromTheme("go-down"),tr("Minimize window"),NULL);
     connect(nt,SIGNAL(triggered()),this,SLOT(minimizeWindowCtx()));
     cm.addAction(nt);
@@ -357,6 +373,16 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
 
 void ZMangaView::redrawPage()
 {
+    QPageTimer* fTimer = qobject_cast<QPageTimer *>(sender());
+    bool fineDraw = (fTimer!=NULL);
+    int savedPage = -1;
+    if (fineDraw) {
+        savedPage = fTimer->savedPage;
+        fTimer->deleteLater();
+    }
+
+    if (fineDraw && savedPage!=currentPage) return;
+
     QPalette p = palette();
     p.setBrush(QPalette::Dark,QBrush(zg->backgroundColor));
     setPalette(p);
@@ -393,8 +419,20 @@ void ZMangaView::redrawPage()
             } else if (zoomMode==Height) {
                 sz.setWidth(round(((double)sz.height())*pixAspect));
             }
-            if (sz!=ssz)
-                curPixmap = resizeImage(curUmPixmap,sz);
+            if (sz!=ssz) {
+                if (fineDraw || !zg->useFineRendering) {
+                    curPixmap = resizeImage(curUmPixmap,sz);
+                } else {
+                    QTimer *tmr = NULL;
+                    if (zg->resizeFilter!=Z::Nearest) {
+                        tmr = new QPageTimer(this,100,currentPage);
+                        connect(tmr,SIGNAL(timeout()),this,SLOT(redrawPage()));
+                    }
+                    curPixmap = resizeImage(curUmPixmap,sz,true,Z::Nearest);
+                    if (tmr!=NULL)
+                        tmr->start();
+                }
+            }
         }
         setMinimumSize(curPixmap.width(),curPixmap.height());
 
@@ -412,7 +450,12 @@ void ZMangaView::ownerResized(const QSize &)
 
 void ZMangaView::minimizeWindowCtx()
 {
-    emit keyPressed(Qt::Key_F4);
+    emit minimizeRequested();
+}
+
+void ZMangaView::closeFileCtx()
+{
+    emit closeFileRequested();
 }
 
 void ZMangaView::navFirst()

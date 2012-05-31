@@ -58,7 +58,20 @@
            <item>
             <widget class="QPushButton" name="btnSearchTab">
              <property name="toolTip">
-              <string>Search tab</string>
+              <string>Search tab (F2)</string>
+             </property>
+             <property name="icon">
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/img/book.png</normaloff>:/img/book.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="shortcut">
+              <string>F2</string>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -72,6 +85,15 @@
              </property>
              <property name="text">
               <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="document-open"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -93,6 +115,15 @@
              <property name="text">
               <string/>
              </property>
+             <property name="icon">
+              <iconset theme="go-first"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
              <property name="flat">
               <bool>true</bool>
              </property>
@@ -105,6 +136,15 @@
              </property>
              <property name="text">
               <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="go-previous"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -119,6 +159,15 @@
              <property name="text">
               <string/>
              </property>
+             <property name="icon">
+              <iconset theme="go-next"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
              <property name="flat">
               <bool>true</bool>
              </property>
@@ -131,6 +180,15 @@
              </property>
              <property name="text">
               <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="go-last"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -203,6 +261,15 @@
              <property name="text">
               <string/>
              </property>
+             <property name="icon">
+              <iconset theme="zoom-fit-best"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
              <property name="flat">
               <bool>true</bool>
              </property>
@@ -215,6 +282,15 @@
              </property>
              <property name="text">
               <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="zoom-fit-width"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -229,6 +305,15 @@
              <property name="text">
               <string/>
              </property>
+             <property name="icon">
+              <iconset theme="zoom-fit-height"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
              <property name="flat">
               <bool>true</bool>
              </property>
@@ -241,6 +326,15 @@
              </property>
              <property name="text">
               <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="zoom-original"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -261,6 +355,15 @@
              </property>
              <property name="text">
               <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="zoom-draw"/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -409,7 +512,7 @@
              <x>0</x>
              <y>0</y>
              <width>760</width>
-             <height>466</height>
+             <height>461</height>
             </rect>
            </property>
            <property name="focusPolicy">
@@ -497,6 +600,12 @@
    <property name="text">
     <string>Open...</string>
    </property>
+   <property name="statusTip">
+    <string>Open manga in ZIP/RAR/PDF file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="actionExit">
    <property name="icon">
@@ -506,6 +615,12 @@
    </property>
    <property name="text">
     <string>Exit</string>
+   </property>
+   <property name="statusTip">
+    <string>Close program</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actionClose">
@@ -517,6 +632,12 @@
    <property name="text">
     <string>Close</string>
    </property>
+   <property name="statusTip">
+    <string>Close currently opened manga</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
   </action>
   <action name="actionSettings">
    <property name="icon">
@@ -527,15 +648,27 @@
    <property name="text">
     <string>Settings...</string>
    </property>
+   <property name="statusTip">
+    <string>Adjust settings and parameters, edit bookmarks</string>
+   </property>
   </action>
   <action name="actionAddBookmark">
    <property name="text">
     <string>Add bookmark...</string>
    </property>
+   <property name="statusTip">
+    <string>Add current manga and current page to bookmarks list</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
   </action>
   <action name="actionAbout">
    <property name="text">
     <string>About...</string>
+   </property>
+   <property name="statusTip">
+    <string>Info about program version</string>
    </property>
   </action>
   <action name="actionFullscreen">
@@ -550,6 +683,9 @@
    <property name="text">
     <string>Fullscreen</string>
    </property>
+   <property name="statusTip">
+    <string>Maximize manga viewer to entire screen (also, double-click on free area inside window)</string>
+   </property>
    <property name="shortcut">
     <string>F9</string>
    </property>
@@ -563,6 +699,9 @@
    <property name="text">
     <string>Minimize</string>
    </property>
+   <property name="statusTip">
+    <string>Minimize window (also, press middle mouse button on empty area inside window)</string>
+   </property>
    <property name="shortcut">
     <string>F4</string>
    </property>
@@ -573,6 +712,12 @@
   <action name="actionSaveSettings">
    <property name="text">
     <string>Save settings</string>
+   </property>
+   <property name="statusTip">
+    <string>Save settings and parameters to configuration file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>
@@ -603,6 +748,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="qmanga.qrc"/>
+ </resources>
  <connections/>
 </ui>

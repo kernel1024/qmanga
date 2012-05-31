@@ -32,6 +32,7 @@ public:
 
     int pdfRenderWidth;
     bool cachePixmaps;
+    bool useFineRendering;
 
     QColor foregroundColor();
     

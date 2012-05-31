@@ -38,7 +38,6 @@ private:
     QString getAlbumNameToAdd(QString suggest);
 
 public slots:
-    void albumChanged(QListWidgetItem * current, QListWidgetItem * previous);
     void albumClicked(QListWidgetItem * item);
 
     void mangaSearch();

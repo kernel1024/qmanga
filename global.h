@@ -89,6 +89,13 @@ public:
     void delJob();
 };
 
+class QPageTimer : public QTimer {
+    Q_OBJECT
+public:
+    int savedPage;
+    QPageTimer(QObject * parent = 0, int interval = 1000, int pageNum = -1);
+};
+
 typedef QList<SQLMangaEntry> SQLMangaList;
 
 

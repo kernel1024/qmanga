@@ -34,9 +34,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcModeList->setChecked(ui->srcList->viewMode()==QListView::ListMode);
     ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->srcAlbums,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),
-            this,SLOT(albumChanged(QListWidgetItem*,QListWidgetItem*)));
     connect(ui->srcAlbums,SIGNAL(itemActivated(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
+    connect(ui->srcAlbums,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
     connect(ui->srcAlbums,SIGNAL(customContextMenuRequested(QPoint)),
             this,SLOT(ctxAlbumMenu(QPoint)));
     connect(ui->srcList,SIGNAL(activated(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
@@ -265,9 +264,9 @@ QString ZSearchTab::getAlbumNameToAdd(QString suggest)
     return ret;
 }
 
-void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
+void ZSearchTab::albumClicked(QListWidgetItem *item)
 {
-    if (current==NULL) return;
+    if (item==NULL) return;
 
     emit statusBarMsg(tr("Searching..."));
 
@@ -275,12 +274,7 @@ void ZSearchTab::albumChanged(QListWidgetItem *current, QListWidgetItem *)
 
     if (model)
         model->deleteAllItems();
-    emit dbGetFiles(current->text(),QString(),(int)order,reverseOrder);
-}
-
-void ZSearchTab::albumClicked(QListWidgetItem *item)
-{
-    albumChanged(item,NULL);
+    emit dbGetFiles(item->text(),QString(),(int)order,reverseOrder);
 }
 
 void ZSearchTab::mangaSearch()

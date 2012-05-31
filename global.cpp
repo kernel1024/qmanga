@@ -377,3 +377,12 @@ void ZLoaderHelper::delJob()
     if (jobCount>0)
         jobCount--;
 }
+
+
+QPageTimer::QPageTimer(QObject *parent, int interval, int pageNum)
+    : QTimer(parent)
+{
+    setSingleShot(true);
+    setInterval(interval);
+    savedPage = pageNum;
+}
