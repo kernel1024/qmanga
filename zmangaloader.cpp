@@ -39,8 +39,8 @@ void ZMangaLoader::closeFile()
 {
     if (mReader!=NULL) {
         mReader->closeFile();
+        mReader->setParent(NULL);
+        delete mReader;
     }
-    mReader->setParent(NULL);
-    delete mReader;
     mReader = NULL;
 }
