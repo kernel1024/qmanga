@@ -27,30 +27,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->spinPosition->hide();
 
-    int btnSize = 20;
-    ui->btnOpen->setIcon(QIcon(":/img/document-open.png"));
-    ui->btnOpen->setIconSize(QSize(btnSize,btnSize));
-    ui->btnNavFirst->setIcon(QIcon(":/img/go-first.png"));
-    ui->btnNavFirst->setIconSize(QSize(btnSize,btnSize));
-    ui->btnNavPrev->setIcon(QIcon(":/img/go-previous.png"));
-    ui->btnNavPrev->setIconSize(QSize(btnSize,btnSize));
-    ui->btnNavNext->setIcon(QIcon(":/img/go-next.png"));
-    ui->btnNavNext->setIconSize(QSize(btnSize,btnSize));
-    ui->btnNavLast->setIcon(QIcon(":/img/go-last.png"));
-    ui->btnNavLast->setIconSize(QSize(btnSize,btnSize));
-    ui->btnZoomFit->setIcon(QIcon(":/img/zoom-fit-best.png"));
-    ui->btnZoomFit->setIconSize(QSize(btnSize,btnSize));
-    ui->btnZoomWidth->setIcon(QIcon(":/img/zoom-fit-width.png"));
-    ui->btnZoomWidth->setIconSize(QSize(btnSize,btnSize));
-    ui->btnZoomHeight->setIcon(QIcon(":/img/zoom-fit-height.png"));
-    ui->btnZoomHeight->setIconSize(QSize(btnSize,btnSize));
-    ui->btnZoomOriginal->setIcon(QIcon(":/img/zoom-original.png"));
-    ui->btnZoomOriginal->setIconSize(QSize(btnSize,btnSize));
-    ui->btnZoomDynamic->setIcon(QIcon(":/img/zoom-draw.png"));
-    ui->btnZoomDynamic->setIconSize(QSize(btnSize,btnSize));
-    ui->btnSearchTab->setIcon(QIcon(":/img/book.png"));
-    ui->btnSearchTab->setIconSize(QSize(btnSize,btnSize));
-
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
     connect(ui->actionClose,SIGNAL(triggered()),this,SLOT(closeManga()));
@@ -67,6 +43,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->comboZoom,SIGNAL(currentIndexChanged(QString)),ui->mangaView,SLOT(setZoomAny(QString)));
     connect(ui->mangaView,SIGNAL(doubleClicked()),this,SLOT(switchFullscreen()));
     connect(ui->mangaView,SIGNAL(keyPressed(int)),this,SLOT(viewerKeyPressed(int)));
+    connect(ui->mangaView,SIGNAL(minimizeRequested()),this,SLOT(showMinimized()));
+    connect(ui->mangaView,SIGNAL(closeFileRequested()),this,SLOT(closeManga()));
     connect(ui->srcWidget,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
     connect(ui->srcWidget,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
     connect(ui->mangaView,SIGNAL(averageSizes(QSize,qint64)),this,SLOT(msgFromMangaView(QSize,qint64)));
@@ -193,7 +171,6 @@ void MainWindow::switchFullscreen()
 void MainWindow::viewerKeyPressed(int key)
 {
     if (key==Qt::Key_Escape && fullScreen) switchFullscreen();
-    if (key==Qt::Key_F4) showMinimized();
 }
 
 void MainWindow::updateViewer()

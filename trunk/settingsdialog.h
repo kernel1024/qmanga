@@ -22,6 +22,7 @@ public:
     QListWidget* listBookmarks;
     QRadioButton* radioCachePixmaps;
     QRadioButton* radioCacheData;
+    QCheckBox* checkFineRendering;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();

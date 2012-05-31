@@ -19,6 +19,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     listBookmarks = ui->listBookmarks;
     radioCachePixmaps = ui->rbCachePixmaps;
     radioCacheData = ui->rbCacheData;
+    checkFineRendering = ui->checkFineRendering;
 
 #ifndef WITH_MAGICK
     while (ui->comboFilter->count()>2)

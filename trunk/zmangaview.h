@@ -59,6 +59,8 @@ signals:
     void doubleClicked();
     void keyPressed(int key);
     void averageSizes(QSize sz, qint64 fsz);
+    void minimizeRequested();
+    void closeFileRequested();
 
     // cache signals
     void cacheOpenFile(QString filename, int preferred);
@@ -71,6 +73,7 @@ public slots:
     void redrawPage();
     void ownerResized(const QSize& size);
     void minimizeWindowCtx();
+    void closeFileCtx();
 
     void navFirst();
     void navPrev();
@@ -94,6 +97,7 @@ protected:
     void wheelEvent(QWheelEvent *event);
     void paintEvent(QPaintEvent *);
     void mouseMoveEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *);
     void keyPressEvent(QKeyEvent *event);
     void contextMenuEvent(QContextMenuEvent *event);
