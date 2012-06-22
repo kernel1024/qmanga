@@ -139,7 +139,7 @@ void ZMangaModel::deleteItems(const QIntList &dbids)
     for (int i=0;i<dbids.count();i++) {
         int idx = mList.indexOf(SQLMangaEntry(dbids.at(i)));
         if (idx>=0) {
-            beginRemoveRows(QModelIndex(),idx,idx+1);
+            beginRemoveRows(QModelIndex(),idx,idx);
             mList.removeAt(idx);
             endRemoveRows();
         }
@@ -149,7 +149,7 @@ void ZMangaModel::deleteItems(const QIntList &dbids)
 void ZMangaModel::addItem(const SQLMangaEntry &file)
 {
     int posidx = mList.count();
-    beginInsertRows(QModelIndex(),posidx,posidx+1);
+    beginInsertRows(QModelIndex(),posidx,posidx);
     mList.append(file);
     endInsertRows();
 }
