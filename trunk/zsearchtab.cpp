@@ -303,9 +303,11 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     int idx = current.row();
     const SQLMangaEntry m = model->getItem(idx);
 
+    QFileInfo fi(m.filename);
+
     QString msg = QString(descTemplate).
             arg(m.name).arg(m.pagesCount).arg(formatSize(m.fileSize)).arg(m.album).arg(m.fileMagic).
-            arg(m.fileDT.toString("yyyy-MM-dd")).arg(m.addingDT.toString("yyyy-MM-dd"));
+            arg(m.fileDT.toString("yyyy-MM-dd")).arg(m.addingDT.toString("yyyy-MM-dd")).arg(fi.path());
 
     ui->srcDesc->setHtml(msg);
 }
