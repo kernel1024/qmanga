@@ -22,6 +22,7 @@ protected:
     ZoomMode zoomMode;
     QPixmap curPixmap, curUmPixmap;
     QPoint zoomPos;
+    QPoint dragPos;
 
     QList<ZLoaderHelper> cacheLoaders;
     int privPageCount;
@@ -99,6 +100,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
     void keyPressEvent(QKeyEvent *event);
     void contextMenuEvent(QContextMenuEvent *event);
 };
