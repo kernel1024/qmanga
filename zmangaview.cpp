@@ -12,6 +12,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
     zoomMode = Fit;
     zoomDynamic = false;
     zoomPos = QPoint();
+    dragPos = QPoint();
     curPixmap = QPixmap();
     curUmPixmap = QPixmap();
     openedFile = QString();
@@ -272,11 +273,25 @@ void ZMangaView::paintEvent(QPaintEvent *)
 
 void ZMangaView::mouseMoveEvent(QMouseEvent *event)
 {
-    if (zoomDynamic) {
-        zoomPos = event->pos();
-        update();
-    } else
-        zoomPos = QPoint();
+    QScrollBar* vb = scroller->verticalScrollBar();
+    QScrollBar* hb = scroller->horizontalScrollBar();
+    if ((event->buttons() && Qt::LeftButton)>0) {
+        if (!dragPos.isNull()) {
+            int hlen = hb->maximum()-hb->minimum();
+            int vlen = vb->maximum()-vb->minimum();
+            int hvsz = width();
+            int vvsz = height();
+            hb->setValue(hb->value()+hlen*(dragPos.x()-event->pos().x())/hvsz);
+            vb->setValue(vb->value()+vlen*(dragPos.y()-event->pos().y())/vvsz);
+        }
+        dragPos = event->pos();
+    } else {
+        if (zoomDynamic) {
+            zoomPos = event->pos();
+            update();
+        } else
+            zoomPos = QPoint();
+    }
 }
 
 void ZMangaView::mousePressEvent(QMouseEvent *event)
@@ -291,6 +306,11 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
 void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
 {
     emit doubleClicked();
+}
+
+void ZMangaView::mouseReleaseEvent(QMouseEvent *)
+{
+    dragPos = QPoint();
 }
 
 void ZMangaView::keyPressEvent(QKeyEvent *event)
