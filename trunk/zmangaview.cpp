@@ -286,11 +286,13 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
         }
         dragPos = event->pos();
     } else {
-        if (zoomDynamic) {
-            zoomPos = event->pos();
-            update();
-        } else
-            zoomPos = QPoint();
+        if ((QApplication::keyboardModifiers() && Qt::ControlModifier) == 0) {
+            if (zoomDynamic) {
+                zoomPos = event->pos();
+                update();
+            } else
+                zoomPos = QPoint();
+        }
     }
 }
 
