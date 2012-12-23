@@ -41,6 +41,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
                 this,SLOT(cacheGotPage(QByteArray,int,QString,QUuid)),Qt::QueuedConnection);
         connect(ld,SIGNAL(gotError(QString)),
                 this,SLOT(cacheGotError(QString)),Qt::QueuedConnection);
+        connect(ld,SIGNAL(closeFileRequest()),
+                this,SLOT(closeFile()));
 
         connect(this,SIGNAL(cacheOpenFile(QString,int)),ld,SLOT(openFile(QString,int)),Qt::QueuedConnection);
         connect(this,SIGNAL(cacheCloseFile()),ld,SLOT(closeFile()),Qt::QueuedConnection);

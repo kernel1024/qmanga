@@ -248,7 +248,8 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
             continue;
         }
 
-        ZAbstractReader* za = readerFactory(this,files.at(i));
+        bool mimeOk = false;
+        ZAbstractReader* za = readerFactory(this,files.at(i),&mimeOk);
         if (za == NULL) {
             qDebug() << files.at(i) << "File format not supported.";
             continue;

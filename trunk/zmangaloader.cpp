@@ -11,13 +11,20 @@ void ZMangaLoader::openFile(QString filename, int preferred)
     if (mReader!=NULL)
         closeFile();
 
-    ZAbstractReader* za = readerFactory(this,filename);
-    if (za == NULL) {
-        emit gotError(tr("File format not supported"));
+    bool mimeOk = false;
+    ZAbstractReader* za = readerFactory(this,filename,&mimeOk);
+    if ((za == NULL) && (!mimeOk)) {
+        emit closeFileRequest();
+        emit gotError(tr("File format not supported."));
+        return;
+    } else if ((za == NULL) && (mimeOk)) {
+        emit closeFileRequest();
+        emit gotError(tr("File not found. Update database or restore file."));
         return;
     }
     if (!za->openFile()) {
-        emit gotError(tr("Unable to open file"));
+        emit closeFileRequest();
+        emit gotError(tr("Unable to open file."));
         za->setParent(NULL);
         delete za;
         return;
