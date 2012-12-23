@@ -99,7 +99,7 @@ public:
 typedef QList<SQLMangaEntry> SQLMangaList;
 
 
-extern ZAbstractReader *readerFactory(QObject* parent, QString filename);
+extern ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk);
 
 QString formatSize(qint64 size);
 QString escapeParam(QString param);

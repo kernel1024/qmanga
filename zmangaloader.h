@@ -20,6 +20,7 @@ signals:
                  const QUuid& aThreadID);
     void gotPageCount(const int& num, const int& preferred);
     void gotError(const QString& msg);
+    void closeFileRequest();
     
 public slots:
     void openFile(QString filename, int preferred);

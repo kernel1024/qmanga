@@ -12,8 +12,12 @@
 using namespace Magick;
 #endif
 
-ZAbstractReader *readerFactory(QObject* parent, QString filename)
+ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk)
 {
+    *mimeOk = true;
+    QFileInfo fi(filename);
+    if (!fi.exists()) return NULL;
+
     QString mime = detectMIME(filename).toLower();
     if (mime.contains("application/zip",Qt::CaseInsensitive)) {
         return new ZZipReader(parent,filename);
@@ -25,6 +29,7 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename)
         return new ZPdfReader(parent,filename);
 #endif
     } else {
+        *mimeOk = false;
         return NULL;
     }
 }
