@@ -15,6 +15,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     bookmarks.clear();
     cachePixmaps = false;
     useFineRendering = true;
+    ocrEditor = NULL;
 
     threadDB = new QThread();
     db = new ZDB();

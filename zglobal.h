@@ -5,6 +5,7 @@
 #include <QtGui>
 
 #include "global.h"
+#include "ocreditor.h"
 
 class ZMangaModel;
 class ZDB;
@@ -17,6 +18,7 @@ protected:
     QString dbBase, dbUser, dbPass;
 public:
     ZDB* db;
+    ZOCREditor* ocrEditor;
 
     explicit ZGlobal(QObject *parent = 0);
     ~ZGlobal();

@@ -391,3 +391,86 @@ QPageTimer::QPageTimer(QObject *parent, int interval, int pageNum)
     setInterval(interval);
     savedPage = pageNum;
 }
+
+#ifdef WITH_OCR
+PIX* Image2PIX(QImage& qImage) {
+  PIX * pixs;
+  l_uint32 *lines;
+
+  qImage = qImage.rgbSwapped();
+  int width = qImage.width();
+  int height = qImage.height();
+  int depth = qImage.depth();
+  int wpl = qImage.bytesPerLine() / 4;
+
+  pixs = pixCreate(width, height, depth);
+  pixSetWpl(pixs, wpl);
+  pixSetColormap(pixs, NULL);
+  l_uint32 *datas = pixs->data;
+
+  for (int y = 0; y < height; y++) {
+    lines = datas + y * wpl;
+    QByteArray a((const char*)qImage.scanLine(y), qImage.bytesPerLine());
+    for (int j = 0; j < a.size(); j++) {
+      *((l_uint8 *)lines + j) = a[j];
+    }
+  }
+  return pixEndianByteSwapNew(pixs);
+}
+
+QImage PIX2QImage(PIX *pixImage) {
+  int width = pixGetWidth(pixImage);
+  int height = pixGetHeight(pixImage);
+  int depth = pixGetDepth(pixImage);
+  int bytesPerLine = pixGetWpl(pixImage) * 4;
+  l_uint32 * s_data = pixGetData(pixEndianByteSwapNew(pixImage));
+
+  QImage::Format format;
+  if (depth == 1)
+    format = QImage::Format_Mono;
+  else if (depth == 8)
+    format = QImage::Format_Indexed8;
+  else
+    format = QImage::Format_RGB32;
+
+  QImage result((uchar*)s_data, width, height, bytesPerLine, format);
+
+  // Handle pallete
+  QVector<QRgb> _bwCT;
+  _bwCT.append(qRgb(255,255,255));
+  _bwCT.append(qRgb(0,0,0));
+
+  QVector<QRgb> _grayscaleCT(256);
+  for (int i = 0; i < 256; i++)  {
+    _grayscaleCT.append(qRgb(i, i, i));
+  }
+  if (depth == 1) {
+    result.setColorTable(_bwCT);
+  }  else if (depth == 8)  {
+    result.setColorTable(_grayscaleCT);
+
+  } else {
+    result.setColorTable(_grayscaleCT);
+  }
+
+  if (result.isNull()) {
+    static QImage none(0,0,QImage::Format_Invalid);
+    qDebug() << "***Invalid format!!!";
+    return none;
+  }
+
+  return result.rgbSwapped();
+}
+
+tesseract::TessBaseAPI* initializeOCR()
+{
+    ocr = new tesseract::TessBaseAPI();
+    if (ocr->Init(NULL,"jpn")) {
+        QMessageBox::critical(NULL,"QManga error",
+                              "Could not initialize Tesseract.\n"
+                              "Maybe japanese language training data is not installed.");
+        return NULL;
+    }
+    return ocr;
+}
+#endif

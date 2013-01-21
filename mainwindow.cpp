@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "zglobal.h"
 #include "bookmarkdlg.h"
+#include "ocreditor.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,6 +12,9 @@ MainWindow::MainWindow(QWidget *parent) :
         zg = new ZGlobal(this);
 
     ui->setupUi(this);
+
+    if (zg->ocrEditor==NULL)
+        zg->ocrEditor = new ZOCREditor(this);
 
     setWindowIcon(QIcon(":/img/Alien9.png"));
 
