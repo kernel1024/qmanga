@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     zpdfreader.cpp \
     albumselectordlg.cpp \
     zdb.cpp \
-    zmangaloader.cpp
+    zmangaloader.cpp \
+    ocreditor.cpp
 
 LIBS += -lquazip -lmagic
 
@@ -45,18 +46,20 @@ HEADERS  += mainwindow.h \
     zpdfreader.h \
     albumselectordlg.h \
     zdb.h \
-    zmangaloader.h
+    zmangaloader.h \
+    ocreditor.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
     bookmarkdlg.ui \
     zsearchtab.ui \
-    albumselectordlg.ui
+    albumselectordlg.ui \
+    ocreditor.ui
 
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig use_magick use_poppler
+CONFIG += warn_on link_pkgconfig use_magick use_poppler use_ocr
 
 use_magick {
     DEFINES += WITH_MAGICK=1
@@ -75,4 +78,11 @@ use_poppler {
 use_kde_dialogs {
     DEFINES += WITH_KDEDIALOGS=1
     LIBS += -lkio -lkdecore -lkdeui
+}
+
+use_ocr {
+    DEFINES += WITH_OCR=1
+    QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
+    INCLUDEPATH += /usr/include/tesseract
+    LIBS += -llept -ltesseract
 }

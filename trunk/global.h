@@ -10,6 +10,11 @@
 #include <kurl.h>
 #endif
 
+#ifdef WITH_OCR
+#include <baseapi.h>
+#include <leptonica/allheaders.h>
+#endif
+
 #ifndef ARGUNUSED
 #define ARGUNUSED(x) (void)(x)
 #endif
@@ -133,5 +138,13 @@ QString detectMIME(QString filename);
 QString detectMIME(QByteArray buf);
 QPixmap resizeImage(QPixmap src, QSize targetSize,
                     bool forceFilter = false, Z::ResizeFilter filter = Z::Lanczos);
+
+#ifdef WITH_OCR
+extern tesseract::TessBaseAPI* ocr;
+
+tesseract::TessBaseAPI *initializeOCR();
+PIX* Image2PIX(QImage& qImage);
+QImage PIX2QImage(PIX *pixImage);
+#endif
 
 #endif // GLOBAL_H

@@ -21,8 +21,11 @@ public:
 protected:
     ZoomMode zoomMode;
     QPixmap curPixmap, curUmPixmap;
+    QPoint drawPos;
     QPoint zoomPos;
     QPoint dragPos;
+    QPoint copyPos;
+    QRubberBand* copySelection;
 
     QList<ZLoaderHelper> cacheLoaders;
     int privPageCount;

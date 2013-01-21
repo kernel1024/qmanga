@@ -13,6 +13,11 @@ ZMangaView::ZMangaView(QWidget *parent) :
     zoomDynamic = false;
     zoomPos = QPoint();
     dragPos = QPoint();
+    copyPos = QPoint();
+    drawPos = QPoint();
+    copySelection = new QRubberBand(QRubberBand::Rectangle,this);
+    copySelection->hide();
+    copySelection->setGeometry(QRect());
     curPixmap = QPixmap();
     curUmPixmap = QPixmap();
     openedFile = QString();
@@ -218,6 +223,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
         if (curPixmap.height()<scroller->size().height()-2*scb)
             y=(scroller->size().height()-curPixmap.height()-2*scb)/2;
         w.drawPixmap(x,y,curPixmap);
+        drawPos = QPoint(x,y);
 
         if (zoomDynamic) {
             QPoint mp(zoomPos.x()-x,zoomPos.y()-y);
@@ -278,15 +284,19 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
     QScrollBar* vb = scroller->verticalScrollBar();
     QScrollBar* hb = scroller->horizontalScrollBar();
     if ((event->buttons() && Qt::LeftButton)>0) {
-        if (!dragPos.isNull()) {
-            int hlen = hb->maximum()-hb->minimum();
-            int vlen = vb->maximum()-vb->minimum();
-            int hvsz = width();
-            int vvsz = height();
-            hb->setValue(hb->value()+hlen*(dragPos.x()-event->pos().x())/hvsz);
-            vb->setValue(vb->value()+vlen*(dragPos.y()-event->pos().y())/vvsz);
+        if ((QApplication::keyboardModifiers() && Qt::AltModifier) != 0) {
+            if (!dragPos.isNull()) {
+                int hlen = hb->maximum()-hb->minimum();
+                int vlen = vb->maximum()-vb->minimum();
+                int hvsz = width();
+                int vvsz = height();
+                hb->setValue(hb->value()+hlen*(dragPos.x()-event->pos().x())/hvsz);
+                vb->setValue(vb->value()+vlen*(dragPos.y()-event->pos().y())/vvsz);
+            }
+            dragPos = event->pos();
+        } else {
+            copySelection->setGeometry(QRect(event->pos(),copyPos).normalized());
         }
-        dragPos = event->pos();
     } else {
         if ((QApplication::keyboardModifiers() && Qt::ControlModifier) == 0) {
             if (zoomDynamic) {
@@ -303,8 +313,13 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
     if (event->button()==Qt::MiddleButton) {
         emit minimizeRequested();
         event->accept();
+    } else if (event->button()==Qt::LeftButton) {
+        if ((QApplication::keyboardModifiers() && Qt::AltModifier) == 0) {
+            copyPos = event->pos();
+            copySelection->setGeometry(copyPos.x(),copyPos.y(),0,0);
+            copySelection->show();
+        }
     }
-
 }
 
 void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
@@ -312,9 +327,51 @@ void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
     emit doubleClicked();
 }
 
-void ZMangaView::mouseReleaseEvent(QMouseEvent *)
+void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 {
+    if ((QApplication::keyboardModifiers() && Qt::AltModifier) == 0) {
+        if (!curPixmap.isNull()) {
+            QRect cp = QRect(event->pos(),copyPos).normalized();
+            cp.moveTo(cp.x()-drawPos.x(),cp.y()-drawPos.y());
+            cp.moveTo(cp.left()*curUmPixmap.width()/curPixmap.width(),
+                      cp.top()*curUmPixmap.height()/curPixmap.height());
+            cp.setWidth(cp.width()*curUmPixmap.width()/curPixmap.width());
+            cp.setHeight(cp.height()*curUmPixmap.height()/curPixmap.height());
+            cp = cp.intersect(curUmPixmap.rect());
+#ifdef WITH_OCR
+            if (ocr!=NULL) {
+                QImage cpx = curUmPixmap.copy(cp).toImage();
+                ocr->SetImage(Image2PIX(cpx));
+                char* rtext = ocr->GetUTF8Text();
+                QString s = QString::fromUtf8(rtext);
+                delete[] rtext;
+                QStringList sl = s.split('\n',QString::SkipEmptyParts);
+                int maxlen = 0;
+                for (int i=0;i<sl.count();i++)
+                    if (sl.at(i).length()>maxlen)
+                        maxlen = sl.at(i).length();
+                if (maxlen<sl.count()) { // vertical kanji block, needs transpose
+                    QStringList sl2;
+                    sl2.clear();
+                    for (int i=0;i<maxlen;i++)
+                        sl2 << QString();
+                    for (int i=0;i<sl.count();i++)
+                        for (int j=0;j<sl.at(i).length();j++)
+                            sl2[maxlen-j-1][i]=sl[i][j];
+                    sl = sl2;
+                }
+                if (zg->ocrEditor!=NULL) {
+                    zg->ocrEditor->addText(sl);
+                    zg->ocrEditor->showWnd();
+                }
+            }
+#endif
+        }
+    }
     dragPos = QPoint();
+    copyPos = QPoint();
+    copySelection->hide();
+    copySelection->setGeometry(QRect());
 }
 
 void ZMangaView::keyPressEvent(QKeyEvent *event)
