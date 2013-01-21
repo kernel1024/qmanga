@@ -40,8 +40,10 @@ void ZOCREditor::translate()
         if (!translator->isValid())
             ui->status->setText(tr("Aux translator not ready."));
         else {
-            translator->setText(ui->editor->toPlainText());
-            translator->startTranslation();
+            QString s = ui->editor->toPlainText();
+            if (!ui->editor->textCursor().selectedText().isEmpty())
+                s = ui->editor->textCursor().selectedText();
+            translator->startAuxTranslation(s);
             ui->status->setText(tr("Translation in progress..."));
         }
     }

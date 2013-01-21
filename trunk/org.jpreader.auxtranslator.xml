@@ -4,12 +4,8 @@
     <signal name="gotTranslation">
       <arg name="text" type="s" direction="out"/>
     </signal>
-    <method name="startTranslationOnce">
-    </method>
-    <method name="startTranslation">
-    </method>
-    <method name="setText">
-      <arg name="Text" type="s" direction="in"/>
+    <method name="startAuxTranslation">
+      <arg name="text" type="s" direction="in"/>
     </method>
   </interface>
 </node>
