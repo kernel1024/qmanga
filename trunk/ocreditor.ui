@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>512</width>
-    <height>321</height>
+    <height>474</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -166,7 +166,20 @@
     </layout>
    </item>
    <item>
-    <widget class="QPlainTextEdit" name="editor"/>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QPlainTextEdit" name="editor"/>
+     <widget class="QPlainTextEdit" name="translatedEditor"/>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="status">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

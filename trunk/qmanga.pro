@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql
+QT       += core gui sql dbus
 
 TARGET = qmanga
 TEMPLATE = app
@@ -86,3 +86,8 @@ use_ocr {
     INCLUDEPATH += /usr/include/tesseract
     LIBS += -llept -ltesseract
 }
+
+OTHER_FILES += \
+    org.jpreader.auxtranslator.xml
+
+DBUS_INTERFACES = org.jpreader.auxtranslator.xml
