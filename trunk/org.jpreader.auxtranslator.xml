@@ -4,6 +4,8 @@
     <signal name="gotTranslation">
       <arg name="text" type="s" direction="out"/>
     </signal>
+    <method name="startTranslationOnce">
+    </method>
     <method name="startTranslation">
     </method>
     <method name="setText">
