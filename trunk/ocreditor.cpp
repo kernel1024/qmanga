@@ -35,11 +35,16 @@ void ZOCREditor::showWnd()
 
 void ZOCREditor::translate()
 {
+    ui->status->clear();
     if (translator!=NULL) {
-        translator->setText(ui->editor->toPlainText());
-        translator->startTranslation();
+        if (!translator->isValid())
+            ui->status->setText(tr("Aux translator not ready."));
+        else {
+            translator->setText(ui->editor->toPlainText());
+            translator->startTranslation();
+            ui->status->setText(tr("Translation in progress..."));
+        }
     }
-    ui->status->setText(tr("Translation in progress..."));
 }
 
 void ZOCREditor::gotTranslation(const QString &text)
