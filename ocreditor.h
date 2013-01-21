@@ -2,6 +2,7 @@
 #define OCREDITOR_H
 
 #include <QDialog>
+#include "auxtranslator_interface.h"
 
 namespace Ui {
 class ZOCREditor;
@@ -18,9 +19,12 @@ public:
     
 private:
     Ui::ZOCREditor *ui;
+    OrgJpreaderAuxtranslatorInterface* translator;
 
 public slots:
     void showWnd();
+    void translate();
+    void gotTranslation(const QString& text);
 };
 
 #endif // OCREDITOR_H

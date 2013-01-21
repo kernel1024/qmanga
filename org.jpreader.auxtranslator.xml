@@ -1,0 +1,13 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.jpreader.auxtranslator">
+    <signal name="gotTranslation">
+      <arg name="text" type="s" direction="out"/>
+    </signal>
+    <method name="startTranslation">
+    </method>
+    <method name="setText">
+      <arg name="Text" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>
