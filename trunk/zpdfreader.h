@@ -25,7 +25,6 @@ public:
     bool openFile();
     void closeFile();
     QByteArray loadPage(int num);
-    QByteHash loadPages(QIntList nums);
     QString getMagic();
     
 };

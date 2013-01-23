@@ -1,5 +1,5 @@
+#include <zzip/zzip.h>
 #include "zzipreader.h"
-#include <quazip/quazipfileinfo.h>
 
 ZZipReader::ZZipReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
@@ -17,22 +17,19 @@ bool ZZipReader::openFile()
         return false;
     }
 
-    mainFile.setFileName(fileName);
-
-    mainZFile.setIoDevice(&mainFile);
-    if (!mainZFile.open(QuaZip::mdUnzip)) {
-        mainFile.close();
+    mainZFile = zzip_opendir(fileName.toUtf8().data());
+    if (!mainZFile) {
         return false;
     }
 
     int cnt = 0;
-    for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
-        QuaZipFileInfo zfi;
-        mainZFile.getCurrentFileInfo(&zfi);
-        if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
-        QFileInfo fi(zfi.name);
+    ZZIP_DIRENT* d;
+    while ((d=zzip_readdir(mainZFile))) {
+        QString fname(d->d_name);
+        if (fname.endsWith('/') || fname.endsWith('\\')) continue;
+        QFileInfo fi(fname);
         if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
-        sortList << ZFileEntry(zfi.name,cnt);
+        sortList << ZFileEntry(fname,cnt);
         cnt++;
     }
 
@@ -47,8 +44,8 @@ void ZZipReader::closeFile()
     if (!opened)
         return;
 
-    mainZFile.close();
-    mainFile.close();
+    if (mainZFile!=NULL)
+        zzip_closedir(mainZFile);
     opened = false;
     sortList.clear();
 }
@@ -56,78 +53,43 @@ void ZZipReader::closeFile()
 QByteArray ZZipReader::loadPage(int num)
 {
     QByteArray res;
+    res.clear();
     if (!opened)
         return res;
 
-    QuaZipFile zf(&mainZFile);
     int idx = 0;
     int znum = -2;
     if (num>=0 && num<sortList.count())
         znum = sortList.at(num).idx;
-    for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
-        QuaZipFileInfo zfi;
-        mainZFile.getCurrentFileInfo(&zfi);
-        if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
-        QFileInfo fi(zfi.name);
+
+    ZZIP_DIRENT* d;
+    zzip_rewinddir(mainZFile);
+    while ((d=zzip_readdir(mainZFile))) {
+        QString fname(d->d_name);
+        if (fname.endsWith('/') || fname.endsWith('\\')) continue;
+        QFileInfo fi(fname);
         if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
 
         if (idx==znum) {
-            QuaZipFileInfo zfi;
-            mainZFile.getCurrentFileInfo(&zfi);
-            if (zfi.uncompressedSize>(150*1024*1024)) {
+            if (d->st_size>(150*1024*1024)) {
                 qDebug() << "Image file is too big (over 150Mb). Unable to load.";
                 return res;
             }
-            if (!zf.open(QIODevice::ReadOnly)) {
+            ZZIP_FILE* zf = zzip_file_open(mainZFile, d->d_name, O_RDONLY);
+            if (!zf) {
                 qDebug() << "Error while opening compressed image inside archive.";
                 return res;
             }
-            res = zf.readAll();
-            zf.close();
+            char* buf = new char[d->st_size];
+            zzip_ssize_t n = zzip_read(zf, buf, d->st_size);
+            res.append(QByteArray::fromRawData(buf,n));
+            delete[] buf;
+            zzip_close(zf);
             return res;
         }
         idx++;
     }
     return res;
-}
-
-QByteHash ZZipReader::loadPages(QIntList nums)
-{
-    QByteHash hash;
-    if (!opened)
-        return hash;
-
-    QuaZipFile zf(&mainZFile);
-    int idx = 0;
-    QHash<int,int> znums;
-    for (int i=0;i<nums.count();i++)
-        if (nums.at(i)>=0 && nums.at(i)<sortList.count())
-            znums.insert(sortList.at(nums.at(i)).idx,nums.at(i));
-
-    for(bool more = mainZFile.goToFirstFile(); more; more = mainZFile.goToNextFile()) {
-        QuaZipFileInfo zfi;
-        mainZFile.getCurrentFileInfo(&zfi);
-        if (zfi.name.endsWith('/') || zfi.name.endsWith('\\')) continue;
-        QFileInfo fi(zfi.name);
-        if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
-
-        if (znums.keys().contains(idx)) {
-            QuaZipFileInfo zfi;
-            mainZFile.getCurrentFileInfo(&zfi);
-            if (zfi.uncompressedSize>(150*1024*1024)) {
-                qDebug() << "Image file is too big (over 150Mb). Unable to load.";
-            } else {
-                if (!zf.open(QIODevice::ReadOnly)) {
-                    qDebug() << "Error while opening compressed image inside archive.";
-                } else {
-                    hash[znums[idx]] = zf.readAll();
-                    zf.close();
-                }
-            }
-        }
-        idx++;
-    }
-    return hash;
 }
 
 QString ZZipReader::getMagic()

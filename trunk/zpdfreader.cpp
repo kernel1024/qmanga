@@ -100,18 +100,6 @@ QByteArray ZPdfReader::loadPage(int num)
     return res;
 }
 
-QByteHash ZPdfReader::loadPages(QIntList nums)
-{
-    QByteHash hash;
-    if (!opened)
-        return hash;
-
-    for (int i=0;i<nums.count();i++)
-        hash[nums.at(i)] = loadPage(nums.at(i));
-
-    return hash;
-}
-
 QString ZPdfReader::getMagic()
 {
     return QString("PDF");
