@@ -2,7 +2,13 @@
 #define ZSEARCHTAB_H
 
 #include <QtCore>
-#include <QtGui>
+#include <QWidget>
+#include <QSlider>
+#include <QRadioButton>
+#include <QProgressDialog>
+#include <QListWidget>
+#include <QListWidgetItem>
+
 #include "zglobal.h"
 #include "zmangamodel.h"
 

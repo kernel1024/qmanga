@@ -2,7 +2,14 @@
 #define SETTINGSDIALOG_H
 
 #include <QtCore>
-#include <QtGui>
+#include <QWidget>
+#include <QDialog>
+#include <QComboBox>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QRadioButton>
+#include <QCheckBox>
 
 namespace Ui {
 class SettingsDialog;

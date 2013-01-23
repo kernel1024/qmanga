@@ -2,7 +2,10 @@
 #define GLOBAL_H
 
 #include <QtCore>
-#include <QtGui>
+#include <QWidget>
+#include <QPixmap>
+#include <QImage>
+#include <QFileDialog>
 #include <magic.h>
 
 #ifdef WITH_KDEDIALOGS

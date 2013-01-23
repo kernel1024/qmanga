@@ -1,3 +1,6 @@
+#include <QDesktopWidget>
+#include <QApplication>
+
 #include "global.h"
 #include "zglobal.h"
 #include "mainwindow.h"

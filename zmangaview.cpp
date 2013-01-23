@@ -1,3 +1,8 @@
+#include <QPainter>
+#include <QScrollBar>
+#include <QApplication>
+#include <QMessageBox>
+
 #include <limits.h>
 #include "zmangaloader.h"
 #include "zmangaview.h"
@@ -337,7 +342,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                       cp.top()*curUmPixmap.height()/curPixmap.height());
             cp.setWidth(cp.width()*curUmPixmap.width()/curPixmap.width());
             cp.setHeight(cp.height()*curUmPixmap.height()/curPixmap.height());
-            cp = cp.intersect(curUmPixmap.rect());
+            cp = cp.intersected(curUmPixmap.rect());
 #ifdef WITH_OCR
             if (ocr!=NULL) {
                 QImage cpx = curUmPixmap.copy(cp).toImage();

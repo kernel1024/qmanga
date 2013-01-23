@@ -2,7 +2,11 @@
 #define ZMANGAVIEW_H
 
 #include <QtCore>
-#include <QtGui>
+#include <QWidget>
+#include <QRubberBand>
+#include <QPixmap>
+#include <QScrollArea>
+
 #include "global.h"
 #include "zabstractreader.h"
 #include "zmangaloader.h"

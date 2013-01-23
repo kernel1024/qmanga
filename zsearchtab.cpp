@@ -1,3 +1,7 @@
+#include <QMenu>
+#include <QInputDialog>
+#include <QMessageBox>
+
 #include "zsearchtab.h"
 #include "ui_zsearchtab.h"
 #include "zglobal.h"

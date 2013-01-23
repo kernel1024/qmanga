@@ -1,4 +1,5 @@
-#include <QtGui/QApplication>
+#include <QtGui>
+#include <QApplication>
 #include <locale.h>
 #include "mainwindow.h"
 #include "global.h"

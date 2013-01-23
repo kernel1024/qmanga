@@ -2,7 +2,8 @@
 #define ALBUMSELECTORDLG_H
 
 #include <QtCore>
-#include <QtGui>
+#include <QDialog>
+#include <QComboBox>
 
 namespace Ui {
 class AlbumSelectorDlg;

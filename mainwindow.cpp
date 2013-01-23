@@ -1,3 +1,6 @@
+#include <QDesktopWidget>
+#include <QMessageBox>
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "zglobal.h"

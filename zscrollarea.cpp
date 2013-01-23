@@ -1,3 +1,4 @@
+#include <QResizeEvent>
 #include "zscrollarea.h"
 
 ZScrollArea::ZScrollArea(QWidget *parent) :
