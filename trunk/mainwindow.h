@@ -2,7 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QtCore>
-#include <QtGui>
+#include <QWidget>
+#include <QMainWindow>
+#include <QMenu>
+#include <QLabel>
+
 #include "zmangaview.h"
 #include "zsearchtab.h"
 

@@ -1,3 +1,6 @@
+#include <QColorDialog>
+#include <QFontDialog>
+
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 

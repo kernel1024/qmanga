@@ -1,3 +1,5 @@
+#include <QLineEdit>
+
 #include "albumselectordlg.h"
 #include "ui_albumselectordlg.h"
 

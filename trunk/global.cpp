@@ -1,3 +1,5 @@
+#include <QMessageBox>
+
 #include "zmangaloader.h"
 #include "global.h"
 #include "zabstractreader.h"

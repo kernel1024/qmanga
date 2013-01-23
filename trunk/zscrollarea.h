@@ -2,7 +2,9 @@
 #define ZSCROLLAREA_H
 
 #include <QtCore>
-#include <QtGui>
+#include <QScrollArea>
+#include <QTabWidget>
+#include <QTabBar>
 
 class ZScrollArea : public QScrollArea
 {

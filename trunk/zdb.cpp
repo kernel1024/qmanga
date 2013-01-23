@@ -1,3 +1,5 @@
+#include <QApplication>
+
 #include "zdb.h"
 
 ZDB::ZDB(QObject *parent) :
