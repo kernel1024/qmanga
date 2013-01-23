@@ -2,6 +2,11 @@
 #include <QScrollBar>
 #include <QApplication>
 #include <QMessageBox>
+#include <QWheelEvent>
+#include <QPaintEvent>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QContextMenuEvent>
 
 #include <limits.h>
 #include "zmangaloader.h"

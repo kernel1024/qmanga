@@ -2,7 +2,6 @@
 #define ZGLOBAL_H
 
 #include <QtCore>
-#include <QtGui>
 
 #include "global.h"
 #include "ocreditor.h"

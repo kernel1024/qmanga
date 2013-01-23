@@ -2,24 +2,20 @@
 #define ZZIPREADER_H
 
 #include <QtCore>
-#include <QtGui>
-#include <quazip/quazip.h>
-#include <quazip/quazipfile.h>
+#include <zzip/zzip.h>
 #include "zglobal.h"
 #include "zabstractreader.h"
 
 class ZZipReader : public ZAbstractReader
 {
 protected:
-    QuaZip mainZFile;
-    QFile mainFile;
+    ZZIP_DIR* mainZFile;
 
 public:
     explicit ZZipReader(QObject *parent, QString filename);
     bool openFile();
     void closeFile();
     QByteArray loadPage(int num);
-    QByteHash loadPages(QIntList nums);
     QString getMagic();
     QString getInternalPath(int idx);
 };

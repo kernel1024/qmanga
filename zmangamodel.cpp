@@ -1,3 +1,7 @@
+#include <QPainter>
+#include <QPixmap>
+#include <QPen>
+
 #include "zmangamodel.h"
 
 ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QListView *aView) :

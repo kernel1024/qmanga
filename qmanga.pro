@@ -30,8 +30,6 @@ SOURCES += main.cpp\
     zmangaloader.cpp \
     ocreditor.cpp
 
-LIBS += -lquazip -lmagic
-
 HEADERS  += mainwindow.h \
     zmangaview.h \
     zabstractreader.h \
@@ -62,6 +60,9 @@ RESOURCES += \
 
 CONFIG += warn_on link_pkgconfig use_magick use_poppler use_ocr
 
+LIBS += -lmagic
+PKGCONFIG += zziplib
+
 use_magick {
     DEFINES += WITH_MAGICK=1
     MAGICK_CXX = $$system(Magick++-config --cxxflags)
@@ -72,8 +73,6 @@ use_magick {
 
 use_poppler {
     DEFINES += WITH_POPPLER=1
-    #INCLUDEPATH += /usr/include/poppler/qt4
-    #LIBS += -lpoppler-qt4
     INCLUDEPATH += /usr/include/poppler/cpp
     LIBS += -lpoppler-cpp
 }
