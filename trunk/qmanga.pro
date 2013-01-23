@@ -72,8 +72,10 @@ use_magick {
 
 use_poppler {
     DEFINES += WITH_POPPLER=1
-    INCLUDEPATH += /usr/include/poppler/qt4
-    LIBS += -lpoppler-qt4
+    #INCLUDEPATH += /usr/include/poppler/qt4
+    #LIBS += -lpoppler-qt4
+    INCLUDEPATH += /usr/include/poppler/cpp
+    LIBS += -lpoppler-cpp
 }
 
 use_kde_dialogs {
