@@ -334,12 +334,15 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
 
 void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
 {
+    copyPos = QPoint();
     emit doubleClicked();
 }
 
 void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 {
-    if ((QApplication::keyboardModifiers() && Qt::AltModifier) == 0) {
+    if (event->button()==Qt::LeftButton &&
+            !copyPos.isNull() &&
+            (QApplication::keyboardModifiers() && Qt::AltModifier) == 0) {
         if (!curPixmap.isNull()) {
             QRect cp = QRect(event->pos(),copyPos).normalized();
             cp.moveTo(cp.x()-drawPos.x(),cp.y()-drawPos.y());
@@ -349,7 +352,8 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             cp.setHeight(cp.height()*curUmPixmap.height()/curPixmap.height());
             cp = cp.intersected(curUmPixmap.rect());
 #ifdef WITH_OCR
-            if (ocr!=NULL) {
+            if (ocr!=NULL && cp.width()>10) {
+                qDebug() << cp;
                 QImage cpx = curUmPixmap.copy(cp).toImage();
                 ocr->SetImage(Image2PIX(cpx));
                 char* rtext = ocr->GetUTF8Text();

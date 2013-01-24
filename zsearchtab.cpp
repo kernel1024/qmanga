@@ -38,11 +38,10 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcModeList->setChecked(ui->srcList->viewMode()==QListView::ListMode);
     ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->srcAlbums,SIGNAL(itemActivated(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
     connect(ui->srcAlbums,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
     connect(ui->srcAlbums,SIGNAL(customContextMenuRequested(QPoint)),
             this,SLOT(ctxAlbumMenu(QPoint)));
-    connect(ui->srcList,SIGNAL(activated(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
+    connect(ui->srcList,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
     connect(ui->srcList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
     connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
     connect(ui->srcAddDirBtn,SIGNAL(clicked()),this,SLOT(mangaAddDir()));
