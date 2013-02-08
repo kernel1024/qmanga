@@ -61,6 +61,7 @@ public slots:
     void ctxAlbumMenu(QPoint pos);
     void ctxSorting();
     void ctxRenameAlbum();
+    void ctxOpenDir();
 
     void dbShowProgressDialog(const bool visible);
     void dbShowProgressState(const int value, const QString& msg);

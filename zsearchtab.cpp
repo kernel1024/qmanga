@@ -1,6 +1,8 @@
 #include <QMenu>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QProcess>
+#include <QFileInfo>
 
 #include "zsearchtab.h"
 #include "ui_zsearchtab.h"
@@ -179,6 +181,10 @@ void ZSearchTab::ctxMenu(QPoint pos)
                        tr("Delete selected %1 files").arg(cnt),this,SLOT(mangaDel()));
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
 
+    acm = cm.addAction(QIcon::fromTheme("document-open-folder"),
+                       tr("Open containing directory"),this,SLOT(ctxOpenDir()));
+    acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
+
     cm.exec(ui->srcList->mapToGlobal(pos));
 }
 
@@ -239,6 +245,48 @@ void ZSearchTab::ctxRenameAlbum()
     if (!ok) return;
 
     emit dbRenameAlbum(s,n);
+}
+
+void ZSearchTab::ctxOpenDir()
+{
+    QModelIndexList li;
+    li.clear();
+    QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
+    if (lii.isEmpty()) return;
+
+    for (int i=0;i<lii.count();i++) {
+        if (lii.at(i).column()==0)
+            li << lii.at(i);
+    }
+
+    QStringList edl;
+    QStringList dl;
+    edl.clear();
+    dl.clear();
+    for (int i=0;i<li.count();i++) {
+        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
+            QString fname = model->getItem(li.at(i).row()).filename;
+            QFileInfo fi(fname);
+            if (!fi.isFile() || !fi.exists())
+                edl << fname;
+            else {
+                if (!dl.contains(fi.path()))
+                    dl << fi.path();
+            }
+        }
+    }
+
+    for (int i=0;i<dl.count();i++) {
+        QStringList params;
+        params << dl.at(i);
+        QProcess::startDetached("xdg-open",params);
+    }
+
+    if (!edl.isEmpty()) {
+        QMessageBox::warning(this,tr("QManga"),
+                             tr("Error while searching file path for some files.\n\n%1").
+                             arg(edl.join("\n")));
+    }
 }
 
 void ZSearchTab::updateAlbumsList()
