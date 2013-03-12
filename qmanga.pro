@@ -65,7 +65,7 @@ PKGCONFIG += zziplib
 
 use_magick {
     DEFINES += WITH_MAGICK=1
-    MAGICK_CXX = $$system(Magick++-config --cxxflags)
+    MAGICK_CXX = $$system(Magick++-config --cxxflags | sed 's/^.*-I/-I/')
     MAGICK_LIBS = $$system(Magick++-config --libs)
     QMAKE_CXXFLAGS += $$MAGICK_CXX
     LIBS += $$MAGICK_LIBS
