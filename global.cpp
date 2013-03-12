@@ -197,10 +197,11 @@ QString detectMIME(QByteArray buf)
 
 QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFilter filter)
 {
+    static bool imagickOk = true;
     Z::ResizeFilter rf = zg->resizeFilter;
     if (forceFilter)
         rf = filter;
-    if (rf==Z::Nearest)
+    if (rf==Z::Nearest || !imagickOk)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
     else if (rf==Z::Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
@@ -212,44 +213,50 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFi
         QTime tmr;
         tmr.start();
 
-        // Load QImage to ImageMagick image
-        QByteArray bufSrc;
-        QBuffer buf(&bufSrc);
-        buf.open(QIODevice::WriteOnly);
-        src.save(&buf,"BMP");
-        buf.close();
-        Blob iBlob(bufSrc.data(),bufSrc.size());
-        Image iImage(iBlob,Geometry(src.width(),src.height()),"BMP");
+        QPixmap dst = QPixmap();
+        try {
+            // Load QImage to ImageMagick image
+            QByteArray bufSrc;
+            QBuffer buf(&bufSrc);
+            buf.open(QIODevice::WriteOnly);
+            src.save(&buf,"BMP");
+            buf.close();
+            Blob iBlob(bufSrc.data(),bufSrc.size());
+            Image iImage(iBlob,Geometry(src.width(),src.height()),"BMP");
 
-        // Resize image
-        if (rf==Z::Lanczos)
-            iImage.filterType(LanczosFilter);
-        else if (rf==Z::Gaussian)
-            iImage.filterType(GaussianFilter);
-        else if (rf==Z::Lanczos2)
-            iImage.filterType(Lanczos2Filter);
-        else if (rf==Z::Cubic)
-            iImage.filterType(CubicFilter);
-        else if (rf==Z::Sinc)
-            iImage.filterType(SincFilter);
-        else if (rf==Z::Triangle)
-            iImage.filterType(TriangleFilter);
-        else if (rf==Z::Mitchell)
-            iImage.filterType(MitchellFilter);
-        else
-            iImage.filterType(LanczosFilter);
+            // Resize image
+            if (rf==Z::Lanczos)
+                iImage.filterType(LanczosFilter);
+            else if (rf==Z::Gaussian)
+                iImage.filterType(GaussianFilter);
+            else if (rf==Z::Lanczos2)
+                iImage.filterType(Lanczos2Filter);
+            else if (rf==Z::Cubic)
+                iImage.filterType(CubicFilter);
+            else if (rf==Z::Sinc)
+                iImage.filterType(SincFilter);
+            else if (rf==Z::Triangle)
+                iImage.filterType(TriangleFilter);
+            else if (rf==Z::Mitchell)
+                iImage.filterType(MitchellFilter);
+            else
+                iImage.filterType(LanczosFilter);
 
-        iImage.resize(Geometry(targetSize.width(),targetSize.height()));
+            iImage.resize(Geometry(targetSize.width(),targetSize.height()));
 
-        // Convert image to QImage
-        Blob oBlob;
-        iImage.magick("BMP");
-        iImage.write(&oBlob);
-        bufSrc.clear();
-        bufSrc=QByteArray::fromRawData((char*)(oBlob.data()),oBlob.length());
-        QPixmap dst;
-        dst.loadFromData(bufSrc);
-        bufSrc.clear();
+            // Convert image to QImage
+            Blob oBlob;
+            iImage.magick("BMP");
+            iImage.write(&oBlob);
+            bufSrc.clear();
+            bufSrc=QByteArray::fromRawData((char*)(oBlob.data()),oBlob.length());
+            dst.loadFromData(bufSrc);
+            bufSrc.clear();
+        } catch (...) {
+            imagickOk = false;
+            qDebug() << "ImageMagick crashed. Using Qt image scaling.";
+            return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
+        }
 
         //qDebug() << "ImageMagick ms: " << tmr.elapsed();
         return dst;

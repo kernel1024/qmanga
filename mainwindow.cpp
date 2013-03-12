@@ -1,6 +1,8 @@
 #include <QDesktopWidget>
 #include <QMessageBox>
 #include <QCloseEvent>
+#include <QStatusBar>
+#include <QPushButton>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -30,8 +32,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     lblSearchStatus = new QLabel(tr("Ready"));
     lblAverageSizes = new QLabel();
+    lblRotation = new QLabel("Rotation: 0");
     statusBar()->addPermanentWidget(lblAverageSizes);
     statusBar()->addPermanentWidget(lblSearchStatus);
+    statusBar()->addPermanentWidget(lblRotation);
 
     ui->spinPosition->hide();
 
@@ -57,6 +61,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->srcWidget,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
     connect(ui->mangaView,SIGNAL(averageSizes(QSize,qint64)),this,SLOT(msgFromMangaView(QSize,qint64)));
     connect(ui->spinPosition,SIGNAL(editingFinished()),this,SLOT(pageNumEdited()));
+    connect(ui->btnRotateCCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCCW()));
+    connect(ui->btnRotateCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCW()));
+    connect(ui->mangaView,SIGNAL(rotationUpdated(int)),this,SLOT(rotationUpdated(int)));
 
     connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
     connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
@@ -184,6 +191,11 @@ void MainWindow::viewerKeyPressed(int key)
 void MainWindow::updateViewer()
 {
     ui->mangaView->redrawPage();
+}
+
+void MainWindow::rotationUpdated(int degree)
+{
+    lblRotation->setText(tr("Rotation: %1").arg(degree));
 }
 
 void MainWindow::updateBookmarks()

@@ -19,6 +19,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
 {
     currentPage = 0;
     privPageCount = 0;
+    rotation = 0;
     zoomMode = Fit;
     zoomDynamic = false;
     zoomPos = QPoint();
@@ -138,6 +139,11 @@ void ZMangaView::displayCurrentPage()
             img.clear();
         } else {
             p = iCachePixmaps.value(currentPage);
+        }
+        if (rotation!=0) {
+            QMatrix mr;
+            mr.rotate(rotation*90.0);
+            p = p.transformed(mr,Qt::SmoothTransformation);
         }
 
         if (!p.isNull()) {
@@ -612,6 +618,22 @@ void ZMangaView::setZoomAny(QString proc)
             zoomAny = -1;
     }
     redrawPage();
+}
+
+void ZMangaView::viewRotateCCW()
+{
+    rotation--;
+    if (rotation<0) rotation = 3;
+    displayCurrentPage();
+    emit rotationUpdated(rotation*90);
+}
+
+void ZMangaView::viewRotateCW()
+{
+    rotation++;
+    if (rotation>3) rotation = 0;
+    displayCurrentPage();
+    emit rotationUpdated(rotation*90);
 }
 
 void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QString &internalPath,
