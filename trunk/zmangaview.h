@@ -24,6 +24,7 @@ public:
 
 protected:
     ZoomMode zoomMode;
+    int rotation;
     QPixmap curPixmap, curUmPixmap;
     QPoint drawPos;
     QPoint zoomPos;
@@ -69,6 +70,7 @@ signals:
     void averageSizes(QSize sz, qint64 fsz);
     void minimizeRequested();
     void closeFileRequested();
+    void rotationUpdated(int degree);
 
     // cache signals
     void cacheOpenFile(QString filename, int preferred);
@@ -94,6 +96,9 @@ public slots:
     void setZoomOriginal();
     void setZoomDynamic(bool state);
     void setZoomAny(QString proc);
+
+    void viewRotateCCW();
+    void viewRotateCW();
 
     // cache slots
     void cacheGotPage(const QByteArray& page, const int& num, const QString& internalPath,

@@ -23,6 +23,7 @@ public:
     ZSearchTab* srcWidget;
     QLabel* lblSearchStatus;
     QLabel* lblAverageSizes;
+    QLabel* lblRotation;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void centerWindow();
@@ -43,6 +44,7 @@ public slots:
     void switchFullscreen();
     void viewerKeyPressed(int key);
     void updateViewer();
+    void rotationUpdated(int degree);
 
     void updateBookmarks();
     void updateTitle();
