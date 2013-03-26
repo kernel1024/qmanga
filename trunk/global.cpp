@@ -9,7 +9,7 @@
 #include "zglobal.h"
 
 #ifdef WITH_MAGICK
-#include <ImageMagick/Magick++.h>
+#include <Magick++.h>
 
 using namespace Magick;
 #endif
