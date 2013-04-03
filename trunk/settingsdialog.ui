@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>707</width>
-    <height>419</height>
+    <height>433</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -75,37 +75,37 @@
               </item>
               <item>
                <property name="text">
-                <string>Lanczos</string>
+                <string>Lanczos (Magick)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Gaussian</string>
+                <string>Gaussian (Magick)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Lanczos 2</string>
+                <string>Lanczos 2 (Magick)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Cubic</string>
+                <string>Cubic (Magick)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Sinc</string>
+                <string>Sinc (Magick)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Triangle</string>
+                <string>Triangle (Magick)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Mitchell</string>
+                <string>Mitchell (Magick)</string>
                </property>
               </item>
              </widget>
