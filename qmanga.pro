@@ -74,23 +74,23 @@ packagesExist(zziplib) {
 
 packagesExist(poppler-cpp) {
     CONFIG += use_poppler
-    message("Using Poppler:        YES");
+    message("Using Poppler:        YES")
 } else {
-    message("Using Poppler:        NO");
+    message("Using Poppler:        NO")
 }
 
 packagesExist(tesseract) {
     CONFIG += use_ocr
-    message("Using Tesseract OCR:  YES");
+    message("Using Tesseract OCR:  YES")
 } else {
-    message("Using Tesseract OCR:  NO");
+    message("Using Tesseract OCR:  NO")
 }
 
 system(Magick++-config --version > /dev/null) {
     CONFIG += use_magick
-    message("Using ImageMagick:    YES");
+    message("Using ImageMagick:    YES")
 } else {
-    message("Using ImageMagick:    NO");
+    message("Using ImageMagick:    NO")
 }
 
 use_magick {
