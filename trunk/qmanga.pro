@@ -86,7 +86,7 @@ packagesExist(tesseract) {
     message("Using Tesseract OCR:  NO");
 }
 
-system(Magick++-config --version) {
+system(Magick++-config --version > /dev/null) {
     CONFIG += use_magick
     message("Using ImageMagick:    YES");
 } else {
