@@ -58,10 +58,40 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig use_magick use_poppler use_ocr
+CONFIG += warn_on link_pkgconfig
 
-LIBS += -lmagic
-PKGCONFIG += zziplib
+exists( /usr/include/magic.h ) {
+    LIBS += -lmagic
+} else {
+    error("Dependency error: libmagic not found.")
+}
+
+packagesExist(zziplib) {
+    PKGCONFIG += zziplib
+} else {
+    error("Dependency error: zziplib not found.")
+}
+
+packagesExist(poppler-cpp) {
+    CONFIG += use_poppler
+    message("Using Poppler:        YES");
+} else {
+    message("Using Poppler:        NO");
+}
+
+packagesExist(tesseract) {
+    CONFIG += use_ocr
+    message("Using Tesseract OCR:  YES");
+} else {
+    message("Using Tesseract OCR:  NO");
+}
+
+system(Magick++-config --version) {
+    CONFIG += use_magick
+    message("Using ImageMagick:    YES");
+} else {
+    message("Using ImageMagick:    NO");
+}
 
 use_magick {
     DEFINES += WITH_MAGICK=1
@@ -73,20 +103,13 @@ use_magick {
 
 use_poppler {
     DEFINES += WITH_POPPLER=1
-    INCLUDEPATH += /usr/include/poppler/cpp
-    LIBS += -lpoppler-cpp
-}
-
-use_kde_dialogs {
-    DEFINES += WITH_KDEDIALOGS=1
-    LIBS += -lkio -lkdecore -lkdeui
+    PKGCONFIG += poppler-cpp
 }
 
 use_ocr {
     DEFINES += WITH_OCR=1
     QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
-    INCLUDEPATH += /usr/include/tesseract
-    LIBS += -llept -ltesseract
+    PKGCONFIG += tesseract
 }
 
 OTHER_FILES += \

@@ -8,11 +8,6 @@
 #include <QFileDialog>
 #include <magic.h>
 
-#ifdef WITH_KDEDIALOGS
-#include <kfiledialog.h>
-#include <kurl.h>
-#endif
-
 #ifdef WITH_OCR
 #include <baseapi.h>
 #include <leptonica/allheaders.h>
