@@ -89,7 +89,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,SIGNAL(dbCreateTables()),
             zg->db,SLOT(sqlCreateTables()),Qt::QueuedConnection);
 
-    order = Z::FileName;
+    order = zg->defaultOrdering;
     reverseOrder = false;
     connect(ui->actionSortByName,SIGNAL(triggered()),this,SLOT(ctxSorting()));
     connect(ui->actionSortByAlbum,SIGNAL(triggered()),this,SLOT(ctxSorting()));
@@ -208,28 +208,23 @@ void ZSearchTab::ctxSorting()
     if (sender()!=NULL)
         am = qobject_cast<QAction *>(sender());
 
+    Z::Ordering a = order;
+    bool r = reverseOrder;
     if (am!=NULL) {
         if (am->text()==ui->actionSortByName->text())
-            order = Z::FileName;
+            a = Z::FileName;
         else if (am->text()==ui->actionSortByAlbum->text())
-            order = Z::Album;
+            a = Z::Album;
         else if (am->text()==ui->actionSortByPageCount->text())
-            order = Z::PagesCount;
+            a = Z::PagesCount;
         else if (am->text()==ui->actionSortByAdded->text())
-            order = Z::AddingDate;
+            a = Z::AddingDate;
         else if (am->text()==ui->actionSortByCreation->text())
-            order = Z::FileDate;
+            a = Z::FileDate;
         else if (am->text()==ui->actionSortReverse->text())
-            reverseOrder = ! reverseOrder;
+            r = !r;
     }
-    ui->actionSortByName->setChecked(order==Z::FileName);
-    ui->actionSortByAlbum->setChecked(order==Z::Album);
-    ui->actionSortByPageCount->setChecked(order==Z::PagesCount);
-    ui->actionSortByAdded->setChecked(order==Z::AddingDate);
-    ui->actionSortByCreation->setChecked(order==Z::FileDate);
-    ui->actionSortReverse->setChecked(reverseOrder);
-
-    albumClicked(ui->srcAlbums->currentItem());
+    applyOrder(a,r,true);
 }
 
 void ZSearchTab::ctxRenameAlbum()
@@ -292,6 +287,23 @@ void ZSearchTab::ctxOpenDir()
 void ZSearchTab::updateAlbumsList()
 {
     emit dbGetAlbums();
+}
+
+void ZSearchTab::applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI)
+{
+    order = aOrder;
+    reverseOrder = aReverseOrder;
+    ui->actionSortByName->setChecked(order==Z::FileName);
+    ui->actionSortByAlbum->setChecked(order==Z::Album);
+    ui->actionSortByPageCount->setChecked(order==Z::PagesCount);
+    ui->actionSortByAdded->setChecked(order==Z::AddingDate);
+    ui->actionSortByCreation->setChecked(order==Z::FileDate);
+    ui->actionSortReverse->setChecked(reverseOrder);
+
+    if (updateGUI)
+        albumClicked(ui->srcAlbums->currentItem());
+
+    zg->defaultOrdering = order;
 }
 
 QSize ZSearchTab::gridSize(int ref)

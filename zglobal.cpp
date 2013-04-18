@@ -19,6 +19,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     cachePixmaps = false;
     useFineRendering = true;
     ocrEditor = NULL;
+    defaultOrdering = Z::FileName;
 
     threadDB = new QThread();
     db = new ZDB();
@@ -63,6 +64,7 @@ void ZGlobal::loadSettings()
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
     useFineRendering = settings.value("fineRendering",true).toBool();
+    defaultOrdering = (Z::Ordering)settings.value("defaultOrdering",Z::FileName).toInt();
     if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
         idxFont = QApplication::font("QListView");
     if (!backgroundColor.isValid())
@@ -100,8 +102,10 @@ void ZGlobal::loadSettings()
         w->updateBookmarks();
         w->updateViewer();
         w->srcWidget->setEnabled(!dbUser.isEmpty());
-        if (w->srcWidget->isEnabled())
+        if (w->srcWidget->isEnabled()) {
             w->srcWidget->updateAlbumsList();
+            w->srcWidget->applyOrder(defaultOrdering,false,false);
+        }
     }
     emit dbCheckBase();
 }
@@ -122,6 +126,7 @@ void ZGlobal::saveSettings()
     settings.setValue("cachePixmaps",cachePixmaps);
     settings.setValue("fineRendering",useFineRendering);
     settings.setValue("idxFont",idxFont.toString());
+    settings.setValue("defaultOrdering",(int)defaultOrdering);
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
     if (w!=NULL) {
