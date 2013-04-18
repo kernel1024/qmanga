@@ -24,13 +24,12 @@ public:
     QSlider* srclIconSize;
     QRadioButton* srclModeIcon;
     QRadioButton* srclModeList;
-    Z::Ordering order;
-    bool reverseOrder;
 
     explicit ZSearchTab(QWidget *parent = 0);
     ~ZSearchTab();
 
     void updateAlbumsList();
+    void applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI = false);
     
 private:
     Ui::ZSearchTab *ui;
@@ -39,6 +38,8 @@ private:
     QPointer<ZMangaModel> model;
     QProgressDialog progressDlg;
     QStringList cachedAlbums;
+    Z::Ordering order;
+    bool reverseOrder;
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(QString suggest);

@@ -25,6 +25,7 @@ public:
     QMap<QString, QString> bookmarks;
 
     Z::ResizeFilter resizeFilter;
+    Z::Ordering defaultOrdering;
     int cacheWidth;
     int magnifySize;
     QString savedAuxOpenDir, savedIndexOpenDir;
