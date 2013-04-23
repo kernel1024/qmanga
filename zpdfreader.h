@@ -1,8 +1,6 @@
 #ifndef ZPDFREADER_H
 #define ZPDFREADER_H
 
-#include <QtCore>
-
 #ifdef WITH_POPPLER
 #include <poppler-document.h>
 #include <poppler-page-renderer.h>

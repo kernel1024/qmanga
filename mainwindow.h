@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QtCore>
 #include <QWidget>
 #include <QMainWindow>
 #include <QMenu>
@@ -37,6 +36,7 @@ protected:
 
 public slots:
     void openAux();
+    void openClipboard();
     void openFromIndex(QString filename);
     void closeManga();
     void dispPage(int num, QString msg);

@@ -1,7 +1,6 @@
 #ifndef ZRARREADER_H
 #define ZRARREADER_H
 
-#include <QtCore>
 #include "zabstractreader.h"
 
 class ZRarReader : public ZAbstractReader

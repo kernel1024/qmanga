@@ -1,7 +1,6 @@
 #ifndef ZSEARCHTAB_H
 #define ZSEARCHTAB_H
 
-#include <QtCore>
 #include <QWidget>
 #include <QSlider>
 #include <QRadioButton>
@@ -62,6 +61,7 @@ public slots:
     void ctxAlbumMenu(QPoint pos);
     void ctxSorting();
     void ctxRenameAlbum();
+    void ctxDeleteAlbum();
     void ctxOpenDir();
 
     void dbShowProgressDialog(const bool visible);
@@ -82,6 +82,7 @@ signals:
     void dbAddFiles(const QStringList& aFiles, const QString& album);
     void dbGetFiles(const QString& album, const QString& search, const int order, const bool reverseOrder);
     void dbDelFiles(const QIntList& dbids);
+    void dbDeleteAlbum(const QString& album);
 };
 
 #endif // ZSEARCHTAB_H

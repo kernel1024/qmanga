@@ -1,7 +1,6 @@
 #ifndef ZMANGAVIEW_H
 #define ZMANGAVIEW_H
 
-#include <QtCore>
 #include <QWidget>
 #include <QRubberBand>
 #include <QPixmap>
@@ -76,6 +75,9 @@ signals:
     void cacheOpenFile(QString filename, int preferred);
     void cacheCloseFile();
 
+    // DB signals
+    void changeMangaCover(const QString& fileName, const int pageNum);
+
 public slots:
     void openFile(QString filename, int page = 0);
     void closeFile();
@@ -84,6 +86,7 @@ public slots:
     void ownerResized(const QSize& size);
     void minimizeWindowCtx();
     void closeFileCtx();
+    void changeMangaCoverCtx();
 
     void navFirst();
     void navPrev();

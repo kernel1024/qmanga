@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     albumselectordlg.cpp \
     zdb.cpp \
     zmangaloader.cpp \
-    ocreditor.cpp
+    ocreditor.cpp \
+    zsingleimagereader.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -46,7 +47,8 @@ HEADERS  += mainwindow.h \
     albumselectordlg.h \
     zdb.h \
     zmangaloader.h \
-    ocreditor.h
+    ocreditor.h \
+    zsingleimagereader.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \

@@ -70,6 +70,7 @@ void ZPdfReader::closeFile()
 QByteArray ZPdfReader::loadPage(int num)
 {
     QByteArray res;
+    res.clear();
 #ifdef WITH_POPPLER
     if (!opened || doc==NULL)
         return res;

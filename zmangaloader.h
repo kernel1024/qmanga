@@ -1,7 +1,6 @@
 #ifndef ZMANGACACHE_H
 #define ZMANGACACHE_H
 
-#include <QtCore>
 #include "global.h"
 #include "zabstractreader.h"
 

@@ -18,16 +18,7 @@
     <property name="spacing">
      <number>2</number>
     </property>
-    <property name="leftMargin">
-     <number>2</number>
-    </property>
-    <property name="topMargin">
-     <number>2</number>
-    </property>
-    <property name="rightMargin">
-     <number>2</number>
-    </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>2</number>
     </property>
     <item>
@@ -46,16 +37,7 @@
         <property name="spacing">
          <number>2</number>
         </property>
-        <property name="leftMargin">
-         <number>2</number>
-        </property>
-        <property name="topMargin">
-         <number>2</number>
-        </property>
-        <property name="rightMargin">
-         <number>2</number>
-        </property>
-        <property name="bottomMargin">
+        <property name="margin">
          <number>2</number>
         </property>
         <item>
@@ -70,16 +52,7 @@
            <property name="spacing">
             <number>0</number>
            </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>0</number>
            </property>
            <item>
@@ -248,7 +221,9 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="object-rotate-left"/>
+              <iconset theme="object-rotate-left">
+               <normaloff/>
+              </iconset>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -264,7 +239,9 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="object-rotate-right"/>
+              <iconset theme="object-rotate-right">
+               <normaloff/>
+              </iconset>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -290,16 +267,7 @@
               <property name="spacing">
                <number>0</number>
               </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
+              <property name="margin">
                <number>0</number>
               </property>
               <item>
@@ -606,8 +574,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>758</width>
-             <height>470</height>
+             <width>760</width>
+             <height>461</height>
             </rect>
            </property>
            <property name="focusPolicy">
@@ -626,16 +594,7 @@
         <property name="spacing">
          <number>2</number>
         </property>
-        <property name="leftMargin">
-         <number>2</number>
-        </property>
-        <property name="topMargin">
-         <number>2</number>
-        </property>
-        <property name="rightMargin">
-         <number>2</number>
-        </property>
-        <property name="bottomMargin">
+        <property name="margin">
          <number>2</number>
         </property>
         <item>
@@ -653,7 +612,7 @@
      <x>0</x>
      <y>0</y>
      <width>797</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -661,6 +620,7 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
+    <addaction name="actionOpenClipboard"/>
     <addaction name="actionClose"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
@@ -705,7 +665,7 @@
     <string>Open...</string>
    </property>
    <property name="statusTip">
-    <string>Open manga in ZIP/RAR/PDF file</string>
+    <string>Open manga in ZIP/RAR/PDF file or single image file</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -822,6 +782,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionOpenClipboard">
+   <property name="icon">
+    <iconset theme="edit-paste"/>
+   </property>
+   <property name="text">
+    <string>Open from clipboard</string>
+   </property>
+   <property name="statusTip">
+    <string>Open single image from clipboard</string>
    </property>
   </action>
  </widget>

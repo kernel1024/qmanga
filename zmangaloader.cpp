@@ -12,7 +12,7 @@ void ZMangaLoader::openFile(QString filename, int preferred)
         closeFile();
 
     bool mimeOk = false;
-    ZAbstractReader* za = readerFactory(this,filename,&mimeOk);
+    ZAbstractReader* za = readerFactory(this,filename,&mimeOk,false);
     if ((za == NULL) && (!mimeOk)) {
         emit closeFileRequest();
         emit gotError(tr("File format not supported."));

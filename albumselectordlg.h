@@ -1,7 +1,6 @@
 #ifndef ALBUMSELECTORDLG_H
 #define ALBUMSELECTORDLG_H
 
-#include <QtCore>
 #include <QDialog>
 #include <QComboBox>
 

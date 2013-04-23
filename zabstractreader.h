@@ -1,7 +1,6 @@
 #ifndef ZABSTRACTREADER_H
 #define ZABSTRACTREADER_H
 
-#include <QtCore>
 #include "zglobal.h"
 
 class ZAbstractReader : public QObject

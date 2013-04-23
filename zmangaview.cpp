@@ -47,6 +47,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
     setPalette(p);
 
+    connect(this,SIGNAL(changeMangaCover(QString,int)),zg->db,SLOT(sqlChangeFilePreview(QString,int)),Qt::QueuedConnection);
+
     int cnt = QThread::idealThreadCount()+1;
     if (cnt<2) cnt=2;
     for (int i=0;i<cnt;i++) {
@@ -191,7 +193,10 @@ void ZMangaView::openFile(QString filename, int page)
     emit loadedPage(-1,QString());
 
     emit cacheOpenFile(filename,page);
-    openedFile = filename;
+    if (filename.startsWith(":CLIP:"))
+        openedFile = "Clipboard image";
+    else
+        openedFile = filename;
     processingPages.clear();
 }
 
@@ -463,6 +468,9 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     nt = new QAction(QIcon::fromTheme("document-close"),tr("Close manga"),NULL);
     connect(nt,SIGNAL(triggered()),this,SLOT(closeFileCtx()));
     cm.addAction(nt);
+    nt = new QAction(QIcon::fromTheme("view-preview"),tr("Set page as cover"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(changeMangaCoverCtx()));
+    cm.addAction(nt);
     cm.addSeparator();
     nt = new QAction(QIcon::fromTheme("go-down"),tr("Minimize window"),NULL);
     connect(nt,SIGNAL(triggered()),this,SLOT(minimizeWindowCtx()));
@@ -556,6 +564,14 @@ void ZMangaView::minimizeWindowCtx()
 void ZMangaView::closeFileCtx()
 {
     emit closeFileRequested();
+}
+
+void ZMangaView::changeMangaCoverCtx()
+{
+    if (openedFile.isEmpty()) return;
+    if (currentPage<0 || currentPage>=privPageCount) return;
+
+    emit changeMangaCover(openedFile,currentPage);
 }
 
 void ZMangaView::navFirst()
