@@ -1,8 +1,6 @@
 #ifndef ZGLOBAL_H
 #define ZGLOBAL_H
 
-#include <QtCore>
-
 #include "global.h"
 #include "ocreditor.h"
 

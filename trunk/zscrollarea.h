@@ -1,7 +1,6 @@
 #ifndef ZSCROLLAREA_H
 #define ZSCROLLAREA_H
 
-#include <QtCore>
 #include <QScrollArea>
 #include <QTabWidget>
 #include <QTabBar>

@@ -6,6 +6,7 @@
 #include "zzipreader.h"
 #include "zrarreader.h"
 #include "zpdfreader.h"
+#include "zsingleimagereader.h"
 #include "zglobal.h"
 
 #ifdef WITH_MAGICK
@@ -17,9 +18,12 @@
 using namespace Magick;
 #endif
 
-ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk)
+ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk, bool onlyArchives)
 {
     *mimeOk = true;
+    if (filename.startsWith(":CLIP:") && !onlyArchives) {
+        return new ZSingleImageReader(parent,filename);
+    }
     QFileInfo fi(filename);
     if (!fi.exists()) return NULL;
 
@@ -33,6 +37,8 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk)
     } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
         return new ZPdfReader(parent,filename);
 #endif
+    } else if (mime.contains("image/",Qt::CaseInsensitive) && !onlyArchives) {
+        return new ZSingleImageReader(parent,filename);
     } else {
         *mimeOk = false;
         return NULL;

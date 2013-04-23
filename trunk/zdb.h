@@ -1,8 +1,8 @@
 #ifndef ZDB_H
 #define ZDB_H
 
-#include <QtCore>
-#include <QtSql>
+#include <QObject>
+#include <QSqlDatabase>
 #include "zabstractreader.h"
 #include "global.h"
 
@@ -17,6 +17,7 @@ protected:
     bool sqlCheckBasePriv();
     QSqlDatabase sqlOpenBase();
     void sqlCloseBase(QSqlDatabase& db);
+    QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
 
 public:
     explicit ZDB(QObject *parent = 0);
@@ -42,10 +43,12 @@ public slots:
     void sqlDelEmptyAlbums();
     void sqlGetAlbums();
     void sqlRenameAlbum(const QString& oldName, const QString& newName);
+    void sqlDelAlbum(const QString& album);
     void sqlDelFiles(const QIntList& dbids);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
     void sqlGetFiles(const QString& album, const QString& search, const int sortOrder, const bool reverseOrder);
+    void sqlChangeFilePreview(const QString& fileName, const int pageNum);
 
 };
 

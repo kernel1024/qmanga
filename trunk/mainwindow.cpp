@@ -3,6 +3,10 @@
 #include <QCloseEvent>
 #include <QStatusBar>
 #include <QPushButton>
+#include <QApplication>
+#include <QClipboard>
+#include <QImage>
+#include <QBuffer>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -41,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
+    connect(ui->actionOpenClipboard,SIGNAL(triggered()),this,SLOT(openClipboard()));
     connect(ui->actionClose,SIGNAL(triggered()),this,SLOT(closeManga()));
     connect(ui->actionSettings,SIGNAL(triggered()),zg,SLOT(settingsDlg()));
     connect(ui->actionAddBookmark,SIGNAL(triggered()),this,SLOT(createBookmark()));
@@ -122,7 +127,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::openAux()
 {
-    QString filename = getOpenFileNameD(this,tr("Open manga archive"),zg->savedAuxOpenDir);
+    QString filename = getOpenFileNameD(this,tr("Open manga or image"),zg->savedAuxOpenDir);
     if (!filename.isEmpty()) {
         QFileInfo fi(filename);
         zg->savedAuxOpenDir = fi.path();
@@ -130,6 +135,27 @@ void MainWindow::openAux()
         ui->tabWidget->setCurrentIndex(0);
         ui->mangaView->openFile(filename);
     }
+}
+
+void MainWindow::openClipboard()
+{
+    if (!QApplication::clipboard()->mimeData()->hasImage()) {
+        QMessageBox::warning(this,tr("QManga"),tr("Clipboard is empty or contains incompatible data."));
+        return;
+    }
+
+    QImage img = QApplication::clipboard()->image();
+    QByteArray imgs;
+    imgs.clear();
+    QBuffer buf(&imgs);
+    buf.open(QIODevice::WriteOnly);
+    img.save(&buf,"BMP");
+    buf.close();
+    QString bs = QString(":CLIP:")+QString::fromLatin1(imgs.toBase64());
+    imgs.clear();
+
+    ui->tabWidget->setCurrentIndex(0);
+    ui->mangaView->openFile(bs);
 }
 
 void MainWindow::openFromIndex(QString filename)

@@ -1,11 +1,14 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include <QtCore>
 #include <QWidget>
 #include <QPixmap>
 #include <QImage>
 #include <QFileDialog>
+#include <QDateTime>
+#include <QUuid>
+#include <QPointer>
+#include <QTimer>
 #include <magic.h>
 
 #ifdef WITH_OCR
@@ -102,7 +105,7 @@ public:
 typedef QList<SQLMangaEntry> SQLMangaList;
 
 
-extern ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk);
+extern ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk, bool onlyArchives);
 
 QString formatSize(qint64 size);
 QString escapeParam(QString param);

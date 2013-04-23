@@ -58,6 +58,7 @@ void ZRarReader::closeFile()
 QByteArray ZRarReader::loadPage(int num)
 {
     QByteArray res;
+    res.clear();
     if (!opened)
         return res;
 

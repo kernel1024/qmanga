@@ -1,4 +1,6 @@
 #include <QApplication>
+#include <QSqlQuery>
+#include <QSqlError>
 
 #include "zdb.h"
 
@@ -201,6 +203,72 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
     return;
 }
 
+void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
+{
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
+
+    QSqlQuery qrs(db);
+    qrs.prepare(QString("SELECT name FROM files WHERE (filename='%1');").arg(escapeParam(fileName)));
+    if (!qrs.exec()) {
+        qDebug() << "file search query failed";
+        sqlCloseBase(db);
+        return;
+    }
+    if (qrs.size()<1) {
+        emit errorMsg("Opened file not found in library.");
+        sqlCloseBase(db);
+        return;
+    }
+
+    QFileInfo fi(fileName);
+    if (!fi.isReadable()) {
+        qDebug() << "skipping" << fileName << "as unreadable";
+        emit errorMsg(tr("%1 file is unreadable.").arg(fileName));
+        sqlCloseBase(db);
+        return;
+    }
+
+    bool mimeOk = false;
+    ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
+    if (za == NULL) {
+        qDebug() << fileName << "File format not supported";
+        emit errorMsg(tr("%1 file format not supported.").arg(fileName));
+        sqlCloseBase(db);
+        return;
+    }
+
+    if (!za->openFile()) {
+        qDebug() << fileName << "Unable to open file. Broken archive.";
+        emit errorMsg(tr("Unable to open file %1. Broken archive.").arg(fileName));
+        za->setParent(NULL);
+        delete za;
+        sqlCloseBase(db);
+        return;
+    }
+
+    QByteArray pba = createMangaPreview(za,pageNum);
+
+    QSqlQuery qr(db);
+    qr.prepare(QString("UPDATE files SET cover=? WHERE (filename='%1');").arg(escapeParam(fileName)));
+    qr.bindValue(0,pba);
+    if (!qr.exec()) {
+        QString msg = tr("Unable to change cover for '%1'.\n%2\n%3")
+                .arg(fileName)
+                .arg(qr.lastError().databaseText())
+                .arg(qr.lastError().driverText());
+        qDebug() << msg;
+        emit errorMsg(msg);
+    }
+    pba.clear();
+    za->closeFile();
+    za->setParent(NULL);
+    delete za;
+
+    sqlCloseBase(db);
+    return;
+}
+
 void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 {
     if (album.isEmpty()) {
@@ -251,36 +319,20 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         }
 
         bool mimeOk = false;
-        ZAbstractReader* za = readerFactory(this,files.at(i),&mimeOk);
+        ZAbstractReader* za = readerFactory(this,files.at(i),&mimeOk,true);
         if (za == NULL) {
             qDebug() << files.at(i) << "File format not supported.";
             continue;
         }
+
         if (!za->openFile()) {
             qDebug() << files.at(i) << "Unable to open file. Broken archive.";
             za->setParent(NULL);
             delete za;
             continue;
         }
-        int idx = 0;
-        QImage p = QImage();
-        QByteArray pb;
-        while (idx<za->getPageCount()) {
-            p = QImage();
-            pb = za->loadPage(idx);
-            if (p.loadFromData(pb)) {
-                break;
-            }
-            idx++;
-        }
-        QByteArray pba;
-        if (!p.isNull()) {
-            p = p.scaled(maxPreviewSize,maxPreviewSize,Qt::KeepAspectRatio,Qt::SmoothTransformation);
-            QBuffer buf(&pba);
-            buf.open(QIODevice::WriteOnly);
-            p.save(&buf, "JPG");
-            buf.close();
-        }
+
+        QByteArray pba = createMangaPreview(za,0);
 
         QSqlQuery qr(db);
         qr.prepare("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
@@ -299,7 +351,6 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         else
             cnt++;
         pba.clear();
-        p = QImage();
         za->closeFile();
         za->setParent(NULL);
         delete za;
@@ -320,6 +371,35 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     emit filesAdded(cnt,files.count(),tmr.elapsed());
     emit albumsListUpdated();
     return;
+}
+
+QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
+{
+    QByteArray pba;
+    pba.clear();
+
+    int idx = pageNum;
+    QImage p = QImage();
+    QByteArray pb;
+    while (idx<za->getPageCount()) {
+        p = QImage();
+        pb = za->loadPage(idx);
+        if (p.loadFromData(pb)) {
+            break;
+        }
+        idx++;
+    }
+    if (!p.isNull()) {
+        p = p.scaled(maxPreviewSize,maxPreviewSize,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+        QBuffer buf(&pba);
+        buf.open(QIODevice::WriteOnly);
+        p.save(&buf, "JPG");
+        buf.close();
+        p = QImage();
+    }
+    pb.clear();
+
+    return pba;
 }
 
 void ZDB::sqlCancelAdding()
@@ -389,4 +469,36 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
     }
     sqlCloseBase(db);
     emit albumsListUpdated();
+}
+
+void ZDB::sqlDelAlbum(const QString &album)
+{
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
+
+    QSqlQuery qra(QString("SELECT id FROM `albums` WHERE name='%1';").arg(escapeParam(album)),db);
+    int id = -1;
+    while (qra.next()) {
+        id = qra.value(0).toInt();
+        break;
+    }
+    if (id==-1) {
+        emit errorMsg(tr("Album '%1' not found").arg(album));
+        sqlCloseBase(db);
+        return;
+    }
+
+    QSqlQuery qr(db);
+    qr.prepare(QString("DELETE FROM files WHERE album=%1;").arg(id));
+    if (!qr.exec()) {
+        QString msg = tr("Unable to delete manga\n%2\n%3")
+                .arg(qr.lastError().databaseText())
+                .arg(qr.lastError().driverText());
+        emit errorMsg(msg);
+        qDebug() << msg;
+        sqlCloseBase(db);
+        return;
+    }
+    sqlCloseBase(db);
+    sqlDelEmptyAlbums();
 }

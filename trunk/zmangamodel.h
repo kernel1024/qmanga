@@ -1,6 +1,8 @@
 #ifndef ZMANGAMODEL_H
 #define ZMANGAMODEL_H
 
+#include <QSlider>
+#include <QListView>
 #include <QAbstractListModel>
 #include "global.h"
 #include "zglobal.h"

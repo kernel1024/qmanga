@@ -1,7 +1,6 @@
 #ifndef ZZIPREADER_H
 #define ZZIPREADER_H
 
-#include <QtCore>
 #include <zzip/zzip.h>
 #include "zglobal.h"
 #include "zabstractreader.h"

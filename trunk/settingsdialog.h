@@ -1,7 +1,6 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
-#include <QtCore>
 #include <QWidget>
 #include <QDialog>
 #include <QComboBox>

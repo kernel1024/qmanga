@@ -88,6 +88,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
             zg->db,SLOT(sqlRenameAlbum(QString,QString)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbCreateTables()),
             zg->db,SLOT(sqlCreateTables()),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbDeleteAlbum(QString)),
+            zg->db,SLOT(sqlDelAlbum(QString)),Qt::QueuedConnection);
 
     order = zg->defaultOrdering;
     reverseOrder = false;
@@ -198,6 +200,9 @@ void ZSearchTab::ctxAlbumMenu(QPoint pos)
     acm = cm.addAction(QIcon::fromTheme("edit-rename"),tr("Rename album"),
                        this,SLOT(ctxRenameAlbum()));
     acm->setData(itm->text());
+    acm = cm.addAction(QIcon::fromTheme("edit-delete"),tr("Delete album"),
+                       this,SLOT(ctxDeleteAlbum()));
+    acm->setData(itm->text());
 
     cm.exec(ui->srcAlbums->mapToGlobal(pos));
 }
@@ -240,6 +245,18 @@ void ZSearchTab::ctxRenameAlbum()
     if (!ok) return;
 
     emit dbRenameAlbum(s,n);
+}
+
+void ZSearchTab::ctxDeleteAlbum()
+{
+    QAction* nt = qobject_cast<QAction *>(sender());
+    if (nt==NULL) return;
+    QString s = nt->data().toString();
+    if (s.isEmpty()) return;
+
+    if (QMessageBox::question(this,tr("Delete album"),tr("Are you sure to delete album '%1' and ALL it's contents?").arg(s),
+                                      QMessageBox::Yes | QMessageBox::No, QMessageBox::No)==QMessageBox::Yes)
+        emit dbDeleteAlbum(s);
 }
 
 void ZSearchTab::ctxOpenDir()
@@ -512,6 +529,7 @@ void ZSearchTab::dbShowProgressDialog(const bool visible)
         progressDlg.setWindowModality(Qt::WindowModal);
         progressDlg.setWindowTitle(tr("Adding files to index..."));
         progressDlg.setValue(0);
+        progressDlg.setLabelText(QString());
         progressDlg.show();
     } else {
         progressDlg.hide();
