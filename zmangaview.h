@@ -103,6 +103,8 @@ public slots:
     void viewRotateCCW();
     void viewRotateCW();
 
+    void asyncMsg(const QString& msg);
+
     // cache slots
     void cacheGotPage(const QByteArray& page, const int& num, const QString& internalPath,
                       const QUuid& threadID);

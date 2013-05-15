@@ -8,6 +8,7 @@
 #include "zpdfreader.h"
 #include "zsingleimagereader.h"
 #include "zglobal.h"
+#include "zmangaview.h"
 
 #ifdef WITH_MAGICK
 #define MAGICKCORE_QUANTUM_DEPTH 8
@@ -145,7 +146,8 @@ QString detectMIME(QByteArray buf)
     return mag;
 }
 
-QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFilter filter)
+QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFilter filter,
+                    ZMangaView *mangaView)
 {
     static bool imagickOk = true;
     Z::ResizeFilter rf = zg->resizeFilter;
@@ -205,6 +207,9 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFi
         } catch (...) {
             imagickOk = false;
             qDebug() << "ImageMagick crashed. Using Qt image scaling.";
+            if (mangaView!=NULL)
+                QMetaObject::invokeMethod(mangaView,"asyncMsg",Qt::QueuedConnection,
+                                          Q_ARG(QString,"ImageMagick crashed. Using Qt image scaling."));
             return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
         }
 
