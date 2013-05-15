@@ -30,7 +30,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Add manga to album</string>
+      <string>Add %1 files to album</string>
      </property>
      <property name="buddy">
       <cstring>listAlbums</cstring>

@@ -332,9 +332,9 @@ QSize ZSearchTab::gridSize(int ref)
     return QSize(ui->srcList->width()/3,25*fm.height()/10);
 }
 
-QString ZSearchTab::getAlbumNameToAdd(QString suggest)
+QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)
 {
-    AlbumSelectorDlg* dlg = new AlbumSelectorDlg(this,cachedAlbums,suggest);
+    AlbumSelectorDlg* dlg = new AlbumSelectorDlg(this,cachedAlbums,suggest,toAddCount);
     QString ret = QString();
     if (dlg->exec()) {
         ret = dlg->listAlbums->lineEdit()->text();
@@ -417,7 +417,7 @@ void ZSearchTab::mangaAdd()
 
     QDir d(fi.path());
     QString album = d.dirName();
-    album = getAlbumNameToAdd(album);
+    album = getAlbumNameToAdd(album,fl.count());
     if (album.isEmpty()) return;
 
     emit dbAddFiles(fl,album);
@@ -438,7 +438,7 @@ void ZSearchTab::mangaAddDir()
             files << fl.at(i).absoluteFilePath();
     QString album = d.dirName();
 
-    album = getAlbumNameToAdd(album);
+    album = getAlbumNameToAdd(album,-1);
     if (album.isEmpty()) return;
 
     emit dbAddFiles(files,album);

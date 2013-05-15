@@ -652,6 +652,12 @@ void ZMangaView::viewRotateCW()
     emit rotationUpdated(rotation*90);
 }
 
+void ZMangaView::asyncMsg(const QString &msg)
+{
+    if (msg.isEmpty()) return;
+    QMessageBox::warning(this,tr("QManga"),msg);
+}
+
 void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QString &internalPath,
                               const QUuid &threadID)
 {

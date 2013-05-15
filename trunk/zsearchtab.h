@@ -41,7 +41,7 @@ private:
     bool reverseOrder;
 
     QSize gridSize(int ref);
-    QString getAlbumNameToAdd(QString suggest);
+    QString getAlbumNameToAdd(QString suggest,int toAddCount);
 
 public slots:
     void albumClicked(QListWidgetItem * item);

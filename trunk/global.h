@@ -29,6 +29,7 @@ typedef QList<int> QIntList;
 
 class ZAbstractReader;
 class ZMangaLoader;
+class ZMangaView;
 
 namespace Z {
 
@@ -138,7 +139,9 @@ QString	getExistingDirectoryD ( QWidget * parent = 0,
 QString detectMIME(QString filename);
 QString detectMIME(QByteArray buf);
 QPixmap resizeImage(QPixmap src, QSize targetSize,
-                    bool forceFilter = false, Z::ResizeFilter filter = Z::Lanczos);
+                    bool forceFilter = false,
+                    Z::ResizeFilter filter = Z::Lanczos,
+                    ZMangaView* mangaView = NULL);
 
 #ifdef WITH_OCR
 extern tesseract::TessBaseAPI* ocr;
