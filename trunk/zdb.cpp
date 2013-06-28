@@ -46,7 +46,9 @@ bool ZDB::sqlCheckBasePriv()
 
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) {
-        emit errorMsg(tr("Unable to open MySQL connection. Check login info."));
+        emit errorMsg(tr("Unable to open MySQL connection. Check login info.\n%1\n%2")
+                      .arg(db.lastError().databaseText())
+                      .arg(db.lastError().driverText()));
         return false;
     }
     bool noTables = (!db.tables().contains("files",Qt::CaseInsensitive) ||
@@ -89,6 +91,7 @@ void ZDB::sqlCreateTables()
       "PRIMARY KEY (`id`)"
     ") ENGINE=InnoDB  DEFAULT CHARSET=utf8")) {
         sqlCloseBase(db);
+        qDebug() << db.lastError().databaseText() << db.lastError().driverText();
         emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2").
                       arg(qr.lastError().databaseText()).arg(qr.lastError().driverText()));
         return;
