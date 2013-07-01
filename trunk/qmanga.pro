@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql dbus
+QT       += core gui dbus
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = qmanga
@@ -113,6 +113,13 @@ use_ocr {
     QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
     PKGCONFIG += tesseract
 }
+
+MYSQL_CXX = $$system(mysql_config --cflags)
+MYSQL_LIBS = $$system(mysql_config --libs)
+MYSQL_INC = $$system(mysql_config --include)
+QMAKE_CXXFLAGS += $$MYSQL_CXX
+LIBS += $$MYSQL_LIBS
+INCLUDEPATH += $$MYSQL_INC
 
 OTHER_FILES += \
     org.jpreader.auxtranslator.xml

@@ -1,7 +1,4 @@
 #include <QApplication>
-#include <QSqlQuery>
-#include <QSqlError>
-
 #include "zdb.h"
 
 ZDB::ZDB(QObject *parent) :
@@ -15,15 +12,19 @@ ZDB::ZDB(QObject *parent) :
 
 int ZDB::getAlbumsCount()
 {
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return 0;
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return 0;
 
-    QSqlQuery qr("SELECT COUNT(name) FROM `albums` ORDER BY name ASC",db);
+    if (mysql_query(db,"SELECT COUNT(name) FROM `albums` ORDER BY name ASC;")) return 0;
+
+    MYSQL_RES* res = mysql_use_result(db);
     int cnt = 0;
-    while (qr.next()) {
-        cnt = qr.value(0).toInt();
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res)) != NULL) {
+        cnt = QString::fromUtf8(row[0]).toInt();
         break;
     }
+    mysql_free_result(res);
     sqlCloseBase(db);
     return cnt;
 }
@@ -44,16 +45,27 @@ bool ZDB::sqlCheckBasePriv()
 {
     if (dbUser.isEmpty()) return false;
 
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) {
-        emit errorMsg(tr("Unable to open MySQL connection. Check login info.\n%1\n%2")
-                      .arg(db.lastError().databaseText())
-                      .arg(db.lastError().driverText()));
-        return false;
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return false;
+
+    if (mysql_query(db,"SHOW TABLES;")) return 0;
+
+    MYSQL_RES* res = mysql_use_result(db);
+
+    MYSQL_ROW row;
+    int cnt=0;
+    while ((row = mysql_fetch_row(res)) != NULL) {
+        QString s = QString::fromUtf8(row[0]);
+        if (s.contains("files",Qt::CaseInsensitive) ||
+                s.contains("albums",Qt::CaseInsensitive))
+            cnt++;
     }
-    bool noTables = (!db.tables().contains("files",Qt::CaseInsensitive) ||
-            !db.tables().contains("albums",Qt::CaseInsensitive));
+    mysql_free_result(res);
+
+    bool noTables = (cnt!=2);
+
     sqlCloseBase(db);
+
     if (noTables) {
         emit needTableCreation();
         return false;
@@ -63,21 +75,21 @@ bool ZDB::sqlCheckBasePriv()
 
 void ZDB::sqlCreateTables()
 {
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
 
-    QSqlQuery qr(db);
-    if (!qr.exec("CREATE TABLE IF NOT EXISTS `albums` ("
+    QString qr = "CREATE TABLE IF NOT EXISTS `albums` ("
                  "`id` int(11) NOT NULL AUTO_INCREMENT,"
                  "`name` varchar(2048) NOT NULL,"
                  "PRIMARY KEY (`id`)"
-                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;")) {
+                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+    if (mysql_query(db,qr.toUtf8())) {
+        emit errorMsg(tr("Unable to create table `albums`\n\n%1")
+                      .arg(mysql_error(db)));
         sqlCloseBase(db);
-        emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2").
-                      arg(qr.lastError().databaseText()).arg(qr.lastError().driverText()));
         return;
     }
-    if (!qr.exec("CREATE TABLE IF NOT EXISTS `files` ("
+    qr = "CREATE TABLE IF NOT EXISTS `files` ("
       "`id` int(11) NOT NULL AUTO_INCREMENT,"
       "`name` varchar(2048) NOT NULL,"
       "`filename` varchar(16383) NOT NULL,"
@@ -89,63 +101,69 @@ void ZDB::sqlCreateTables()
       "`fileDT` datetime NOT NULL,"
       "`addingDT` datetime NOT NULL,"
       "PRIMARY KEY (`id`)"
-    ") ENGINE=InnoDB  DEFAULT CHARSET=utf8")) {
+    ") ENGINE=InnoDB  DEFAULT CHARSET=utf8;";
+    if (mysql_query(db,qr.toUtf8())) {
+        emit errorMsg(tr("Unable to create table `files`\n\n%1")
+                      .arg(mysql_error(db)));
         sqlCloseBase(db);
-        qDebug() << db.lastError().databaseText() << db.lastError().driverText();
-        emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2").
-                      arg(qr.lastError().databaseText()).arg(qr.lastError().driverText()));
         return;
     }
     sqlCloseBase(db);
     return;
 }
 
-QSqlDatabase ZDB::sqlOpenBase()
+MYSQL* ZDB::sqlOpenBase()
 {
-    if (dbUser.isEmpty()) return QSqlDatabase();
-    QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL",QUuid::createUuid().toString());
-    if (db.isValid()) {
-        db.setHostName("localhost");
-        db.setDatabaseName(dbBase);
-        db.setUserName(dbUser);
-        db.setPassword(dbPass);
-        if (!db.open())
-            db = QSqlDatabase();
+    if (dbUser.isEmpty()) return NULL;
+    MYSQL* db = mysql_init(NULL);
+    if (!mysql_real_connect(db,"localhost",dbUser.toUtf8(),dbPass.toUtf8(),dbBase.toUtf8(),0,NULL,0)) {
+        emit errorMsg(tr("Unable to open MySQL connection. Check login info.\n%1")
+                      .arg(mysql_error(db)));
+        qDebug() << mysql_error(db);
+        db = NULL;
+    } else {
+        mysql_set_character_set(db,"utf8");
     }
     return db;
 }
 
-void ZDB::sqlCloseBase(QSqlDatabase &db)
+void ZDB::sqlCloseBase(MYSQL *db)
 {
-    if (db.isOpen())
-        db.close();
+    if (db!=NULL)
+        mysql_close(db);
 }
 
 void ZDB::sqlGetAlbums()
 {
-    QStringList res;
-    res.clear();
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
+    QStringList result;
+    result.clear();
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
 
-    QSqlQuery qr("SELECT name FROM `albums` ORDER BY name ASC",db);
-    while (qr.next()) {
-        res << qr.value(0).toString();
+    QString qr = "SELECT name FROM `albums` ORDER BY name ASC;";
+    if (mysql_query(db,qr.toUtf8())) return;
+
+    MYSQL_RES* res = mysql_use_result(db);
+
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res)) != NULL) {
+        result << QString::fromUtf8(row[0]);
     }
+    mysql_free_result(res);
+
     sqlCloseBase(db);
-    emit gotAlbums(res);
+    emit gotAlbums(result);
 }
 
 void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sortOrder, const bool reverseOrder)
 {
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
     Z::Ordering order = (Z::Ordering)sortOrder;
 
     QTime tmr;
     tmr.start();
 
-    QSqlQuery qr(db);
     QString tqr;
     if (!album.isEmpty()) {
         tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
@@ -175,32 +193,35 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
         else tqr+=" ASC";
     }
     tqr+=";";
-    qr.prepare(tqr);
 
     int idx = 0;
-    if (qr.exec()) {
-        //int resCnt = qr.size();
-        while (qr.next()) {
+    if (!mysql_query(db,tqr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(res)) != NULL) {
+            unsigned long *lengths = mysql_fetch_lengths(res);
             QImage p = QImage();
-            QByteArray ba = qr.value(2).toByteArray();
+            QByteArray ba = QByteArray::fromRawData(row[2],lengths[2]);
             if (!ba.isEmpty())
                 p.loadFromData(ba);
 
-            emit gotFile(SQLMangaEntry(qr.value(0).toString(),
-                                       qr.value(1).toString(),
-                                       qr.value(9).toString(),
+            emit gotFile(SQLMangaEntry(QString::fromUtf8(row[0]),
+                                       QString::fromUtf8(row[1]),
+                                       QString::fromUtf8(row[9]),
                                        p,
-                                       qr.value(3).toInt(),
-                                       qr.value(4).toInt(),
-                                       qr.value(5).toString(),
-                                       qr.value(6).toDateTime(),
-                                       qr.value(7).toDateTime(),
-                                       qr.value(8).toInt()));
+                                       QString::fromUtf8(row[3]).toInt(),
+                                       QString::fromUtf8(row[4]).toInt(),
+                                       QString::fromUtf8(row[5]),
+                                       QDateTime::fromString(QString::fromUtf8(row[6]),"yyyy-MM-dd H:mm:ss"),
+                                       QDateTime::fromString(QString::fromUtf8(row[7]),"yyyy-MM-dd H:mm:ss"),
+                                       QString::fromUtf8(row[8]).toInt()));
             QApplication::processEvents();
             idx++;
         }
+        mysql_free_result(res);
     } else
-        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
+        qDebug() << mysql_error(db);
     sqlCloseBase(db);
     emit filesLoaded(idx,tmr.elapsed());
     return;
@@ -208,21 +229,26 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
 
 void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
 {
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
 
-    QSqlQuery qrs(db);
-    qrs.prepare(QString("SELECT name FROM files WHERE (filename='%1');").arg(escapeParam(fileName)));
-    if (!qrs.exec()) {
+    QString qrs = QString("SELECT name FROM files WHERE (filename='%1');")
+                  .arg(escapeParam(fileName));
+    if (mysql_query(db,qrs.toUtf8())) {
         qDebug() << "file search query failed";
         sqlCloseBase(db);
         return;
     }
-    if (qrs.size()<1) {
+    MYSQL_RES* res = mysql_use_result(db);
+
+    MYSQL_ROW row = mysql_fetch_row(res);
+    if (row==NULL) {
         emit errorMsg("Opened file not found in library.");
+        mysql_free_result(res);
         sqlCloseBase(db);
         return;
     }
+    mysql_free_result(res);
 
     QFileInfo fi(fileName);
     if (!fi.isReadable()) {
@@ -251,19 +277,24 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     }
 
     QByteArray pba = createMangaPreview(za,pageNum);
+    char* pbae = (char*) malloc(pba.length()*2+1);
+    int pbaelen = mysql_real_escape_string(db,pbae,pba.constData(),pba.length());
+    pba = QByteArray::fromRawData(pbae,pbaelen);
 
-    QSqlQuery qr(db);
-    qr.prepare(QString("UPDATE files SET cover=? WHERE (filename='%1');").arg(escapeParam(fileName)));
-    qr.bindValue(0,pba);
-    if (!qr.exec()) {
-        QString msg = tr("Unable to change cover for '%1'.\n%2\n%3")
+    QByteArray qr;
+    qr.clear();
+    qr.append("UPDATE files SET cover='");
+    qr.append(pba);
+    qr.append(QString("' WHERE (filename='%1');").arg(escapeParam(fileName)));
+    if (mysql_real_query(db,qr.constData(),qr.length())) {
+        QString msg = tr("Unable to change cover for '%1'.\n%2")
                 .arg(fileName)
-                .arg(qr.lastError().databaseText())
-                .arg(qr.lastError().driverText());
+                .arg(mysql_error(db));
         qDebug() << msg;
         emit errorMsg(msg);
     }
     pba.clear();
+    free(pbae);
     za->closeFile();
     za->setParent(NULL);
     delete za;
@@ -281,8 +312,8 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     QStringList files = aFiles;
     files.removeDuplicates();
 
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
 
     int ialbum = -1;
     wasCanceled = false;
@@ -290,25 +321,26 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     QTime tmr;
     tmr.start();
 
-    QSqlQuery aqr(db);
-    aqr.prepare(QString("SELECT id FROM albums WHERE (name='%1');").arg(escapeParam(album)));
-    if (aqr.exec())
-        if (aqr.next())
-            ialbum = aqr.value(0).toInt();
+    QString aqr = QString("SELECT id FROM albums WHERE (name='%1');").arg(escapeParam(album));
+    if (!mysql_query(db,aqr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        if ((row = mysql_fetch_row(res)) != NULL)
+            ialbum = QString::fromUtf8(row[0]).toInt();
+        mysql_free_result(res);
+    }
 
     if (ialbum==-1) {
-        QSqlQuery qr(db);
-        qr.prepare("INSERT INTO albums (name) VALUES (?);");
-        qr.bindValue(0,album);
-        if (!qr.exec()) {
-            emit errorMsg(tr("Unable to create album `%1`\n%2\n%3").
+        QString qr = QString("INSERT INTO albums (name) VALUES ('%1');").arg(album);
+        if (mysql_query(db,qr.toUtf8())) {
+            emit errorMsg(tr("Unable to create album `%1`\n%2").
                           arg(album).
-                          arg(qr.lastError().databaseText()).
-                          arg(qr.lastError().driverText()));
+                          arg(mysql_error(db)));
             sqlCloseBase(db);
             return;
         }
-        ialbum = qr.lastInsertId().toInt();
+        ialbum = mysql_insert_id(db);
     }
 
     emit showProgressDialog(true);
@@ -336,24 +368,36 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         }
 
         QByteArray pba = createMangaPreview(za,0);
+        char* pbae = (char*) malloc(pba.length()*2+1);
+        int pbaelen = mysql_real_escape_string(db,pbae,pba.constData(),pba.length());
+        pba = QByteArray::fromRawData(pbae,pbaelen);
 
-        QSqlQuery qr(db);
-        qr.prepare("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
-                   "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW());");
-        qr.bindValue(0,fi.completeBaseName());
-        qr.bindValue(1,files.at(i));
-        qr.bindValue(2,ialbum);
-        qr.bindValue(3,pba);
-        qr.bindValue(4,za->getPageCount());
-        qr.bindValue(5,fi.size());
-        qr.bindValue(6,za->getMagic());
-        qr.bindValue(7,fi.created());
-        if (!qr.exec())
-            qDebug() << files.at(i) << "unable to add" << qr.lastError().databaseText() <<
-                        qr.lastError().driverText();
+        QByteArray qr;
+        qr.clear();
+        qr.append("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
+                   "fileMagic, fileDT, addingDT) VALUES ('");
+        qr.append(fi.completeBaseName());
+        qr.append("','");
+        qr.append(files.at(i));
+        qr.append("','");
+        qr.append(QString("%1").arg(ialbum));
+        qr.append("','");
+        qr.append(pba);
+        qr.append("','");
+        qr.append(QString("%1").arg(za->getPageCount()));
+        qr.append("','");
+        qr.append(QString("%1").arg(fi.size()));
+        qr.append("','");
+        qr.append(za->getMagic());
+        qr.append("','");
+        qr.append(fi.created().toString("yyyy-MM-dd H:mm:ss"));
+        qr.append("',NOW());");
+        if (mysql_real_query(db,qr.constData(),qr.length()))
+            qDebug() << files.at(i) << "unable to add" << mysql_error(db);
         else
             cnt++;
         pba.clear();
+        free(pbae);
         za->closeFile();
         za->setParent(NULL);
         delete za;
@@ -421,14 +465,11 @@ void ZDB::sqlDelFiles(const QIntList &dbids)
     }
     delqr+=");";
 
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
-    QSqlQuery qr(db);
-    qr.prepare(delqr);
-    if (!qr.exec()) {
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+    if (mysql_query(db,delqr.toUtf8())) {
         emit errorMsg(tr("Unable to delete manga\n%2\n%3").
-                      arg(qr.lastError().databaseText()).
-                      arg(qr.lastError().driverText()));
+                      arg(mysql_error(db)));
         sqlCloseBase(db);
         return;
     }
@@ -441,13 +482,10 @@ void ZDB::sqlDelFiles(const QIntList &dbids)
 void ZDB::sqlDelEmptyAlbums()
 {
     QString delqr = QString("DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album FROM files);");
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
-    QSqlQuery qr(db);
-    qr.prepare(delqr);
-    if (!qr.exec())
-        qDebug() << "Unable to delete empty albums" << qr.lastError().databaseText() <<
-                    qr.lastError().driverText();
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+    if (mysql_query(db,delqr.toUtf8()))
+        qDebug() << "Unable to delete empty albums" << mysql_error(db);
     sqlCloseBase(db);
     emit albumsListUpdated();
 }
@@ -457,18 +495,13 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
     if (oldName==newName || oldName.isEmpty() || newName.isEmpty()) return;
     QString delqr = QString("UPDATE albums SET name='%1' WHERE name='%2';").
             arg(escapeParam(newName)).arg(escapeParam(oldName));
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
-    QSqlQuery qr(db);
-    qr.prepare(delqr);
-    if (!qr.exec()) {
-        qDebug() << "Unable to rename album" <<
-                    qr.lastError().databaseText() <<
-                    qr.lastError().driverText();
-        emit errorMsg(tr("Unable to rename album `%1`\n%2\n%3").
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+    if (mysql_query(db,delqr.toUtf8())) {
+        qDebug() << "Unable to rename album" << mysql_error(db);
+        emit errorMsg(tr("Unable to rename album `%1`\n%2").
                       arg(oldName).
-                      arg(qr.lastError().databaseText()).
-                      arg(qr.lastError().driverText()));
+                      arg(mysql_error(db)));
     }
     sqlCloseBase(db);
     emit albumsListUpdated();
@@ -476,14 +509,20 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
 
 void ZDB::sqlDelAlbum(const QString &album)
 {
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
 
-    QSqlQuery qra(QString("SELECT id FROM `albums` WHERE name='%1';").arg(escapeParam(album)),db);
+    QString qra = QString("SELECT id FROM `albums` WHERE name='%1';").arg(escapeParam(album));
     int id = -1;
-    while (qra.next()) {
-        id = qra.value(0).toInt();
-        break;
+
+    if (!mysql_query(db,qra.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(res)) != NULL) {
+            id = QString::fromUtf8(row[0]).toInt();
+            break;
+        }
+        mysql_free_result(res);
     }
     if (id==-1) {
         emit errorMsg(tr("Album '%1' not found").arg(album));
@@ -491,12 +530,10 @@ void ZDB::sqlDelAlbum(const QString &album)
         return;
     }
 
-    QSqlQuery qr(db);
-    qr.prepare(QString("DELETE FROM files WHERE album=%1;").arg(id));
-    if (!qr.exec()) {
-        QString msg = tr("Unable to delete manga\n%2\n%3")
-                .arg(qr.lastError().databaseText())
-                .arg(qr.lastError().driverText());
+    QString qr = QString("DELETE FROM files WHERE album=%1;").arg(id);
+    if (mysql_query(db,qr.toUtf8())) {
+        QString msg = tr("Unable to delete manga\n%2")
+                      .arg(mysql_error(db));
         emit errorMsg(msg);
         qDebug() << msg;
         sqlCloseBase(db);
