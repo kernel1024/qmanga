@@ -2,9 +2,14 @@
 #define ZDB_H
 
 #include <QObject>
-#include <QSqlDatabase>
 #include "zabstractreader.h"
 #include "global.h"
+
+namespace mysql {
+    #include <mysql/mysql.h>
+}
+
+using namespace mysql;
 
 class ZDB : public QObject
 {
@@ -15,8 +20,8 @@ protected:
     bool wasCanceled;
 
     bool sqlCheckBasePriv();
-    QSqlDatabase sqlOpenBase();
-    void sqlCloseBase(QSqlDatabase& db);
+    MYSQL* sqlOpenBase();
+    void sqlCloseBase(MYSQL* db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
 
 public:
