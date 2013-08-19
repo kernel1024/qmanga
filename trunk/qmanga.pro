@@ -112,6 +112,7 @@ use_ocr {
     DEFINES += WITH_OCR=1
     QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
     PKGCONFIG += tesseract
+    LIBS += -llept
 }
 
 MYSQL_CXX = $$system(mysql_config --cflags)
