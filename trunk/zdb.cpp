@@ -303,6 +303,15 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     return;
 }
 
+QString mysqlEscapeString(MYSQL* db, const QString& str)
+{
+    QByteArray pba = str.toUtf8();
+    char* pbae = (char*) malloc(pba.length()*2+1);
+    int pbaelen = mysql_real_escape_string(db,pbae,pba.constData(),pba.length());
+    pba = QByteArray::fromRawData(pbae,pbaelen);
+    return QString::fromUtf8(pba);
+}
+
 void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 {
     if (album.isEmpty()) {
@@ -376,9 +385,9 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         qr.clear();
         qr.append("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
                    "fileMagic, fileDT, addingDT) VALUES ('");
-        qr.append(fi.completeBaseName());
+        qr.append(mysqlEscapeString(db,fi.completeBaseName()));
         qr.append("','");
-        qr.append(files.at(i));
+        qr.append(mysqlEscapeString(db,files.at(i)));
         qr.append("','");
         qr.append(QString("%1").arg(ialbum));
         qr.append("','");
