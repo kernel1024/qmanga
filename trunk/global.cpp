@@ -66,33 +66,19 @@ QString escapeParam(QString param)
 
 int compareWithNumerics(QString ref1, QString ref2)
 {
-    // find common part of both strings
-    int mlen = qMin(ref1.length(),ref2.length());
-    int diffs = 0;
+    QStringList r1nums = ref1.split(QRegExp("\\D+"),QString::SkipEmptyParts);
+    QStringList r2nums = ref2.split(QRegExp("\\D+"),QString::SkipEmptyParts);
+    int mlen = qMin(r1nums.count(),r2nums.count());
     for (int i=0;i<mlen;i++) {
-        if (ref1.at(i).isDigit() || ref2.at(i).isDigit()) {
-            diffs = i;
-            break;
-        }
-        if (ref1.at(i)!=ref2.at(i)) {
-            diffs = i;
-            break;
-        }
-    }
-    if (diffs>0) // and compare only differences as strings again
-        return compareWithNumerics(ref1.mid(diffs),ref2.mid(diffs));
+        bool okconv;
+        int r1n = r1nums.at(i).toInt(&okconv);
+        if (!okconv) break;
+        int r2n = r2nums.at(i).toInt(&okconv);
+        if (!okconv) break;
 
-    // try convert to int
-    bool okconv1, okconv2;
-    int v1 = ref1.toInt(&okconv1);
-    int v2 = ref2.toInt(&okconv2);
-    if (okconv1 && okconv2) {
-        if (v1<v2) return -1;
-        else if (v1==v2) return 0;
-        else return 1;
+        if (r1n<r2n) return -1;
+        else if (r1n>r2n) return 1;
     }
-
-    // simply compare strings
     return QString::compare(ref1,ref2);
 }
 
