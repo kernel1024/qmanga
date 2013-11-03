@@ -63,6 +63,7 @@ public slots:
     void ctxRenameAlbum();
     void ctxDeleteAlbum();
     void ctxOpenDir();
+    void ctxXdgOpen();
 
     void dbShowProgressDialog(const bool visible);
     void dbShowProgressState(const int value, const QString& msg);
