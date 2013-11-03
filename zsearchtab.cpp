@@ -187,6 +187,9 @@ void ZSearchTab::ctxMenu(QPoint pos)
                        tr("Open containing directory"),this,SLOT(ctxOpenDir()));
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
 
+    acm = cm.addAction(QIcon::fromTheme("fork"),
+                       tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
+
     cm.exec(ui->srcList->mapToGlobal(pos));
 }
 
@@ -298,6 +301,42 @@ void ZSearchTab::ctxOpenDir()
         QMessageBox::warning(this,tr("QManga"),
                              tr("Error while searching file path for some files.\n\n%1").
                              arg(edl.join("\n")));
+    }
+}
+
+void ZSearchTab::ctxXdgOpen()
+{
+    QModelIndexList li;
+    li.clear();
+    QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
+    if (lii.isEmpty()) return;
+
+    for (int i=0;i<lii.count();i++) {
+        if (lii.at(i).column()==0)
+            li << lii.at(i);
+    }
+
+    QStringList dl;
+    dl.clear();
+    for (int i=0;i<li.count();i++) {
+        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
+            QString fname = model->getItem(li.at(i).row()).filename;
+            QFileInfo fi(fname);
+            if (fi.isFile() && fi.exists())
+                dl << fname;
+        }
+    }
+
+    for (int i=0;i<dl.count();i++) {
+        QStringList params;
+        params << dl.at(i);
+        QProcess::startDetached("xdg-open",params);
+    }
+
+    if (dl.isEmpty()) {
+        QMessageBox::warning(this,tr("QManga"),
+                             tr("Error while searching file path for some files.\n\n%1").
+                             arg(dl.join("\n")));
     }
 }
 
