@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     srcWidget = ui->srcWidget;
     fullScreen = false;
 
-    QApplication::setWheelScrollLines(1);
+//    QApplication::setWheelScrollLines(1);
 
     lblSearchStatus = new QLabel(tr("Ready"));
     lblAverageSizes = new QLabel();
