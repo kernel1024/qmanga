@@ -463,7 +463,7 @@ void ZDB::sqlCancelAdding()
     wasCanceled = true;
 }
 
-void ZDB::sqlDelFiles(const QIntList &dbids)
+void ZDB::sqlDelFiles(const QIntList &dbids, const bool fullDelete)
 {
     if (dbids.count()==0) return;
 
@@ -474,8 +474,29 @@ void ZDB::sqlDelFiles(const QIntList &dbids)
     }
     delqr+=");";
 
+    QString fsqr = QString("SELECT filename FROM files WHERE id IN (");
+    for (int i=0;i<dbids.count();i++) {
+        if (i>0) fsqr+=",";
+        fsqr+=QString("%1").arg(dbids.at(i));
+    }
+    fsqr+=");";
+
     MYSQL* db = sqlOpenBase();
+    bool okdel = true;
     if (db==NULL) return;
+    if (fullDelete) {
+        if (!mysql_query(db,fsqr.toUtf8())) {
+            MYSQL_RES* res = mysql_use_result(db);
+
+            MYSQL_ROW row;
+            while ((row = mysql_fetch_row(res)) != NULL) {
+                QString fname = QString::fromUtf8(row[0]);
+                if (!QFile::remove(fname))
+                    okdel = false;
+            }
+        }
+    }
+
     if (mysql_query(db,delqr.toUtf8())) {
         emit errorMsg(tr("Unable to delete manga\n%2\n%3").
                       arg(mysql_error(db)));
@@ -486,6 +507,10 @@ void ZDB::sqlDelFiles(const QIntList &dbids)
     sqlDelEmptyAlbums();
 
     emit deleteItemsFromModel(dbids);
+
+    if (!okdel && fullDelete)
+        emit errorMsg(tr("Errors occured, some files not deleted from filesystem or not found.\n%2\n%3").
+                      arg(mysql_error(db)));
 }
 
 void ZDB::sqlDelEmptyAlbums()

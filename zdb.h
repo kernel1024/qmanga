@@ -49,7 +49,7 @@ public slots:
     void sqlGetAlbums();
     void sqlRenameAlbum(const QString& oldName, const QString& newName);
     void sqlDelAlbum(const QString& album);
-    void sqlDelFiles(const QIntList& dbids);
+    void sqlDelFiles(const QIntList& dbids, const bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
     void sqlGetFiles(const QString& album, const QString& search, const int sortOrder, const bool reverseOrder);

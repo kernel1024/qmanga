@@ -82,7 +82,7 @@ signals:
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
     void dbGetFiles(const QString& album, const QString& search, const int order, const bool reverseOrder);
-    void dbDelFiles(const QIntList& dbids);
+    void dbDelFiles(const QIntList& dbids, const bool fullDelete);
     void dbDeleteAlbum(const QString& album);
 };
 

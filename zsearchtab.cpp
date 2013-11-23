@@ -79,8 +79,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     connect(this,SIGNAL(dbAddFiles(QStringList,QString)),
             zg->db,SLOT(sqlAddFiles(QStringList,QString)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbDelFiles(QIntList)),
-            zg->db,SLOT(sqlDelFiles(QIntList)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbDelFiles(QIntList,bool)),
+            zg->db,SLOT(sqlDelFiles(QIntList,bool)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbGetAlbums()),
             zg->db,SLOT(sqlGetAlbums()),Qt::QueuedConnection);
     connect(this,SIGNAL(dbGetFiles(QString,QString,int,bool)),
@@ -180,9 +180,14 @@ void ZSearchTab::ctxMenu(QPoint pos)
         if (li.at(i).column()==0)
             cnt++;
     }
-    acm = cm.addAction(QIcon::fromTheme("edit-delete"),
-                       tr("Delete selected %1 files").arg(cnt),this,SLOT(mangaDel()));
+    QMenu* dmenu = cm.addMenu(QIcon::fromTheme("edit-delete"),
+                              tr("Delete selected %1 files").arg(cnt));
+    acm = dmenu->addAction(tr("Delete only from database"),this,SLOT(mangaDel()));
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
+    acm->setData(1);
+    acm = dmenu->addAction(tr("Delete from database and filesystem"),this,SLOT(mangaDel()));
+    acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
+    acm->setData(2);
 
     acm = cm.addAction(QIcon::fromTheme("document-open-folder"),
                        tr("Open containing directory"),this,SLOT(ctxOpenDir()));
@@ -258,7 +263,7 @@ void ZSearchTab::ctxDeleteAlbum()
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
 
-    if (QMessageBox::question(this,tr("Delete album"),tr("Are you sure to delete album '%1' and ALL it's contents?").arg(s),
+    if (QMessageBox::question(this,tr("Delete album"),tr("Are you sure to delete album '%1' and all it's contents from database?").arg(s),
                                       QMessageBox::Yes | QMessageBox::No, QMessageBox::No)==QMessageBox::Yes)
         emit dbDeleteAlbum(s);
 }
@@ -487,6 +492,10 @@ void ZSearchTab::mangaAddDir()
 void ZSearchTab::mangaDel()
 {
     if (!model) return;
+    QAction *ac = qobject_cast<QAction *>(sender());
+    if (ac==NULL) return;
+    bool delFiles = (ac->data().toInt() == 2);
+
     QIntList dl;
     int cnt = zg->db->getAlbumsCount();
     // remove other selected columns
@@ -504,7 +513,7 @@ void ZSearchTab::mangaDel()
             dl << model->getItem(li.at(i).row()).dbid;
     }
 
-    emit dbDelFiles(dl);
+    emit dbDelFiles(dl,delFiles);
 
     if (cnt!=zg->db->getAlbumsCount())
         updateAlbumsList();
