@@ -40,6 +40,7 @@ signals:
     void gotFile(const SQLMangaEntry& file);
     void filesLoaded(const int count, const int elapsed);
     void deleteItemsFromModel(const QIntList& dbids);
+    void updateWatchDirList(const QStringList& dirs);
 
 public slots:
     void setCredentials(const QString& base, const QString& user, const QString& password);
@@ -54,6 +55,7 @@ public slots:
     void sqlCancelAdding();
     void sqlGetFiles(const QString& album, const QString& search, const int sortOrder, const bool reverseOrder);
     void sqlChangeFilePreview(const QString& fileName, const int pageNum);
+    void sqlRescanIndexedDirs();
 
 };
 

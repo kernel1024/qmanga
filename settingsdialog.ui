@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>707</width>
-    <height>433</height>
+    <height>502</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -221,38 +221,6 @@
            </layout>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QGroupBox" name="groupBox_4">
-           <property name="title">
-            <string>Fonts</string>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QPushButton" name="btnFontIndexer">
-              <property name="text">
-               <string>Indexer list...</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="labelIdxFont">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>TextLabel</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
@@ -293,7 +261,39 @@
            </layout>
           </widget>
          </item>
-         <item row="2" column="0" rowspan="2" colspan="2">
+         <item row="1" column="1">
+          <widget class="QGroupBox" name="groupBox_4">
+           <property name="title">
+            <string>Fonts</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QPushButton" name="btnFontIndexer">
+              <property name="text">
+               <string>Indexer list...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="labelIdxFont">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
           <widget class="QGroupBox" name="groupBox_5">
            <property name="title">
             <string>Cache policy</string>
@@ -310,6 +310,22 @@
              <widget class="QRadioButton" name="rbCacheData">
               <property name="text">
                <string>Cache file data (slower, conservative memory usage)</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="2">
+          <widget class="QGroupBox" name="groupBox_6">
+           <property name="title">
+            <string>Settings</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QCheckBox" name="checkFSWatcher">
+              <property name="text">
+               <string>Watching for filesystem changes</string>
               </property>
              </widget>
             </item>
@@ -421,10 +437,12 @@
   <tabstop>btnFontIndexer</tabstop>
   <tabstop>rbCachePixmaps</tabstop>
   <tabstop>rbCacheData</tabstop>
+  <tabstop>checkFSWatcher</tabstop>
   <tabstop>pushButton_2</tabstop>
   <tabstop>pushButton_3</tabstop>
   <tabstop>listBookmarks</tabstop>
   <tabstop>btnDeleteBookmark</tabstop>
+  <tabstop>checkFineRendering</tabstop>
  </tabstops>
  <resources/>
  <connections>

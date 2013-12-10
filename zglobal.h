@@ -1,6 +1,8 @@
 #ifndef ZGLOBAL_H
 #define ZGLOBAL_H
 
+#include <QFileSystemWatcher>
+#include <QHash>
 #include "global.h"
 #include "ocreditor.h"
 
@@ -13,9 +15,12 @@ class ZGlobal : public QObject
 protected:
     QThread* threadDB;
     QString dbBase, dbUser, dbPass;
+    QHash<QString,QStringList> dirWatchList;
 public:
     ZDB* db;
     ZOCREditor* ocrEditor;
+    QFileSystemWatcher* fsWatcher;
+    QStringList newlyAddedFiles;
 
     explicit ZGlobal(QObject *parent = 0);
     ~ZGlobal();
@@ -33,18 +38,25 @@ public:
     int pdfRenderWidth;
     bool cachePixmaps;
     bool useFineRendering;
+    bool filesystemWatcher;
 
     QColor foregroundColor();
-    
+
+    void fsCheckFilesAvailability();
+
 public slots:
     void settingsDlg();
     void loadSettings();
     void saveSettings();
+    void updateWatchDirList(const QStringList & watchDirs);
+    void directoryChanged(const QString & dir);
 
 signals:
     void dbSetCredentials(const QString& base, const QString& user, const QString& password);
     void dbCheckBase();
     void dbCheckEmptyAlbums();
+    void dbRescanIndexedDirs();
+    void fsFilesAdded();
 
 };
 
