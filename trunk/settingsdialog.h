@@ -29,6 +29,7 @@ public:
     QRadioButton* radioCachePixmaps;
     QRadioButton* radioCacheData;
     QCheckBox* checkFineRendering;
+    QCheckBox* checkFSWatcher;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();

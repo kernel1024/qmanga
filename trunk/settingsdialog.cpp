@@ -23,6 +23,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     radioCachePixmaps = ui->rbCachePixmaps;
     radioCacheData = ui->rbCacheData;
     checkFineRendering = ui->checkFineRendering;
+    checkFSWatcher = ui->checkFSWatcher;
 
 #ifndef WITH_MAGICK
     while (ui->comboFilter->count()>2)

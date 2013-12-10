@@ -5,9 +5,21 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QLabel>
+#include <QList>
+#include <QMutex>
 
 #include "zmangaview.h"
 #include "zsearchtab.h"
+
+class ZFSFile {
+public:
+    QString name;
+    QString album;
+    QString fileName;
+    ZFSFile();
+    ZFSFile(QString aName, QString aFileName, QString aAlbum);
+    ZFSFile &operator=(const ZFSFile& other);
+};
 
 namespace Ui {
 class MainWindow;
@@ -30,9 +42,14 @@ public:
 private:
     Ui::MainWindow *ui;
     bool fullScreen;
+    QList<ZFSFile> fsScannedFiles;
+    QMutex fsAddFilesMutex;
 
 protected:
     void closeEvent(QCloseEvent * event);
+
+signals:
+    void dbAddFiles(const QStringList& aFiles, const QString& album);
 
 public slots:
     void openAux();
@@ -54,6 +71,12 @@ public slots:
     void helpAbout();
     void msgFromIndexer(QString msg);
     void msgFromMangaView(QSize sz, qint64 fsz);
+
+    void fsAddFiles();
+    void fsCheckAvailability();
+    void fsDelFiles();
+    void fsNewFilesAdded();
+    void fsUpdateFileList();
 };
 
 #endif // MAINWINDOW_H

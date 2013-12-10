@@ -21,12 +21,21 @@ ZGlobal::ZGlobal(QObject *parent) :
     ocrEditor = NULL;
     defaultOrdering = Z::FileName;
 
+    filesystemWatcher = false;
+    fsWatcher = new QFileSystemWatcher(this);
+    newlyAddedFiles.clear();
+    dirWatchList.clear();
+    connect(fsWatcher,SIGNAL(directoryChanged(QString)),this,SLOT(directoryChanged(QString)));
+
     threadDB = new QThread();
     db = new ZDB();
     connect(this,SIGNAL(dbSetCredentials(QString,QString,QString)),
             db,SLOT(setCredentials(QString,QString,QString)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbCheckBase()),db,SLOT(sqlCheckBase()),Qt::QueuedConnection);
     connect(this,SIGNAL(dbCheckEmptyAlbums()),db,SLOT(sqlDelEmptyAlbums()),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbRescanIndexedDirs()),db,SLOT(sqlRescanIndexedDirs()),Qt::QueuedConnection);
+    connect(db,SIGNAL(updateWatchDirList(QStringList)),
+            this,SLOT(updateWatchDirList(QStringList)),Qt::QueuedConnection);
     db->moveToThread(threadDB);
     threadDB->start();
 
@@ -64,6 +73,7 @@ void ZGlobal::loadSettings()
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
     useFineRendering = settings.value("fineRendering",true).toBool();
+    filesystemWatcher = settings.value("filesystemWatcher",false).toBool();
     defaultOrdering = (Z::Ordering)settings.value("defaultOrdering",Z::FileName).toInt();
     if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
         idxFont = QApplication::font("QListView");
@@ -108,6 +118,8 @@ void ZGlobal::loadSettings()
         }
     }
     emit dbCheckBase();
+    if (filesystemWatcher)
+        emit dbRescanIndexedDirs();
 }
 
 void ZGlobal::saveSettings()
@@ -125,6 +137,7 @@ void ZGlobal::saveSettings()
     settings.setValue("backgroundColor",backgroundColor.name());
     settings.setValue("cachePixmaps",cachePixmaps);
     settings.setValue("fineRendering",useFineRendering);
+    settings.setValue("filesystemWatcher",filesystemWatcher);
     settings.setValue("idxFont",idxFont.toString());
     settings.setValue("defaultOrdering",(int)defaultOrdering);
 
@@ -151,6 +164,32 @@ void ZGlobal::saveSettings()
     emit dbCheckEmptyAlbums();
 }
 
+void ZGlobal::updateWatchDirList(const QStringList &watchDirs)
+{
+    dirWatchList.clear();
+    for (int i=0;i<watchDirs.count();i++) {
+        QDir d(watchDirs.at(i));
+        if (!d.isReadable()) continue;
+        dirWatchList[d.absolutePath()] =
+                d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
+    }
+    fsWatcher->addPaths(watchDirs);
+}
+
+void ZGlobal::directoryChanged(const QString &dir)
+{
+    QDir d(dir);
+    if (!d.isReadable()) return;
+    QStringList nlist = d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
+    QStringList olist = dirWatchList[d.absolutePath()];
+    for (int i=0;i<nlist.count();i++) {
+        QString fname = d.absoluteFilePath(nlist.at(i));
+        if (!olist.contains(nlist.at(i)) && !newlyAddedFiles.contains(fname))
+            newlyAddedFiles << fname;
+    }
+    fsCheckFilesAvailability();
+}
+
 QColor ZGlobal::foregroundColor()
 {
     qreal r,g,b;
@@ -160,6 +199,19 @@ QColor ZGlobal::foregroundColor()
         return QColor(Qt::black);
     else
         return QColor(Qt::white);
+}
+
+void ZGlobal::fsCheckFilesAvailability()
+{
+    int i = 0;
+    while (i<newlyAddedFiles.count() && !newlyAddedFiles.isEmpty()) {
+        QFileInfo fi(newlyAddedFiles.at(i));
+        if (!(fi.isReadable() && fi.isFile()))
+            newlyAddedFiles.removeAt(i);
+        else
+            i++;
+    }
+    emit fsFilesAdded();
 }
 
 void ZGlobal::settingsDlg()
@@ -179,6 +231,7 @@ void ZGlobal::settingsDlg()
     dlg->checkFineRendering->setChecked(useFineRendering);
     dlg->updateBkColor(backgroundColor);
     dlg->updateIdxFont(idxFont);
+    dlg->checkFSWatcher->setChecked(filesystemWatcher);
     switch (resizeFilter) {
         case Z::Nearest: dlg->comboFilter->setCurrentIndex(0); break;
         case Z::Bilinear: dlg->comboFilter->setCurrentIndex(1); break;
@@ -210,6 +263,7 @@ void ZGlobal::settingsDlg()
         idxFont=dlg->getIdxFont();
         cachePixmaps=dlg->radioCachePixmaps->isChecked();
         useFineRendering=dlg->checkFineRendering->isChecked();
+        filesystemWatcher=dlg->checkFSWatcher->isChecked();
         switch (dlg->comboFilter->currentIndex()) {
             case 0: resizeFilter = Z::Nearest; break;
             case 1: resizeFilter = Z::Bilinear; break;
@@ -234,6 +288,8 @@ void ZGlobal::settingsDlg()
                 w->srcWidget->updateAlbumsList();
         }
         emit dbCheckBase();
+        if (filesystemWatcher)
+            emit dbRescanIndexedDirs();
     }
     dlg->setParent(NULL);
     delete dlg;

@@ -83,6 +83,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->btnSearchTab,SIGNAL(clicked()),this,SLOT(openSearchTab()));
 
+    connect(ui->btnFSAdd,SIGNAL(clicked()),this,SLOT(fsAddFiles()));
+    connect(ui->btnFSCheck,SIGNAL(clicked()),this,SLOT(fsCheckAvailability()));
+    connect(ui->btnFSDelete,SIGNAL(clicked()),this,SLOT(fsDelFiles()));
+    connect(zg,SIGNAL(fsFilesAdded()),this,SLOT(fsNewFilesAdded()));
+    connect(this,SIGNAL(dbAddFiles(QStringList,QString)),
+            zg->db,SLOT(sqlAddFiles(QStringList,QString)),Qt::QueuedConnection);
+
     ui->mangaView->scroller = ui->scrollArea;
     zg->loadSettings();
     if (!isMaximized())
@@ -313,8 +320,102 @@ void MainWindow::msgFromMangaView(QSize sz, qint64 fsz)
     lblAverageSizes->setText(tr("Avg: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
 }
 
+void MainWindow::fsAddFiles()
+{
+    QHash<QString,QStringList> fl;
+    fl.clear();
+    for (int i=0;i<fsScannedFiles.count();i++) {
+        fl[fsScannedFiles.at(i).album].append(fsScannedFiles.at(i).fileName);
+        zg->newlyAddedFiles.removeAll(fsScannedFiles.at(i).fileName);
+    }
+
+    for (int i=0;i<fl.keys().count();i++) {
+        QString k = fl.keys().at(i);
+        emit dbAddFiles(fl[k],k);
+    }
+
+    zg->fsCheckFilesAvailability();
+}
+
+void MainWindow::fsCheckAvailability()
+{
+    zg->fsCheckFilesAvailability();
+}
+
+void MainWindow::fsDelFiles()
+{
+    QList<int> rows;
+    rows.clear();
+    for (int i=0;i<ui->fsResults->selectedItems().count();i++) {
+        int idx = ui->fsResults->selectedItems().at(i)->row();
+        if (!rows.contains(idx))
+            rows << idx;
+    }
+    if (rows.isEmpty()) return;
+    QList<ZFSFile> nl;
+    nl.clear();
+    for (int i=0;i<fsScannedFiles.count();i++) {
+        if (!rows.contains(i))
+            nl << fsScannedFiles.at(i);
+    }
+    fsScannedFiles = nl;
+    fsUpdateFileList();
+}
+
+void MainWindow::fsNewFilesAdded()
+{
+    fsAddFilesMutex.lock();
+    ui->fsResults->clear();
+    fsScannedFiles.clear();
+    QStringList f = zg->newlyAddedFiles;
+
+    for (int i=0;i<f.count();i++) {
+        QFileInfo fi(f.at(i));
+        fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
+    }
+    fsUpdateFileList();
+    fsAddFilesMutex.unlock();
+}
+
+void MainWindow::fsUpdateFileList()
+{
+    QStringList h;
+    h << tr("File") << tr("Album");
+    ui->fsResults->setColumnCount(2);
+    ui->fsResults->setRowCount(fsScannedFiles.count());
+    ui->fsResults->setHorizontalHeaderLabels(h);
+    for (int i=0;i<fsScannedFiles.count();i++) {
+        ui->fsResults->setItem(i,0,new QTableWidgetItem(fsScannedFiles[i].name));
+        ui->fsResults->setItem(i,1,new QTableWidgetItem(fsScannedFiles[i].album));
+    }
+    ui->fsResults->setColumnWidth(0,ui->fsResults->width()/2);
+}
+
 void MainWindow::pageNumEdited()
 {
     if (ui->spinPosition->value()!=ui->mangaView->currentPage)
         ui->mangaView->setPage(ui->spinPosition->value()-1);
+}
+
+
+ZFSFile::ZFSFile()
+{
+    name.clear();
+    fileName.clear();
+    album.clear();
+}
+
+ZFSFile::ZFSFile(QString aName, QString aFileName, QString aAlbum)
+{
+    name = aName;
+    fileName = aFileName;
+    album = aAlbum;
+}
+
+ZFSFile &ZFSFile::operator=(const ZFSFile &other)
+{
+    name = other.name;
+    fileName = other.fileName;
+    album = other.album;
+    return *this;
 }

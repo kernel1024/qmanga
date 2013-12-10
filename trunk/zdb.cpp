@@ -303,6 +303,38 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     return;
 }
 
+void ZDB::sqlRescanIndexedDirs()
+{
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+
+    QStringList dirs;
+    dirs.clear();
+
+    QString tqr;
+    tqr = QString("SELECT filename "
+                  "FROM files");
+    tqr+=";";
+
+    if (!mysql_query(db,tqr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(res)) != NULL) {
+            QFileInfo fi(QString::fromUtf8(row[0]));
+            if (!fi.exists()) continue;
+            if (!dirs.contains(fi.absoluteDir().absolutePath()))
+                dirs << fi.absoluteDir().absolutePath();
+        }
+        mysql_free_result(res);
+    } else
+        qDebug() << mysql_error(db);
+    sqlCloseBase(db);
+    if (!dirs.isEmpty())
+        emit updateWatchDirList(dirs);
+    return;
+}
+
 QString mysqlEscapeString(MYSQL* db, const QString& str)
 {
     QByteArray pba = str.toUtf8();
@@ -424,6 +456,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     }
     emit showProgressDialog(false);
     sqlCloseBase(db);
+    sqlRescanIndexedDirs();
     emit filesAdded(cnt,files.count(),tmr.elapsed());
     emit albumsListUpdated();
     return;
