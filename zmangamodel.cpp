@@ -1,6 +1,7 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPen>
+#include <QScrollBar>
 
 #include "zmangamodel.h"
 
@@ -156,4 +157,6 @@ void ZMangaModel::addItem(const SQLMangaEntry &file)
     beginInsertRows(QModelIndex(),posidx,posidx);
     mList.append(file);
     endInsertRows();
+    if (view->verticalScrollBar()!=NULL)
+        view->verticalScrollBar()->setSingleStep(view->verticalScrollBar()->pageStep());
 }
