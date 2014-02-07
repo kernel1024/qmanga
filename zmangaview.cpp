@@ -47,7 +47,10 @@ ZMangaView::ZMangaView(QWidget *parent) :
     p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
     setPalette(p);
 
-    connect(this,SIGNAL(changeMangaCover(QString,int)),zg->db,SLOT(sqlChangeFilePreview(QString,int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(changeMangaCover(QString,int)),
+            zg->db,SLOT(sqlChangeFilePreview(QString,int)),Qt::QueuedConnection);
+    connect(this,SIGNAL(updateFileStats(QString)),
+            zg->db,SLOT(sqlUpdateFileStats(QString)),Qt::QueuedConnection);
 
     int cnt = QThread::idealThreadCount()+1;
     if (cnt<2) cnt=2;
@@ -198,6 +201,7 @@ void ZMangaView::openFile(QString filename, int page)
     else
         openedFile = filename;
     processingPages.clear();
+    emit updateFileStats(filename);
 }
 
 void ZMangaView::closeFile()
@@ -527,6 +531,8 @@ void ZMangaView::redrawPage()
             } else if (zoomMode==Height) {
                 sz.setWidth(round(((double)sz.height())*pixAspect));
             }
+            if (zg->preferredWidth!=sz.width())
+                zg->preferredWidth = sz.width();
             if (sz!=ssz) {
                 if (fineDraw || !zg->useFineRendering) {
                     curPixmap = resizeImage(curUmPixmap,sz);

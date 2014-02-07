@@ -47,6 +47,7 @@ private:
 
 protected:
     void closeEvent(QCloseEvent * event);
+    void resizeEvent(QResizeEvent * event);
 
 signals:
     void dbAddFiles(const QStringList& aFiles, const QString& album);

@@ -34,8 +34,8 @@ public:
     QString savedAuxOpenDir, savedIndexOpenDir;
     QColor backgroundColor;
     QFont idxFont;
+    int preferredWidth;
 
-    int pdfRenderWidth;
     bool cachePixmaps;
     bool useFineRendering;
     bool filesystemWatcher;
@@ -50,6 +50,7 @@ public slots:
     void saveSettings();
     void updateWatchDirList(const QStringList & watchDirs);
     void directoryChanged(const QString & dir);
+    void resetPreferredWidth();
 
 signals:
     void dbSetCredentials(const QString& base, const QString& user, const QString& password);

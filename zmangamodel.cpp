@@ -158,5 +158,5 @@ void ZMangaModel::addItem(const SQLMangaEntry &file)
     mList.append(file);
     endInsertRows();
     if (view->verticalScrollBar()!=NULL)
-        view->verticalScrollBar()->setSingleStep(view->verticalScrollBar()->pageStep());
+        view->verticalScrollBar()->setSingleStep(view->verticalScrollBar()->pageStep()/2);
 }

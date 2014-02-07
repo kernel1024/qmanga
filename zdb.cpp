@@ -335,6 +335,51 @@ void ZDB::sqlRescanIndexedDirs()
     return;
 }
 
+void ZDB::sqlUpdateFileStats(const QString &fileName)
+{
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+
+    QFileInfo fi(fileName);
+    if (!fi.isReadable()) {
+        qDebug() << "updating aborted for" << fileName << "as unreadable";
+        return;
+    }
+
+    bool mimeOk = false;
+    ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
+    if (za == NULL) {
+        qDebug() << fileName << "File format not supported.";
+        return;
+    }
+
+    if (!za->openFile()) {
+        qDebug() << fileName << "Unable to open file. Broken archive.";
+        za->setParent(NULL);
+        delete za;
+        return;
+    }
+
+    QByteArray qr;
+    qr.clear();
+    qr.append("UPDATE files SET ");
+    qr.append(QString("pagesCount='%1',").arg(za->getPageCount()));
+    qr.append(QString("fileSize='%1',").arg(fi.size()));
+    qr.append(QString("fileMagic='%1',").arg(za->getMagic()));
+    qr.append(QString("fileDT='%1' ").arg(fi.created().toString("yyyy-MM-dd H:mm:ss")));
+    qr.append(QString("WHERE (filename='%1');").arg(escapeParam(fileName)));
+
+    za->closeFile();
+    za->setParent(NULL);
+    delete za;
+
+    if (mysql_real_query(db,qr.constData(),qr.length()))
+        qDebug() << fileName << "unable to update file stats" << mysql_error(db);
+
+    sqlCloseBase(db);
+    return;
+}
+
 QString mysqlEscapeString(MYSQL* db, const QString& str)
 {
     QByteArray pba = str.toUtf8();
