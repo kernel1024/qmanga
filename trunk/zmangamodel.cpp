@@ -53,11 +53,13 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
             cp.drawPixmap(0,(rp.height()-p.height())/2,p);
         else
             cp.drawPixmap((rp.width()-p.width())/2,0,p);
-        cp.setPen(QPen(Qt::lightGray));
-        cp.drawLine(0,0,rp.width()-1,0);
-        cp.drawLine(rp.width()-1,0,rp.width()-1,rp.height()-1);
-        cp.drawLine(rp.width()-1,rp.height()-1,0,rp.height()-1);
-        cp.drawLine(0,rp.height()-1,0,0);
+        if (zg->frameColor!=zg->backgroundColor) {
+            cp.setPen(QPen(zg->frameColor));
+            cp.drawLine(0,0,rp.width()-1,0);
+            cp.drawLine(rp.width()-1,0,rp.width()-1,rp.height()-1);
+            cp.drawLine(rp.width()-1,rp.height()-1,0,rp.height()-1);
+            cp.drawLine(0,rp.height()-1,0,0);
+        }
         return rp;
     } else if (role == Qt::TextColorRole) {
         return zg->foregroundColor();
