@@ -39,16 +39,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     db->moveToThread(threadDB);
     threadDB->start();
 
-    int screen = 0;
-    QDesktopWidget *desktop = QApplication::desktop();
-    if (desktop->isVirtualDesktop()) {
-        screen = desktop->screenNumber(QCursor::pos());
-    }
-
-    pdfRenderWidth = 2*desktop->screen(screen)->width()/3;
-    if (pdfRenderWidth<1000)
-        pdfRenderWidth = 1000;
-
+    resetPreferredWidth();
 }
 
 ZGlobal::~ZGlobal()
@@ -188,6 +179,19 @@ void ZGlobal::directoryChanged(const QString &dir)
             newlyAddedFiles << fname;
     }
     fsCheckFilesAvailability();
+}
+
+void ZGlobal::resetPreferredWidth()
+{
+    int screen = 0;
+    QDesktopWidget *desktop = QApplication::desktop();
+    if (desktop->isVirtualDesktop()) {
+        screen = desktop->screenNumber(QCursor::pos());
+    }
+
+    preferredWidth = 2*desktop->screen(screen)->width()/3;
+    if (preferredWidth<1000)
+        preferredWidth = 1000;
 }
 
 QColor ZGlobal::foregroundColor()

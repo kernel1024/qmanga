@@ -56,6 +56,7 @@ public slots:
     void sqlGetFiles(const QString& album, const QString& search, const int sortOrder, const bool reverseOrder);
     void sqlChangeFilePreview(const QString& fileName, const int pageNum);
     void sqlRescanIndexedDirs();
+    void sqlUpdateFileStats(const QString& fileName);
 
 };
 

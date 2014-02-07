@@ -77,6 +77,7 @@ signals:
 
     // DB signals
     void changeMangaCover(const QString& fileName, const int pageNum);
+    void updateFileStats(const QString& fileName);
 
 public slots:
     void openFile(QString filename, int page = 0);

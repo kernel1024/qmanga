@@ -132,6 +132,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
+void MainWindow::resizeEvent(QResizeEvent *)
+{
+    zg->resetPreferredWidth();
+}
+
 void MainWindow::openAux()
 {
     QString filename = getOpenFileNameD(this,tr("Open manga or image"),zg->savedAuxOpenDir);
