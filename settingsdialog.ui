@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>707</width>
-    <height>502</height>
+    <height>529</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -226,37 +226,60 @@
            <property name="title">
             <string>Colors</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout">
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_2">
-              <item>
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Main background</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QFrame" name="frameBkColor">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Sunken</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnBkColor">
-                <property name="text">
-                 <string>Color...</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="0" colspan="2">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Main background</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QFrame" name="frameBkColor">
+              <property name="autoFillBackground">
+               <bool>true</bool>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Sunken</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QPushButton" name="btnBkColor">
+              <property name="text">
+               <string>Color...</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QPushButton" name="btnFrameColor">
+              <property name="text">
+               <string>Color...</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QFrame" name="frameFrameColor">
+              <property name="autoFillBackground">
+               <bool>true</bool>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Sunken</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0" colspan="2">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>Preview frame</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -430,10 +453,12 @@
   <tabstop>comboFilter</tabstop>
   <tabstop>spinCacheWidth</tabstop>
   <tabstop>spinMagnify</tabstop>
-  <tabstop>btnBkColor</tabstop>
+  <tabstop>checkFineRendering</tabstop>
   <tabstop>editMySqlBase</tabstop>
   <tabstop>editMySqlLogin</tabstop>
   <tabstop>editMySqlPassword</tabstop>
+  <tabstop>btnBkColor</tabstop>
+  <tabstop>btnFrameColor</tabstop>
   <tabstop>btnFontIndexer</tabstop>
   <tabstop>rbCachePixmaps</tabstop>
   <tabstop>rbCacheData</tabstop>
@@ -442,7 +467,6 @@
   <tabstop>pushButton_3</tabstop>
   <tabstop>listBookmarks</tabstop>
   <tabstop>btnDeleteBookmark</tabstop>
-  <tabstop>checkFineRendering</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -453,8 +477,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>490</x>
-     <y>384</y>
+     <x>610</x>
+     <y>566</y>
     </hint>
     <hint type="destinationlabel">
      <x>342</x>
@@ -469,8 +493,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>575</x>
-     <y>384</y>
+     <x>696</x>
+     <y>566</y>
     </hint>
     <hint type="destinationlabel">
      <x>252</x>

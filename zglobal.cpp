@@ -62,6 +62,7 @@ void ZGlobal::loadSettings()
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
+    frameColor = QColor(settings.value("frameColor",QColor(Qt::lightGray).name()).toString());
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
     useFineRendering = settings.value("fineRendering",true).toBool();
     filesystemWatcher = settings.value("filesystemWatcher",false).toBool();
@@ -70,6 +71,8 @@ void ZGlobal::loadSettings()
         idxFont = QApplication::font("QListView");
     if (!backgroundColor.isValid())
         backgroundColor = QApplication::palette("QWidget").dark().color();
+    if (!frameColor.isValid())
+        frameColor = QColor(Qt::lightGray);
 
     bool showMaximized = false;
     if (w!=NULL)
@@ -126,6 +129,7 @@ void ZGlobal::saveSettings()
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
     settings.setValue("magnifySize",magnifySize);
     settings.setValue("backgroundColor",backgroundColor.name());
+    settings.setValue("frameColor",frameColor.name());
     settings.setValue("cachePixmaps",cachePixmaps);
     settings.setValue("fineRendering",useFineRendering);
     settings.setValue("filesystemWatcher",filesystemWatcher);
@@ -235,6 +239,7 @@ void ZGlobal::settingsDlg()
     dlg->checkFineRendering->setChecked(useFineRendering);
     dlg->updateBkColor(backgroundColor);
     dlg->updateIdxFont(idxFont);
+    dlg->updateFrameColor(frameColor);
     dlg->checkFSWatcher->setChecked(filesystemWatcher);
     switch (resizeFilter) {
         case Z::Nearest: dlg->comboFilter->setCurrentIndex(0); break;
@@ -264,6 +269,7 @@ void ZGlobal::settingsDlg()
         cacheWidth=dlg->spinCacheWidth->value();
         magnifySize=dlg->spinMagnify->value();
         backgroundColor=dlg->getBkColor();
+        frameColor=dlg->getFrameColor();
         idxFont=dlg->getIdxFont();
         cachePixmaps=dlg->radioCachePixmaps->isChecked();
         useFineRendering=dlg->checkFineRendering->isChecked();

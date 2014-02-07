@@ -32,7 +32,7 @@ public:
     int cacheWidth;
     int magnifySize;
     QString savedAuxOpenDir, savedIndexOpenDir;
-    QColor backgroundColor;
+    QColor backgroundColor, frameColor;
     QFont idxFont;
     int preferredWidth;
 

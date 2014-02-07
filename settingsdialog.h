@@ -35,9 +35,10 @@ public:
     ~SettingsDialog();
     QColor getBkColor();
     QFont getIdxFont();
+    QColor getFrameColor();
     
 private:
-    QColor bkColor;
+    QColor bkColor, frameColor;
     QFont idxFont;
     Ui::SettingsDialog *ui;
 
@@ -45,8 +46,10 @@ public slots:
     void delBookmark();
     void bkColorDlg();
     void idxFontDlg();
+    void frameColorDlg();
     void updateBkColor(QColor c);
     void updateIdxFont(QFont f);
+    void updateFrameColor(QColor c);
 
 };
 
