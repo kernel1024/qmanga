@@ -89,10 +89,10 @@ void ZGlobal::loadSettings()
 
     if (w!=NULL) {
         if (settings.value("listMode",false).toBool())
-            w->srcWidget->srclModeList->setChecked(true);
+            w->searchTab->srclModeList->setChecked(true);
         else
-            w->srcWidget->srclModeIcon->setChecked(true);
-        w->srcWidget->srclIconSize->setValue(settings.value("iconSize",128).toInt());
+            w->searchTab->srclModeIcon->setChecked(true);
+        w->searchTab->srclIconSize->setValue(settings.value("iconSize",128).toInt());
     }
 
     settings.endGroup();
@@ -105,10 +105,10 @@ void ZGlobal::loadSettings()
 
         w->updateBookmarks();
         w->updateViewer();
-        w->srcWidget->setEnabled(!dbUser.isEmpty());
-        if (w->srcWidget->isEnabled()) {
-            w->srcWidget->updateAlbumsList();
-            w->srcWidget->applyOrder(defaultOrdering,false,false);
+        w->searchTab->setEnabled(!dbUser.isEmpty());
+        if (w->searchTab->isEnabled()) {
+            w->searchTab->updateAlbumsList();
+            w->searchTab->applyOrder(defaultOrdering,false,false);
         }
     }
     emit dbCheckBase();
@@ -140,8 +140,8 @@ void ZGlobal::saveSettings()
     if (w!=NULL) {
         settings.setValue("maximized",w->isMaximized());
 
-        settings.setValue("listMode",w->srcWidget->srclModeList->isChecked());
-        settings.setValue("iconSize",w->srcWidget->srclIconSize->value());
+        settings.setValue("listMode",w->searchTab->srclModeList->isChecked());
+        settings.setValue("iconSize",w->searchTab->srclIconSize->value());
     }
 
     settings.beginWriteArray("bookmarks");
@@ -293,9 +293,9 @@ void ZGlobal::settingsDlg()
         if (w!=NULL) {
             w->updateBookmarks();
             w->updateViewer();
-            w->srcWidget->setEnabled(!dbUser.isEmpty());
-            if (w->srcWidget->isEnabled())
-                w->srcWidget->updateAlbumsList();
+            w->searchTab->setEnabled(!dbUser.isEmpty());
+            if (w->searchTab->isEnabled())
+                w->searchTab->updateAlbumsList();
         }
         emit dbCheckBase();
         if (filesystemWatcher)

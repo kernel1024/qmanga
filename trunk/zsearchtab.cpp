@@ -368,6 +368,11 @@ void ZSearchTab::applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateG
     zg->defaultOrdering = order;
 }
 
+QStringList ZSearchTab::getAlbums()
+{
+    return cachedAlbums;
+}
+
 QSize ZSearchTab::gridSize(int ref)
 {
     QFontMetrics fm(font());
