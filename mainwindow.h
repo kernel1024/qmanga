@@ -31,7 +31,7 @@ class MainWindow : public QMainWindow
     
 public:
     QMenu* bookmarksMenu;
-    ZSearchTab* srcWidget;
+    ZSearchTab* searchTab;
     QLabel* lblSearchStatus;
     QLabel* lblAverageSizes;
     QLabel* lblRotation;
@@ -78,6 +78,8 @@ public slots:
     void fsDelFiles();
     void fsNewFilesAdded();
     void fsUpdateFileList();
+    void fsResultsMenuCtx(const QPoint& pos);
+    void fsResultsCtxApplyAlbum();
 };
 
 #endif // MAINWINDOW_H

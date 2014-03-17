@@ -643,7 +643,7 @@
          <number>2</number>
         </property>
         <item>
-         <widget class="ZSearchTab" name="srcWidget" native="true"/>
+         <widget class="ZSearchTab" name="searchTab" native="true"/>
         </item>
        </layout>
       </widget>

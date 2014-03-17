@@ -29,6 +29,7 @@ public:
 
     void updateAlbumsList();
     void applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI = false);
+    QStringList getAlbums();
     
 private:
     Ui::ZSearchTab *ui;

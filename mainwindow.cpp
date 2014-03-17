@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowIcon(QIcon(":/img/Alien9.png"));
 
     bookmarksMenu = ui->menuBookmarks;
-    srcWidget = ui->srcWidget;
+    searchTab = ui->searchTab;
     fullScreen = false;
 
 //    QApplication::setWheelScrollLines(1);
@@ -42,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar()->addPermanentWidget(lblRotation);
 
     ui->spinPosition->hide();
+
+    ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
@@ -62,8 +64,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->mangaView,SIGNAL(keyPressed(int)),this,SLOT(viewerKeyPressed(int)));
     connect(ui->mangaView,SIGNAL(minimizeRequested()),this,SLOT(showMinimized()));
     connect(ui->mangaView,SIGNAL(closeFileRequested()),this,SLOT(closeManga()));
-    connect(ui->srcWidget,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
-    connect(ui->srcWidget,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
+    connect(searchTab,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
+    connect(searchTab,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
     connect(ui->mangaView,SIGNAL(averageSizes(QSize,qint64)),this,SLOT(msgFromMangaView(QSize,qint64)));
     connect(ui->spinPosition,SIGNAL(editingFinished()),this,SLOT(pageNumEdited()));
     connect(ui->btnRotateCCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCCW()));
@@ -83,6 +85,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->btnSearchTab,SIGNAL(clicked()),this,SLOT(openSearchTab()));
 
+    connect(ui->fsResults,SIGNAL(customContextMenuRequested(QPoint)),
+            this,SLOT(fsResultsMenuCtx(QPoint)));
     connect(ui->btnFSAdd,SIGNAL(clicked()),this,SLOT(fsAddFiles()));
     connect(ui->btnFSCheck,SIGNAL(clicked()),this,SLOT(fsCheckAvailability()));
     connect(ui->btnFSDelete,SIGNAL(clicked()),this,SLOT(fsDelFiles()));
@@ -122,7 +126,7 @@ void MainWindow::centerWindow()
     resize(nw);
     move(rect.width()/2 - frameGeometry().width()/2,
          rect.height()/2 - frameGeometry().height()/2);
-    srcWidget->updateSplitters();
+    searchTab->updateSplitters();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -214,6 +218,16 @@ void MainWindow::switchFullscreen()
     menuBar()->setVisible(!fullScreen);
     ui->tabWidget->tabBar()->setVisible(!fullScreen);
     ui->toolbar->setVisible(!fullScreen);
+    int m = 2;
+    if (fullScreen) m = 0;
+    if (ui->centralWidget!=NULL) {
+        ui->centralWidget->layout()->setMargin(m);
+        ui->centralWidget->layout()->setContentsMargins(m,m,m,m);
+    }
+    if (ui->tabWidget->currentWidget()!=NULL) {
+        ui->tabWidget->currentWidget()->layout()->setMargin(m);
+        ui->tabWidget->currentWidget()->layout()->setContentsMargins(m,m,m,m);
+    }
     if (fullScreen)
         showFullScreen();
     else
@@ -393,7 +407,37 @@ void MainWindow::fsUpdateFileList()
         ui->fsResults->setItem(i,0,new QTableWidgetItem(fsScannedFiles[i].name));
         ui->fsResults->setItem(i,1,new QTableWidgetItem(fsScannedFiles[i].album));
     }
-    ui->fsResults->setColumnWidth(0,ui->fsResults->width()/2);
+    ui->fsResults->setColumnWidth(0,ui->tabWidget->width()/2);
+}
+
+void MainWindow::fsResultsMenuCtx(const QPoint &pos)
+{
+    QStringList albums = searchTab->getAlbums();
+    if (albums.isEmpty()) return;
+    QMenu cm(this);
+    for (int i=0;i<albums.count();i++) {
+        QAction* ac = new QAction(albums.at(i),NULL);
+        connect(ac,SIGNAL(triggered()),this,SLOT(fsResultsCtxApplyAlbum()));
+        cm.addAction(ac);
+    }
+    cm.exec(ui->fsResults->mapToGlobal(pos));
+}
+
+void MainWindow::fsResultsCtxApplyAlbum()
+{
+    QAction* ac = qobject_cast<QAction *>(sender());
+    if (ac==NULL) return;
+    QString s = ac->text();
+    QList<int> idxs;
+    idxs.clear();
+
+    for (int i=0;i<ui->fsResults->selectedItems().count();i++)
+        idxs << ui->fsResults->selectedItems().at(i)->row();
+
+    for (int i=0;i<idxs.count();i++)
+        if (ui->fsResults->item(idxs.at(i),1)!=NULL)
+            ui->fsResults->item(idxs.at(i),1)->setText(s);
+
 }
 
 void MainWindow::pageNumEdited()
