@@ -14,8 +14,9 @@ class ZExportDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ZExportDialog(QWidget *parent, const int pagesMaximum);
+    explicit ZExportDialog(QWidget *parent = 0);
     ~ZExportDialog();
+    void setPagesMaximum(const int pagesMaximum);
     QString getExportDir();
     QString getImageFormat();
     int getPagesCount();

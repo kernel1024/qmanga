@@ -10,6 +10,7 @@
 #include "global.h"
 #include "zabstractreader.h"
 #include "zmangaloader.h"
+#include "zexportdialog.h"
 
 class ZMangaView : public QWidget
 {
@@ -42,6 +43,8 @@ protected:
 
     QList<QSize> lastSizes;
     QList<int> lastFileSizes;
+
+    ZExportDialog exportDialog;
 
     QProgressDialog progressDlg;
     bool exportStop;

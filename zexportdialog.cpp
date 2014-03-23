@@ -2,14 +2,13 @@
 #include "ui_zexportdialog.h"
 #include <QFileDialog>
 
-ZExportDialog::ZExportDialog(QWidget *parent, const int pagesMaximum) :
+ZExportDialog::ZExportDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ZExportDialog)
 {
     ui->setupUi(this);
 
     ui->exportDir->setText(QDir::currentPath());
-    ui->pageCount->setMaximum(pagesMaximum);
 
     connect(ui->exportDirBtn,SIGNAL(clicked()),this,SLOT(dirSelectBtn()));
 }
@@ -17,6 +16,11 @@ ZExportDialog::ZExportDialog(QWidget *parent, const int pagesMaximum) :
 ZExportDialog::~ZExportDialog()
 {
     delete ui;
+}
+
+void ZExportDialog::setPagesMaximum(const int pagesMaximum)
+{
+    ui->pageCount->setMaximum(pagesMaximum);
 }
 
 QString ZExportDialog::getExportDir()

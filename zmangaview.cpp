@@ -13,7 +13,6 @@
 #include "zmangaview.h"
 #include "zglobal.h"
 #include "mainwindow.h"
-#include "zexportdialog.h"
 
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
@@ -601,11 +600,12 @@ void ZMangaView::exportPagesCtx()
         return;
     }
 
-    ZExportDialog* d = new ZExportDialog(this,privPageCount-currentPage);
-    if (d->exec()) {
-        QString fmt = d->getImageFormat();
-        QDir dir(d->getExportDir());
-        int cnt = d->getPagesCount();
+    exportDialog.setPagesMaximum(privPageCount-currentPage);
+    exportDialog.setParent(window(),Qt::Dialog);
+    if (exportDialog.exec()) {
+        QString fmt = exportDialog.getImageFormat();
+        QDir dir(exportDialog.getExportDir());
+        int cnt = exportDialog.getPagesCount();
         int fnlen = QString::number(cnt).length();
 
         exportStop = false;
@@ -624,7 +624,7 @@ void ZMangaView::exportPagesCtx()
             if (!p.loadFromData(ba))
                 p = QPixmap();
             if (p.isNull()) continue;
-            if (!p.save(fname,fmt.toLatin1(),d->getImageQuality())) {
+            if (!p.save(fname,fmt.toLatin1(),exportDialog.getImageQuality())) {
                 QMessageBox::critical(this,tr("QManga"),tr("Error caught while saving image. Cannot create file. Check your permissions."));
                 exportStop = true;
                 break;
@@ -644,8 +644,6 @@ void ZMangaView::exportPagesCtx()
             msg = tr("Pages export aborted");
         QMessageBox::information(this,tr("QManga"),msg);
     }
-    d->setParent(NULL);
-    delete d;
 }
 
 void ZMangaView::exportCancel()
