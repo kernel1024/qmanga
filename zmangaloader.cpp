@@ -42,6 +42,11 @@ void ZMangaLoader::getPage(int num)
     emit gotPage(img,num,ipt,threadID);
 }
 
+QByteArray ZMangaLoader::getPageSync(int num)
+{
+    return mReader->loadPage(num);
+}
+
 void ZMangaLoader::closeFile()
 {
     if (mReader!=NULL) {

@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     zdb.cpp \
     zmangaloader.cpp \
     ocreditor.cpp \
-    zsingleimagereader.cpp
+    zsingleimagereader.cpp \
+    zexportdialog.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -48,14 +49,16 @@ HEADERS  += mainwindow.h \
     zdb.h \
     zmangaloader.h \
     ocreditor.h \
-    zsingleimagereader.h
+    zsingleimagereader.h \
+    zexportdialog.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
     bookmarkdlg.ui \
     zsearchtab.ui \
     albumselectordlg.ui \
-    ocreditor.ui
+    ocreditor.ui \
+    zexportdialog.ui
 
 RESOURCES += \
     qmanga.qrc

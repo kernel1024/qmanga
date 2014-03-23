@@ -13,6 +13,7 @@
 #include "zmangaview.h"
 #include "zglobal.h"
 #include "mainwindow.h"
+#include "zexportdialog.h"
 
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
@@ -20,6 +21,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
     currentPage = 0;
     privPageCount = 0;
     rotation = 0;
+    exportStop = false;
     zoomMode = Fit;
     zoomDynamic = false;
     zoomPos = QPoint();
@@ -51,6 +53,12 @@ ZMangaView::ZMangaView(QWidget *parent) :
             zg->db,SLOT(sqlChangeFilePreview(QString,int)),Qt::QueuedConnection);
     connect(this,SIGNAL(updateFileStats(QString)),
             zg->db,SLOT(sqlUpdateFileStats(QString)),Qt::QueuedConnection);
+
+    progressDlg.setParent(this,Qt::Dialog);
+    progressDlg.setMinimum(0);
+    progressDlg.setMaximum(100);
+    progressDlg.setCancelButtonText(tr("Cancel"));
+    progressDlg.setLabelText(tr("Adding files"));
 
     int cnt = QThread::idealThreadCount()+1;
     if (cnt<2) cnt=2;
@@ -475,6 +483,9 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     nt = new QAction(QIcon::fromTheme("view-preview"),tr("Set page as cover"),NULL);
     connect(nt,SIGNAL(triggered()),this,SLOT(changeMangaCoverCtx()));
     cm.addAction(nt);
+    nt = new QAction(QIcon::fromTheme("folder-tar"),tr("Export pages to directory"),NULL);
+    connect(nt,SIGNAL(triggered()),this,SLOT(exportPagesCtx()));
+    cm.addAction(nt);
     cm.addSeparator();
     nt = new QAction(QIcon::fromTheme("go-down"),tr("Minimize window"),NULL);
     connect(nt,SIGNAL(triggered()),this,SLOT(minimizeWindowCtx()));
@@ -578,6 +589,68 @@ void ZMangaView::changeMangaCoverCtx()
     if (currentPage<0 || currentPage>=privPageCount) return;
 
     emit changeMangaCover(openedFile,currentPage);
+}
+
+void ZMangaView::exportPagesCtx()
+{
+    if (openedFile.isEmpty()) return;
+    if (currentPage<0 || currentPage>=privPageCount) return;
+    ZMangaLoader* zl = cacheLoaders.first().loader;
+    if (zl==NULL) {
+        QMessageBox::critical(this,tr("QManga"),tr("Manga reader is empty. Unable to extract pages."));
+        return;
+    }
+
+    ZExportDialog* d = new ZExportDialog(this,privPageCount-currentPage);
+    if (d->exec()) {
+        QString fmt = d->getImageFormat();
+        QDir dir(d->getExportDir());
+        int cnt = d->getPagesCount();
+        int fnlen = QString::number(cnt).length();
+
+        exportStop = false;
+        progressDlg.setWindowModality(Qt::WindowModal);
+        progressDlg.setWindowTitle(tr("Exporting pages..."));
+        progressDlg.setValue(0);
+        progressDlg.setLabelText(QString());
+        progressDlg.show();
+
+        for (int i=0;i<cnt;i++) {
+            QString fname = dir.filePath(tr("%1.%2").arg(i,fnlen,10,QChar('0')).arg(fmt.toLower()));
+            QByteArray ba = zl->getPageSync(currentPage+i);
+            if (ba.isEmpty()) continue;
+
+            QPixmap p = QPixmap();
+            if (!p.loadFromData(ba))
+                p = QPixmap();
+            if (p.isNull()) continue;
+            if (!p.save(fname,fmt.toLatin1(),d->getImageQuality())) {
+                QMessageBox::critical(this,tr("QManga"),tr("Error caught while saving image. Cannot create file. Check your permissions."));
+                exportStop = true;
+                break;
+            }
+
+            if ((100*i/cnt)!=progressDlg.value())
+                progressDlg.setValue(100*i/cnt);
+
+            QApplication::processEvents();
+            if (exportStop)
+                break;
+        }
+        progressDlg.hide();
+
+        QString msg = tr("Pages export completed.");
+        if (exportStop)
+            msg = tr("Pages export aborted");
+        QMessageBox::information(this,tr("QManga"),msg);
+    }
+    d->setParent(NULL);
+    delete d;
+}
+
+void ZMangaView::exportCancel()
+{
+    exportStop = true;
 }
 
 void ZMangaView::navFirst()
