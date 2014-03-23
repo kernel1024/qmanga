@@ -18,16 +18,7 @@
     <property name="spacing">
      <number>2</number>
     </property>
-    <property name="leftMargin">
-     <number>2</number>
-    </property>
-    <property name="topMargin">
-     <number>2</number>
-    </property>
-    <property name="rightMargin">
-     <number>2</number>
-    </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>2</number>
     </property>
     <item>
@@ -46,16 +37,7 @@
         <property name="spacing">
          <number>2</number>
         </property>
-        <property name="leftMargin">
-         <number>2</number>
-        </property>
-        <property name="topMargin">
-         <number>2</number>
-        </property>
-        <property name="rightMargin">
-         <number>2</number>
-        </property>
-        <property name="bottomMargin">
+        <property name="margin">
          <number>2</number>
         </property>
         <item>
@@ -70,16 +52,7 @@
            <property name="spacing">
             <number>0</number>
            </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>0</number>
            </property>
            <item>
@@ -294,16 +267,7 @@
               <property name="spacing">
                <number>0</number>
               </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
+              <property name="margin">
                <number>0</number>
               </property>
               <item>
@@ -610,13 +574,44 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>758</width>
-             <height>470</height>
+             <width>760</width>
+             <height>461</height>
             </rect>
            </property>
            <property name="focusPolicy">
             <enum>Qt::StrongFocus</enum>
            </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>396</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="ZPopupFrame" name="fastScrollPanel">
+              <layout class="QVBoxLayout" name="verticalLayout_5">
+               <item>
+                <widget class="QSlider" name="fastScrollSlider">
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </widget>
         </item>
@@ -630,16 +625,7 @@
         <property name="spacing">
          <number>2</number>
         </property>
-        <property name="leftMargin">
-         <number>2</number>
-        </property>
-        <property name="topMargin">
-         <number>2</number>
-        </property>
-        <property name="rightMargin">
-         <number>2</number>
-        </property>
-        <property name="bottomMargin">
+        <property name="margin">
          <number>2</number>
         </property>
         <item>
@@ -741,7 +727,7 @@
      <x>0</x>
      <y>0</y>
      <width>797</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -951,6 +937,12 @@
    <class>ZSearchTab</class>
    <extends>QWidget</extends>
    <header>zsearchtab.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ZPopupFrame</class>
+   <extends>QFrame</extends>
+   <header>mainwindow.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
