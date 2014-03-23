@@ -38,6 +38,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void centerWindow();
+    bool isMangaOpened();
     
 private:
     Ui::MainWindow *ui;
@@ -48,6 +49,7 @@ private:
 protected:
     void closeEvent(QCloseEvent * event);
     void resizeEvent(QResizeEvent * event);
+    bool eventFilter(QObject * obj, QEvent * event);
 
 signals:
     void dbAddFiles(const QStringList& aFiles, const QString& album);
@@ -63,6 +65,8 @@ public slots:
     void viewerKeyPressed(int key);
     void updateViewer();
     void rotationUpdated(int degree);
+    void fastScroll(int page);
+    void updateFastScrollPosition();
 
     void updateBookmarks();
     void updateTitle();
@@ -80,6 +84,22 @@ public slots:
     void fsUpdateFileList();
     void fsResultsMenuCtx(const QPoint& pos);
     void fsResultsCtxApplyAlbum();
+};
+
+class ZPopupFrame : public QFrame {
+    Q_OBJECT
+public:
+    explicit ZPopupFrame(QWidget* parent = 0);
+    void setMainWindow(MainWindow* wnd);
+protected:
+    MainWindow* mwnd;
+    void enterEvent(QEvent* event);
+    void leaveEvent(QEvent* event);
+    void hideChildren();
+    void showChildren();
+signals:
+    void showWidget();
+    void hideWidget();
 };
 
 #endif // MAINWINDOW_H

@@ -4,6 +4,7 @@
 #include <QStatusBar>
 #include <QPushButton>
 #include <QApplication>
+#include <QCoreApplication>
 #include <QClipboard>
 #include <QImage>
 #include <QBuffer>
@@ -42,6 +43,9 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar()->addPermanentWidget(lblRotation);
 
     ui->spinPosition->hide();
+    ui->fastScrollPanel->setMainWindow(this);
+    ui->fastScrollSlider->hide();
+    ui->fastScrollSlider->installEventFilter(this);
 
     ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -84,6 +88,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),ui->mangaView,SLOT(setZoomDynamic(bool)));
 
     connect(ui->btnSearchTab,SIGNAL(clicked()),this,SLOT(openSearchTab()));
+
+    connect(ui->fastScrollSlider,SIGNAL(valueChanged(int)),this,SLOT(fastScroll(int)));
+    connect(ui->fastScrollPanel,SIGNAL(showWidget()),this,SLOT(updateFastScrollPosition()));
 
     connect(ui->fsResults,SIGNAL(customContextMenuRequested(QPoint)),
             this,SLOT(fsResultsMenuCtx(QPoint)));
@@ -129,6 +136,11 @@ void MainWindow::centerWindow()
     searchTab->updateSplitters();
 }
 
+bool MainWindow::isMangaOpened()
+{
+    return (ui->mangaView->getPageCount()>0);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (zg!=NULL)
@@ -139,6 +151,15 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::resizeEvent(QResizeEvent *)
 {
     zg->resetPreferredWidth();
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj==ui->fastScrollSlider && event->type()==QEvent::Wheel) {
+        QCoreApplication::sendEvent(ui->mangaView,event);
+        return true;
+    } else
+        return QMainWindow::eventFilter(obj,event);
 }
 
 void MainWindow::openAux()
@@ -189,11 +210,12 @@ void MainWindow::closeManga()
 void MainWindow::dispPage(int num, QString msg)
 {
     updateTitle();
-    if (num<0 || ui->mangaView->getPageCount()<=0) {
+    if (num<0 || !isMangaOpened()) {
         if (ui->spinPosition->isVisible()) {
             ui->spinPosition->hide();
         }
         ui->lblPosition->clear();
+        ui->fastScrollSlider->setEnabled(false);
     } else {
         if (!ui->spinPosition->isVisible()) {
             ui->spinPosition->show();
@@ -202,6 +224,14 @@ void MainWindow::dispPage(int num, QString msg)
         }
         ui->spinPosition->setValue(num+1);
         ui->lblPosition->setText(tr("  /  %1").arg(ui->mangaView->getPageCount()));
+
+        ui->fastScrollSlider->blockSignals(true);
+        ui->fastScrollSlider->setEnabled(true);
+        ui->fastScrollSlider->setMinimum(1);
+        ui->fastScrollSlider->setMaximum(ui->mangaView->getPageCount());
+        if (ui->fastScrollSlider->value()!=num)
+            ui->fastScrollSlider->setValue(num+1);
+        ui->fastScrollSlider->blockSignals(false);
     }
 
     if (!msg.isEmpty())
@@ -248,6 +278,21 @@ void MainWindow::updateViewer()
 void MainWindow::rotationUpdated(int degree)
 {
     lblRotation->setText(tr("Rotation: %1").arg(degree));
+}
+
+void MainWindow::fastScroll(int page)
+{
+    if (!isMangaOpened()) return;
+    if (page<=0 || page>ui->mangaView->getPageCount()) return;
+    ui->mangaView->setPage(page-1);
+}
+
+void MainWindow::updateFastScrollPosition()
+{
+    if (!isMangaOpened()) return;
+    ui->fastScrollSlider->blockSignals(true);
+    ui->fastScrollSlider->setValue(ui->mangaView->currentPage+1);
+    ui->fastScrollSlider->blockSignals(false);
 }
 
 void MainWindow::updateBookmarks()
@@ -467,4 +512,45 @@ ZFSFile &ZFSFile::operator=(const ZFSFile &other)
     fileName = other.fileName;
     album = other.album;
     return *this;
+}
+
+
+ZPopupFrame::ZPopupFrame(QWidget *parent) :
+    QFrame(parent)
+{
+    mwnd = NULL;
+    hideChildren();
+}
+
+void ZPopupFrame::setMainWindow(MainWindow *wnd)
+{
+    mwnd = wnd;
+}
+
+void ZPopupFrame::enterEvent(QEvent *)
+{
+    showChildren();
+}
+
+void ZPopupFrame::leaveEvent(QEvent *)
+{
+    hideChildren();
+}
+
+void ZPopupFrame::hideChildren()
+{
+    foreach (QWidget* w, findChildren<QWidget *>())
+        if (w!=NULL) w->hide();
+    emit hideWidget();
+}
+
+void ZPopupFrame::showChildren()
+{
+    if (mwnd!=NULL && !mwnd->isMangaOpened())
+        hideChildren();
+    else {
+        foreach (QWidget* w, findChildren<QWidget *>())
+            if (w!=NULL) w->show();
+        emit showWidget();
+    }
 }
