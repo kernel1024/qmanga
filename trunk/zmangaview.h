@@ -5,6 +5,7 @@
 #include <QRubberBand>
 #include <QPixmap>
 #include <QScrollArea>
+#include <QProgressDialog>
 
 #include "global.h"
 #include "zabstractreader.h"
@@ -41,6 +42,9 @@ protected:
 
     QList<QSize> lastSizes;
     QList<int> lastFileSizes;
+
+    QProgressDialog progressDlg;
+    bool exportStop;
 
     void cacheDropUnusable();
     void cacheFillNearest();
@@ -88,6 +92,8 @@ public slots:
     void minimizeWindowCtx();
     void closeFileCtx();
     void changeMangaCoverCtx();
+    void exportPagesCtx();
+    void exportCancel();
 
     void navFirst();
     void navPrev();

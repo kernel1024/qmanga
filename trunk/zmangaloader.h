@@ -13,6 +13,7 @@ protected:
 public:
     explicit ZMangaLoader(QObject *parent = 0);
     QUuid threadID;
+    QByteArray getPageSync(int num);
 
 signals:
     void gotPage(const QByteArray& page, const int& num, const QString& internalPath,
