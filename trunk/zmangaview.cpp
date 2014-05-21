@@ -230,6 +230,11 @@ void ZMangaView::setPage(int page)
 
 void ZMangaView::wheelEvent(QWheelEvent *event)
 {
+    if (scroller->verticalScrollBar()->isVisible()) {
+        event->ignore();
+        return;
+    }
+
     int numDegrees = event->delta() / 8;
     int numSteps = numDegrees / 15;
 
