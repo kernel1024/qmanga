@@ -1,4 +1,5 @@
 #include <QMessageBox>
+#include <QDebug>
 
 #include "zmangaloader.h"
 #include "global.h"
@@ -66,8 +67,56 @@ QString escapeParam(QString param)
 
 int compareWithNumerics(QString ref1, QString ref2)
 {
-    QStringList r1nums = ref1.split(QRegExp("\\D+"),QString::SkipEmptyParts);
-    QStringList r2nums = ref2.split(QRegExp("\\D+"),QString::SkipEmptyParts);
+    QStringList r1nums,r1sep;
+    QString sn,sc;
+    for (int i=0;i<=ref1.length();i++) {
+        if (!sn.isEmpty() &&
+            ((i==ref1.length()) ||
+             (!ref1[i].isDigit() && sn[sn.length()-1].isDigit()))) {
+            r1nums << sn;
+            r1sep << sc;
+            sn.clear();
+            sc.clear();
+        }
+        if (i<ref1.length()) {
+            if (ref1[i].isDigit())
+                sn.append(ref1[i]);
+            else if (ref1[i].isLetter())
+                sc.append(ref1[i]);
+        } else {
+            sc.clear();
+            sn.clear();
+        }
+    }
+    QStringList r2nums,r2sep;
+    sn.clear();
+    sc.clear();
+    for (int i=0;i<=ref2.length();i++) {
+        if (!sn.isEmpty() &&
+            ((i==ref2.length()) ||
+             (!ref2[i].isDigit() && sn[sn.length()-1].isDigit()))) {
+            r2nums << sn;
+            r2sep << sc;
+            sn.clear();
+            sc.clear();
+        }
+        if (i<ref2.length()) {
+            if (ref2[i].isDigit())
+                sn.append(ref2[i]);
+            else if (ref2[i].isLetter())
+                sc.append(ref2[i]);
+        } else {
+            sc.clear();
+            sn.clear();
+        }
+    }
+//    QStringList r1nums = ref1.split(QRegExp("\\D+"),QString::SkipEmptyParts);
+//    QStringList r2nums = ref2.split(QRegExp("\\D+"),QString::SkipEmptyParts);
+    qDebug() << "----------- compare: " << ref1 << ref2;
+    qDebug() << r1nums;
+    qDebug() << r1sep;
+    qDebug() << r2nums;
+    qDebug() << r2sep;
     int mlen = qMin(r1nums.count(),r2nums.count());
     for (int i=0;i<mlen;i++) {
         bool okconv;
@@ -76,8 +125,10 @@ int compareWithNumerics(QString ref1, QString ref2)
         int r2n = r2nums.at(i).toInt(&okconv);
         if (!okconv) break;
 
-        if (r1n<r2n) return -1;
-        else if (r1n>r2n) return 1;
+        if (r1sep.at(i)<r2sep.at(i)) { qDebug() << "Ret: LT"; return -1; }
+        else if (r1sep.at(i)>r2sep.at(i)) { qDebug() << "Ret: GT"; return 1; }
+        else if (r1n<r2n) { qDebug() << "Ret: LT"; return -1; }
+        else if (r1n>r2n) { qDebug() << "Ret: GT"; return 1; }
     }
     return QString::compare(ref1,ref2);
 }
