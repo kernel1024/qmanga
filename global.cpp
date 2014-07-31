@@ -112,11 +112,6 @@ int compareWithNumerics(QString ref1, QString ref2)
     }
 //    QStringList r1nums = ref1.split(QRegExp("\\D+"),QString::SkipEmptyParts);
 //    QStringList r2nums = ref2.split(QRegExp("\\D+"),QString::SkipEmptyParts);
-    qDebug() << "----------- compare: " << ref1 << ref2;
-    qDebug() << r1nums;
-    qDebug() << r1sep;
-    qDebug() << r2nums;
-    qDebug() << r2sep;
     int mlen = qMin(r1nums.count(),r2nums.count());
     for (int i=0;i<mlen;i++) {
         bool okconv;
@@ -125,10 +120,10 @@ int compareWithNumerics(QString ref1, QString ref2)
         int r2n = r2nums.at(i).toInt(&okconv);
         if (!okconv) break;
 
-        if (r1sep.at(i)<r2sep.at(i)) { qDebug() << "Ret: LT"; return -1; }
-        else if (r1sep.at(i)>r2sep.at(i)) { qDebug() << "Ret: GT"; return 1; }
-        else if (r1n<r2n) { qDebug() << "Ret: LT"; return -1; }
-        else if (r1n>r2n) { qDebug() << "Ret: GT"; return 1; }
+        if (r1sep.at(i)<r2sep.at(i)) return -1;
+        else if (r1sep.at(i)>r2sep.at(i)) return 1;
+        else if (r1n<r2n) return -1;
+        else if (r1n>r2n) return 1;
     }
     return QString::compare(ref1,ref2);
 }
