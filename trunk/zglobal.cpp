@@ -93,6 +93,8 @@ void ZGlobal::loadSettings()
         else
             w->searchTab->srclModeIcon->setChecked(true);
         w->searchTab->srclIconSize->setValue(settings.value("iconSize",128).toInt());
+
+        w->searchTab->loadSearchItems(settings);
     }
 
     settings.endGroup();
@@ -142,6 +144,8 @@ void ZGlobal::saveSettings()
 
         settings.setValue("listMode",w->searchTab->srclModeList->isChecked());
         settings.setValue("iconSize",w->searchTab->srclIconSize->value());
+
+        w->searchTab->saveSearchItems(settings);
     }
 
     settings.beginWriteArray("bookmarks");

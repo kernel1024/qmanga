@@ -52,8 +52,9 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcModeIcon,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
     connect(ui->srcModeList,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
     connect(ui->srcIconSize,SIGNAL(valueChanged(int)),this,SLOT(iconSizeChanged(int)));
-    connect(ui->srcEdit,SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
+    connect(ui->srcEdit->lineEdit(),SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
     connect(ui->srcEditBtn,SIGNAL(clicked()),this,SLOT(mangaSearch()));
+    connect(ui->srcEdit,SIGNAL(activated(int)),this,SLOT(mangaSearch(int)));
 
     connect(&progressDlg,SIGNAL(canceled()),
             zg->db,SLOT(sqlCancelAdding()),Qt::QueuedConnection);
@@ -373,6 +374,29 @@ QStringList ZSearchTab::getAlbums()
     return cachedAlbums;
 }
 
+void ZSearchTab::loadSearchItems(QSettings &settings)
+{
+    int sz=settings.beginReadArray("search_text");
+    for (int i=0;i<sz;i++) {
+        settings.setArrayIndex(i);
+        QString s = settings.value("txt",QString()).toString();
+        if (!s.isEmpty())
+            ui->srcEdit->addItem(s);
+    }
+    settings.endArray();
+    ui->srcEdit->clearEditText();
+}
+
+void ZSearchTab::saveSearchItems(QSettings &settings)
+{
+    settings.beginWriteArray("search_text");
+    for (int i=0;i<ui->srcEdit->count();i++) {
+        settings.setArrayIndex(i);
+        settings.setValue("txt",ui->srcEdit->itemText(i));
+    }
+    settings.endArray();
+}
+
 QSize ZSearchTab::gridSize(int ref)
 {
     QFontMetrics fm(font());
@@ -415,7 +439,20 @@ void ZSearchTab::mangaSearch()
 
     if (model)
         model->deleteAllItems();
-    emit dbGetFiles(QString(),ui->srcEdit->text(),(int)order,reverseOrder);
+
+    QString s = ui->srcEdit->currentText();
+    int idx=ui->srcEdit->findText(s);
+    if (idx>=0)
+        ui->srcEdit->removeItem(idx);
+    ui->srcEdit->insertItem(0,s);
+    ui->srcEdit->setCurrentIndex(0);
+
+    emit dbGetFiles(QString(),s,(int)order,reverseOrder);
+}
+
+void ZSearchTab::mangaSearch(int)
+{
+    mangaSearch();
 }
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)
