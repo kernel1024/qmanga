@@ -7,6 +7,7 @@
 #include <QProgressDialog>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QSettings>
 
 #include "zglobal.h"
 #include "zmangamodel.h"
@@ -30,7 +31,9 @@ public:
     void updateAlbumsList();
     void applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI = false);
     QStringList getAlbums();
-    
+
+    void loadSearchItems(QSettings &settings);
+    void saveSearchItems(QSettings &settings);
 private:
     Ui::ZSearchTab *ui;
     QStateMachine loadingState;
@@ -48,6 +51,7 @@ public slots:
     void albumClicked(QListWidgetItem * item);
 
     void mangaSearch();
+    void mangaSearch(int idx);
     void mangaSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
     void mangaOpen(const QModelIndex &index);
     void mangaAdd();
