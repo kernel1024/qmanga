@@ -45,6 +45,9 @@ private:
     bool fullScreen;
     QList<ZFSFile> fsScannedFiles;
     QMutex fsAddFilesMutex;
+    bool savedMaximized;
+    QPoint savedPos;
+    QSize savedSize;
 
 protected:
     void closeEvent(QCloseEvent * event);
