@@ -105,6 +105,9 @@ MainWindow::MainWindow(QWidget *parent) :
     zg->loadSettings();
     if (!isMaximized())
         centerWindow();
+    savedPos=pos();
+    savedSize=size();
+    savedMaximized=isMaximized();
     dispPage(-1,QString());
 }
 
@@ -244,6 +247,12 @@ void MainWindow::switchFullscreen()
 {
     fullScreen = !fullScreen;
 
+    if (fullScreen) {
+        savedMaximized=isMaximized();
+        savedPos=pos();
+        savedSize=size();
+    }
+
     statusBar()->setVisible(!fullScreen);
     menuBar()->setVisible(!fullScreen);
     ui->tabWidget->tabBar()->setVisible(!fullScreen);
@@ -260,8 +269,15 @@ void MainWindow::switchFullscreen()
     }
     if (fullScreen)
         showFullScreen();
-    else
-        showNormal();
+    else {
+        if (savedMaximized)
+            showMaximized();
+        else {
+            showNormal();
+            move(savedPos);
+            resize(savedSize);
+        }
+    }
     ui->actionFullscreen->setChecked(fullScreen);
 }
 
