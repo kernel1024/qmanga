@@ -546,8 +546,6 @@ void ZMangaView::redrawPage()
             } else if (zoomMode==Height) {
                 sz.setWidth(round(((double)sz.height())*pixAspect));
             }
-            if (zg->preferredWidth!=sz.width())
-                zg->preferredWidth = sz.width();
             if (sz!=ssz) {
                 if (fineDraw || !zg->useFineRendering) {
                     curPixmap = resizeImage(curUmPixmap,sz);
