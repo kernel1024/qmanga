@@ -80,7 +80,7 @@ QByteArray ZPdfReader::loadPage(int num)
     int idx = sortList.at(num).idx;
     page* p = doc->create_page(idx);
     if (p!=NULL) {
-        double dpi = 72.0*((double)zg->preferredWidth)/p->page_rect().width();
+        double dpi = 150.0*((double)zg->preferredWidth)/p->page_rect().width();
         image img = renderer->render_page(p,dpi,dpi);
         QImage qimg;
         if (img.is_valid()) {
