@@ -49,6 +49,8 @@ protected:
     QProgressDialog progressDlg;
     bool exportStop;
 
+    int scrollAccumulator;
+
     void cacheDropUnusable();
     void cacheFillNearest();
     QIntList cacheGetActivePages();

@@ -35,6 +35,7 @@ public:
     QColor backgroundColor, frameColor;
     QFont idxFont;
     int preferredWidth;
+    int scrollDelta;
 
     bool cachePixmaps;
     bool useFineRendering;

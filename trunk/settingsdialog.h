@@ -30,6 +30,7 @@ public:
     QRadioButton* radioCacheData;
     QCheckBox* checkFineRendering;
     QCheckBox* checkFSWatcher;
+    QSpinBox* spinScrollDelta;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
