@@ -9,6 +9,7 @@
 #include <QListWidget>
 #include <QRadioButton>
 #include <QCheckBox>
+#include <QLabel>
 
 namespace Ui {
 class SettingsDialog;
@@ -31,6 +32,7 @@ public:
     QCheckBox* checkFineRendering;
     QCheckBox* checkFSWatcher;
     QSpinBox* spinScrollDelta;
+    QLabel* labelDetectedDelta;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();

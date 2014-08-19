@@ -15,6 +15,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     QObject(parent)
 {
     cacheWidth = 6;
+    detectedDelta = 120;
     bookmarks.clear();
     cachePixmaps = false;
     useFineRendering = true;
@@ -240,6 +241,7 @@ void ZGlobal::settingsDlg()
     dlg->spinCacheWidth->setValue(cacheWidth);
     dlg->spinMagnify->setValue(magnifySize);
     dlg->spinScrollDelta->setValue(scrollDelta);
+    dlg->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(detectedDelta));
     if (cachePixmaps)
         dlg->radioCachePixmaps->setChecked(true);
     else
