@@ -26,6 +26,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     checkFineRendering = ui->checkFineRendering;
     checkFSWatcher = ui->checkFSWatcher;
     spinScrollDelta = ui->spinScrollDelta;
+    labelDetectedDelta = ui->labelDetectedDelta;
 
 #ifndef WITH_MAGICK
     while (ui->comboFilter->count()>2)

@@ -36,6 +36,7 @@ public:
     QFont idxFont;
     int preferredWidth;
     int scrollDelta;
+    int detectedDelta;
 
     bool cachePixmaps;
     bool useFineRendering;

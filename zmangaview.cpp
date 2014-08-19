@@ -238,14 +238,17 @@ void ZMangaView::wheelEvent(QWheelEvent *event)
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
     scrollAccumulator+= event->angleDelta().y();
+    zg->detectedDelta = abs(event->angleDelta().y());
 #else
     scrollAccumulator+= event->delta();
+    zg->detectedDelta = abs(event->delta());
 #endif
 
     int numSteps = scrollAccumulator / zg->scrollDelta;
     scrollAccumulator-= numSteps * zg->scrollDelta;
 
-    setPage(currentPage-numSteps);
+    if (numSteps!=0)
+        setPage(currentPage-numSteps);
     event->accept();
 }
 
