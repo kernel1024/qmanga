@@ -25,6 +25,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     radioCacheData = ui->rbCacheData;
     checkFineRendering = ui->checkFineRendering;
     checkFSWatcher = ui->checkFSWatcher;
+    spinScrollDelta = ui->spinScrollDelta;
 
 #ifndef WITH_MAGICK
     while (ui->comboFilter->count()>2)

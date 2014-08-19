@@ -20,6 +20,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     useFineRendering = true;
     ocrEditor = NULL;
     defaultOrdering = Z::FileName;
+    scrollDelta = 120;
 
     filesystemWatcher = false;
     fsWatcher = new QFileSystemWatcher(this);
@@ -61,6 +62,7 @@ void ZGlobal::loadSettings()
     savedAuxOpenDir = settings.value("savedAuxOpenDir",QString()).toString();
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
+    scrollDelta = settings.value("scrollDelta",120).toInt();
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
     frameColor = QColor(settings.value("frameColor",QColor(Qt::lightGray).name()).toString());
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
@@ -130,6 +132,7 @@ void ZGlobal::saveSettings()
     settings.setValue("savedAuxOpenDir",savedAuxOpenDir);
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
     settings.setValue("magnifySize",magnifySize);
+    settings.setValue("scrollDelta",scrollDelta);
     settings.setValue("backgroundColor",backgroundColor.name());
     settings.setValue("frameColor",frameColor.name());
     settings.setValue("cachePixmaps",cachePixmaps);
@@ -236,6 +239,7 @@ void ZGlobal::settingsDlg()
     dlg->editMySqlBase->setText(dbBase);
     dlg->spinCacheWidth->setValue(cacheWidth);
     dlg->spinMagnify->setValue(magnifySize);
+    dlg->spinScrollDelta->setValue(scrollDelta);
     if (cachePixmaps)
         dlg->radioCachePixmaps->setChecked(true);
     else
@@ -272,6 +276,7 @@ void ZGlobal::settingsDlg()
         dbBase=dlg->editMySqlBase->text();
         cacheWidth=dlg->spinCacheWidth->value();
         magnifySize=dlg->spinMagnify->value();
+        scrollDelta=dlg->spinScrollDelta->value();
         backgroundColor=dlg->getBkColor();
         frameColor=dlg->getFrameColor();
         idxFont=dlg->getIdxFont();

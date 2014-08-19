@@ -20,6 +20,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
     currentPage = 0;
     privPageCount = 0;
     rotation = 0;
+    scrollAccumulator = 0;
     exportStop = false;
     zoomMode = Fit;
     zoomDynamic = false;
@@ -235,8 +236,14 @@ void ZMangaView::wheelEvent(QWheelEvent *event)
         return;
     }
 
-    int numDegrees = event->delta() / 8;
-    int numSteps = numDegrees / 15;
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+    scrollAccumulator+= event->angleDelta().y();
+#else
+    scrollAccumulator+= event->delta();
+#endif
+
+    int numSteps = scrollAccumulator / zg->scrollDelta;
+    scrollAccumulator-= numSteps * zg->scrollDelta;
 
     setPage(currentPage-numSteps);
     event->accept();
