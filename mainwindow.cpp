@@ -392,7 +392,13 @@ void MainWindow::helpAbout()
 
 void MainWindow::msgFromIndexer(QString msg)
 {
-    lblSearchStatus->setText(msg);
+    QString s = msg;
+    bool showMsgBox = s.startsWith("MBOX#");
+    if (showMsgBox)
+        s.remove("MBOX#");
+    lblSearchStatus->setText(s);
+    if (showMsgBox)
+        QMessageBox::information(this,tr("QManga"),s);
 }
 
 void MainWindow::msgFromMangaView(QSize sz, qint64 fsz)
