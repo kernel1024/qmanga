@@ -129,3 +129,8 @@ OTHER_FILES += \
     org.jpreader.auxtranslator.xml
 
 DBUS_INTERFACES = org.jpreader.auxtranslator.xml
+
+# Workaround for _FORTIFY_SOURCE and required -O level
+debug {
+    QMAKE_CXXFLAGS += -O1
+}

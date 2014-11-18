@@ -1,6 +1,8 @@
 #include <QApplication>
 #include "zdb.h"
 
+#define AN_LATEST_200 "# Latest 200"
+
 ZDB::ZDB(QObject *parent) :
     QObject(parent)
 {
@@ -152,6 +154,7 @@ void ZDB::sqlGetAlbums()
     mysql_free_result(res);
 
     sqlCloseBase(db);
+    result << QString(AN_LATEST_200);
     emit gotAlbums(result);
 }
 
@@ -165,13 +168,22 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
     tmr.start();
 
     QString tqr;
+    bool specQuery = false;
     if (!album.isEmpty()) {
-        tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                      "addingDT, files.id, albums.name "
-                      "FROM files LEFT JOIN albums ON files.album=albums.id "
-                      "WHERE (album="
-                      "  (SELECT id FROM albums WHERE (name = '%1'))"
-                      ") ").arg(escapeParam(album));
+        if (album.compare(AN_LATEST_200)==0) {
+            specQuery = true;
+            tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
+                          "addingDT, files.id, albums.name "
+                          "FROM files LEFT JOIN albums ON files.album=albums.id "
+                          "ORDER BY addingDT DESC "
+                          "LIMIT 200");
+        } else
+            tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
+                          "addingDT, files.id, albums.name "
+                          "FROM files LEFT JOIN albums ON files.album=albums.id "
+                          "WHERE (album="
+                          "  (SELECT id FROM albums WHERE (name = '%1'))"
+                          ") ").arg(escapeParam(album));
     } else if (!search.isEmpty()){
         tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
                 "addingDT, files.id, albums.name "
@@ -182,7 +194,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
                 "addingDT, files.id, albums.name "
                 "FROM files LEFT JOIN albums ON files.album=albums.id ");
     }
-    if (order!=Z::Unordered) {
+    if (order!=Z::Unordered && !specQuery) {
         tqr+="ORDER BY ";
         if (order==Z::FileDate) tqr+="fileDT";
         else if (order==Z::AddingDate) tqr+="addingDT";
@@ -395,6 +407,11 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         emit errorMsg(tr("Album name cannot be empty"));
         return;
     }
+    if (album.startsWith("#")) {
+        emit errorMsg(tr("Reserved character in album name"));
+        return;
+    }
+
     QStringList files = aFiles;
     files.removeDuplicates();
 
@@ -605,6 +622,7 @@ void ZDB::sqlDelEmptyAlbums()
 void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
 {
     if (oldName==newName || oldName.isEmpty() || newName.isEmpty()) return;
+    if (newName.startsWith("#") || oldName.startsWith("#")) return;
     QString delqr = QString("UPDATE albums SET name='%1' WHERE name='%2';").
             arg(escapeParam(newName)).arg(escapeParam(oldName));
     MYSQL* db = sqlOpenBase();
