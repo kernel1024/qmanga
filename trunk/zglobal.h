@@ -3,11 +3,14 @@
 
 #include <QFileSystemWatcher>
 #include <QHash>
+#include <QMap>
 #include "global.h"
 #include "ocreditor.h"
 
 class ZMangaModel;
 class ZDB;
+
+typedef QMap<QString, QString> ZDynAlbums;
 
 class ZGlobal : public QObject
 {
@@ -60,6 +63,7 @@ signals:
     void dbCheckEmptyAlbums();
     void dbRescanIndexedDirs();
     void fsFilesAdded();
+    void dbSetDynAlbums(const ZDynAlbums& albums);
 
 };
 

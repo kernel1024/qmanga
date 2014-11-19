@@ -1,26 +1,37 @@
 #include "bookmarkdlg.h"
 #include "ui_bookmarkdlg.h"
 
-QBookmarkDlg::QBookmarkDlg(QWidget *parent, const QString &name, const QString &filename) :
+QTwoEditDlg::QTwoEditDlg(QWidget *parent, const QString& windowTitle,
+                         const QString &title1, const QString &title2,
+                         const QString &value1, const QString &value2) :
     QDialog(parent),
-    ui(new Ui::QBookmarkDlg)
+    ui(new Ui::QTwoEditDlg)
 {
     ui->setupUi(this);
-    ui->lineTitle->setText(name);
-    ui->lineFile->setText(filename);
+    setWindowTitle(windowTitle);
+    ui->label1->setText(title1);
+    ui->label2->setText(title2);
+    ui->lineEdit1->setText(value1);
+    ui->lineEdit2->setText(value2);
+    ui->labelHelp->clear();
 }
 
-QBookmarkDlg::~QBookmarkDlg()
+QTwoEditDlg::~QTwoEditDlg()
 {
     delete ui;
 }
 
-QString QBookmarkDlg::getBkTitle()
+QString QTwoEditDlg::getDlgEdit1()
 {
-    return ui->lineTitle->text();
+    return ui->lineEdit1->text();
 }
 
-QString QBookmarkDlg::getBkFilename()
+QString QTwoEditDlg::getDlgEdit2()
 {
-    return ui->lineFile->text();
+    return ui->lineEdit2->text();
+}
+
+void QTwoEditDlg::setHelpText(const QString &helpText)
+{
+    ui->labelHelp->setText(helpText);
 }

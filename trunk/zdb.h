@@ -2,6 +2,7 @@
 #define ZDB_H
 
 #include <QObject>
+#include <QString>
 #include "zabstractreader.h"
 #include "global.h"
 
@@ -16,6 +17,7 @@ class ZDB : public QObject
     Q_OBJECT
 protected:
     QString dbBase, dbUser, dbPass;
+    ZDynAlbums dynAlbums;
 
     bool wasCanceled;
 
@@ -28,6 +30,7 @@ public:
     explicit ZDB(QObject *parent = 0);
 
     int getAlbumsCount();
+    ZDynAlbums getDynAlbums();
 
 signals:
     void errorMsg(const QString& msg);
@@ -44,6 +47,7 @@ signals:
 
 public slots:
     void setCredentials(const QString& base, const QString& user, const QString& password);
+    void setDynAlbums(const ZDynAlbums& albums);
     void sqlCheckBase();
     void sqlCreateTables();
     void sqlDelEmptyAlbums();

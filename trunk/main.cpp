@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<SQLMangaEntry>("SQLMangaEntry");
     qRegisterMetaType<QByteHash>("QByteHash");
     qRegisterMetaType<QUuid>("QUuid");
+    qRegisterMetaType<ZDynAlbums>("ZDynAlbums");
 
     QApplication a(argc, argv);
     MainWindow w;

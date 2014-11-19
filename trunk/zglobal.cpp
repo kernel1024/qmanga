@@ -38,6 +38,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     connect(this,SIGNAL(dbRescanIndexedDirs()),db,SLOT(sqlRescanIndexedDirs()),Qt::QueuedConnection);
     connect(db,SIGNAL(updateWatchDirList(QStringList)),
             this,SLOT(updateWatchDirList(QStringList)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbSetDynAlbums(ZDynAlbums)),db,SLOT(setDynAlbums(ZDynAlbums)),Qt::QueuedConnection);
     db->moveToThread(threadDB);
     threadDB->start();
 
@@ -89,6 +90,18 @@ void ZGlobal::loadSettings()
             bookmarks[t]=settings.value("url").toString();
     }
     settings.endArray();
+
+    ZDynAlbums albums;
+    albums.clear();
+    sz = settings.beginReadArray("dynAlbums");
+    for (int i=0; i<sz; i++) {
+        settings.setArrayIndex(i);
+        QString t = settings.value("title").toString();
+        if (!t.isEmpty())
+            albums[t]=settings.value("query").toString();
+    }
+    settings.endArray();
+    emit dbSetDynAlbums(albums);
 
     if (w!=NULL) {
         if (settings.value("listMode",false).toBool())
@@ -158,6 +171,17 @@ void ZGlobal::saveSettings()
         settings.setArrayIndex(i);
         settings.setValue("title",t);
         settings.setValue("url",bookmarks.value(t));
+        i++;
+    }
+    settings.endArray();
+
+    ZDynAlbums albums = db->getDynAlbums();
+    settings.beginWriteArray("dynAlbums");
+    i=0;
+    foreach (const QString &t, albums.keys()) {
+        settings.setArrayIndex(i);
+        settings.setValue("title",t);
+        settings.setValue("query",albums.value(t));
         i++;
     }
     settings.endArray();
@@ -271,6 +295,14 @@ void ZGlobal::settingsDlg()
         li->setData(Qt::UserRole+1,bookmarks.value(t));
         dlg->listBookmarks->addItem(li);
     }
+    ZDynAlbums albums = db->getDynAlbums();
+    foreach (const QString &title, albums.keys()) {
+        QString query = albums.value(title);
+        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg(title).arg(query));
+        li->setData(Qt::UserRole,title);
+        li->setData(Qt::UserRole+1,query);
+        dlg->listDynAlbums->addItem(li);
+    }
 
     if (dlg->exec()) {
         dbUser=dlg->editMySqlLogin->text();
@@ -301,6 +333,11 @@ void ZGlobal::settingsDlg()
             bookmarks[dlg->listBookmarks->item(i)->data(Qt::UserRole).toString()]=
                     dlg->listBookmarks->item(i)->data(Qt::UserRole+1).toString();
         emit dbSetCredentials(dbBase,dbUser,dbPass);
+        albums.clear();
+        for (int i=0; i<dlg->listDynAlbums->count(); i++)
+            albums[dlg->listDynAlbums->item(i)->data(Qt::UserRole).toString()]=
+                    dlg->listDynAlbums->item(i)->data(Qt::UserRole+1).toString();
+        emit dbSetDynAlbums(albums);
         if (w!=NULL) {
             w->updateBookmarks();
             w->updateViewer();

@@ -4,21 +4,25 @@
 #include <QDialog>
 
 namespace Ui {
-class QBookmarkDlg;
+class QTwoEditDlg;
 }
 
-class QBookmarkDlg : public QDialog
+class QTwoEditDlg : public QDialog
 {
     Q_OBJECT
     
 public:
-    explicit QBookmarkDlg(QWidget *parent = 0, const QString &name = QString(), const QString &filename = QString());
-    ~QBookmarkDlg();
-    QString getBkTitle();
-    QString getBkFilename();
+    explicit QTwoEditDlg(QWidget *parent,
+                         const QString &windowTitle,
+                         const QString &title1, const QString &title2,
+                         const QString &value1 = QString(), const QString &value2 = QString());
+    ~QTwoEditDlg();
+    QString getDlgEdit1();
+    QString getDlgEdit2();
+    void setHelpText(const QString& helpText);
     
 private:
-    Ui::QBookmarkDlg *ui;
+    Ui::QTwoEditDlg *ui;
 };
 
 #endif // BOOKMARKDLG_H
