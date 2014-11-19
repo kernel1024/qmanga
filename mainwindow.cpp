@@ -342,11 +342,12 @@ void MainWindow::createBookmark()
 {
     if (ui->mangaView->openedFile.isEmpty()) return;
     QFileInfo fi(ui->mangaView->openedFile);
-    QBookmarkDlg *dlg = new QBookmarkDlg(this,fi.completeBaseName(),ui->mangaView->openedFile);
+    QTwoEditDlg *dlg = new QTwoEditDlg(this,tr("Add bookmark"),tr("Title"),tr("Filename"),
+                                       fi.completeBaseName(),ui->mangaView->openedFile);
     if (dlg->exec()) {
-        QString t = dlg->getBkTitle();
+        QString t = dlg->getDlgEdit1();
         if (!t.isEmpty() && !zg->bookmarks.contains(t)) {
-            zg->bookmarks[t]=QString("%1\n%2").arg(dlg->getBkFilename()).arg(ui->mangaView->currentPage);
+            zg->bookmarks[t]=QString("%1\n%2").arg(dlg->getDlgEdit2()).arg(ui->mangaView->currentPage);
             updateBookmarks();
         } else
             QMessageBox::warning(this,tr("QManga"),

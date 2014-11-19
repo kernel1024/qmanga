@@ -33,6 +33,7 @@ public:
     QCheckBox* checkFSWatcher;
     QSpinBox* spinScrollDelta;
     QLabel* labelDetectedDelta;
+    QListWidget* listDynAlbums;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
@@ -53,6 +54,9 @@ public slots:
     void updateBkColor(QColor c);
     void updateIdxFont(QFont f);
     void updateFrameColor(QColor c);
+    void dynAdd();
+    void dynEdit();
+    void dynDelete();
 
 };
 

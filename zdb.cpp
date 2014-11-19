@@ -1,8 +1,6 @@
 #include <QApplication>
 #include "zdb.h"
 
-#define AN_LATEST_200 "# Latest 200"
-
 ZDB::ZDB(QObject *parent) :
     QObject(parent)
 {
@@ -31,11 +29,22 @@ int ZDB::getAlbumsCount()
     return cnt;
 }
 
+ZDynAlbums ZDB::getDynAlbums()
+{
+    return dynAlbums;
+}
+
 void ZDB::setCredentials(const QString &base, const QString &user, const QString &password)
 {
     dbBase = base;
     dbUser = user;
     dbPass = password;
+}
+
+void ZDB::setDynAlbums(const ZDynAlbums &albums)
+{
+    dynAlbums.clear();
+    dynAlbums = albums;
 }
 
 void ZDB::sqlCheckBase()
@@ -154,7 +163,8 @@ void ZDB::sqlGetAlbums()
     mysql_free_result(res);
 
     sqlCloseBase(db);
-    result << QString(AN_LATEST_200);
+    foreach (const QString& title, dynAlbums.keys())
+        result << QString("# %1").arg(title);
     emit gotAlbums(result);
 }
 
@@ -167,32 +177,20 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
     QTime tmr;
     tmr.start();
 
-    QString tqr;
+    QString tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
+                         "addingDT, files.id, albums.name "
+                         "FROM files LEFT JOIN albums ON files.album=albums.id ");
     bool specQuery = false;
     if (!album.isEmpty()) {
-        if (album.compare(AN_LATEST_200)==0) {
+        if (album.startsWith("# ") && dynAlbums.keys().contains(album.mid(2))) {
             specQuery = true;
-            tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                          "addingDT, files.id, albums.name "
-                          "FROM files LEFT JOIN albums ON files.album=albums.id "
-                          "ORDER BY addingDT DESC "
-                          "LIMIT 200");
+            tqr += dynAlbums.value(album.mid(2));
         } else
-            tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                          "addingDT, files.id, albums.name "
-                          "FROM files LEFT JOIN albums ON files.album=albums.id "
-                          "WHERE (album="
-                          "  (SELECT id FROM albums WHERE (name = '%1'))"
-                          ") ").arg(escapeParam(album));
+            tqr += QString("WHERE (album="
+                           "  (SELECT id FROM albums WHERE (name = '%1'))"
+                           ") ").arg(escapeParam(album));
     } else if (!search.isEmpty()){
-        tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                "addingDT, files.id, albums.name "
-                "FROM files LEFT JOIN albums ON files.album=albums.id "
-                "WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
-    } else {
-        tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                "addingDT, files.id, albums.name "
-                "FROM files LEFT JOIN albums ON files.album=albums.id ");
+        tqr += QString("WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
     }
     if (order!=Z::Unordered && !specQuery) {
         tqr+="ORDER BY ";

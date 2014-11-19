@@ -2,6 +2,7 @@
 #include <QFontDialog>
 
 #include "settingsdialog.h"
+#include "bookmarkdlg.h"
 #include "ui_settingsdialog.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
@@ -27,6 +28,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     checkFSWatcher = ui->checkFSWatcher;
     spinScrollDelta = ui->spinScrollDelta;
     labelDetectedDelta = ui->labelDetectedDelta;
+    listDynAlbums = ui->listDynAlbums;
 
 #ifndef WITH_MAGICK
     while (ui->comboFilter->count()>2)
@@ -37,6 +39,10 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     connect(ui->btnBkColor,SIGNAL(clicked()),this,SLOT(bkColorDlg()));
     connect(ui->btnFontIndexer,SIGNAL(clicked()),this,SLOT(idxFontDlg()));
     connect(ui->btnFrameColor,SIGNAL(clicked()),this,SLOT(frameColorDlg()));
+
+    connect(ui->btnDynAdd,SIGNAL(clicked()),this,SLOT(dynAdd()));
+    connect(ui->btnDynEdit,SIGNAL(clicked()),this,SLOT(dynEdit()));
+    connect(ui->btnDynDelete,SIGNAL(clicked()),this,SLOT(dynDelete()));
 }
 
 SettingsDialog::~SettingsDialog()
@@ -111,4 +117,53 @@ void SettingsDialog::updateFrameColor(QColor c)
     QPalette p = ui->frameFrameColor->palette();
     p.setBrush(QPalette::Window,QBrush(frameColor));
     ui->frameFrameColor->setPalette(p);
+}
+
+void SettingsDialog::dynAdd()
+{
+    QTwoEditDlg *dlg = new QTwoEditDlg(this,tr("Add dynamic list"),tr("List title"),
+                                       tr("Query part"));
+    dlg->setHelpText(tr("Query part contains part of SELECT query on manga table "
+                        "from FROM clause to the end of query.\n"
+                        "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
+    if (dlg->exec()) {
+        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").
+                                                  arg(dlg->getDlgEdit1()).
+                                                  arg(dlg->getDlgEdit2()));
+        li->setData(Qt::UserRole,dlg->getDlgEdit1());
+        li->setData(Qt::UserRole+1,dlg->getDlgEdit2());
+        ui->listDynAlbums->addItem(li);
+    }
+    dlg->setParent(NULL);
+    delete dlg;
+}
+
+void SettingsDialog::dynEdit()
+{
+    if (ui->listDynAlbums->selectedItems().isEmpty()) return;
+    QTwoEditDlg *dlg = new QTwoEditDlg(this,tr("Edit dynamic list"),tr("List title"),
+                                       tr("Query part"),
+                                       ui->listDynAlbums->selectedItems().first()->data(Qt::UserRole).toString(),
+                                       ui->listDynAlbums->selectedItems().first()->data(Qt::UserRole+1).toString());
+    dlg->setHelpText(tr("Query part contains part of SELECT query on manga table "
+                        "from FROM clause to the end of query.\n"
+                        "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
+    if (dlg->exec()) {
+        ui->listDynAlbums->selectedItems().first()->setText(QString("%1 [ %2 ]").
+                                                            arg(dlg->getDlgEdit1()).
+                                                            arg(dlg->getDlgEdit2()));
+        ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole,dlg->getDlgEdit1());
+        ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole+1,dlg->getDlgEdit2());
+    }
+    dlg->setParent(NULL);
+    delete dlg;
+}
+
+void SettingsDialog::dynDelete()
+{
+    QList<QListWidgetItem *> dl = ui->listDynAlbums->selectedItems();
+    foreach (QListWidgetItem* i, dl) {
+        ui->listDynAlbums->removeItemWidget(i);
+        delete i;
+    }
 }
