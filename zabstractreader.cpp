@@ -7,7 +7,7 @@ ZAbstractReader::ZAbstractReader(QObject *parent, QString filename) :
     fileName = filename;
     pageCount = -1;
     sortList.clear();
-    supportedImg << "jpg" << "jpeg" << "gif" << "png" << "tiff" << "tif" << "bmp";
+    supportedImg << "jpg" << "jpeg" << "jpe" << "gif" << "png" << "tiff" << "tif" << "bmp";
 }
 
 ZAbstractReader::~ZAbstractReader()

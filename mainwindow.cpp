@@ -458,7 +458,10 @@ void MainWindow::fsNewFilesAdded()
 
     for (int i=0;i<f.count();i++) {
         QFileInfo fi(f.at(i));
-        fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
+        bool mimeOk;
+        readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
+        if (mimeOk)
+            fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
     }
     fsUpdateFileList();
     fsAddFilesMutex.unlock();

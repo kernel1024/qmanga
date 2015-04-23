@@ -20,27 +20,43 @@
 using namespace Magick;
 #endif
 
-ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk, bool onlyArchives)
+ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
+                               bool onlyArchives, bool createReader)
 {
     *mimeOk = true;
     if (filename.startsWith(":CLIP:") && !onlyArchives) {
-        return new ZSingleImageReader(parent,filename);
+        if (createReader)
+            return new ZSingleImageReader(parent,filename);
+        else
+            return NULL;
     }
     QFileInfo fi(filename);
     if (!fi.exists()) return NULL;
 
     QString mime = detectMIME(filename).toLower();
     if (mime.contains("application/zip",Qt::CaseInsensitive)) {
-        return new ZZipReader(parent,filename);
+        if (createReader)
+            return new ZZipReader(parent,filename);
+        else
+            return NULL;
     } else if (mime.contains("application/x-rar",Qt::CaseInsensitive) ||
                mime.contains("application/rar",Qt::CaseInsensitive)) {
-        return new ZRarReader(parent,filename);
+        if (createReader)
+            return new ZRarReader(parent,filename);
+        else
+            return NULL;
 #ifdef WITH_POPPLER
     } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
-        return new ZPdfReader(parent,filename);
+        if (createReader)
+            return new ZPdfReader(parent,filename);
+        else
+            return NULL;
 #endif
     } else if (mime.contains("image/",Qt::CaseInsensitive) && !onlyArchives) {
-        return new ZSingleImageReader(parent,filename);
+        if (createReader)
+            return new ZSingleImageReader(parent,filename);
+        else
+            return NULL;
     } else {
         *mimeOk = false;
         return NULL;
