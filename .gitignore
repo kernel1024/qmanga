@@ -1,0 +1,32 @@
+# Generic Qt and C++ patterns
+*.moc
+Makefile*
+*.so.*
+*.so
+*.so.debug
+*.o
+.cd.rc
+*.swp
+core
+moc_*.cpp
+*.Debug
+*.Release
+*.pdb
+*.idb
+*.ib_pdb_index
+ui_*.h
+qrc_*.cpp
+Debug/
+Release/
+*.log
+
+# QtCreator project files
+*.pro.user
+=======
+*.pro.user*
+*~
+
+# Project specific
+qmanga
+qmanga_*.pro
+auxtranslator_interface.*
