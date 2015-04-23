@@ -57,6 +57,7 @@ public slots:
     void mangaAdd();
     void mangaAddDir();
     void mangaDel();
+    void imagesAddDir();
 
     void listModeChanged(bool state);
     void iconSizeChanged(int ref);

@@ -11,7 +11,6 @@ protected:
     int pageCount;
     QString fileName;
     QList<ZFileEntry> sortList;
-    QStringList supportedImg;
 
 public:
     explicit ZAbstractReader(QObject *parent, QString filename);

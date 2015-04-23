@@ -8,6 +8,7 @@ ZDB::ZDB(QObject *parent) :
     dbUser = QString();
     dbPass = QString();
     wasCanceled = false;
+    indexedDirs.clear();
 }
 
 int ZDB::getAlbumsCount()
@@ -165,6 +166,7 @@ void ZDB::sqlGetAlbums()
     sqlCloseBase(db);
     foreach (const QString& title, dynAlbums.keys())
         result << QString("# %1").arg(title);
+
     emit gotAlbums(result);
 }
 
@@ -242,8 +244,13 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     MYSQL* db = sqlOpenBase();
     if (db==NULL) return;
 
+    QString fname(fileName);
+    bool dynManga = fname.startsWith("#DYN#");
+    if (dynManga)
+        fname.remove(QRegExp("^#DYN#"));
+
     QString qrs = QString("SELECT name FROM files WHERE (filename='%1');")
-                  .arg(escapeParam(fileName));
+                  .arg(escapeParam(fname));
     if (mysql_query(db,qrs.toUtf8())) {
         qDebug() << "file search query failed";
         sqlCloseBase(db);
@@ -260,10 +267,10 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     }
     mysql_free_result(res);
 
-    QFileInfo fi(fileName);
+    QFileInfo fi(fname);
     if (!fi.isReadable()) {
-        qDebug() << "skipping" << fileName << "as unreadable";
-        emit errorMsg(tr("%1 file is unreadable.").arg(fileName));
+        qDebug() << "skipping" << fname << "as unreadable";
+        emit errorMsg(tr("%1 file is unreadable.").arg(fname));
         sqlCloseBase(db);
         return;
     }
@@ -271,15 +278,15 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
     if (za == NULL) {
-        qDebug() << fileName << "File format not supported";
-        emit errorMsg(tr("%1 file format not supported.").arg(fileName));
+        qDebug() << fname << "File format not supported";
+        emit errorMsg(tr("%1 file format not supported.").arg(fname));
         sqlCloseBase(db);
         return;
     }
 
     if (!za->openFile()) {
-        qDebug() << fileName << "Unable to open file. Broken archive.";
-        emit errorMsg(tr("Unable to open file %1. Broken archive.").arg(fileName));
+        qDebug() << fname << "Unable to open file.";
+        emit errorMsg(tr("Unable to open file %1.").arg(fname));
         za->setParent(NULL);
         delete za;
         sqlCloseBase(db);
@@ -295,10 +302,10 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     qr.clear();
     qr.append("UPDATE files SET cover='");
     qr.append(pba);
-    qr.append(QString("' WHERE (filename='%1');").arg(escapeParam(fileName)));
+    qr.append(QString("' WHERE (filename='%1');").arg(escapeParam(fname)));
     if (mysql_real_query(db,qr.constData(),qr.length())) {
         QString msg = tr("Unable to change cover for '%1'.\n%2")
-                .arg(fileName)
+                .arg(fname)
                 .arg(mysql_error(db));
         qDebug() << msg;
         emit errorMsg(msg);
@@ -323,7 +330,8 @@ void ZDB::sqlRescanIndexedDirs()
 
     QString tqr;
     tqr = QString("SELECT filename "
-                  "FROM files");
+                  "FROM files "
+                  "WHERE NOT(fileMagic='DYN')");
     tqr+=";";
 
     if (!mysql_query(db,tqr.toUtf8())) {
@@ -340,15 +348,18 @@ void ZDB::sqlRescanIndexedDirs()
     } else
         qDebug() << mysql_error(db);
     sqlCloseBase(db);
-    if (!dirs.isEmpty())
+    indexedDirs.clear();
+    if (!dirs.isEmpty()) {
+        indexedDirs.append(dirs);
         emit updateWatchDirList(dirs);
+    }
+    emit albumsListUpdated();
     return;
 }
 
 void ZDB::sqlUpdateFileStats(const QString &fileName)
 {
-    MYSQL* db = sqlOpenBase();
-    if (db==NULL) return;
+    if (fileName.startsWith("#DYN#")) return;
 
     QFileInfo fi(fileName);
     if (!fi.isReadable()) {
@@ -364,11 +375,14 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     }
 
     if (!za->openFile()) {
-        qDebug() << fileName << "Unable to open file. Broken archive.";
+        qDebug() << fileName << "Unable to open file.";
         za->setParent(NULL);
         delete za;
         return;
     }
+
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
 
     QByteArray qr;
     qr.clear();
@@ -407,6 +421,10 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     }
     if (album.startsWith("#")) {
         emit errorMsg(tr("Reserved character in album name"));
+        return;
+    }
+    if (aFiles.first().startsWith("###DYNAMIC###")) {
+        fsAddImagesDir(aFiles.last(),album);
         return;
     }
 
@@ -462,7 +480,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         }
 
         if (!za->openFile()) {
-            qDebug() << files.at(i) << "Unable to open file. Broken archive.";
+            qDebug() << files.at(i) << "Unable to open file.";
             za->setParent(NULL);
             delete za;
             continue;
@@ -551,6 +569,112 @@ QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
     return pba;
 }
 
+void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
+{
+    QDir d(dir);
+    QFileInfoList fl = d.entryInfoList(QStringList("*"));
+    QStringList files;
+    for (int i=0;i<fl.count();i++)
+        if (fl.at(i).isReadable() && fl.at(i).isFile() &&
+                supportedImg().contains(fl.at(i).suffix(),Qt::CaseInsensitive)) {
+            files << fl.at(i).absoluteFilePath();
+
+        }
+
+    if (files.isEmpty()) {
+        emit errorMsg("Could not find supported image files in specified directory");
+        return;
+    }
+
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+
+    // get album number
+    int ialbum = -1;
+
+    QString aqr = QString("SELECT id FROM albums WHERE (name='%1');").arg(escapeParam(album));
+    if (!mysql_query(db,aqr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        if ((row = mysql_fetch_row(res)) != NULL)
+            ialbum = QString::fromUtf8(row[0]).toInt();
+        mysql_free_result(res);
+    }
+
+    if (ialbum==-1) {
+        QString qr = QString("INSERT INTO albums (name) VALUES ('%1');").arg(album);
+        if (mysql_query(db,qr.toUtf8())) {
+            emit errorMsg(tr("Unable to create album `%1`\n%2").
+                          arg(album).
+                          arg(mysql_error(db)));
+            sqlCloseBase(db);
+            return;
+        }
+        ialbum = mysql_insert_id(db);
+    }
+
+    QTime tmr;
+    tmr.start();
+
+    // get album preview image
+    QImage p;
+    foreach (const QString& fname, files) {
+        if (p.load(fname))
+            break;
+    }
+
+    QByteArray pba;
+    char* pbae = NULL;
+    pba.clear();
+    if (!p.isNull()) {
+        p = p.scaled(maxPreviewSize,maxPreviewSize,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+        QBuffer buf(&pba);
+        buf.open(QIODevice::WriteOnly);
+        p.save(&buf, "JPG");
+        buf.close();
+        p = QImage();
+
+        pbae = (char*) malloc(pba.length()*2+1);
+        int pbaelen = mysql_real_escape_string(db,pbae,pba.constData(),pba.length());
+        pba = QByteArray::fromRawData(pbae,pbaelen);
+    }
+
+    // add dynamic album to base
+    int cnt = 0;
+    QByteArray qr;
+    qr.clear();
+    qr.append("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
+               "fileMagic, fileDT, addingDT) VALUES ('");
+    qr.append(mysqlEscapeString(db,d.dirName()));
+    qr.append("','");
+    qr.append(mysqlEscapeString(db,d.absolutePath()));
+    qr.append("','");
+    qr.append(QString("%1").arg(ialbum));
+    qr.append("','");
+    qr.append(pba);
+    qr.append("','");
+    qr.append(QString("%1").arg(files.count()));
+    qr.append("','");
+    qr.append(QString("%1").arg(0));
+    qr.append("','");
+    qr.append(QString("DYN"));
+    qr.append("',NOW()");
+    qr.append(",NOW());");
+    if (mysql_real_query(db,qr.constData(),qr.length()))
+        qDebug() << "unable to add dynamic album" << dir << mysql_error(db);
+    else
+        cnt++;
+    pba.clear();
+    if (pbae!=NULL)
+        free(pbae);
+
+    sqlCloseBase(db);
+    sqlRescanIndexedDirs();
+    emit filesAdded(cnt,cnt,tmr.elapsed());
+    emit albumsListUpdated();
+}
+
 void ZDB::sqlCancelAdding()
 {
     wasCanceled = true;
@@ -567,7 +691,7 @@ void ZDB::sqlDelFiles(const QIntList &dbids, const bool fullDelete)
     }
     delqr+=");";
 
-    QString fsqr = QString("SELECT filename FROM files WHERE id IN (");
+    QString fsqr = QString("SELECT filename,fileMagic FROM files WHERE id IN (");
     for (int i=0;i<dbids.count();i++) {
         if (i>0) fsqr+=",";
         fsqr+=QString("%1").arg(dbids.at(i));
@@ -584,8 +708,10 @@ void ZDB::sqlDelFiles(const QIntList &dbids, const bool fullDelete)
             MYSQL_ROW row;
             while ((row = mysql_fetch_row(res)) != NULL) {
                 QString fname = QString::fromUtf8(row[0]);
-                if (!QFile::remove(fname))
-                    okdel = false;
+                QString magic = QString::fromUtf8(row[1]);
+                if (magic!="DYN")
+                    if (!QFile::remove(fname))
+                        okdel = false;
             }
         }
     }

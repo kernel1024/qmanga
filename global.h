@@ -109,6 +109,7 @@ typedef QList<SQLMangaEntry> SQLMangaList;
 extern ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
                                       bool onlyArchives, bool createReader = true);
 
+QStringList supportedImg();
 QString formatSize(qint64 size);
 QString escapeParam(QString param);
 int compareWithNumerics(QString ref1, QString ref2);

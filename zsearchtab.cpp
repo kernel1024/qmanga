@@ -48,6 +48,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
     connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
     connect(ui->srcAddDirBtn,SIGNAL(clicked()),this,SLOT(mangaAddDir()));
+    connect(ui->srcAddImgDirBtn,SIGNAL(clicked()),this,SLOT(imagesAddDir()));
     connect(ui->srcDelBtn,SIGNAL(clicked()),this,SLOT(mangaDel()));
     connect(ui->srcModeIcon,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
     connect(ui->srcModeList,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
@@ -264,8 +265,9 @@ void ZSearchTab::ctxDeleteAlbum()
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
 
-    if (QMessageBox::question(this,tr("Delete album"),tr("Are you sure to delete album '%1' and all it's contents from database?").arg(s),
-                                      QMessageBox::Yes | QMessageBox::No, QMessageBox::No)==QMessageBox::Yes)
+    if (QMessageBox::question(this,tr("Delete album"),
+                              tr("Are you sure to delete album '%1' and all it's contents from database?").arg(s),
+                              QMessageBox::Yes | QMessageBox::No, QMessageBox::No)==QMessageBox::Yes)
         emit dbDeleteAlbum(s);
 }
 
@@ -289,12 +291,11 @@ void ZSearchTab::ctxOpenDir()
         if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
             QString fname = model->getItem(li.at(i).row()).filename;
             QFileInfo fi(fname);
-            if (!fi.isFile() || !fi.exists())
-                edl << fname;
-            else {
+            if (fi.exists() && (fi.isDir() || fi.isFile())) {
                 if (!dl.contains(fi.path()))
                     dl << fi.path();
-            }
+            } else
+                edl << fname;
         }
     }
 
@@ -329,8 +330,10 @@ void ZSearchTab::ctxXdgOpen()
         if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
             QString fname = model->getItem(li.at(i).row()).filename;
             QFileInfo fi(fname);
-            if (fi.isFile() && fi.exists())
-                dl << fname;
+            if (fi.exists() && (fi.isDir() || fi.isFile())) {
+                if (!dl.contains(fi.filePath()))
+                    dl << fi.filePath();
+            }
         }
     }
 
@@ -491,6 +494,9 @@ void ZSearchTab::mangaOpen(const QModelIndex &index)
 
     QString filename = model->getItem(idx).filename;
 
+    if (model->getItem(idx).fileMagic=="DYN")
+        filename.prepend("#DYN#");
+
     emit mangaDblClick(filename);
 }
 
@@ -559,6 +565,35 @@ void ZSearchTab::mangaDel()
 
     if (cnt!=zg->db->getAlbumsCount())
         updateAlbumsList();
+}
+
+void ZSearchTab::imagesAddDir()
+{
+    QString fi = getExistingDirectoryD(this,tr("Compose images from directory as manga"),
+                                                    zg->savedIndexOpenDir);
+    if (fi.isEmpty()) return;
+    zg->savedIndexOpenDir = fi;
+
+    QDir d(fi);
+    QFileInfoList fl = d.entryInfoList(QStringList("*"));
+    QStringList files;
+    for (int i=0;i<fl.count();i++)
+        if (fl.at(i).isReadable() && fl.at(i).isFile() &&
+                supportedImg().contains(fl.at(i).suffix(),Qt::CaseInsensitive))
+            files << fl.at(i).absoluteFilePath();
+
+    if (files.isEmpty()) {
+        QMessageBox::warning(this,tr("QManga"),tr("Supported image files not found in specified directory."));
+        return;
+    }
+    QString album = getAlbumNameToAdd(QString(),-1);
+    if (album.isEmpty()) return;
+
+    files.clear();
+    files << QString("###DYNAMIC###");
+    files << fi;
+
+    emit dbAddFiles(files,album);
 }
 
 void ZSearchTab::listModeChanged(bool)

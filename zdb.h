@@ -17,6 +17,7 @@ class ZDB : public QObject
     Q_OBJECT
 protected:
     QString dbBase, dbUser, dbPass;
+    QStringList indexedDirs;
     ZDynAlbums dynAlbums;
 
     bool wasCanceled;
@@ -25,6 +26,7 @@ protected:
     MYSQL* sqlOpenBase();
     void sqlCloseBase(MYSQL* db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
+    void fsAddImagesDir(const QString& dir, const QString& album);
 
 public:
     explicit ZDB(QObject *parent = 0);

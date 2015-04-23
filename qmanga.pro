@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     zmangaloader.cpp \
     ocreditor.cpp \
     zsingleimagereader.cpp \
-    zexportdialog.cpp
+    zexportdialog.cpp \
+    zimagesdirreader.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -50,7 +51,8 @@ HEADERS  += mainwindow.h \
     zmangaloader.h \
     ocreditor.h \
     zsingleimagereader.h \
-    zexportdialog.h
+    zexportdialog.h \
+    zimagesdirreader.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \

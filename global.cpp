@@ -7,6 +7,7 @@
 #include "zzipreader.h"
 #include "zrarreader.h"
 #include "zpdfreader.h"
+#include "zimagesdirreader.h"
 #include "zsingleimagereader.h"
 #include "zglobal.h"
 #include "zmangaview.h"
@@ -29,6 +30,16 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
             return new ZSingleImageReader(parent,filename);
         else
             return NULL;
+    }
+
+    if (filename.startsWith("#DYN#")) {
+        QString fname(filename);
+        fname.remove(QRegExp("^#DYN#"));
+        if (createReader)
+            return new ZImagesDirReader(parent,fname);
+        else
+            return NULL;
+
     }
     QFileInfo fi(filename);
     if (!fi.exists()) return NULL;
@@ -486,3 +497,12 @@ tesseract::TessBaseAPI* initializeOCR()
     return ocr;
 }
 #endif
+
+
+QStringList supportedImg()
+{
+    QStringList res;
+    res.clear();
+    res << "jpg" << "jpeg" << "jpe" << "gif" << "png" << "tiff" << "tif" << "bmp";
+    return res;
+}

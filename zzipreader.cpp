@@ -28,7 +28,7 @@ bool ZZipReader::openFile()
         QString fname(d->d_name);
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         QFileInfo fi(fname);
-        if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
+        if (!supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
         sortList << ZFileEntry(fname,cnt);
         cnt++;
     }
@@ -68,7 +68,7 @@ QByteArray ZZipReader::loadPage(int num)
         QString fname(d->d_name);
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         QFileInfo fi(fname);
-        if (!supportedImg.contains(fi.suffix(),Qt::CaseInsensitive)) continue;
+        if (!supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
 
         if (idx==znum) {
             if (d->st_size>(150*1024*1024)) {

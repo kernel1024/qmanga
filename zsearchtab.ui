@@ -145,6 +145,13 @@ p, li { white-space: pre-wrap; }
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="srcAddImgDirBtn">
+        <property name="text">
+         <string>Add images dir...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="srcDelBtn">
         <property name="text">
          <string>Delete</string>
@@ -209,14 +216,14 @@ p, li { white-space: pre-wrap; }
          <item>
           <widget class="QRadioButton" name="srcModeIcon">
            <property name="text">
-            <string>Icons</string>
+            <string>&amp;Icons</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QRadioButton" name="srcModeList">
            <property name="text">
-            <string>List</string>
+            <string>&amp;List</string>
            </property>
           </widget>
          </item>
@@ -283,6 +290,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>srcList</tabstop>
   <tabstop>srcAddBtn</tabstop>
   <tabstop>srcAddDirBtn</tabstop>
+  <tabstop>srcAddImgDirBtn</tabstop>
   <tabstop>srcDelBtn</tabstop>
   <tabstop>srcIconSize</tabstop>
   <tabstop>srcModeIcon</tabstop>
