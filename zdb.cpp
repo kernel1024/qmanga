@@ -359,23 +359,28 @@ void ZDB::sqlRescanIndexedDirs()
 
 void ZDB::sqlUpdateFileStats(const QString &fileName)
 {
-    if (fileName.startsWith("#DYN#")) return;
+    bool dynManga = false;
+    QString fname = fileName;
+    if (fname.startsWith("#DYN#")) {
+        fname.remove(QRegExp("^#DYN#"));
+        dynManga = true;
+    }
 
-    QFileInfo fi(fileName);
+    QFileInfo fi(fname);
     if (!fi.isReadable()) {
-        qDebug() << "updating aborted for" << fileName << "as unreadable";
+        qDebug() << "updating aborted for" << fname << "as unreadable";
         return;
     }
 
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
     if (za == NULL) {
-        qDebug() << fileName << "File format not supported.";
+        qDebug() << fname << "File format not supported.";
         return;
     }
 
     if (!za->openFile()) {
-        qDebug() << fileName << "Unable to open file.";
+        qDebug() << fname << "Unable to open file.";
         za->setParent(NULL);
         delete za;
         return;
@@ -388,17 +393,20 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     qr.clear();
     qr.append("UPDATE files SET ");
     qr.append(QString("pagesCount='%1',").arg(za->getPageCount()));
-    qr.append(QString("fileSize='%1',").arg(fi.size()));
+    if (dynManga)
+        qr.append(QString("fileSize='%1',").arg(0));
+    else
+        qr.append(QString("fileSize='%1',").arg(fi.size()));
     qr.append(QString("fileMagic='%1',").arg(za->getMagic()));
     qr.append(QString("fileDT='%1' ").arg(fi.created().toString("yyyy-MM-dd H:mm:ss")));
-    qr.append(QString("WHERE (filename='%1');").arg(escapeParam(fileName)));
+    qr.append(QString("WHERE (filename='%1');").arg(escapeParam(fname)));
 
     za->closeFile();
     za->setParent(NULL);
     delete za;
 
     if (mysql_real_query(db,qr.constData(),qr.length()))
-        qDebug() << fileName << "unable to update file stats" << mysql_error(db);
+        qDebug() << fname << "unable to update file stats" << mysql_error(db);
 
     sqlCloseBase(db);
     return;
@@ -571,6 +579,12 @@ QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
 
 void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 {
+    QFileInfo fi(dir);
+    if (!fi.isReadable()) {
+        emit errorMsg(QString("Updating aborted for %1 as unreadable").arg(dir));
+        return;
+    }
+
     QDir d(dir);
     QFileInfoList fl = d.entryInfoList(QStringList("*"));
     QStringList files;
@@ -659,8 +673,9 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     qr.append(QString("%1").arg(0));
     qr.append("','");
     qr.append(QString("DYN"));
-    qr.append("',NOW()");
-    qr.append(",NOW());");
+    qr.append("','");
+    qr.append(QString("%1").arg(fi.created().toString("yyyy-MM-dd H:mm:ss")));
+    qr.append("',NOW());");
     if (mysql_real_query(db,qr.constData(),qr.length()))
         qDebug() << "unable to add dynamic album" << dir << mysql_error(db);
     else
