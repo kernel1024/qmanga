@@ -69,12 +69,13 @@ bool ZDB::sqlCheckBasePriv()
     while ((row = mysql_fetch_row(res)) != NULL) {
         QString s = QString::fromUtf8(row[0]);
         if (s.contains("files",Qt::CaseInsensitive) ||
-                s.contains("albums",Qt::CaseInsensitive))
+                s.contains("albums",Qt::CaseInsensitive) ||
+                s.contains("ignored_files",Qt::CaseInsensitive))
             cnt++;
     }
     mysql_free_result(res);
 
-    bool noTables = (cnt!=2);
+    bool noTables = (cnt!=3);
 
     sqlCloseBase(db);
 
@@ -97,6 +98,17 @@ void ZDB::sqlCreateTables()
                  ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create table `albums`\n\n%1")
+                      .arg(mysql_error(db)));
+        sqlCloseBase(db);
+        return;
+    }
+    qr = "CREATE TABLE IF NOT EXISTS `ignored_files` ("
+         "`id` int(11) NOT NULL AUTO_INCREMENT,"
+         "`filename` varchar(16383) NOT NULL,"
+         "PRIMARY KEY (`id`)"
+         ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+    if (mysql_query(db,qr.toUtf8())) {
+        emit errorMsg(tr("Unable to create table `ignored_files`\n\n%1")
                       .arg(mysql_error(db)));
         sqlCloseBase(db);
         return;
@@ -410,6 +422,75 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
 
     sqlCloseBase(db);
     return;
+}
+
+bool isFileInTable(MYSQL* db, const QString& filename, const QString& table, bool *error)
+{
+    *error=false;
+    QString qr;
+    qr = QString("SELECT id FROM %1 WHERE filename='%2';")
+         .arg(table)
+         .arg(escapeParam(filename));
+    if (!mysql_query(db,qr.toUtf8())) {
+        MYSQL_RES* res = mysql_store_result(db);
+        if (res!=NULL) {
+            int rows = mysql_num_rows(res);
+            mysql_free_result(res);
+            if (rows>0) return true;
+        }
+    } else {
+        *error=true;
+    }
+    return false;
+}
+
+void ZDB::sqlSearchMissingManga()
+{
+    QStringList foundFiles;
+    foundFiles.clear();
+
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+
+    foreach (const QString& d, indexedDirs) {
+        QDir dir(d);
+        QFileInfoList fl = dir.entryInfoList(QStringList("*"));
+        for (int i=0;i<fl.count();i++)
+            if (fl.at(i).isReadable() && fl.at(i).isFile()) {
+                bool err1,err2;
+                if (!isFileInTable(db,fl.at(i).absoluteFilePath(),"files",&err1) &&
+                        !isFileInTable(db,fl.at(i).absoluteFilePath(),"ignored_files",&err2)) {
+                    if (!err1 && !err2) {
+                        foundFiles << fl.at(i).absoluteFilePath();
+                    } else {
+                        qDebug() << mysql_error(db);
+                        sqlCloseBase(db);
+                        return;
+                    }
+                }
+            }
+    }
+    sqlCloseBase(db);
+
+    emit foundNewFiles(foundFiles);
+}
+
+void ZDB::sqlAddIgnoredFiles(const QStringList &files)
+{
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+
+    foreach (const QString& file, files) {
+        QString qr = QString("INSERT INTO ignored_files (filename) VALUES ('%1');").arg(escapeParam(file));
+        if (mysql_query(db,qr.toUtf8())) {
+            emit errorMsg(tr("Unable to add ignored file `%1`\n%2").
+                          arg(file).
+                          arg(mysql_error(db)));
+            sqlCloseBase(db);
+            return;
+        }
+    }
+    sqlCloseBase(db);
 }
 
 QString mysqlEscapeString(MYSQL* db, const QString& str)

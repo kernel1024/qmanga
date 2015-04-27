@@ -56,6 +56,8 @@ protected:
 
 signals:
     void dbAddFiles(const QStringList& aFiles, const QString& album);
+    void dbFindNewFiles();
+    void dbAddIgnoredFiles(const QStringList& files);
 
 public slots:
     void openAux();
@@ -87,6 +89,9 @@ public slots:
     void fsUpdateFileList();
     void fsResultsMenuCtx(const QPoint& pos);
     void fsResultsCtxApplyAlbum();
+    void fsFindNewFiles();
+    void fsFoundNewFiles(const QStringList& files);
+    void fsAddIgnoredFiles();
 };
 
 class ZPopupFrame : public QFrame {

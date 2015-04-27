@@ -97,6 +97,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnFSAdd,SIGNAL(clicked()),this,SLOT(fsAddFiles()));
     connect(ui->btnFSCheck,SIGNAL(clicked()),this,SLOT(fsCheckAvailability()));
     connect(ui->btnFSDelete,SIGNAL(clicked()),this,SLOT(fsDelFiles()));
+    connect(ui->btnFSFind,SIGNAL(clicked()),this,SLOT(fsFindNewFiles()));
+    connect(zg->db,SIGNAL(foundNewFiles(QStringList)),
+            this,SLOT(fsFoundNewFiles(QStringList)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbAddIgnoredFiles(QStringList)),
+            zg->db,SLOT(sqlAddIgnoredFiles(QStringList)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbFindNewFiles()),
+            zg->db,SLOT(sqlSearchMissingManga()),Qt::QueuedConnection);
     connect(zg,SIGNAL(fsFilesAdded()),this,SLOT(fsNewFilesAdded()));
     connect(this,SIGNAL(dbAddFiles(QStringList,QString)),
             zg->db,SLOT(sqlAddFiles(QStringList,QString)),Qt::QueuedConnection);
@@ -477,6 +484,9 @@ void MainWindow::fsUpdateFileList()
     for (int i=0;i<fsScannedFiles.count();i++) {
         ui->fsResults->setItem(i,0,new QTableWidgetItem(fsScannedFiles[i].name));
         ui->fsResults->setItem(i,1,new QTableWidgetItem(fsScannedFiles[i].album));
+        QTableWidgetItem* w = ui->fsResults->item(i,0);
+        if (w!=NULL)
+                w->setToolTip(fsScannedFiles[i].fileName);
     }
     ui->fsResults->setColumnWidth(0,ui->tabWidget->width()/2);
 }
@@ -484,14 +494,25 @@ void MainWindow::fsUpdateFileList()
 void MainWindow::fsResultsMenuCtx(const QPoint &pos)
 {
     QStringList albums = searchTab->getAlbums();
-    if (albums.isEmpty()) return;
     QMenu cm(this);
+    QAction* ac;
+    int cnt=0;
+    if (!ui->fsResults->selectedItems().isEmpty()) {
+        ac = new QAction(QIcon::fromTheme("dialog-cancel"),tr("Ignore these file(s)"),this);
+        connect(ac,SIGNAL(triggered()),this,SLOT(fsAddIgnoredFiles()));
+        cm.addAction(ac);
+        cm.addSeparator();
+        cnt++;
+    }
     for (int i=0;i<albums.count();i++) {
-        QAction* ac = new QAction(albums.at(i),NULL);
+        if (albums.at(i).startsWith("#")) continue;
+        ac = new QAction(albums.at(i),NULL);
         connect(ac,SIGNAL(triggered()),this,SLOT(fsResultsCtxApplyAlbum()));
         cm.addAction(ac);
+        cnt++;
     }
-    cm.exec(ui->fsResults->mapToGlobal(pos));
+    if (cnt>0)
+        cm.exec(ui->fsResults->mapToGlobal(pos));
 }
 
 void MainWindow::fsResultsCtxApplyAlbum()
@@ -509,6 +530,51 @@ void MainWindow::fsResultsCtxApplyAlbum()
         if (ui->fsResults->item(idxs.at(i),1)!=NULL)
             ui->fsResults->item(idxs.at(i),1)->setText(s);
 
+}
+
+void MainWindow::fsFindNewFiles()
+{
+    fsScannedFiles.clear();
+    fsUpdateFileList();
+    emit dbFindNewFiles();
+}
+
+void MainWindow::fsFoundNewFiles(const QStringList &files)
+{
+    foreach (const QString& filename, files) {
+        QFileInfo fi(filename);
+        bool mimeOk;
+        readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
+        if (mimeOk)
+            fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
+    }
+    fsUpdateFileList();
+}
+
+void MainWindow::fsAddIgnoredFiles()
+{
+    QList<int> rows;
+    rows.clear();
+    for (int i=0;i<ui->fsResults->selectedItems().count();i++) {
+        int idx = ui->fsResults->selectedItems().at(i)->row();
+        if (!rows.contains(idx))
+            rows << idx;
+    }
+    if (rows.isEmpty()) return;
+    QList<ZFSFile> nl;
+    QStringList sl;
+    nl.clear();
+    sl.clear();
+    for (int i=0;i<fsScannedFiles.count();i++) {
+        if (!rows.contains(i))
+            nl << fsScannedFiles.at(i);
+        else
+            sl << fsScannedFiles.at(i).fileName;
+
+    }
+    emit dbAddIgnoredFiles(sl);
+    fsScannedFiles = nl;
+    fsUpdateFileList();
 }
 
 void MainWindow::pageNumEdited()
