@@ -47,6 +47,7 @@ signals:
     void deleteItemsFromModel(const QIntList& dbids);
     void updateWatchDirList(const QStringList& dirs);
     void foundNewFiles(const QStringList& files);
+    void gotTablesDescription(const QString& text);
 
 public slots:
     void setCredentials(const QString& base, const QString& user, const QString& password);
@@ -66,6 +67,7 @@ public slots:
     void sqlUpdateFileStats(const QString& fileName);
     void sqlSearchMissingManga();
     void sqlAddIgnoredFiles(const QStringList& files);
+    void sqlGetTablesDescription();
 
 };
 

@@ -493,6 +493,86 @@ void ZDB::sqlAddIgnoredFiles(const QStringList &files)
     sqlCloseBase(db);
 }
 
+void ZDB::sqlGetTablesDescription()
+{
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+
+    MYSQL_RES *tbl_cols = mysql_list_fields(db, "files", NULL);
+    if (tbl_cols==NULL) return;
+
+    int field_cnt = mysql_num_fields(tbl_cols);
+
+    QStringList names, types;
+    int nl = 0; int tl = 0;
+    for (int i=0; i < field_cnt; ++i)
+    {
+        MYSQL_FIELD *col = mysql_fetch_field_direct(tbl_cols, i);
+        if (col==NULL) {
+            names << "<NULL>";
+            types << "unknown";
+            continue;
+        }
+        names << QString::fromUtf8(col->name);
+        switch (col->type) {
+            case MYSQL_TYPE_DECIMAL:    types << "DECIMAL"; break;
+            case MYSQL_TYPE_TINY:       types << "TINY"; break;
+            case MYSQL_TYPE_SHORT:      types << "SHORT"; break;
+            case MYSQL_TYPE_LONG:       types << "LONG"; break;
+            case MYSQL_TYPE_FLOAT:      types << "FLOAT"; break;
+            case MYSQL_TYPE_DOUBLE:     types << "DOUBLE"; break;
+            case MYSQL_TYPE_NULL:       types << "NULL"; break;
+            case MYSQL_TYPE_TIMESTAMP:  types << "TIMESTAMP"; break;
+            case MYSQL_TYPE_LONGLONG:   types << "LONGLONG"; break;
+            case MYSQL_TYPE_INT24:      types << "INT24"; break;
+            case MYSQL_TYPE_DATE:       types << "DATE"; break;
+            case MYSQL_TYPE_TIME:       types << "TIME"; break;
+            case MYSQL_TYPE_DATETIME:   types << "DATETIME"; break;
+            case MYSQL_TYPE_YEAR:       types << "YEAR"; break;
+            case MYSQL_TYPE_NEWDATE:    types << "NEWDATE"; break;
+            case MYSQL_TYPE_VARCHAR:    types << "VARCHAR"; break;
+            case MYSQL_TYPE_BIT:        types << "BIT"; break;
+            case MYSQL_TYPE_TIMESTAMP2: types << "TIMESTAMP2"; break;
+            case MYSQL_TYPE_DATETIME2:  types << "DATETIME2"; break;
+            case MYSQL_TYPE_TIME2:      types << "TIME2"; break;
+            case MYSQL_TYPE_NEWDECIMAL: types << "NEWDECIMAL"; break;
+            case MYSQL_TYPE_ENUM:       types << "ENUM"; break;
+            case MYSQL_TYPE_SET:        types << "SET"; break;
+            case MYSQL_TYPE_TINY_BLOB:  types << "TINY_BLOB"; break;
+            case MYSQL_TYPE_MEDIUM_BLOB:types << "MEDIUM_BLOB"; break;
+            case MYSQL_TYPE_LONG_BLOB:  types << "LONG_BLOB"; break;
+            case MYSQL_TYPE_BLOB:       types << "BLOB"; break;
+            case MYSQL_TYPE_VAR_STRING: types << "VAR_STRING"; break;
+            case MYSQL_TYPE_STRING:     types << "STRING"; break;
+            case MYSQL_TYPE_GEOMETRY:   types << "GEOMETRY"; break;
+            default:                    types << "unknown"; break;
+        }
+
+        if (names.last().length()>nl)
+            nl = names.last().length();
+
+        if (types.last().length()>tl)
+            tl = types.last().length();
+    }
+    mysql_free_result(tbl_cols);
+
+    sqlCloseBase(db);
+
+    QStringList res;
+    QString s1("Field");
+    QString s2("Type");
+    res << "Fields description:";
+    res << "| "+s1.leftJustified(nl,' ')+" | "+s2.leftJustified(tl,' ')+" |";
+    s1.fill('-',nl); s2.fill('-',tl);
+    res << "+-"+s1+"-+-"+s2+"-+";
+    for (int i=0;i<names.count();i++) {
+        s1 = names.at(i);
+        s2 = types.at(i);
+        res << "| "+s1.leftJustified(nl,' ')+" | "+s2.leftJustified(tl,' ')+" |";
+    }
+    emit gotTablesDescription(res.join('\n'));
+}
+
 QString mysqlEscapeString(MYSQL* db, const QString& str)
 {
     QByteArray pba = str.toUtf8();

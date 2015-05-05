@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>586</width>
-    <height>136</height>
+    <width>629</width>
+    <height>157</height>
    </rect>
   </property>
   <property name="modal">
@@ -62,6 +62,19 @@
    </item>
    <item>
     <widget class="QLabel" name="labelHelp">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelAux">
+     <property name="font">
+      <font>
+       <family>Courier New</family>
+       <pointsize>9</pointsize>
+      </font>
+     </property>
      <property name="text">
       <string/>
      </property>

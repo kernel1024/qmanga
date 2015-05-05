@@ -14,6 +14,7 @@ QTwoEditDlg::QTwoEditDlg(QWidget *parent, const QString& windowTitle,
     ui->lineEdit1->setText(value1);
     ui->lineEdit2->setText(value2);
     ui->labelHelp->clear();
+    ui->labelAux->clear();
 }
 
 QTwoEditDlg::~QTwoEditDlg()
@@ -34,4 +35,9 @@ QString QTwoEditDlg::getDlgEdit2()
 void QTwoEditDlg::setHelpText(const QString &helpText)
 {
     ui->labelHelp->setText(helpText);
+}
+
+void QTwoEditDlg::setAuxText(const QString &text)
+{
+    ui->labelAux->setText(text);
 }

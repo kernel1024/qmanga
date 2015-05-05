@@ -4,6 +4,8 @@
 #include "settingsdialog.h"
 #include "bookmarkdlg.h"
 #include "ui_settingsdialog.h"
+#include "zglobal.h"
+#include "zdb.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -126,6 +128,10 @@ void SettingsDialog::dynAdd()
     dlg->setHelpText(tr("Query part contains part of SELECT query on manga table "
                         "from FROM clause to the end of query.\n"
                         "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
+
+    connect(zg->db,SIGNAL(gotTablesDescription(QString)),dlg,SLOT(setAuxText(QString)),Qt::QueuedConnection);
+    QMetaObject::invokeMethod(zg->db,"sqlGetTablesDescription",Qt::QueuedConnection);
+
     if (dlg->exec()) {
         QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").
                                                   arg(dlg->getDlgEdit1()).

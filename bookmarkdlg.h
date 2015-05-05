@@ -20,6 +20,9 @@ public:
     QString getDlgEdit1();
     QString getDlgEdit2();
     void setHelpText(const QString& helpText);
+
+public slots:
+    void setAuxText(const QString& text);
     
 private:
     Ui::QTwoEditDlg *ui;
