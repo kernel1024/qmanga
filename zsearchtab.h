@@ -71,7 +71,7 @@ public slots:
     void ctxOpenDir();
     void ctxXdgOpen();
 
-    void dbShowProgressDialog(const bool visible);
+    void dbShowProgressDialog(const bool visible, const QString &title = QString());
     void dbShowProgressState(const int value, const QString& msg);
     void dbAlbumsListUpdated();
     void dbAlbumsListReady(const QStringList& albums);

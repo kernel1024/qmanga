@@ -649,11 +649,14 @@ void ZSearchTab::dbNeedTableCreation()
         emit dbCreateTables();
 }
 
-void ZSearchTab::dbShowProgressDialog(const bool visible)
+void ZSearchTab::dbShowProgressDialog(const bool visible, const QString& title)
 {
     if (visible) {
         progressDlg.setWindowModality(Qt::WindowModal);
-        progressDlg.setWindowTitle(tr("Adding files to index..."));
+        if (title.isEmpty())
+            progressDlg.setWindowTitle(tr("Adding files to index..."));
+        else
+            progressDlg.setWindowTitle(title);
         progressDlg.setValue(0);
         progressDlg.setLabelText(QString());
         progressDlg.show();

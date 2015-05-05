@@ -536,6 +536,8 @@ void MainWindow::fsFindNewFiles()
 {
     fsScannedFiles.clear();
     fsUpdateFileList();
+    searchTab->dbShowProgressDialog(true,tr("Scanning filesystem"));
+    searchTab->dbShowProgressState(25,tr("Scanning filesystem..."));
     emit dbFindNewFiles();
 }
 
@@ -549,6 +551,7 @@ void MainWindow::fsFoundNewFiles(const QStringList &files)
             fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
     }
     fsUpdateFileList();
+    searchTab->dbShowProgressDialog(false);
 }
 
 void MainWindow::fsAddIgnoredFiles()
