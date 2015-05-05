@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QList>
 #include <QMutex>
+#include <QMessageBox>
 
 #include "zmangaview.h"
 #include "zsearchtab.h"
@@ -48,6 +49,7 @@ private:
     bool savedMaximized;
     QPoint savedPos;
     QSize savedSize;
+    QMessageBox indexerMsgBox;
 
 protected:
     void closeEvent(QCloseEvent * event);

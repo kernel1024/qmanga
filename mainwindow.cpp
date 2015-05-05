@@ -33,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
     searchTab = ui->searchTab;
     fullScreen = false;
 
+    indexerMsgBox.setWindowTitle(tr("QManga"));
+
 //    QApplication::setWheelScrollLines(1);
 
     lblSearchStatus = new QLabel(tr("Ready"));
@@ -405,8 +407,13 @@ void MainWindow::msgFromIndexer(QString msg)
     if (showMsgBox)
         s.remove("MBOX#");
     lblSearchStatus->setText(s);
-    if (showMsgBox)
-        QMessageBox::information(this,tr("QManga"),s);
+    if (showMsgBox) {
+        if (indexerMsgBox.isVisible())
+            indexerMsgBox.setText(indexerMsgBox.text()+"\n"+s);
+        else
+            indexerMsgBox.setText(s);
+        indexerMsgBox.exec();
+    }
 }
 
 void MainWindow::msgFromMangaView(QSize sz, qint64 fsz)
