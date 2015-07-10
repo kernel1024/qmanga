@@ -46,7 +46,7 @@ protected:
 
     ZExportDialog exportDialog;
 
-    QProgressDialog progressDlg;
+    QProgressDialog *progressDlg;
     bool exportStop;
 
     int scrollAccumulator;

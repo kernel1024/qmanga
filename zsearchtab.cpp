@@ -18,11 +18,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     cachedAlbums.clear();
 
-    progressDlg.setParent(this,Qt::Dialog);
-    progressDlg.setMinimum(0);
-    progressDlg.setMaximum(100);
-    progressDlg.setCancelButtonText(tr("Cancel"));
-    progressDlg.setLabelText(tr("Adding files"));
+    progressDlg = NULL;
 
     descTemplate = ui->srcDesc->toHtml();
     ui->srcDesc->clear();
@@ -56,9 +52,6 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcEdit->lineEdit(),SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
     connect(ui->srcEditBtn,SIGNAL(clicked()),this,SLOT(mangaSearch()));
     connect(ui->srcEdit,SIGNAL(activated(int)),this,SLOT(mangaSearch(int)));
-
-    connect(&progressDlg,SIGNAL(canceled()),
-            zg->db,SLOT(sqlCancelAdding()),Qt::QueuedConnection);
 
     connect(zg->db,SIGNAL(albumsListUpdated()),
             this,SLOT(dbAlbumsListUpdated()),Qt::QueuedConnection);
@@ -652,21 +645,28 @@ void ZSearchTab::dbNeedTableCreation()
 void ZSearchTab::dbShowProgressDialog(const bool visible, const QString& title)
 {
     if (visible) {
-        progressDlg.setWindowModality(Qt::WindowModal);
+        if (progressDlg==NULL) {
+            progressDlg = new QProgressDialog(tr("Adding files"),tr("Cancel"),0,100,this);
+            connect(progressDlg,SIGNAL(canceled()),
+                    zg->db,SLOT(sqlCancelAdding()),Qt::QueuedConnection);
+        }
+        progressDlg->setWindowModality(Qt::WindowModal);
         if (title.isEmpty())
-            progressDlg.setWindowTitle(tr("Adding files to index..."));
+            progressDlg->setWindowTitle(tr("Adding files to index..."));
         else
-            progressDlg.setWindowTitle(title);
-        progressDlg.setValue(0);
-        progressDlg.setLabelText(QString());
-        progressDlg.show();
+            progressDlg->setWindowTitle(title);
+        progressDlg->setValue(0);
+        progressDlg->setLabelText(QString());
+        progressDlg->show();
     } else {
-        progressDlg.hide();
+        progressDlg->hide();
     }
 }
 
 void ZSearchTab::dbShowProgressState(const int value, const QString &msg)
 {
-    progressDlg.setValue(value);
-    progressDlg.setLabelText(msg);
+    if (progressDlg!=NULL) {
+        progressDlg->setValue(value);
+        progressDlg->setLabelText(msg);
+    }
 }

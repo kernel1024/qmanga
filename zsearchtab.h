@@ -39,7 +39,7 @@ private:
     QStateMachine loadingState;
     QString descTemplate;
     QPointer<ZMangaModel> model;
-    QProgressDialog progressDlg;
+    QProgressDialog *progressDlg;
     QStringList cachedAlbums;
     Z::Ordering order;
     bool reverseOrder;

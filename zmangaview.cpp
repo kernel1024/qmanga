@@ -54,11 +54,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
     connect(this,SIGNAL(updateFileStats(QString)),
             zg->db,SLOT(sqlUpdateFileStats(QString)),Qt::QueuedConnection);
 
-    progressDlg.setParent(this,Qt::Dialog);
-    progressDlg.setMinimum(0);
-    progressDlg.setMaximum(100);
-    progressDlg.setCancelButtonText(tr("Cancel"));
-    progressDlg.setLabelText(tr("Adding files"));
+    progressDlg=NULL;
 
     int cnt = QThread::idealThreadCount()+1;
     if (cnt<2) cnt=2;
@@ -622,14 +618,16 @@ void ZMangaView::exportPagesCtx()
         int fnlen = QString::number(cnt).length();
 
         exportStop = false;
-        progressDlg.setWindowModality(Qt::WindowModal);
-        progressDlg.setWindowTitle(tr("Exporting pages..."));
-        progressDlg.setValue(0);
-        progressDlg.setLabelText(QString());
-        progressDlg.show();
+        if (progressDlg==NULL)
+            progressDlg = new QProgressDialog(this);
+        progressDlg->setWindowModality(Qt::WindowModal);
+        progressDlg->setWindowTitle(tr("Exporting pages..."));
+        progressDlg->setValue(0);
+        progressDlg->setLabelText(QString());
+        progressDlg->show();
 
         for (int i=0;i<cnt;i++) {
-            QString fname = dir.filePath(tr("%1.%2").arg(i,fnlen,10,QChar('0')).arg(fmt.toLower()));
+            QString fname = dir.filePath(tr("%1.%2").arg(i+1,fnlen,10,QChar('0')).arg(fmt.toLower()));
             QByteArray ba = zl->getPageSync(currentPage+i);
             if (ba.isEmpty()) continue;
 
@@ -643,14 +641,14 @@ void ZMangaView::exportPagesCtx()
                 break;
             }
 
-            if ((100*i/cnt)!=progressDlg.value())
-                progressDlg.setValue(100*i/cnt);
+            if ((100*i/cnt)!=progressDlg->value())
+                progressDlg->setValue(100*i/cnt);
 
             QApplication::processEvents();
             if (exportStop)
                 break;
         }
-        progressDlg.hide();
+        progressDlg->hide();
 
         QString msg = tr("Pages export completed.");
         if (exportStop)
