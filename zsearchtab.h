@@ -43,6 +43,7 @@ private:
     QStringList cachedAlbums;
     Z::Ordering order;
     bool reverseOrder;
+    ZMangaSearchHistoryModel* searchHistoryModel;
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(QString suggest,int toAddCount);
@@ -51,7 +52,6 @@ public slots:
     void albumClicked(QListWidgetItem * item);
 
     void mangaSearch();
-    void mangaSearch(int idx);
     void mangaSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
     void mangaOpen(const QModelIndex &index);
     void mangaAdd();

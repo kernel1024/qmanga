@@ -18,7 +18,7 @@ class ZDB : public QObject
 protected:
     QString dbBase, dbUser, dbPass;
     QStringList indexedDirs;
-    ZDynAlbums dynAlbums;
+    ZStrMap dynAlbums;
 
     bool wasCanceled;
 
@@ -32,7 +32,7 @@ public:
     explicit ZDB(QObject *parent = 0);
 
     int getAlbumsCount();
-    ZDynAlbums getDynAlbums();
+    ZStrMap getDynAlbums();
 
 signals:
     void errorMsg(const QString& msg);
@@ -51,7 +51,7 @@ signals:
 
 public slots:
     void setCredentials(const QString& base, const QString& user, const QString& password);
-    void setDynAlbums(const ZDynAlbums& albums);
+    void setDynAlbums(const ZStrMap &albums);
     void sqlCheckBase();
     void sqlCreateTables();
     void sqlDelEmptyAlbums();

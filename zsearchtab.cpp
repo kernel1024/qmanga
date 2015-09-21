@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QFileInfo>
+#include <QCompleter>
 
 #include "zsearchtab.h"
 #include "ui_zsearchtab.h"
@@ -28,6 +29,13 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     srclModeIcon = ui->srcModeIcon;
     srclModeList = ui->srcModeList;
 
+    QCompleter *completer = new QCompleter(this);
+    searchHistoryModel = new ZMangaSearchHistoryModel(completer);
+    completer->setModel(searchHistoryModel);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    completer->setFilterMode(Qt::MatchContains);
+    ui->srcEdit->setCompleter(completer);
+
     ui->srcIconSize->setMinimum(16);
     ui->srcIconSize->setMaximum(maxPreviewSize);
     ui->srcIconSize->setValue(128);
@@ -49,9 +57,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcModeIcon,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
     connect(ui->srcModeList,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
     connect(ui->srcIconSize,SIGNAL(valueChanged(int)),this,SLOT(iconSizeChanged(int)));
-    connect(ui->srcEdit->lineEdit(),SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
+    connect(ui->srcEdit,SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
     connect(ui->srcEditBtn,SIGNAL(clicked()),this,SLOT(mangaSearch()));
-    connect(ui->srcEdit,SIGNAL(activated(int)),this,SLOT(mangaSearch(int)));
 
     connect(zg->db,SIGNAL(albumsListUpdated()),
             this,SLOT(dbAlbumsListUpdated()),Qt::QueuedConnection);
@@ -372,25 +379,32 @@ QStringList ZSearchTab::getAlbums()
 
 void ZSearchTab::loadSearchItems(QSettings &settings)
 {
+    if (searchHistoryModel==NULL) return;
+
+    QStringList sl;
+
     int sz=settings.beginReadArray("search_text");
-    for (int i=0;i<sz;i++) {
-        settings.setArrayIndex(i);
-        QString s = settings.value("txt",QString()).toString();
-        if (!s.isEmpty())
-            ui->srcEdit->addItem(s);
+    if (sz>0) {
+        for (int i=0;i<sz;i++) {
+            settings.setArrayIndex(i);
+            QString s = settings.value("txt",QString()).toString();
+            if (!s.isEmpty())
+                sl << s;
+            settings.endArray();
+        }
+    } else {
+        settings.endArray();
+        sl = settings.value("search_history",QStringList()).value<QStringList>();
     }
-    settings.endArray();
-    ui->srcEdit->clearEditText();
+
+    searchHistoryModel->setHistoryItems(sl);
 }
 
 void ZSearchTab::saveSearchItems(QSettings &settings)
 {
-    settings.beginWriteArray("search_text");
-    for (int i=0;i<ui->srcEdit->count();i++) {
-        settings.setArrayIndex(i);
-        settings.setValue("txt",ui->srcEdit->itemText(i));
-    }
-    settings.endArray();
+    if (searchHistoryModel==NULL) return;
+
+    settings.setValue("search_history",QVariant::fromValue(searchHistoryModel->getHistoryItems()));
 }
 
 QSize ZSearchTab::gridSize(int ref)
@@ -436,19 +450,11 @@ void ZSearchTab::mangaSearch()
     if (model)
         model->deleteAllItems();
 
-    QString s = ui->srcEdit->currentText();
-    int idx=ui->srcEdit->findText(s);
-    if (idx>=0)
-        ui->srcEdit->removeItem(idx);
-    ui->srcEdit->insertItem(0,s);
-    ui->srcEdit->setCurrentIndex(0);
+    QString s = ui->srcEdit->text();
+
+    searchHistoryModel->appendHistoryItem(s);
 
     emit dbGetFiles(QString(),s,(int)order,reverseOrder);
-}
-
-void ZSearchTab::mangaSearch(int)
-{
-    mangaSearch();
 }
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)

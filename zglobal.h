@@ -10,7 +10,7 @@
 class ZMangaModel;
 class ZDB;
 
-typedef QMap<QString, QString> ZDynAlbums;
+typedef QMap<QString, QString> ZStrMap;
 
 class ZGlobal : public QObject
 {
@@ -28,7 +28,7 @@ public:
     explicit ZGlobal(QObject *parent = 0);
     ~ZGlobal();
 
-    QMap<QString, QString> bookmarks;
+    ZStrMap bookmarks;
 
     Z::ResizeFilter resizeFilter;
     Z::Ordering defaultOrdering;
@@ -63,7 +63,7 @@ signals:
     void dbCheckEmptyAlbums();
     void dbRescanIndexedDirs();
     void fsFilesAdded();
-    void dbSetDynAlbums(const ZDynAlbums& albums);
+    void dbSetDynAlbums(const ZStrMap& albums);
 
 };
 

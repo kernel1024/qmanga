@@ -37,4 +37,19 @@ public slots:
     void addItem(const SQLMangaEntry& file);
 };
 
+class ZMangaSearchHistoryModel : public QAbstractListModel {
+    Q_OBJECT
+private:
+    QStringList historyItems;
+public:
+    ZMangaSearchHistoryModel(QObject *parent = 0);
+    int rowCount(const QModelIndex &parent) const;
+    QVariant data(const QModelIndex &index, int role) const;
+    Qt::ItemFlags flags(const QModelIndex &index) const;
+
+    void setHistoryItems(const QStringList& items);
+    QStringList getHistoryItems() const;
+    void appendHistoryItem(const QString& item);
+};
+
 #endif // ZMANGAMODEL_H

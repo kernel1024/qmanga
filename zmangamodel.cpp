@@ -162,3 +162,62 @@ void ZMangaModel::addItem(const SQLMangaEntry &file)
     if (view->verticalScrollBar()!=NULL)
         view->verticalScrollBar()->setSingleStep(view->verticalScrollBar()->pageStep()/2);
 }
+
+ZMangaSearchHistoryModel::ZMangaSearchHistoryModel(QObject *parent)
+    : QAbstractListModel(parent)
+{
+
+}
+
+int ZMangaSearchHistoryModel::rowCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent);
+
+    return historyItems.count();
+}
+
+QVariant ZMangaSearchHistoryModel::data(const QModelIndex &index, int role) const
+{
+    int idx = index.row();
+
+    if (idx<0 || idx>=historyItems.count()) return QVariant();
+
+    if (role==Qt::DisplayRole || role==Qt::EditRole)
+        return historyItems.at(idx);
+
+    return QVariant();
+}
+
+Qt::ItemFlags ZMangaSearchHistoryModel::flags(const QModelIndex &index) const
+{
+    Q_UNUSED(index);
+
+    return (Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+}
+
+void ZMangaSearchHistoryModel::setHistoryItems(const QStringList &items)
+{
+    beginRemoveRows(QModelIndex(),0,historyItems.count()-1);
+    historyItems.clear();
+    endRemoveRows();
+
+    QStringList sl = items;
+    sl.removeDuplicates();
+    beginInsertRows(QModelIndex(),0,sl.count()-1);
+    historyItems.append(sl);
+    endInsertRows();
+}
+
+QStringList ZMangaSearchHistoryModel::getHistoryItems() const
+{
+    return historyItems;
+}
+
+void ZMangaSearchHistoryModel::appendHistoryItem(const QString &item)
+{
+    if (historyItems.contains(item)) return;
+
+    beginInsertRows(QModelIndex(),historyItems.count()-1,historyItems.count());
+    historyItems.append(item);
+    endInsertRows();
+}

@@ -30,7 +30,7 @@ int ZDB::getAlbumsCount()
     return cnt;
 }
 
-ZDynAlbums ZDB::getDynAlbums()
+ZStrMap ZDB::getDynAlbums()
 {
     return dynAlbums;
 }
@@ -42,7 +42,7 @@ void ZDB::setCredentials(const QString &base, const QString &user, const QString
     dbPass = password;
 }
 
-void ZDB::setDynAlbums(const ZDynAlbums &albums)
+void ZDB::setDynAlbums(const ZStrMap &albums)
 {
     dynAlbums.clear();
     dynAlbums = albums;

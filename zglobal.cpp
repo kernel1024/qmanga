@@ -38,7 +38,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     connect(this,SIGNAL(dbRescanIndexedDirs()),db,SLOT(sqlRescanIndexedDirs()),Qt::QueuedConnection);
     connect(db,SIGNAL(updateWatchDirList(QStringList)),
             this,SLOT(updateWatchDirList(QStringList)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbSetDynAlbums(ZDynAlbums)),db,SLOT(setDynAlbums(ZDynAlbums)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbSetDynAlbums(ZStrMap)),db,SLOT(setDynAlbums(ZStrMap)),Qt::QueuedConnection);
     db->moveToThread(threadDB);
     threadDB->start();
 
@@ -83,24 +83,34 @@ void ZGlobal::loadSettings()
         showMaximized = settings.value("maximized",false).toBool();
 
     int sz = settings.beginReadArray("bookmarks");
-    for (int i=0; i<sz; i++) {
-        settings.setArrayIndex(i);
-        QString t = settings.value("title").toString();
-        if (!t.isEmpty())
-            bookmarks[t]=settings.value("url").toString();
+    if (sz>0) {
+        for (int i=0; i<sz; i++) {
+            settings.setArrayIndex(i);
+            QString t = settings.value("title").toString();
+            if (!t.isEmpty())
+                bookmarks[t]=settings.value("url").toString();
+        }
+        settings.endArray();
+    } else {
+        settings.endArray();
+        bookmarks = settings.value("bookmarks").value<ZStrMap>();
     }
-    settings.endArray();
 
-    ZDynAlbums albums;
+    ZStrMap albums;
     albums.clear();
     sz = settings.beginReadArray("dynAlbums");
-    for (int i=0; i<sz; i++) {
-        settings.setArrayIndex(i);
-        QString t = settings.value("title").toString();
-        if (!t.isEmpty())
-            albums[t]=settings.value("query").toString();
+    if (sz>0) {
+        for (int i=0; i<sz; i++) {
+            settings.setArrayIndex(i);
+            QString t = settings.value("title").toString();
+            if (!t.isEmpty())
+                albums[t]=settings.value("query").toString();
+        }
+        settings.endArray();
+    } else {
+        settings.endArray();
+        albums = settings.value("dynAlbums").value<ZStrMap>();
     }
-    settings.endArray();
     emit dbSetDynAlbums(albums);
 
     if (w!=NULL) {
@@ -138,6 +148,7 @@ void ZGlobal::saveSettings()
 {
     QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
+    settings.remove("");
     settings.setValue("cacheWidth",cacheWidth);
     settings.setValue("resizeFilter",(int)resizeFilter);
     settings.setValue("mysqlUser",dbUser);
@@ -165,26 +176,8 @@ void ZGlobal::saveSettings()
         w->searchTab->saveSearchItems(settings);
     }
 
-    settings.beginWriteArray("bookmarks");
-    int i=0;
-    foreach (const QString &t, bookmarks.keys()) {
-        settings.setArrayIndex(i);
-        settings.setValue("title",t);
-        settings.setValue("url",bookmarks.value(t));
-        i++;
-    }
-    settings.endArray();
-
-    ZDynAlbums albums = db->getDynAlbums();
-    settings.beginWriteArray("dynAlbums");
-    i=0;
-    foreach (const QString &t, albums.keys()) {
-        settings.setArrayIndex(i);
-        settings.setValue("title",t);
-        settings.setValue("query",albums.value(t));
-        i++;
-    }
-    settings.endArray();
+    settings.setValue("bookmarks",QVariant::fromValue(bookmarks));
+    settings.setValue("dynAlbums",QVariant::fromValue(db->getDynAlbums()));
 
     settings.endGroup();
 
@@ -295,7 +288,7 @@ void ZGlobal::settingsDlg()
         li->setData(Qt::UserRole+1,bookmarks.value(t));
         dlg->listBookmarks->addItem(li);
     }
-    ZDynAlbums albums = db->getDynAlbums();
+    ZStrMap albums = db->getDynAlbums();
     foreach (const QString &title, albums.keys()) {
         QString query = albums.value(title);
         QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg(title).arg(query));

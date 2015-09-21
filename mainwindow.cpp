@@ -381,7 +381,10 @@ void MainWindow::openBookmark()
         if (!okconv) page = 0;
     }
     QFileInfo fi(f);
-    if (!fi.isReadable()) return;
+    if (!fi.isReadable()) {
+        QMessageBox::warning(this,tr("QManga"),tr("Unable to open file %1").arg(f));
+        return;
+    }
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(f,page);
