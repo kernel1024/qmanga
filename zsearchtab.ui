@@ -55,7 +55,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QListView" name="srcList">
+        <widget class="ZMangaListView" name="srcList">
          <property name="dragDropMode">
           <enum>QAbstractItemView::NoDragDrop</enum>
          </property>
@@ -273,6 +273,13 @@ p, li { white-space: pre-wrap; }
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ZMangaListView</class>
+   <extends>QListView</extends>
+   <header location="global">zmangamodel.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>srcAlbums</tabstop>
   <tabstop>srcEdit</tabstop>

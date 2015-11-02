@@ -128,6 +128,9 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     ZMangaModel* aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcList);
     ui->srcList->setModel(aModel);
+    ui->srcList->setItemDelegate(new ZMangaListItemDelegate(this,ui->srcList,aModel));
+    ui->srcList->header->setSectionResizeMode(0,QHeaderView::Stretch);
+
     connect(ui->srcList->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
 
