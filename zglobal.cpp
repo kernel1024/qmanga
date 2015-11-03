@@ -1,4 +1,5 @@
 #include <QDesktopWidget>
+#include <QListView>
 #include <QApplication>
 
 #include "global.h"
@@ -82,43 +83,15 @@ void ZGlobal::loadSettings()
     if (w!=NULL)
         showMaximized = settings.value("maximized",false).toBool();
 
-    int sz = settings.beginReadArray("bookmarks");
-    if (sz>0) {
-        for (int i=0; i<sz; i++) {
-            settings.setArrayIndex(i);
-            QString t = settings.value("title").toString();
-            if (!t.isEmpty())
-                bookmarks[t]=settings.value("url").toString();
-        }
-        settings.endArray();
-    } else {
-        settings.endArray();
-        bookmarks = settings.value("bookmarks").value<ZStrMap>();
-    }
-
-    ZStrMap albums;
-    albums.clear();
-    sz = settings.beginReadArray("dynAlbums");
-    if (sz>0) {
-        for (int i=0; i<sz; i++) {
-            settings.setArrayIndex(i);
-            QString t = settings.value("title").toString();
-            if (!t.isEmpty())
-                albums[t]=settings.value("query").toString();
-        }
-        settings.endArray();
-    } else {
-        settings.endArray();
-        albums = settings.value("dynAlbums").value<ZStrMap>();
-    }
+    bookmarks = settings.value("bookmarks").value<ZStrMap>();
+    ZStrMap albums = settings.value("dynAlbums").value<ZStrMap>();
     emit dbSetDynAlbums(albums);
 
     if (w!=NULL) {
+        QListView::ViewMode m = QListView::IconMode;
         if (settings.value("listMode",false).toBool())
-            w->searchTab->srclModeList->setChecked(true);
-        else
-            w->searchTab->srclModeIcon->setChecked(true);
-        w->searchTab->srclIconSize->setValue(settings.value("iconSize",128).toInt());
+            m = QListView::ListMode;
+        w->searchTab->setListViewOptions(m, settings.value("iconSize",128).toInt());
 
         w->searchTab->loadSearchItems(settings);
     }
@@ -170,8 +143,8 @@ void ZGlobal::saveSettings()
     if (w!=NULL) {
         settings.setValue("maximized",w->isMaximized());
 
-        settings.setValue("listMode",w->searchTab->srclModeList->isChecked());
-        settings.setValue("iconSize",w->searchTab->srclIconSize->value());
+        settings.setValue("listMode",w->searchTab->getListViewMode()==QListView::ListMode);
+        settings.setValue("iconSize",w->searchTab->getIconSize());
 
         w->searchTab->saveSearchItems(settings);
     }

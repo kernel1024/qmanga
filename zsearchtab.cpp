@@ -25,10 +25,6 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcDesc->clear();
     ui->srcLoading->hide();
 
-    srclIconSize = ui->srcIconSize;
-    srclModeIcon = ui->srcModeIcon;
-    srclModeList = ui->srcModeList;
-
     QCompleter *completer = new QCompleter(this);
     searchHistoryModel = new ZMangaSearchHistoryModel(completer);
     completer->setModel(searchHistoryModel);
@@ -396,6 +392,23 @@ QStringList ZSearchTab::getAlbums()
     return cachedAlbums;
 }
 
+void ZSearchTab::setListViewOptions(const QListView::ViewMode mode, const int iconSize)
+{
+    ui->srcModeList->setChecked(mode==QListView::ListMode);
+    ui->srcModeIcon->setChecked(mode==QListView::IconMode);
+    ui->srcIconSize->setValue(iconSize);
+}
+
+int ZSearchTab::getIconSize() const
+{
+    return ui->srcIconSize->value();
+}
+
+QListView::ViewMode ZSearchTab::getListViewMode() const
+{
+    return ui->srcList->viewMode();
+}
+
 void ZSearchTab::loadSearchItems(QSettings &settings)
 {
     if (searchHistoryModel==NULL) return;
@@ -617,10 +630,12 @@ void ZSearchTab::imagesAddDir()
 void ZSearchTab::listModeChanged(bool)
 {
     if (ui->srcModeIcon->isChecked()) {
+        ui->srcList->setWordWrap(true);
         ui->srcList->setViewMode(QListView::IconMode);
         ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     } else {
-        ui->srcList->setViewMode(QListView::ListMode);
+        ui->srcList->setWordWrap(false);                // QTBUG-11227 (incorrect rect height in view
+        ui->srcList->setViewMode(QListView::ListMode);  // item delegate when wordWrap enabled)
         ui->srcList->setGridSize(gridSize(0));
     }
 }

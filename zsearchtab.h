@@ -21,16 +21,15 @@ class ZSearchTab : public QWidget
     Q_OBJECT
     
 public:
-    QSlider* srclIconSize;
-    QRadioButton* srclModeIcon;
-    QRadioButton* srclModeList;
-
     explicit ZSearchTab(QWidget *parent = 0);
     ~ZSearchTab();
 
     void updateAlbumsList();
     void applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI = false);
     QStringList getAlbums();
+    void setListViewOptions(const QListView::ViewMode mode, const int iconSize);
+    int getIconSize() const;
+    QListView::ViewMode getListViewMode() const;
 
     void loadSearchItems(QSettings &settings);
     void saveSearchItems(QSettings &settings);
