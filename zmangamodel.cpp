@@ -7,7 +7,7 @@
 
 #include "zmangamodel.h"
 
-ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QListView *aView) :
+ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, ZMangaListView *aView) :
     QAbstractListModel(parent)
 {
     pixmapSize = aPixmapSize;
@@ -79,10 +79,11 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
             col = columnOverride;
         switch (col) {
             case 0: return t.name;
-            case 1: return QString("%1").arg(t.pagesCount);
-            case 2: return formatSize(t.fileSize);
-            case 3: return t.addingDT.toString("yyyy-MM-dd");
-            case 4: return t.fileDT.toString("yyyy-MM-dd");
+            case 1: return t.album;
+            case 2: return QString("%1").arg(t.pagesCount);
+            case 3: return formatSize(t.fileSize);
+            case 4: return t.addingDT.toString("yyyy-MM-dd");
+            case 5: return t.fileDT.toString("yyyy-MM-dd");
             default: return QVariant();
         }
         return QVariant();
@@ -110,23 +111,19 @@ int ZMangaModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
 
-    return 5;
+    return 6;
 }
 
 QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     Q_UNUSED(orientation)
 
-    if (role == Qt::DisplayRole) {
-        switch (section) {
-            case 0: return tr("Name");
-            case 1: return tr("Pages");
-            case 2: return tr("Size");
-            case 3: return tr("Added");
-            case 4: return tr("Created");
-            default: return QVariant();
-        }
-        return QVariant();
+    if (role == Qt::DisplayRole && section>=0 && section<Z::maxOrdering) {
+        Z::Ordering s = (Z::Ordering)section;
+        if (Z::headerColumns.contains(s))
+            return Z::headerColumns.value(s);
+        else
+            return QVariant();
     }
     return QVariant();
 }
@@ -168,14 +165,17 @@ void ZMangaModel::deleteItems(const QIntList &dbids)
     }
 }
 
-void ZMangaModel::addItem(const SQLMangaEntry &file)
+void ZMangaModel::addItem(const SQLMangaEntry &file, const Z::Ordering sortOrder, const bool reverseOrder)
 {
     int posidx = mList.count();
     beginInsertRows(QModelIndex(),posidx,posidx);
     mList.append(file);
     endInsertRows();
+
     if (view->verticalScrollBar()!=NULL)
         view->verticalScrollBar()->setSingleStep(view->verticalScrollBar()->pageStep()/2);
+
+    view->updateHeaderView(sortOrder, reverseOrder);
 }
 
 ZMangaSearchHistoryModel::ZMangaSearchHistoryModel(QObject *parent)
@@ -259,7 +259,7 @@ void ZMangaListItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem
         QRect srctr = opt.rect;
         QString text = opt.text;
         opt.text.clear();
-        // draw background for entire row, overpaint later with text from additional columns
+        // draw background for entire row, overpaint later with text from columns
         style->drawControl( QStyle::CE_ItemViewItem, &opt, painter, view );
 
         opt.text = text;
@@ -334,9 +334,16 @@ ZMangaListView::ZMangaListView(QWidget *parent)
     QFontMetrics fm(QApplication::font());
     headerHeight = 6*fm.height()/5;
     header = new QHeaderView(Qt::Horizontal, this);
+    header->setSortIndicatorShown(true);
+    header->setSectionsClickable(true);
     header->hide();
 
-    connect(header, SIGNAL(sectionResized(int,int,int)), this, SLOT(updateWidths(int,int,int)));
+    connect(header, &QHeaderView::sectionResized, [this](int, int, int){
+        ZMangaModel* m = qobject_cast<ZMangaModel *>(model());
+        if (m!=NULL)
+            for (int i=0;i<m->rowCount();i++)
+                update(m->index(i));
+    });
 }
 
 ZMangaListView::~ZMangaListView()
@@ -349,7 +356,6 @@ void ZMangaListView::setModel(QAbstractItemModel *model)
 {
     QListView::setModel(model);
     header->setModel(model);
-
 }
 
 void ZMangaListView::setViewMode(QListView::ViewMode mode)
@@ -362,15 +368,9 @@ void ZMangaListView::setViewMode(QListView::ViewMode mode)
         setViewportMargins(0,0,0,0);
 }
 
-void ZMangaListView::updateWidths(int logicalIndex, int oldSize, int newSize)
+void ZMangaListView::updateHeaderView(const Z::Ordering sortOrder, const bool reverseOrder)
 {
-    Q_UNUSED(logicalIndex)
-    Q_UNUSED(oldSize)
-    Q_UNUSED(newSize)
-
-    ZMangaModel* m = qobject_cast<ZMangaModel *>(model());
-    if (m==NULL) return;
-
-    for (int i=0;i<m->rowCount();i++)
-        update(m->index(i));
+    if (((int)sortOrder!=header->sortIndicatorSection()) ||
+            ((int)reverseOrder!=(int)header->sortIndicatorOrder()))
+        header->setSortIndicator((int)sortOrder,(Qt::SortOrder)reverseOrder);
 }

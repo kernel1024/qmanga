@@ -46,15 +46,47 @@ enum ResizeFilter {
 };
 
 enum Ordering {
-    Unordered = 0,
-    FileName = 1,
-    FileDate = 2,
-    AddingDate = 3,
-    Album = 4,
-    PagesCount = 5
+    Name = 0,
+    Album = 1,
+    PagesCount = 2,
+    FileSize = 3,
+    AddingDate = 4,
+    CreationFileDate = 5,
+};
+
+static const int maxOrdering = 6;
+
+static const QHash<Ordering,QString> headerColumns = {
+    {Name, "Name"},
+    {Album, "Album"},
+    {PagesCount, "Pages"},
+    {FileSize, "Size"},
+    {AddingDate, "Added"},
+    {CreationFileDate, "Created"}
+};
+
+static const QHash<Ordering,QString> sqlColumns = {
+    {Name, "files.name"},
+    {Album, "albums.name"},
+    {PagesCount, "pagesCount"},
+    {FileSize, "fileSize"},
+    {AddingDate, "addingDT"},
+    {CreationFileDate, "fileDT"}
+};
+
+static const QHash<Ordering,QString> sortMenu = {
+    {Name, "By name"},
+    {Album, "By album"},
+    {PagesCount, "By pages count"},
+    {FileSize, "By file size"},
+    {AddingDate, "By adding date"},
+    {CreationFileDate, "By file creation date"}
 };
 
 }
+
+Q_DECLARE_METATYPE(Z::ResizeFilter)
+Q_DECLARE_METATYPE(Z::Ordering)
 
 class SQLMangaEntry {
 public:

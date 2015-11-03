@@ -85,8 +85,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
             zg->db,SLOT(sqlDelFiles(QIntList,bool)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbGetAlbums()),
             zg->db,SLOT(sqlGetAlbums()),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbGetFiles(QString,QString,int,bool)),
-            zg->db,SLOT(sqlGetFiles(QString,QString,int,bool)),Qt::QueuedConnection);
+    connect(this,SIGNAL(dbGetFiles(QString,QString,Z::Ordering,bool)),
+            zg->db,SLOT(sqlGetFiles(QString,QString,Z::Ordering,bool)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbRenameAlbum(QString,QString)),
             zg->db,SLOT(sqlRenameAlbum(QString,QString)),Qt::QueuedConnection);
     connect(this,SIGNAL(dbCreateTables()),
@@ -94,19 +94,26 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,SIGNAL(dbDeleteAlbum(QString)),
             zg->db,SLOT(sqlDelAlbum(QString)),Qt::QueuedConnection);
 
+    sortActions.clear();
     order = zg->defaultOrdering;
     reverseOrder = false;
-    connect(ui->actionSortByName,SIGNAL(triggered()),this,SLOT(ctxSorting()));
-    connect(ui->actionSortByAlbum,SIGNAL(triggered()),this,SLOT(ctxSorting()));
-    connect(ui->actionSortByPageCount,SIGNAL(triggered()),this,SLOT(ctxSorting()));
-    connect(ui->actionSortByAdded,SIGNAL(triggered()),this,SLOT(ctxSorting()));
-    connect(ui->actionSortByCreation,SIGNAL(triggered()),this,SLOT(ctxSorting()));
-    connect(ui->actionSortReverse,SIGNAL(triggered()),this,SLOT(ctxSorting()));
+    for (int i=0;i<=Z::maxOrdering;i++) {
+        QAction* ac;
+        if (i<Z::maxOrdering)
+            ac = new QAction(Z::sortMenu.value((Z::Ordering)i),this);
+        else
+            ac = new QAction(tr("Reverse order"),this);
+        ac->setCheckable(true);
+        ac->setChecked(false);
+        connect(ac, &QAction::triggered, this, &ZSearchTab::ctxSorting);
+        ac->setData(i);
+        sortActions << ac;
+    }
     ctxSorting();
 
     QState* sLoaded = new QState(); QState* sLoading = new QState();
     sLoading->addTransition(zg->db,SIGNAL(filesLoaded(int,int)),sLoaded);
-    sLoaded->addTransition(this,SIGNAL(dbGetFiles(QString,QString,int,bool)),sLoading);
+    sLoaded->addTransition(this,SIGNAL(dbGetFiles(QString,QString,Z::Ordering,bool)),sLoading);
     sLoading->assignProperty(ui->srcAddBtn,"enabled",false);
     sLoading->assignProperty(ui->srcAddDirBtn,"enabled",false);
     sLoading->assignProperty(ui->srcDelBtn,"enabled",false);
@@ -130,12 +137,14 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcList->setModel(aModel);
     ui->srcList->setItemDelegate(new ZMangaListItemDelegate(this,ui->srcList,aModel));
     ui->srcList->header->setSectionResizeMode(0,QHeaderView::Stretch);
+    connect(ui->srcList->header, SIGNAL(sectionClicked(int)),
+            this, SLOT(headerClicked(int)));
 
     connect(ui->srcList->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
 
-    connect(zg->db,SIGNAL(gotFile(SQLMangaEntry)),
-            aModel,SLOT(addItem(SQLMangaEntry)),Qt::QueuedConnection);
+    connect(zg->db,SIGNAL(gotFile(SQLMangaEntry,Z::Ordering,bool)),
+            aModel,SLOT(addItem(SQLMangaEntry,Z::Ordering,bool)));
     connect(zg->db,SIGNAL(deleteItemsFromModel(QIntList)),
             aModel,SLOT(deleteItems(QIntList)),Qt::QueuedConnection);
     model = aModel;
@@ -159,18 +168,29 @@ void ZSearchTab::updateSplitters()
     ui->splitter->setSizes(widths);
 }
 
+void ZSearchTab::headerClicked(int logicalIndex)
+{
+    int s = (int)order;
+    bool r = reverseOrder;
+
+    if (s==logicalIndex)
+        r = !r;
+    else if (logicalIndex>=0 && logicalIndex<Z::maxOrdering)
+        s = logicalIndex;
+
+    applyOrder((Z::Ordering)s,r,true);
+}
+
 void ZSearchTab::ctxMenu(QPoint pos)
 {
     QMenu cm(ui->srcList);
     QMenu* smenu = cm.addMenu(QIcon::fromTheme("view-sort-ascending"),tr("Sort"));
 
-    smenu->addAction(ui->actionSortByName);
-    smenu->addAction(ui->actionSortByAlbum);
-    smenu->addAction(ui->actionSortByPageCount);
-    smenu->addAction(ui->actionSortByAdded);
-    smenu->addAction(ui->actionSortByCreation);
-    smenu->addSeparator();
-    smenu->addAction(ui->actionSortReverse);
+    for (int i=0;i<sortActions.count();i++) {
+        if (i==(sortActions.count()-1))
+            smenu->addSeparator();
+        smenu->addAction(sortActions.at(i));
+    }
     cm.addSeparator();
 
     QAction* acm;
@@ -230,17 +250,11 @@ void ZSearchTab::ctxSorting()
     Z::Ordering a = order;
     bool r = reverseOrder;
     if (am!=NULL) {
-        if (am->text()==ui->actionSortByName->text())
-            a = Z::FileName;
-        else if (am->text()==ui->actionSortByAlbum->text())
-            a = Z::Album;
-        else if (am->text()==ui->actionSortByPageCount->text())
-            a = Z::PagesCount;
-        else if (am->text()==ui->actionSortByAdded->text())
-            a = Z::AddingDate;
-        else if (am->text()==ui->actionSortByCreation->text())
-            a = Z::FileDate;
-        else if (am->text()==ui->actionSortReverse->text())
+        bool ok;
+        int s = am->data().toInt(&ok);
+        if (ok && s>=0 && s<Z::maxOrdering)
+            a = (Z::Ordering)s;
+        else if (ok && s==Z::maxOrdering)
             r = !r;
     }
     applyOrder(a,r,true);
@@ -362,12 +376,14 @@ void ZSearchTab::applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateG
 {
     order = aOrder;
     reverseOrder = aReverseOrder;
-    ui->actionSortByName->setChecked(order==Z::FileName);
-    ui->actionSortByAlbum->setChecked(order==Z::Album);
-    ui->actionSortByPageCount->setChecked(order==Z::PagesCount);
-    ui->actionSortByAdded->setChecked(order==Z::AddingDate);
-    ui->actionSortByCreation->setChecked(order==Z::FileDate);
-    ui->actionSortReverse->setChecked(reverseOrder);
+    for (int i=0;i<sortActions.count();i++) {
+        bool ok;
+        int s = sortActions.at(i)->data().toInt(&ok);
+        if (ok && s>=0 && s<Z::maxOrdering)
+            sortActions[i]->setChecked(((Z::Ordering)s)==order);
+        else if (ok && s==Z::maxOrdering)
+            sortActions[i]->setChecked(reverseOrder);
+    }
 
     if (updateGUI)
         albumClicked(ui->srcAlbums->currentItem());
@@ -441,7 +457,7 @@ void ZSearchTab::albumClicked(QListWidgetItem *item)
 
     if (model)
         model->deleteAllItems();
-    emit dbGetFiles(item->text(),QString(),(int)order,reverseOrder);
+    emit dbGetFiles(item->text(),QString(),order,reverseOrder);
 }
 
 void ZSearchTab::mangaSearch()
@@ -457,7 +473,7 @@ void ZSearchTab::mangaSearch()
 
     searchHistoryModel->appendHistoryItem(s);
 
-    emit dbGetFiles(QString(),s,(int)order,reverseOrder);
+    emit dbGetFiles(QString(),s,order,reverseOrder);
 }
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)

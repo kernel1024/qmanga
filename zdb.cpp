@@ -182,11 +182,11 @@ void ZDB::sqlGetAlbums()
     emit gotAlbums(result);
 }
 
-void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sortOrder, const bool reverseOrder)
+void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Ordering sortOrder,
+                      const bool reverseOrder)
 {
     MYSQL* db = sqlOpenBase();
     if (db==NULL) return;
-    Z::Ordering order = (Z::Ordering)sortOrder;
 
     QTime tmr;
     tmr.start();
@@ -206,13 +206,9 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
     } else if (!search.isEmpty()){
         tqr += QString("WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
     }
-    if (order!=Z::Unordered && !specQuery) {
+    if (!specQuery) {
         tqr+="ORDER BY ";
-        if (order==Z::FileDate) tqr+="fileDT";
-        else if (order==Z::AddingDate) tqr+="addingDT";
-        else if (order==Z::Album) tqr+="albums.name";
-        else if (order==Z::PagesCount) tqr+="pagesCount";
-        else tqr+="files.name";
+        tqr+=Z::sqlColumns.value(sortOrder);
         if (reverseOrder) tqr+=" DESC";
         else tqr+=" ASC";
     }
@@ -239,7 +235,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const int sor
                                        QString::fromUtf8(row[5]),
                                        QDateTime::fromString(QString::fromUtf8(row[6]),"yyyy-MM-dd H:mm:ss"),
                                        QDateTime::fromString(QString::fromUtf8(row[7]),"yyyy-MM-dd H:mm:ss"),
-                                       QString::fromUtf8(row[8]).toInt()));
+                                       QString::fromUtf8(row[8]).toInt()), sortOrder, reverseOrder);
             QApplication::processEvents();
             idx++;
         }

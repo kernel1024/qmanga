@@ -10,17 +10,19 @@
 #include "zglobal.h"
 #include "zdb.h"
 
+class ZMangaListView;
+
 class ZMangaModel : public QAbstractListModel
 {
     Q_OBJECT
 private:
     QSlider *pixmapSize;
-    QListView *view;
+    ZMangaListView *view;
 
     SQLMangaList mList;
 
 public:
-    explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, QListView *aView);
+    explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, ZMangaListView *aView);
     ~ZMangaModel();
 
     Qt::ItemFlags flags(const QModelIndex & index) const;
@@ -37,27 +39,22 @@ public:
 public slots:
     void deleteAllItems();
     void deleteItems(const QIntList& dbids);
-    void addItem(const SQLMangaEntry& file);
+    void addItem(const SQLMangaEntry& file, const Z::Ordering sortOrder, const bool reverseOrder);
 };
 
 class ZMangaListView : public QListView {
     Q_OBJECT
 protected:
     void resizeEvent(QResizeEvent *e);
-
+private:
+    int headerHeight;
 public:
     QHeaderView* header;
-
     ZMangaListView(QWidget *parent = 0);
     ~ZMangaListView();
     void setModel(QAbstractItemModel *model);
     void setViewMode(ViewMode mode);
-
-private:
-    int headerHeight;
-
-public slots:
-    void updateWidths(int logicalIndex, int oldSize, int newSize);
+    void updateHeaderView(const Z::Ordering sortOrder, const bool reverseOrder);
 };
 
 class ZMangaListItemDelegate : public QStyledItemDelegate {

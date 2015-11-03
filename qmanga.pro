@@ -4,12 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += core gui dbus
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui dbus widgets
 
 TARGET = qmanga
 TEMPLATE = app
-
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -65,7 +63,7 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig
+CONFIG += warn_on link_pkgconfig c++11
 
 exists( /usr/include/magic.h ) {
     LIBS += -lmagic

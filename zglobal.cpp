@@ -20,7 +20,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     cachePixmaps = false;
     useFineRendering = true;
     ocrEditor = NULL;
-    defaultOrdering = Z::FileName;
+    defaultOrdering = Z::Name;
     scrollDelta = 120;
 
     filesystemWatcher = false;
@@ -70,7 +70,7 @@ void ZGlobal::loadSettings()
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
     useFineRendering = settings.value("fineRendering",true).toBool();
     filesystemWatcher = settings.value("filesystemWatcher",false).toBool();
-    defaultOrdering = (Z::Ordering)settings.value("defaultOrdering",Z::FileName).toInt();
+    defaultOrdering = (Z::Ordering)settings.value("defaultOrdering",Z::Name).toInt();
     if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
         idxFont = QApplication::font("QListView");
     if (!backgroundColor.isValid())

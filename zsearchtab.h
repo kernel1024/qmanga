@@ -43,6 +43,7 @@ private:
     QStringList cachedAlbums;
     Z::Ordering order;
     bool reverseOrder;
+    QList<QPointer<QAction> > sortActions;
     ZMangaSearchHistoryModel* searchHistoryModel;
 
     QSize gridSize(int ref);
@@ -62,6 +63,8 @@ public slots:
     void listModeChanged(bool state);
     void iconSizeChanged(int ref);
     void updateSplitters();
+
+    void headerClicked(int logicalIndex);
 
     void ctxMenu(QPoint pos);
     void ctxAlbumMenu(QPoint pos);
@@ -87,7 +90,7 @@ signals:
     void dbGetAlbums();
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
-    void dbGetFiles(const QString& album, const QString& search, const int order, const bool reverseOrder);
+    void dbGetFiles(const QString& album, const QString& search, const Z::Ordering order, const bool reverseOrder);
     void dbDelFiles(const QIntList& dbids, const bool fullDelete);
     void dbDeleteAlbum(const QString& album);
 };
