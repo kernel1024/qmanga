@@ -33,8 +33,8 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
     void setPixmapSize(QSlider *aPixmapSize);
-    int getItemsCount();
-    SQLMangaEntry getItem(int idx);
+    int getItemsCount() const;
+    SQLMangaEntry getItem(int idx) const;
 
 public slots:
     void deleteAllItems();

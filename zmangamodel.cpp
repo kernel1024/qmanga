@@ -133,12 +133,12 @@ void ZMangaModel::setPixmapSize(QSlider* aPixmapSize)
     pixmapSize = aPixmapSize;
 }
 
-int ZMangaModel::getItemsCount()
+int ZMangaModel::getItemsCount() const
 {
     return mList.count();
 }
 
-SQLMangaEntry ZMangaModel::getItem(int idx)
+SQLMangaEntry ZMangaModel::getItem(int idx) const
 {
     if (idx<0 || idx>=mList.count())
         return SQLMangaEntry();
@@ -282,6 +282,8 @@ void ZMangaListItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem
 
         for (int i=1;i<model->columnCount(QModelIndex());i++) {
 
+            if (view->header->isSectionHidden(i)) continue;
+
             QRect tr = srctr;
             tr.setWidth(view->header->sectionSize(i));
             tr.translate(widthAcc,0);
@@ -373,4 +375,20 @@ void ZMangaListView::updateHeaderView(const Z::Ordering sortOrder, const bool re
     if (((int)sortOrder!=header->sortIndicatorSection()) ||
             ((int)reverseOrder!=(int)header->sortIndicatorOrder()))
         header->setSortIndicator((int)sortOrder,(Qt::SortOrder)reverseOrder);
+
+    // Hide album column when all items from one album
+    ZMangaModel* m = qobject_cast<ZMangaModel *>(model());
+    if (m!=NULL && m->rowCount()>0) {
+        bool oneAlbum = true;
+        QString a = m->getItem(0).album;
+        for (int i=1;i<m->rowCount();i++)
+            if (m->getItem(i).album!=a) {
+                oneAlbum = false;
+                break;
+            }
+        if (oneAlbum && !header->isSectionHidden(Z::Album))
+            header->hideSection(Z::Album);
+        else if (!oneAlbum && header->isSectionHidden(Z::Album))
+            header->showSection(Z::Album);
+    }
 }
