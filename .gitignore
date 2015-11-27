@@ -30,3 +30,4 @@ Release/
 qmanga
 qmanga_*.pro
 auxtranslator_interface.*
+dictionary_interface.*

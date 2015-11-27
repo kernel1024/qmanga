@@ -61,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionFullscreen,SIGNAL(triggered()),this,SLOT(switchFullscreen()));
     connect(ui->actionMinimize,SIGNAL(triggered()),this,SLOT(showMinimized()));
     connect(ui->actionSaveSettings,SIGNAL(triggered()),zg,SLOT(saveSettings()));
+    connect(ui->actionShowOCR,SIGNAL(triggered()),zg->ocrEditor,SLOT(show()));
 
     connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
     connect(ui->mangaView,SIGNAL(loadedPage(int,QString)),this,SLOT(dispPage(int,QString)));

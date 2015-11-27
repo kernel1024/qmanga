@@ -1,0 +1,14 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.qjrad.dictionary">
+    <signal name="gotWordTranslation">
+      <arg name="html" type="s" direction="out"/>
+    </signal>
+    <method name="findWordTranslation">
+      <arg name="text" type="s" direction="in"/>
+    </method>
+    <method name="showDictionaryWindow">
+      <arg name="text" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>

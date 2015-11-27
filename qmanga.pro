@@ -71,6 +71,12 @@ exists( /usr/include/magic.h ) {
     error("Dependency error: libmagic not found.")
 }
 
+exists( /usr/include/X11/Xlib.h ) {
+    LIBS += -lX11
+} else {
+    error("libX11 not found.")
+}
+
 packagesExist(zziplib) {
     PKGCONFIG += zziplib
 } else {
@@ -125,10 +131,14 @@ QMAKE_CXXFLAGS += $$MYSQL_CXX
 LIBS += $$MYSQL_LIBS
 INCLUDEPATH += $$MYSQL_INC
 
-OTHER_FILES += \
-    org.jpreader.auxtranslator.xml
+include( miniqxt/miniqxt.pri )
 
-DBUS_INTERFACES = org.jpreader.auxtranslator.xml
+OTHER_FILES += \
+    org.jpreader.auxtranslator.xml \
+    org.qjrad.dictionary.xml
+
+DBUS_INTERFACES = org.jpreader.auxtranslator.xml \
+    org.qjrad.dictionary.xml
 
 # Workaround for _FORTIFY_SOURCE and required -O level
 debug {

@@ -115,8 +115,7 @@
              </property>
              <property name="icon">
               <iconset theme="document-open">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -146,8 +145,7 @@
              </property>
              <property name="icon">
               <iconset theme="go-first">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -170,8 +168,7 @@
              </property>
              <property name="icon">
               <iconset theme="go-previous">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -194,8 +191,7 @@
              </property>
              <property name="icon">
               <iconset theme="go-next">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -218,8 +214,7 @@
              </property>
              <property name="icon">
               <iconset theme="go-last">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -249,8 +244,7 @@
              </property>
              <property name="icon">
               <iconset theme="object-rotate-left">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -267,8 +261,7 @@
              </property>
              <property name="icon">
               <iconset theme="object-rotate-right">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -352,8 +345,7 @@
              </property>
              <property name="icon">
               <iconset theme="zoom-fit-best">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -376,8 +368,7 @@
              </property>
              <property name="icon">
               <iconset theme="zoom-fit-width">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -400,8 +391,7 @@
              </property>
              <property name="icon">
               <iconset theme="zoom-fit-height">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -424,8 +414,7 @@
              </property>
              <property name="icon">
               <iconset theme="zoom-original">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -455,8 +444,7 @@
              </property>
              <property name="icon">
               <iconset theme="zoom-draw">
-               <normaloff/>
-              </iconset>
+               <normaloff>.</normaloff>.</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -610,8 +598,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>758</width>
-             <height>470</height>
+             <width>757</width>
+             <height>469</height>
             </rect>
            </property>
            <property name="focusPolicy">
@@ -792,7 +780,7 @@
      <x>0</x>
      <y>0</y>
      <width>797</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -828,6 +816,8 @@
     <addaction name="actionFullscreen"/>
     <addaction name="separator"/>
     <addaction name="actionMinimize"/>
+    <addaction name="separator"/>
+    <addaction name="actionShowOCR"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuBookmarks"/>
@@ -838,8 +828,7 @@
   <action name="actionOpen">
    <property name="icon">
     <iconset theme="document-open">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -854,8 +843,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset theme="application-exit">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Exit</string>
@@ -870,8 +858,7 @@
   <action name="actionClose">
    <property name="icon">
     <iconset theme="document-close">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Close</string>
@@ -886,8 +873,7 @@
   <action name="actionSettings">
    <property name="icon">
     <iconset theme="configure">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Settings...</string>
@@ -921,8 +907,7 @@
    </property>
    <property name="icon">
     <iconset theme="view-fullscreen">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Fullscreen</string>
@@ -937,8 +922,7 @@
   <action name="actionMinimize">
    <property name="icon">
     <iconset theme="go-down">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Minimize</string>
@@ -967,14 +951,18 @@
   <action name="actionOpenClipboard">
    <property name="icon">
     <iconset theme="edit-paste">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Open &amp;from clipboard</string>
    </property>
    <property name="statusTip">
     <string>Open single image from clipboard</string>
+   </property>
+  </action>
+  <action name="actionShowOCR">
+   <property name="text">
+    <string>Show OCR window</string>
    </property>
   </action>
  </widget>
