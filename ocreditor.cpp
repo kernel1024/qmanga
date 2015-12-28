@@ -55,6 +55,12 @@ void ZOCREditor::addText(const QStringList &text)
         ui->editor->appendPlainText(text.at(i));
 }
 
+void ZOCREditor::setEditorFont(const QFont &font)
+{
+    ui->editor->setFont(font);
+    ui->translatedEditor->setFont(font);
+}
+
 void ZOCREditor::findWordTranslation(const QString &text)
 {
     if (text.isEmpty()) return;

@@ -15,6 +15,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 
     bkColor = QApplication::palette("QWidget").dark().color();
     idxFont = QApplication::font("QListView");
+    ocrFont = QApplication::font("QPlainTextView");
     frameColor = QColor(Qt::lightGray);
 
     comboFilter = ui->comboFilter;
@@ -40,6 +41,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     connect(ui->btnDeleteBookmark,SIGNAL(clicked()),this,SLOT(delBookmark()));
     connect(ui->btnBkColor,SIGNAL(clicked()),this,SLOT(bkColorDlg()));
     connect(ui->btnFontIndexer,SIGNAL(clicked()),this,SLOT(idxFontDlg()));
+    connect(ui->btnFontOCR,SIGNAL(clicked()),this,SLOT(ocrFontDlg()));
     connect(ui->btnFrameColor,SIGNAL(clicked()),this,SLOT(frameColorDlg()));
 
     connect(ui->btnDynAdd,SIGNAL(clicked()),this,SLOT(dynAdd()));
@@ -60,6 +62,11 @@ QColor SettingsDialog::getBkColor()
 QFont SettingsDialog::getIdxFont()
 {
     return idxFont;
+}
+
+QFont SettingsDialog::getOCRFont()
+{
+    return ocrFont;
 }
 
 QColor SettingsDialog::getFrameColor()
@@ -91,6 +98,14 @@ void SettingsDialog::idxFontDlg()
     updateIdxFont(f);
 }
 
+void SettingsDialog::ocrFontDlg()
+{
+    bool ok;
+    QFont f = QFontDialog::getFont(&ok,ocrFont,this);
+    if (!ok) return;
+    updateOCRFont(f);
+}
+
 void SettingsDialog::frameColorDlg()
 {
     QColor c = QColorDialog::getColor(frameColor,this);
@@ -111,6 +126,13 @@ void SettingsDialog::updateIdxFont(QFont f)
     idxFont = f;
     ui->labelIdxFont->setFont(idxFont);
     ui->labelIdxFont->setText(QString("%1, %2").arg(f.family()).arg(f.pointSize()));
+}
+
+void SettingsDialog::updateOCRFont(QFont f)
+{
+    ocrFont = f;
+    ui->labelOCRFont->setFont(ocrFont);
+    ui->labelOCRFont->setText(QString("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
 void SettingsDialog::updateFrameColor(QColor c)

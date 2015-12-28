@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>778</width>
-    <height>529</height>
+    <height>548</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,7 +48,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label">
               <property name="text">
-               <string>Resize filter</string>
+               <string>&amp;Resize filter</string>
               </property>
               <property name="buddy">
                <cstring>comboFilter</cstring>
@@ -113,7 +113,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
               <property name="text">
-               <string>Cache width</string>
+               <string>&amp;Cache width</string>
               </property>
               <property name="buddy">
                <cstring>spinCacheWidth</cstring>
@@ -136,7 +136,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Magnifier size</string>
+               <string>&amp;Magnifier size</string>
               </property>
               <property name="buddy">
                <cstring>spinMagnify</cstring>
@@ -178,7 +178,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_7">
               <property name="text">
-               <string>Base</string>
+               <string>&amp;Base</string>
               </property>
               <property name="buddy">
                <cstring>editMySqlBase</cstring>
@@ -191,7 +191,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>Login</string>
+               <string>&amp;Login</string>
               </property>
               <property name="buddy">
                <cstring>editMySqlLogin</cstring>
@@ -204,7 +204,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
-               <string>Password</string>
+               <string>&amp;Password</string>
               </property>
               <property name="buddy">
                <cstring>editMySqlPassword</cstring>
@@ -289,29 +289,60 @@
            <property name="title">
             <string>Fonts</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <layout class="QVBoxLayout" name="verticalLayout_8">
             <item>
-             <widget class="QPushButton" name="btnFontIndexer">
-              <property name="text">
-               <string>Indexer list...</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QPushButton" name="btnFontIndexer">
+                <property name="text">
+                 <string>Indexer list...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="labelIdxFont">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>TextLabel</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
-             <widget class="QLabel" name="labelIdxFont">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>TextLabel</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <item>
+               <widget class="QPushButton" name="btnFontOCR">
+                <property name="text">
+                 <string>OCR editor...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="labelOCRFont">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>TextLabel</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
@@ -341,14 +372,14 @@
             <item>
              <widget class="QRadioButton" name="rbCachePixmaps">
               <property name="text">
-               <string>Cache prerendered pixmaps (faster, but memory expensive)</string>
+               <string>Cache prerendered pixmaps (faster, but memory &amp;expensive)</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QRadioButton" name="rbCacheData">
               <property name="text">
-               <string>Cache file data (slower, conservative memory usage)</string>
+               <string>Cache &amp;file data (slower, conservative memory usage)</string>
               </property>
              </widget>
             </item>
@@ -366,7 +397,7 @@
               <item>
                <widget class="QLabel" name="label_9">
                 <property name="text">
-                 <string>Degrees per page</string>
+                 <string>&amp;Degrees per page</string>
                 </property>
                 <property name="buddy">
                  <cstring>spinScrollDelta</cstring>
@@ -552,6 +583,7 @@
   <tabstop>btnBkColor</tabstop>
   <tabstop>btnFrameColor</tabstop>
   <tabstop>btnFontIndexer</tabstop>
+  <tabstop>btnFontOCR</tabstop>
   <tabstop>rbCachePixmaps</tabstop>
   <tabstop>rbCacheData</tabstop>
   <tabstop>spinScrollDelta</tabstop>
@@ -560,6 +592,10 @@
   <tabstop>pushButton_3</tabstop>
   <tabstop>listBookmarks</tabstop>
   <tabstop>btnDeleteBookmark</tabstop>
+  <tabstop>listDynAlbums</tabstop>
+  <tabstop>btnDynAdd</tabstop>
+  <tabstop>btnDynEdit</tabstop>
+  <tabstop>btnDynDelete</tabstop>
  </tabstops>
  <resources/>
  <connections>

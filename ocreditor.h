@@ -19,6 +19,7 @@ public:
     explicit ZOCREditor(QWidget *parent = 0);
     ~ZOCREditor();
     void addText(const QStringList& text);
+    void setEditorFont(const QFont& font);
     
 private:
     Ui::ZOCREditor *ui;

@@ -39,20 +39,24 @@ public:
     ~SettingsDialog();
     QColor getBkColor();
     QFont getIdxFont();
+    QFont getOCRFont();
     QColor getFrameColor();
     
 private:
     QColor bkColor, frameColor;
     QFont idxFont;
+    QFont ocrFont;
     Ui::SettingsDialog *ui;
 
 public slots:
     void delBookmark();
     void bkColorDlg();
     void idxFontDlg();
+    void ocrFontDlg();
     void frameColorDlg();
     void updateBkColor(QColor c);
     void updateIdxFont(QFont f);
+    void updateOCRFont(QFont f);
     void updateFrameColor(QColor c);
     void dynAdd();
     void dynEdit();

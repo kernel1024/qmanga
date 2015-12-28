@@ -36,7 +36,7 @@ public:
     int magnifySize;
     QString savedAuxOpenDir, savedIndexOpenDir;
     QColor backgroundColor, frameColor;
-    QFont idxFont;
+    QFont idxFont, ocrFont;
     int preferredWidth;
     int scrollDelta;
     int detectedDelta;

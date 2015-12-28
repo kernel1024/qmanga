@@ -74,6 +74,8 @@ void ZGlobal::loadSettings()
     defaultOrdering = (Z::Ordering)settings.value("defaultOrdering",Z::Name).toInt();
     if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
         idxFont = QApplication::font("QListView");
+    if (!ocrFont.fromString(settings.value("ocrFont",QString()).toString()))
+        ocrFont = QApplication::font("QPlainTextView");
     if (!backgroundColor.isValid())
         backgroundColor = QApplication::palette("QWidget").dark().color();
     if (!frameColor.isValid())
@@ -115,6 +117,9 @@ void ZGlobal::loadSettings()
     emit dbCheckBase();
     if (filesystemWatcher)
         emit dbRescanIndexedDirs();
+
+    if (ocrEditor!=NULL)
+        ocrEditor->setEditorFont(ocrFont);
 }
 
 void ZGlobal::saveSettings()
@@ -137,6 +142,7 @@ void ZGlobal::saveSettings()
     settings.setValue("fineRendering",useFineRendering);
     settings.setValue("filesystemWatcher",filesystemWatcher);
     settings.setValue("idxFont",idxFont.toString());
+    settings.setValue("ocrFont",ocrFont.toString());
     settings.setValue("defaultOrdering",(int)defaultOrdering);
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
@@ -239,6 +245,7 @@ void ZGlobal::settingsDlg()
     dlg->checkFineRendering->setChecked(useFineRendering);
     dlg->updateBkColor(backgroundColor);
     dlg->updateIdxFont(idxFont);
+    dlg->updateOCRFont(ocrFont);
     dlg->updateFrameColor(frameColor);
     dlg->checkFSWatcher->setChecked(filesystemWatcher);
     switch (resizeFilter) {
@@ -280,6 +287,7 @@ void ZGlobal::settingsDlg()
         backgroundColor=dlg->getBkColor();
         frameColor=dlg->getFrameColor();
         idxFont=dlg->getIdxFont();
+        ocrFont=dlg->getOCRFont();
         cachePixmaps=dlg->radioCachePixmaps->isChecked();
         useFineRendering=dlg->checkFineRendering->isChecked();
         filesystemWatcher=dlg->checkFSWatcher->isChecked();
@@ -314,6 +322,8 @@ void ZGlobal::settingsDlg()
         emit dbCheckBase();
         if (filesystemWatcher)
             emit dbRescanIndexedDirs();
+        if (ocrEditor!=NULL)
+            ocrEditor->setEditorFont(ocrFont);
     }
     dlg->setParent(NULL);
     delete dlg;
