@@ -38,7 +38,7 @@ public:
     QLabel* lblRotation;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    void centerWindow();
+    void centerWindow(bool moveWindow);
     bool isMangaOpened();
     
 private:

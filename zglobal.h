@@ -32,6 +32,7 @@ public:
 
     Z::ResizeFilter resizeFilter;
     Z::Ordering defaultOrdering;
+    Z::PDFRendering pdfRendering;
     int cacheWidth;
     int magnifySize;
     QString savedAuxOpenDir, savedIndexOpenDir;
@@ -44,6 +45,8 @@ public:
     bool cachePixmaps;
     bool useFineRendering;
     bool filesystemWatcher;
+
+    qreal dpiX, dpiY;
 
     QColor foregroundColor();
 

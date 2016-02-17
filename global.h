@@ -33,6 +33,12 @@ class ZMangaView;
 
 namespace Z {
 
+enum PDFRendering {
+    Autodetect = 0,
+    PageRenderer = 1,
+    ImageCatalog = 2
+};
+
 enum ResizeFilter {
     Nearest = 0,
     Bilinear = 1,

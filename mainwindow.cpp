@@ -8,6 +8,7 @@
 #include <QClipboard>
 #include <QImage>
 #include <QBuffer>
+#include <QScreen>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -113,8 +114,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->mangaView->scroller = ui->scrollArea;
     zg->loadSettings();
-    if (!isMaximized())
-        centerWindow();
+    centerWindow(!isMaximized());
     savedPos=pos();
     savedSize=size();
     savedMaximized=isMaximized();
@@ -126,7 +126,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::centerWindow()
+void MainWindow::centerWindow(bool moveWindow)
 {
     int screen = 0;
     QWidget *w = window();
@@ -143,10 +143,16 @@ void MainWindow::centerWindow()
     int h = 80*rect.height()/100;
     QSize nw(135*h/100,h);
     if (nw.width()<1000) nw.setWidth(80*rect.width()/100);
-    resize(nw);
-    move(rect.width()/2 - frameGeometry().width()/2,
-         rect.height()/2 - frameGeometry().height()/2);
-    searchTab->updateSplitters();
+
+    if (moveWindow) {
+        resize(nw);
+        move(rect.width()/2 - frameGeometry().width()/2,
+             rect.height()/2 - frameGeometry().height()/2);
+        searchTab->updateSplitters();
+    }
+
+    zg->dpiX = QApplication::screens().at(screen)->physicalDotsPerInchX();
+    zg->dpiY = QApplication::screens().at(screen)->physicalDotsPerInchY();
 }
 
 bool MainWindow::isMangaOpened()

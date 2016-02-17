@@ -2,20 +2,24 @@
 #define ZPDFREADER_H
 
 #ifdef WITH_POPPLER
-#include <poppler-document.h>
-#include <poppler-page-renderer.h>
+#include <poppler/PDFDoc.h>
 #endif
 
 #include "zabstractreader.h"
+#include "zpdfimageoutdev.h"
 
 class ZPdfReader : public ZAbstractReader
 {
     Q_OBJECT
-protected:
+
 #ifdef WITH_POPPLER
-    poppler::document* doc;
-    poppler::page_renderer* renderer;
+    PDFDoc* doc;
+    ZPDFImageOutputDev* outDev;
 #endif
+    bool useImageCatalog;
+    int numPages;
+    QSizeF pageSizeF(int page) const;
+    QSize pageSize(int page) const;
 
 public:
     explicit ZPdfReader(QObject *parent, QString filename);
@@ -26,5 +30,8 @@ public:
     QString getMagic();
     
 };
+
+void initPdfReader();
+void freePdfReader();
 
 #endif // ZPDFREADER_H

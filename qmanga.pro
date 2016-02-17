@@ -29,7 +29,9 @@ SOURCES += main.cpp\
     ocreditor.cpp \
     zsingleimagereader.cpp \
     zexportdialog.cpp \
-    zimagesdirreader.cpp
+    zimagesdirreader.cpp \
+    zpdfimageoutdev.cpp \
+    ArthurOutputDev.cc
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -50,7 +52,9 @@ HEADERS  += mainwindow.h \
     ocreditor.h \
     zsingleimagereader.h \
     zexportdialog.h \
-    zimagesdirreader.h
+    zimagesdirreader.h \
+    zpdfimageoutdev.h \
+    ArthurOutputDev.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
@@ -114,7 +118,7 @@ use_magick {
 
 use_poppler {
     DEFINES += WITH_POPPLER=1
-    PKGCONFIG += poppler-cpp
+    PKGCONFIG += poppler
 }
 
 use_ocr {

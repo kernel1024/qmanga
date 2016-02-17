@@ -9,6 +9,7 @@
 #include "zzipreader.h"
 #include "zmangamodel.h"
 #include "zdb.h"
+#include "zpdfreader.h"
 
 ZGlobal* zg = NULL;
 
@@ -22,7 +23,10 @@ ZGlobal::ZGlobal(QObject *parent) :
     useFineRendering = true;
     ocrEditor = NULL;
     defaultOrdering = Z::Name;
+    pdfRendering = Z::Autodetect;
     scrollDelta = 120;
+    dpiX = 75;
+    dpiY = 75;
 
     filesystemWatcher = false;
     fsWatcher = new QFileSystemWatcher(this);
@@ -43,12 +47,15 @@ ZGlobal::ZGlobal(QObject *parent) :
     db->moveToThread(threadDB);
     threadDB->start();
 
+    initPdfReader();
+
     resetPreferredWidth();
 }
 
 ZGlobal::~ZGlobal()
 {
     threadDB->quit();
+    freePdfReader();
 }
 
 void ZGlobal::loadSettings()
