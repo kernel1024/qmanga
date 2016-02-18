@@ -84,6 +84,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
             case 3: return formatSize(t.fileSize);
             case 4: return t.addingDT.toString("yyyy-MM-dd");
             case 5: return t.fileDT.toString("yyyy-MM-dd");
+            case 6: return t.fileMagic;
             default: return QVariant();
         }
         return QVariant();
@@ -111,7 +112,7 @@ int ZMangaModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
 
-    return 6;
+    return 7;
 }
 
 QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int role) const

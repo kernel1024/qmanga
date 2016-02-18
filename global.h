@@ -58,9 +58,10 @@ enum Ordering {
     FileSize = 3,
     AddingDate = 4,
     CreationFileDate = 5,
+    Magic = 6
 };
 
-static const int maxOrdering = 6;
+static const int maxOrdering = 7;
 
 static const QHash<Ordering,QString> headerColumns = {
     {Name, "Name"},
@@ -68,7 +69,8 @@ static const QHash<Ordering,QString> headerColumns = {
     {PagesCount, "Pages"},
     {FileSize, "Size"},
     {AddingDate, "Added"},
-    {CreationFileDate, "Created"}
+    {CreationFileDate, "Created"},
+    {Magic, "Type"}
 };
 
 static const QHash<Ordering,QString> sqlColumns = {
@@ -77,7 +79,8 @@ static const QHash<Ordering,QString> sqlColumns = {
     {PagesCount, "pagesCount"},
     {FileSize, "fileSize"},
     {AddingDate, "addingDT"},
-    {CreationFileDate, "fileDT"}
+    {CreationFileDate, "fileDT"},
+    {Magic,"fileMagic"}
 };
 
 static const QHash<Ordering,QString> sortMenu = {
@@ -86,7 +89,8 @@ static const QHash<Ordering,QString> sortMenu = {
     {PagesCount, "By pages count"},
     {FileSize, "By file size"},
     {AddingDate, "By adding date"},
-    {CreationFileDate, "By file creation date"}
+    {CreationFileDate, "By file creation date"},
+    {Magic, "By file type"}
 };
 
 }
