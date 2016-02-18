@@ -35,7 +35,6 @@
 #include <poppler/poppler-config.h>
 #include <stdio.h>
 #include <poppler/goo/gtypes.h>
-#include <poppler/goo/ImgWriter.h>
 #include <poppler/OutputDev.h>
 
 class ZPDFImg {

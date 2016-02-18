@@ -46,14 +46,10 @@
 #include <ctype.h>
 #include <math.h>
 #include <poppler/goo/gmem.h>
-#include <poppler/goo/NetPBMWriter.h>
-#include <poppler/goo/PNGWriter.h>
-#include <poppler/goo/TiffWriter.h>
 #include <poppler/Error.h>
 #include <poppler/GfxState.h>
 #include <poppler/Object.h>
 #include <poppler/Stream.h>
-#include <poppler/JBIG2Stream.h>
 #include <QImageWriter>
 #include "zpdfimageoutdev.h"
 
