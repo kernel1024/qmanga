@@ -387,7 +387,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             cp.setHeight(cp.height()*curUmPixmap.height()/curPixmap.height());
             cp = cp.intersected(curUmPixmap.rect());
 #ifdef WITH_OCR
-            if (ocr!=NULL && cp.width()>10) {
+            if (ocr!=NULL && cp.width()>20 && cp.height()>20) {
                 QImage cpx = curUmPixmap.copy(cp).toImage();
                 ocr->SetImage(Image2PIX(cpx));
                 char* rtext = ocr->GetUTF8Text();
