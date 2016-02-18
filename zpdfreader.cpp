@@ -58,7 +58,7 @@ bool ZPdfReader::openFile()
                               gTrue, gFalse, gFalse);
     }
     if ((zg->pdfRendering==Z::Autodetect && outDev->getPageCount()==doc->getNumPages()) ||
-        (zg->pdfRendering==Z::ImageCatalog && outDev->getPageCount()>0)) {
+            (zg->pdfRendering==Z::ImageCatalog && outDev->getPageCount()>0)) {
         useImageCatalog = true;
         numPages = outDev->getPageCount();
         emit auxMessage(tr("PDF images catalog"));
@@ -67,8 +67,6 @@ bool ZPdfReader::openFile()
         numPages = doc->getNumPages();
         emit auxMessage(tr("PDF renderer"));
     }
-
-    // TODO: add pdfRendering to settings dialog
 
     outDev->imageCounting = false;
 
@@ -125,7 +123,12 @@ QByteArray ZPdfReader::loadPage(int num)
         str->setPos(outDev->getPage(idx).pos);
         str->doGetChars(sz,(Guchar *)res.data());
     } else {
-        // TODO: adjust dpi
+        qreal xdpi = zg->dpiX;
+        qreal ydpi = zg->dpiY;
+        if (zg->forceDPI>0.0) {
+            xdpi = zg->forceDPI;
+            ydpi = zg->forceDPI;
+        }
         SplashColor bgColor;
         unsigned int paper_color = 0x0ffffff;
         bgColor[0] = paper_color & 0xff;
@@ -137,9 +140,9 @@ QByteArray ZPdfReader::loadPage(int num)
         splashOutputDev.setFreeTypeHinting(gTrue, gFalse);
         splashOutputDev.startDoc(doc);
         doc->displayPageSlice(&splashOutputDev, idx + 1,
-                                 zg->dpiX, zg->dpiY, 0,
-                                 gFalse, gTrue, gFalse,
-                                 -1, -1, -1, -1);
+                              xdpi, ydpi, 0,
+                              gFalse, gTrue, gFalse,
+                              -1, -1, -1, -1);
 
         SplashBitmap *bitmap = splashOutputDev.getBitmap();
         const int bw = bitmap->getWidth();

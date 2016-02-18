@@ -154,10 +154,10 @@ ZPDFImg &ZPDFImg::operator=(const ZPDFImg &other)
 
 bool ZPDFImg::operator==(const ZPDFImg &ref) const
 {
-    return (pos==ref.pos && size==ref.size);
+    return (pos==ref.pos && size==ref.size && format==ref.format);
 }
 
 bool ZPDFImg::operator!=(const ZPDFImg &ref) const
 {
-    return (pos!=ref.pos || size!=ref.size);
+    return (pos!=ref.pos || size!=ref.size || format!=ref.format);
 }

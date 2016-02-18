@@ -32,6 +32,9 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     spinScrollDelta = ui->spinScrollDelta;
     labelDetectedDelta = ui->labelDetectedDelta;
     listDynAlbums = ui->listDynAlbums;
+    comboPDFRendererMode = ui->comboPDFRenderMode;
+    checkForceDPI = ui->checkPDFDPI;
+    spinForceDPI = ui->spinPDFDPI;
 
 #ifndef WITH_MAGICK
     while (ui->comboFilter->count()>2)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>778</width>
-    <height>548</height>
+    <width>655</width>
+    <height>446</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,136 +39,6 @@
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="0">
-          <widget class="QGroupBox" name="groupBox">
-           <property name="title">
-            <string>Rendering</string>
-           </property>
-           <layout class="QFormLayout" name="formLayout">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>&amp;Resize filter</string>
-              </property>
-              <property name="buddy">
-               <cstring>comboFilter</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QComboBox" name="comboFilter">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <item>
-               <property name="text">
-                <string>Nearest (internal)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Bilinear (internal)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Lanczos (Magick)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Gaussian (Magick)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Lanczos 2 (Magick)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Cubic (Magick)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Sinc (Magick)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Triangle (Magick)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Mitchell (Magick)</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>&amp;Cache width</string>
-              </property>
-              <property name="buddy">
-               <cstring>spinCacheWidth</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QSpinBox" name="spinCacheWidth">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimum">
-               <number>2</number>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>&amp;Magnifier size</string>
-              </property>
-              <property name="buddy">
-               <cstring>spinMagnify</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QSpinBox" name="spinMagnify">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimum">
-               <number>5</number>
-              </property>
-              <property name="maximum">
-               <number>1000</number>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QCheckBox" name="checkFineRendering">
-              <property name="text">
-               <string>Use fine postrendering</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
          <item row="0" column="1">
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
@@ -347,45 +217,6 @@
            </layout>
           </widget>
          </item>
-         <item row="3" column="0" colspan="2">
-          <widget class="QGroupBox" name="groupBox_6">
-           <property name="title">
-            <string>Settings</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
-            <item>
-             <widget class="QCheckBox" name="checkFSWatcher">
-              <property name="text">
-               <string>Watching for filesystem changes</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QGroupBox" name="groupBox_5">
-           <property name="title">
-            <string>Cache policy</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <item>
-             <widget class="QRadioButton" name="rbCachePixmaps">
-              <property name="text">
-               <string>Cache prerendered pixmaps (faster, but memory &amp;expensive)</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="rbCacheData">
-              <property name="text">
-               <string>Cache &amp;file data (slower, conservative memory usage)</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
          <item row="2" column="1">
           <widget class="QGroupBox" name="groupBox_7">
            <property name="title">
@@ -426,6 +257,78 @@
            </layout>
           </widget>
          </item>
+         <item row="0" column="0">
+          <widget class="QGroupBox" name="groupBox_5">
+           <property name="title">
+            <string>Cache policy</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <widget class="QRadioButton" name="rbCachePixmaps">
+              <property name="toolTip">
+               <string>Faster, but memory &amp;expensive</string>
+              </property>
+              <property name="text">
+               <string>Cac&amp;he prerendered pixmaps</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="rbCacheData">
+              <property name="toolTip">
+               <string>Slower, conservative memory usage</string>
+              </property>
+              <property name="text">
+               <string>Cache &amp;file data</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_9">
+              <item>
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>&amp;Cache width</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinCacheWidth</cstring>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="spinCacheWidth">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimum">
+                 <number>2</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QGroupBox" name="groupBox_6">
+           <property name="title">
+            <string>Settings</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QCheckBox" name="checkFSWatcher">
+              <property name="text">
+               <string>Watching for filesystem changes</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -437,6 +340,229 @@
           <size>
            <width>17</width>
            <height>42</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_4">
+      <attribute name="title">
+       <string>Rendering</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>34</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string>General</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Resize &amp;filter</string>
+            </property>
+            <property name="buddy">
+             <cstring>comboFilter</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="comboFilter">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <item>
+             <property name="text">
+              <string>Nearest (internal)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bilinear (internal)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Lanczos (Magick)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Gaussian (Magick)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Lanczos 2 (Magick)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Cubic (Magick)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sinc (Magick)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Triangle (Magick)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Mitchell (Magick)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>&amp;PDF catalog detection</string>
+            </property>
+            <property name="buddy">
+             <cstring>comboPDFRenderMode</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="comboPDFRenderMode">
+            <property name="toolTip">
+             <string>Automatic - use catalog mode if PDF consists of single images,
+one per page, with supported format. Use rendering mode as fallback.</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>Automatic</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Force rendering mode</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Force catalog mode</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>&amp;Magnifier size</string>
+            </property>
+            <property name="buddy">
+             <cstring>spinMagnify</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="spinMagnify">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimum">
+             <number>5</number>
+            </property>
+            <property name="maximum">
+             <number>1000</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QCheckBox" name="checkFineRendering">
+            <property name="text">
+             <string>Use fine postrendering</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QGroupBox" name="groupBox_8">
+           <property name="title">
+            <string>PDF renderer resolution</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_9">
+            <item>
+             <widget class="QCheckBox" name="checkPDFDPI">
+              <property name="text">
+               <string>Force custom DPI for page rendering</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <item>
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>&amp;Custom DPI</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinPDFDPI</cstring>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spinPDFDPI">
+                <property name="decimals">
+                 <number>0</number>
+                </property>
+                <property name="minimum">
+                 <double>30.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>600.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>75.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>34</height>
           </size>
          </property>
         </spacer>
@@ -573,29 +699,32 @@
  </widget>
  <tabstops>
   <tabstop>tabWidget</tabstop>
-  <tabstop>comboFilter</tabstop>
+  <tabstop>rbCachePixmaps</tabstop>
+  <tabstop>rbCacheData</tabstop>
   <tabstop>spinCacheWidth</tabstop>
-  <tabstop>spinMagnify</tabstop>
-  <tabstop>checkFineRendering</tabstop>
+  <tabstop>btnBkColor</tabstop>
+  <tabstop>btnFrameColor</tabstop>
+  <tabstop>checkFSWatcher</tabstop>
   <tabstop>editMySqlBase</tabstop>
   <tabstop>editMySqlLogin</tabstop>
   <tabstop>editMySqlPassword</tabstop>
-  <tabstop>btnBkColor</tabstop>
-  <tabstop>btnFrameColor</tabstop>
   <tabstop>btnFontIndexer</tabstop>
   <tabstop>btnFontOCR</tabstop>
-  <tabstop>rbCachePixmaps</tabstop>
-  <tabstop>rbCacheData</tabstop>
   <tabstop>spinScrollDelta</tabstop>
-  <tabstop>checkFSWatcher</tabstop>
-  <tabstop>pushButton_2</tabstop>
-  <tabstop>pushButton_3</tabstop>
+  <tabstop>comboFilter</tabstop>
+  <tabstop>comboPDFRenderMode</tabstop>
+  <tabstop>spinMagnify</tabstop>
+  <tabstop>checkFineRendering</tabstop>
+  <tabstop>checkPDFDPI</tabstop>
+  <tabstop>spinPDFDPI</tabstop>
   <tabstop>listBookmarks</tabstop>
   <tabstop>btnDeleteBookmark</tabstop>
   <tabstop>listDynAlbums</tabstop>
   <tabstop>btnDynAdd</tabstop>
   <tabstop>btnDynEdit</tabstop>
   <tabstop>btnDynDelete</tabstop>
+  <tabstop>pushButton_2</tabstop>
+  <tabstop>pushButton_3</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -606,8 +735,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>610</x>
-     <y>566</y>
+     <x>558</x>
+     <y>435</y>
     </hint>
     <hint type="destinationlabel">
      <x>342</x>
@@ -622,12 +751,28 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>696</x>
-     <y>566</y>
+     <x>644</x>
+     <y>435</y>
     </hint>
     <hint type="destinationlabel">
      <x>252</x>
      <y>295</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkPDFDPI</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spinPDFDPI</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>61</x>
+     <y>299</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>375</x>
+     <y>326</y>
     </hint>
    </hints>
   </connection>

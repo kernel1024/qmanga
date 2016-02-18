@@ -47,6 +47,7 @@ public:
     bool filesystemWatcher;
 
     qreal dpiX, dpiY;
+    qreal forceDPI;
 
     QColor foregroundColor();
 

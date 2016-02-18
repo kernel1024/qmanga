@@ -25,8 +25,9 @@ ZGlobal::ZGlobal(QObject *parent) :
     defaultOrdering = Z::Name;
     pdfRendering = Z::Autodetect;
     scrollDelta = 120;
-    dpiX = 75;
-    dpiY = 75;
+    dpiX = 75.0;
+    dpiY = 75.0;
+    forceDPI = -1.0;
 
     filesystemWatcher = false;
     fsWatcher = new QFileSystemWatcher(this);
@@ -73,6 +74,8 @@ void ZGlobal::loadSettings()
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
     scrollDelta = settings.value("scrollDelta",120).toInt();
+    pdfRendering = (Z::PDFRendering)settings.value("pdfRendering",Z::Autodetect).toInt();
+    forceDPI = settings.value("forceDPI",-1.0).toFloat();
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
     frameColor = QColor(settings.value("frameColor",QColor(Qt::lightGray).name()).toString());
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
@@ -143,6 +146,8 @@ void ZGlobal::saveSettings()
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
     settings.setValue("magnifySize",magnifySize);
     settings.setValue("scrollDelta",scrollDelta);
+    settings.setValue("pdfRendering",pdfRendering);
+    settings.setValue("forceDPI",forceDPI);
     settings.setValue("backgroundColor",backgroundColor.name());
     settings.setValue("frameColor",frameColor.name());
     settings.setValue("cachePixmaps",cachePixmaps);
@@ -255,17 +260,15 @@ void ZGlobal::settingsDlg()
     dlg->updateOCRFont(ocrFont);
     dlg->updateFrameColor(frameColor);
     dlg->checkFSWatcher->setChecked(filesystemWatcher);
-    switch (resizeFilter) {
-        case Z::Nearest: dlg->comboFilter->setCurrentIndex(0); break;
-        case Z::Bilinear: dlg->comboFilter->setCurrentIndex(1); break;
-        case Z::Lanczos: dlg->comboFilter->setCurrentIndex(2); break;
-        case Z::Gaussian: dlg->comboFilter->setCurrentIndex(3); break;
-        case Z::Lanczos2: dlg->comboFilter->setCurrentIndex(4); break;
-        case Z::Cubic: dlg->comboFilter->setCurrentIndex(5); break;
-        case Z::Sinc: dlg->comboFilter->setCurrentIndex(6); break;
-        case Z::Triangle: dlg->comboFilter->setCurrentIndex(7); break;
-        case Z::Mitchell: dlg->comboFilter->setCurrentIndex(8); break;
-    }
+    dlg->comboFilter->setCurrentIndex((int)resizeFilter);
+    dlg->comboPDFRendererMode->setCurrentIndex((int)pdfRendering);
+    dlg->spinForceDPI->setEnabled(forceDPI>0.0);
+    dlg->checkForceDPI->setChecked(forceDPI>0.0);
+    if (forceDPI<=0.0)
+        dlg->spinForceDPI->setValue(dpiX);
+    else
+        dlg->spinForceDPI->setValue(forceDPI);
+
     foreach (const QString &t, bookmarks.keys()) {
         QString st = bookmarks.value(t);
         if (st.split('\n').count()>0)
@@ -298,17 +301,12 @@ void ZGlobal::settingsDlg()
         cachePixmaps=dlg->radioCachePixmaps->isChecked();
         useFineRendering=dlg->checkFineRendering->isChecked();
         filesystemWatcher=dlg->checkFSWatcher->isChecked();
-        switch (dlg->comboFilter->currentIndex()) {
-            case 0: resizeFilter = Z::Nearest; break;
-            case 1: resizeFilter = Z::Bilinear; break;
-            case 2: resizeFilter = Z::Lanczos; break;
-            case 3: resizeFilter = Z::Gaussian; break;
-            case 4: resizeFilter = Z::Lanczos2; break;
-            case 5: resizeFilter = Z::Cubic; break;
-            case 6: resizeFilter = Z::Sinc; break;
-            case 7: resizeFilter = Z::Triangle; break;
-            case 8: resizeFilter = Z::Mitchell; break;
-        }
+        resizeFilter=(Z::ResizeFilter)dlg->comboFilter->currentIndex();
+        pdfRendering = (Z::PDFRendering)dlg->comboPDFRendererMode->currentIndex();
+        if (dlg->checkForceDPI->isChecked())
+            forceDPI = dlg->spinForceDPI->value();
+        else
+            forceDPI = -1.0;
         bookmarks.clear();
         for (int i=0; i<dlg->listBookmarks->count(); i++)
             bookmarks[dlg->listBookmarks->item(i)->data(Qt::UserRole).toString()]=

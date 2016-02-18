@@ -34,6 +34,9 @@ public:
     QSpinBox* spinScrollDelta;
     QLabel* labelDetectedDelta;
     QListWidget* listDynAlbums;
+    QComboBox* comboPDFRendererMode;
+    QCheckBox* checkForceDPI;
+    QDoubleSpinBox* spinForceDPI;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
