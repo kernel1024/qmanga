@@ -30,8 +30,7 @@ SOURCES += main.cpp\
     zsingleimagereader.cpp \
     zexportdialog.cpp \
     zimagesdirreader.cpp \
-    zpdfimageoutdev.cpp \
-    ArthurOutputDev.cc
+    zpdfimageoutdev.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -53,8 +52,7 @@ HEADERS  += mainwindow.h \
     zsingleimagereader.h \
     zexportdialog.h \
     zimagesdirreader.h \
-    zpdfimageoutdev.h \
-    ArthurOutputDev.h
+    zpdfimageoutdev.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
@@ -76,7 +74,7 @@ exists( /usr/include/magic.h ) {
 }
 
 exists( /usr/include/X11/Xlib.h ) {
-    LIBS += -lX11
+   LIBS += -lX11
 } else {
     error("libX11 not found.")
 }
@@ -87,7 +85,7 @@ packagesExist(zziplib) {
     error("Dependency error: zziplib not found.")
 }
 
-packagesExist(poppler-cpp) {
+packagesExist(poppler) {
     CONFIG += use_poppler
     message("Using Poppler:        YES")
 } else {
@@ -143,8 +141,3 @@ OTHER_FILES += \
 
 DBUS_INTERFACES = org.jpreader.auxtranslator.xml \
     org.qjrad.dictionary.xml
-
-# Workaround for _FORTIFY_SOURCE and required -O level
-debug {
-    QMAKE_CXXFLAGS += -O1
-}

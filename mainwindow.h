@@ -81,7 +81,7 @@ public slots:
     void openBookmark();
     void openSearchTab();
     void helpAbout();
-    void msgFromIndexer(QString msg);
+    void auxMessage(QString msg);
     void msgFromMangaView(QSize sz, qint64 fsz);
 
     void fsAddFiles();

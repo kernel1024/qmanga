@@ -21,6 +21,7 @@ signals:
     void gotPageCount(const int& num, const int& preferred);
     void gotError(const QString& msg);
     void closeFileRequest();
+    void auxMessage(const QString& msg);
     
 public slots:
     void openFile(QString filename, int preferred);

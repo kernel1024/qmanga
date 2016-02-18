@@ -27,6 +27,7 @@ public:
     virtual QString getInternalPath(int idx);
     
 signals:
+    void auxMessage(const QString& msg);
     
 public slots:
     

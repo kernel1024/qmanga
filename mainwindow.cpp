@@ -73,7 +73,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->mangaView,SIGNAL(minimizeRequested()),this,SLOT(showMinimized()));
     connect(ui->mangaView,SIGNAL(closeFileRequested()),this,SLOT(closeManga()));
     connect(searchTab,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
-    connect(searchTab,SIGNAL(statusBarMsg(QString)),this,SLOT(msgFromIndexer(QString)));
+    connect(searchTab,SIGNAL(statusBarMsg(QString)),this,SLOT(auxMessage(QString)));
+    connect(ui->mangaView,SIGNAL(auxMessage(QString)),this,SLOT(auxMessage(QString)));
     connect(ui->mangaView,SIGNAL(averageSizes(QSize,qint64)),this,SLOT(msgFromMangaView(QSize,qint64)));
     connect(ui->spinPosition,SIGNAL(editingFinished()),this,SLOT(pageNumEdited()));
     connect(ui->btnRotateCCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCCW()));
@@ -410,7 +411,7 @@ void MainWindow::helpAbout()
 
 }
 
-void MainWindow::msgFromIndexer(QString msg)
+void MainWindow::auxMessage(QString msg)
 {
     QString s = msg;
     bool showMsgBox = s.startsWith("MBOX#");

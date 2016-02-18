@@ -79,6 +79,7 @@ signals:
     void minimizeRequested();
     void closeFileRequested();
     void rotationUpdated(int degree);
+    void auxMessage(const QString& msg);
 
     // cache signals
     void cacheOpenFile(QString filename, int preferred);
@@ -116,6 +117,7 @@ public slots:
     void viewRotateCW();
 
     void asyncMsg(const QString& msg);
+    void loaderMsg(const QString& msg);
 
     // cache slots
     void cacheGotPage(const QByteArray& page, const int& num, const QString& internalPath,

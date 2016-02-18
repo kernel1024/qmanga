@@ -3,14 +3,14 @@
 #include <poppler/PDFDocFactory.h>
 #include <poppler/goo/GooString.h>
 #include <poppler/GlobalParams.h>
+#include <poppler/SplashOutputDev.h>
+#include <poppler/splash/SplashBitmap.h>
 
 GlobalParams* globalParams = NULL;
 
 #endif
 
 #include "zpdfreader.h"
-#include "ArthurOutputDev.h"
-
 
 ZPdfReader::ZPdfReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
@@ -57,16 +57,17 @@ bool ZPdfReader::openFile()
             doc->displayPages(outDev, 1, doc->getNumPages(), 72, 72, 0,
                               gTrue, gFalse, gFalse);
     }
-    if (zg->pdfRendering==Z::Autodetect && outDev->getPageCount()==doc->getNumPages()) {
-        useImageCatalog = true;
-        numPages = doc->getNumPages();
-    }
-    if (zg->pdfRendering==Z::ImageCatalog && outDev->getPageCount()>0) {
+    if ((zg->pdfRendering==Z::Autodetect && outDev->getPageCount()==doc->getNumPages()) ||
+        (zg->pdfRendering==Z::ImageCatalog && outDev->getPageCount()>0)) {
         useImageCatalog = true;
         numPages = outDev->getPageCount();
+        emit auxMessage(tr("PDF images catalog"));
+    } else {
+        useImageCatalog = false;
+        numPages = doc->getNumPages();
+        emit auxMessage(tr("PDF renderer"));
     }
 
-    // TODO: display used method in status bar / message log
     // TODO: add pdfRendering to settings dialog
 
     outDev->imageCounting = false;
@@ -124,18 +125,30 @@ QByteArray ZPdfReader::loadPage(int num)
         str->setPos(outDev->getPage(idx).pos);
         str->doGetChars(sz,(Guchar *)res.data());
     } else {
-        // TODO: check and debug this method!!!
-        // painter->setRenderHint(QPainter::Antialiasing);
-        // painter->setRenderHint(QPainter::TextAntialiasing);
-        QSize size = pageSize(num+1);
-        QImage qimg(size.width(), size.height(), QImage::Format_ARGB32);
+        // TODO: adjust dpi
+        SplashColor bgColor;
+        unsigned int paper_color = 0x0ffffff;
+        bgColor[0] = paper_color & 0xff;
+        bgColor[1] = (paper_color >> 8) & 0xff;
+        bgColor[2] = (paper_color >> 16) & 0xff;
+        SplashOutputDev splashOutputDev(splashModeXBGR8, 4, gFalse, bgColor, gTrue);
+        splashOutputDev.setFontAntialias(gTrue);
+        splashOutputDev.setVectorAntialias(gTrue);
+        splashOutputDev.setFreeTypeHinting(gTrue, gFalse);
+        splashOutputDev.startDoc(doc);
+        doc->displayPageSlice(&splashOutputDev, idx + 1,
+                                 zg->dpiX, zg->dpiY, 0,
+                                 gFalse, gTrue, gFalse,
+                                 -1, -1, -1, -1);
 
-        QPainter p(&qimg);
-        ArthurOutputDev arthur_output(&p);
-        arthur_output.startDoc(doc->getXRef());
-        doc->displayPage(&arthur_output,idx,zg->dpiX,zg->dpiY,0,
-                         false,true,false);
-        p.end();
+        SplashBitmap *bitmap = splashOutputDev.getBitmap();
+        const int bw = bitmap->getWidth();
+        const int bh = bitmap->getHeight();
+
+        SplashColorPtr data_ptr = bitmap->getDataPtr();
+
+        QImage qimg(reinterpret_cast<uchar *>(data_ptr), bw, bh, QImage::Format_ARGB32);
+
         QBuffer buf(&res);
         buf.open(QIODevice::WriteOnly);
         qimg.save(&buf,"BMP");
@@ -149,21 +162,6 @@ QByteArray ZPdfReader::loadPage(int num)
 QString ZPdfReader::getMagic()
 {
     return QString("PDF");
-}
-
-QSizeF ZPdfReader::pageSizeF(int page) const
-{
-    int orient = doc->getPageRotate(page);
-    if ( ( 90 == orient ) || ( 270 == orient ) ) {
-        return QSizeF( doc->getPageCropHeight(page), doc->getPageCropWidth(page) );
-    } else {
-        return QSizeF( doc->getPageCropWidth(page), doc->getPageCropHeight(page) );
-    }
-}
-
-QSize ZPdfReader::pageSize(int page) const
-{
-    return pageSizeF(page).toSize();
 }
 
 #ifdef WITH_POPPLER

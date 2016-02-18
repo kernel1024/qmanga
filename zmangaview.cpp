@@ -58,6 +58,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
 
     int cnt = QThread::idealThreadCount()+1;
     if (cnt<2) cnt=2;
+    cnt=1;
     for (int i=0;i<cnt;i++) {
         QThread* th = new QThread();
         ZMangaLoader* ld = new ZMangaLoader();
@@ -68,6 +69,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
                 this,SLOT(cacheGotError(QString)),Qt::QueuedConnection);
         connect(ld,SIGNAL(closeFileRequest()),
                 this,SLOT(closeFile()));
+        connect(ld,SIGNAL(auxMessage(QString)),
+                this,SLOT(loaderMsg(QString)),Qt::QueuedConnection);
 
         connect(this,SIGNAL(cacheOpenFile(QString,int)),ld,SLOT(openFile(QString,int)),Qt::QueuedConnection);
         connect(this,SIGNAL(cacheCloseFile()),ld,SLOT(closeFile()),Qt::QueuedConnection);
@@ -744,6 +747,11 @@ void ZMangaView::asyncMsg(const QString &msg)
 {
     if (msg.isEmpty()) return;
     QMessageBox::warning(this,tr("QManga"),msg);
+}
+
+void ZMangaView::loaderMsg(const QString &msg)
+{
+    emit auxMessage(msg);
 }
 
 void ZMangaView::cacheGotPage(const QByteArray &page, const int &num, const QString &internalPath,

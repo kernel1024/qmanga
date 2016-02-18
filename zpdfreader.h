@@ -18,8 +18,6 @@ class ZPdfReader : public ZAbstractReader
 #endif
     bool useImageCatalog;
     int numPages;
-    QSizeF pageSizeF(int page) const;
-    QSize pageSize(int page) const;
 
 public:
     explicit ZPdfReader(QObject *parent, QString filename);
