@@ -15,7 +15,7 @@ using namespace mysql;
 class ZDB : public QObject
 {
     Q_OBJECT
-protected:
+private:
     QString dbBase, dbUser, dbPass;
     QStringList indexedDirs;
     ZStrMap dynAlbums;
@@ -23,6 +23,7 @@ protected:
     bool wasCanceled;
 
     bool sqlCheckBasePriv();
+    bool checkTablesParams(MYSQL *db);
     MYSQL* sqlOpenBase();
     void sqlCloseBase(MYSQL* db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);

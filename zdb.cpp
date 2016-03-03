@@ -57,6 +57,9 @@ bool ZDB::sqlCheckBasePriv()
 {
     if (dbUser.isEmpty()) return false;
 
+    QStringList tables;
+    tables << "files" << "albums" << "ignored_files";
+
     MYSQL* db = sqlOpenBase();
     if (db==NULL) return false;
 
@@ -68,21 +71,70 @@ bool ZDB::sqlCheckBasePriv()
     int cnt=0;
     while ((row = mysql_fetch_row(res)) != NULL) {
         QString s = QString::fromUtf8(row[0]);
-        if (s.contains("files",Qt::CaseInsensitive) ||
-                s.contains("albums",Qt::CaseInsensitive) ||
-                s.contains("ignored_files",Qt::CaseInsensitive))
+        if (tables.contains(s,Qt::CaseInsensitive))
             cnt++;
     }
     mysql_free_result(res);
 
     bool noTables = (cnt!=3);
 
-    sqlCloseBase(db);
-
     if (noTables) {
         emit needTableCreation();
+        sqlCloseBase(db);
         return false;
     }
+
+    bool ret = checkTablesParams(db);
+    sqlCloseBase(db);
+
+    return ret;
+}
+
+bool ZDB::checkTablesParams(MYSQL* db)
+{
+    // Convert tables to MyISAM (if necessary)
+    QStringList toconv;
+    QString qr = QString("SELECT table_name FROM information_schema.tables "
+                         "WHERE (table_schema = DATABASE() AND Engine = \"InnoDB\");");
+
+    if (mysql_query(db,qr.toUtf8())) {
+        qDebug() << "Unable to get tables engine." << mysql_error(db);
+        return false;
+    }
+    MYSQL_RES* res = mysql_use_result(db);
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res)) != NULL)
+        toconv << QString::fromUtf8(row[0]);
+    mysql_free_result(res);
+
+    foreach (const QString& tbl, toconv) {
+        qr = QString("ALTER TABLE %1 ENGINE=MyISAM;").arg(tbl);
+        if (mysql_query(db,qr.toUtf8())) {
+            qDebug() << "Engine conversion to MyISAM failed on table" << tbl << mysql_error(db);
+            return false;
+        }
+    }
+
+    // Add fulltext index for manga names
+    qr = QString("SELECT index_type FROM information_schema.statistics "
+                 "WHERE table_schema=DATABASE() AND table_name='files' AND index_name='name_ft';");
+    if (mysql_query(db,qr.toUtf8())) {
+        qDebug() << "Unable to get indexes list." << mysql_error(db);
+        return false;
+    }
+    res = mysql_use_result(db);
+    QString idxn;
+    if ((row = mysql_fetch_row(res)) != NULL)
+        idxn = QString::fromUtf8(row[0]);
+    mysql_free_result(res);
+    if (idxn.isEmpty()) {
+        qr = QString("ALTER TABLE files ADD FULLTEXT INDEX name_ft(name);");
+        if (mysql_query(db,qr.toUtf8())) {
+            qDebug() << "Unable to add fulltext index for files table." << mysql_error(db);
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -95,7 +147,7 @@ void ZDB::sqlCreateTables()
                  "`id` int(11) NOT NULL AUTO_INCREMENT,"
                  "`name` varchar(2048) NOT NULL,"
                  "PRIMARY KEY (`id`)"
-                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+                 ") ENGINE=MyISAM DEFAULT CHARSET=utf8;";
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create table `albums`\n\n%1")
                       .arg(mysql_error(db)));
@@ -106,7 +158,7 @@ void ZDB::sqlCreateTables()
          "`id` int(11) NOT NULL AUTO_INCREMENT,"
          "`filename` varchar(16383) NOT NULL,"
          "PRIMARY KEY (`id`)"
-         ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+         ") ENGINE=MyISAM DEFAULT CHARSET=utf8;";
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create table `ignored_files`\n\n%1")
                       .arg(mysql_error(db)));
@@ -124,8 +176,9 @@ void ZDB::sqlCreateTables()
       "`fileMagic` varchar(32) NOT NULL,"
       "`fileDT` datetime NOT NULL,"
       "`addingDT` datetime NOT NULL,"
-      "PRIMARY KEY (`id`)"
-    ") ENGINE=InnoDB  DEFAULT CHARSET=utf8;";
+      "PRIMARY KEY (`id`),"
+      "FULLTEXT KEY `name_ft` (`name`)"
+    ") ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create table `files`\n\n%1")
                       .arg(mysql_error(db)));
@@ -204,7 +257,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                            "  (SELECT id FROM albums WHERE (name = '%1'))"
                            ") ").arg(escapeParam(album));
     } else if (!search.isEmpty()){
-        tqr += QString("WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
+          tqr += QString("WHERE MATCH(files.name) AGAINST('%%%1%%' IN BOOLEAN MODE) ").arg(escapeParam(search));
     }
     if (!specQuery) {
         tqr+="ORDER BY ";
