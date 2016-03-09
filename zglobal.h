@@ -15,10 +15,13 @@ typedef QMap<QString, QString> ZStrMap;
 class ZGlobal : public QObject
 {
     Q_OBJECT
-protected:
+private:
     QThread* threadDB;
     QString dbBase, dbUser, dbPass;
     QHash<QString,QStringList> dirWatchList;
+
+    void checkSQLProblems(QWidget *parent);
+
 public:
     ZDB* db;
     ZOCREditor* ocrEditor;
@@ -60,6 +63,7 @@ public slots:
     void updateWatchDirList(const QStringList & watchDirs);
     void directoryChanged(const QString & dir);
     void resetPreferredWidth();
+    void dbCheckComplete();
 
 signals:
     void dbSetCredentials(const QString& base, const QString& user, const QString& password);

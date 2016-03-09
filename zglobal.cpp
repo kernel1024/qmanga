@@ -44,6 +44,8 @@ ZGlobal::ZGlobal(QObject *parent) :
     connect(this,SIGNAL(dbRescanIndexedDirs()),db,SLOT(sqlRescanIndexedDirs()),Qt::QueuedConnection);
     connect(db,SIGNAL(updateWatchDirList(QStringList)),
             this,SLOT(updateWatchDirList(QStringList)),Qt::QueuedConnection);
+    connect(db,SIGNAL(baseCheckComplete()),
+            this,SLOT(dbCheckComplete()),Qt::QueuedConnection);
     connect(this,SIGNAL(dbSetDynAlbums(ZStrMap)),db,SLOT(setDynAlbums(ZStrMap)),Qt::QueuedConnection);
     db->moveToThread(threadDB);
     threadDB->start();
@@ -57,6 +59,31 @@ ZGlobal::~ZGlobal()
 {
     threadDB->quit();
     freePdfReader();
+}
+
+void ZGlobal::checkSQLProblems(QWidget *parent)
+{
+    QStrHash problems = db->getConfigProblems();
+    if (problems.isEmpty()) return;
+
+    MainWindow* mw = qobject_cast<MainWindow *>(parent);
+    if (mw!=NULL) {
+        mw->lblSearchStatus->setText(tr("%1 problems with MySQL").arg(problems.keys().count()));
+        return;
+    }
+    QString text;
+    foreach (const QString& msg, problems.keys()) {
+        text += msg+"\n-------------------------------\n";
+        text += problems.value(msg)+"\n\n";
+    }
+    QMessageBox mbox;
+    mbox.setIcon(QMessageBox::Warning);
+    mbox.setText(tr("Some problems found with MySQL configuration."));
+    mbox.setInformativeText(tr("Please read warnings text in details below.\n"
+                               "This list will be cleaned after QManga restart."));
+    mbox.setDetailedText(text);
+    mbox.setWindowTitle(tr("QManga"));
+    mbox.exec();
 }
 
 void ZGlobal::loadSettings()
@@ -130,6 +157,8 @@ void ZGlobal::loadSettings()
 
     if (ocrEditor!=NULL)
         ocrEditor->setEditorFont(ocrFont);
+
+    checkSQLProblems(w);
 }
 
 void ZGlobal::saveSettings()
@@ -214,6 +243,12 @@ void ZGlobal::resetPreferredWidth()
         preferredWidth = 1000;
 }
 
+void ZGlobal::dbCheckComplete()
+{
+    MainWindow* w = qobject_cast<MainWindow *>(parent());
+    checkSQLProblems(w);
+}
+
 QColor ZGlobal::foregroundColor()
 {
     qreal r,g,b;
@@ -240,6 +275,8 @@ void ZGlobal::fsCheckFilesAvailability()
 
 void ZGlobal::settingsDlg()
 {
+    checkSQLProblems(NULL);
+
     MainWindow* w = qobject_cast<MainWindow *>(parent());
     SettingsDialog* dlg = new SettingsDialog(w);
 

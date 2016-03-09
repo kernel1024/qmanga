@@ -1,6 +1,13 @@
 #include <QApplication>
 #include "zdb.h"
 
+#define FT_DETAILS "1. Edit my.cnf file and save\n" \
+                   "--> ft_stopword_file = \"\" (or link an empty file \"empty_stopwords.txt\")\n" \
+                   "--> ft_min_word_len = 2\n" \
+                   "2. Restart your server (this cannot be done dynamically)\n" \
+                   "3. Change the table engine (if needed) - ALTER TABLE tbl_name ENGINE = MyISAM;\n"\
+                   "4. Perform repair - REPAIR TABLE tbl_name QUICK;"
+
 ZDB::ZDB(QObject *parent) :
     QObject(parent)
 {
@@ -9,6 +16,7 @@ ZDB::ZDB(QObject *parent) :
     dbPass = QString();
     wasCanceled = false;
     indexedDirs.clear();
+    problems.clear();
 }
 
 int ZDB::getAlbumsCount()
@@ -35,6 +43,11 @@ ZStrMap ZDB::getDynAlbums()
     return dynAlbums;
 }
 
+QStrHash ZDB::getConfigProblems()
+{
+    return problems;
+}
+
 void ZDB::setCredentials(const QString &base, const QString &user, const QString &password)
 {
     dbBase = base;
@@ -51,6 +64,7 @@ void ZDB::setDynAlbums(const ZStrMap &albums)
 void ZDB::sqlCheckBase()
 {
     sqlCheckBasePriv();
+    emit baseCheckComplete();
 }
 
 bool ZDB::sqlCheckBasePriv()
@@ -99,6 +113,11 @@ bool ZDB::checkTablesParams(MYSQL* db)
 
     if (mysql_query(db,qr.toUtf8())) {
         qDebug() << "Unable to get tables engine." << mysql_error(db);
+
+        problems[tr("MyISAM table engine")] = tr("Unable to check engines for qmanga tables.\n"
+                                                 "SELECT query failed.\n"
+                                                 "All qmanga tables must be created with MyISAM engine.");
+
         return false;
     }
     MYSQL_RES* res = mysql_use_result(db);
@@ -111,6 +130,11 @@ bool ZDB::checkTablesParams(MYSQL* db)
         qr = QString("ALTER TABLE %1 ENGINE=MyISAM;").arg(tbl);
         if (mysql_query(db,qr.toUtf8())) {
             qDebug() << "Engine conversion to MyISAM failed on table" << tbl << mysql_error(db);
+
+            problems[tr("MyISAM table conversion")] = tr("Unable to convert qmanga tables.\n"
+                                                         "ALTER TABLE query failed.\n"
+                                                         "All qmanga tables must be created with MyISAM engine.");
+
             return false;
         }
     }
@@ -120,6 +144,10 @@ bool ZDB::checkTablesParams(MYSQL* db)
                  "WHERE table_schema=DATABASE() AND table_name='files' AND index_name='name_ft';");
     if (mysql_query(db,qr.toUtf8())) {
         qDebug() << "Unable to get indexes list." << mysql_error(db);
+
+        problems[tr("Check for indexes")] = tr("Unable to check indexes for qmanga tables.\n"
+                                               "SELECT query failed.\n");
+
         return false;
     }
     res = mysql_use_result(db);
@@ -131,17 +159,53 @@ bool ZDB::checkTablesParams(MYSQL* db)
         qr = QString("ALTER TABLE files ADD FULLTEXT INDEX name_ft(name);");
         if (mysql_query(db,qr.toUtf8())) {
             qDebug() << "Unable to add fulltext index for files table." << mysql_error(db);
+
+            problems[tr("Creating indexes")] = tr("Unable to add FULLTEXT index for qmanga files table.\n"
+                                                  "ALTER TABLE query failed.\n"
+                                                  "Fulltext index in necessary for search feature.");
+
             return false;
         }
+
+        checkConfigOpts(db,false);
     }
 
+    checkConfigOpts(db,true);
+
     return true;
+}
+
+void ZDB::checkConfigOpts(MYSQL *db, bool silent)
+{
+    if (mysql_query(db,"SELECT @@ft_min_word_len;")) {
+        qDebug() << "Unable to check MySQL config options";
+
+        problems[tr("MySQL config")] = tr("Unable to check my.cnf options via global variables.\n"
+                                          "SELECT query failed.\n"
+                                          "QManga needs specific fulltext ft_* options in config.");
+
+        return;
+    }
+    MYSQL_RES* res = mysql_use_result(db);
+    MYSQL_ROW row;
+    if ((row = mysql_fetch_row(res)) != NULL) {
+        bool okconv;
+        int ftlen = QString::fromUtf8(row[0]).toInt(&okconv);
+        if ((ftlen>2 && okconv) || !okconv) {
+            if (!silent)
+                emit errorMsg(tr(FT_DETAILS));
+            problems[tr("MySQL config fulltext")] = tr(FT_DETAILS);
+        }
+    }
+    mysql_free_result(res);
 }
 
 void ZDB::sqlCreateTables()
 {
     MYSQL* db = sqlOpenBase();
     if (db==NULL) return;
+
+    checkConfigOpts(db,false);
 
     QString qr = "CREATE TABLE IF NOT EXISTS `albums` ("
                  "`id` int(11) NOT NULL AUTO_INCREMENT,"
@@ -151,6 +215,8 @@ void ZDB::sqlCreateTables()
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create table `albums`\n\n%1")
                       .arg(mysql_error(db)));
+        problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
+                                                    "CREATE TABLE query failed.");
         sqlCloseBase(db);
         return;
     }
@@ -162,6 +228,8 @@ void ZDB::sqlCreateTables()
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create table `ignored_files`\n\n%1")
                       .arg(mysql_error(db)));
+        problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
+                                                           "CREATE TABLE query failed.");
         sqlCloseBase(db);
         return;
     }
@@ -182,6 +250,8 @@ void ZDB::sqlCreateTables()
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create table `files`\n\n%1")
                       .arg(mysql_error(db)));
+        problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
+                                                   "CREATE TABLE query failed.");
         sqlCloseBase(db);
         return;
     }
@@ -196,6 +266,9 @@ MYSQL* ZDB::sqlOpenBase()
     if (!mysql_real_connect(db,"localhost",dbUser.toUtf8(),dbPass.toUtf8(),dbBase.toUtf8(),0,NULL,0)) {
         emit errorMsg(tr("Unable to open MySQL connection. Check login info.\n%1")
                       .arg(mysql_error(db)));
+        problems[tr("Connection")] = tr("Unable to connect to MySQL.\n"
+                                        "Check credentials and MySQL running on localhost:3306 socket.");
+
         qDebug() << mysql_error(db);
         db = NULL;
     } else {

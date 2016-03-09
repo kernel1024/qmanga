@@ -26,6 +26,7 @@
 typedef QHash<int,QImage> QImageHash;
 typedef QHash<int,QByteArray> QByteHash;
 typedef QList<int> QIntList;
+typedef QHash<QString,QString> QStrHash;
 
 class ZAbstractReader;
 class ZMangaLoader;

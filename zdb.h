@@ -19,11 +19,13 @@ private:
     QString dbBase, dbUser, dbPass;
     QStringList indexedDirs;
     ZStrMap dynAlbums;
+    QStrHash problems;
 
     bool wasCanceled;
 
     bool sqlCheckBasePriv();
     bool checkTablesParams(MYSQL *db);
+    void checkConfigOpts(MYSQL *db, bool silent);
     MYSQL* sqlOpenBase();
     void sqlCloseBase(MYSQL* db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
@@ -34,10 +36,12 @@ public:
 
     int getAlbumsCount();
     ZStrMap getDynAlbums();
+    QStrHash getConfigProblems();
 
 signals:
     void errorMsg(const QString& msg);
     void needTableCreation();
+    void baseCheckComplete();
     void filesAdded(const int count, const int total, const int elapsed);
     void albumsListUpdated();
     void showProgressDialog(const bool visible);
