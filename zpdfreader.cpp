@@ -10,7 +10,10 @@ GlobalParams* globalParams = NULL;
 
 #endif
 
+#include <QMutex>
 #include "zpdfreader.h"
+
+static QMutex indexerMutex;
 
 ZPdfReader::ZPdfReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
@@ -41,6 +44,8 @@ bool ZPdfReader::openFile()
     if (!fi.isFile() || !fi.isReadable()) {
         return false;
     }
+
+    indexerMutex.lock();
 
     GooString fname(fileName.toUtf8());
     doc = PDFDocFactory().createPDFDoc(fname);
@@ -73,6 +78,8 @@ bool ZPdfReader::openFile()
     for (int i=0;i<numPages;i++) {
         sortList << ZFileEntry(QString("%1").arg(i,6,10,QChar('0')),i);
     }
+
+    indexerMutex.unlock();
 
     qSort(sortList);
 
