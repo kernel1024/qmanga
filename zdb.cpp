@@ -330,7 +330,10 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                            "  (SELECT id FROM albums WHERE (name = '%1'))"
                            ") ").arg(escapeParam(album));
     } else if (!search.isEmpty()){
+        if (search.contains(QRegExp("\\s")))
           tqr += QString("WHERE MATCH(files.name) AGAINST('%%%1%%' IN BOOLEAN MODE) ").arg(escapeParam(search));
+        else
+          tqr += QString("WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
     }
     if (!specQuery) {
         tqr+="ORDER BY ";
