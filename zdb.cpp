@@ -304,6 +304,7 @@ void ZDB::sqlGetAlbums()
     sqlCloseBase(db);
     foreach (const QString& title, dynAlbums.keys())
         result << QString("# %1").arg(title);
+    result << QString("% Deleted");
 
     emit gotAlbums(result);
 }
@@ -321,10 +322,14 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                          "addingDT, files.id, albums.name "
                          "FROM files LEFT JOIN albums ON files.album=albums.id ");
     bool specQuery = false;
+    bool checkFS = false;
     if (!album.isEmpty()) {
         if (album.startsWith("# ") && dynAlbums.keys().contains(album.mid(2))) {
             specQuery = true;
             tqr += dynAlbums.value(album.mid(2));
+        } else if (album.startsWith("% Deleted")) {
+            specQuery = true;
+            checkFS = true;
         } else
             tqr += QString("WHERE (album="
                            "  (SELECT id FROM albums WHERE (name = '%1'))"
@@ -350,6 +355,11 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
             QByteArray ba = QByteArray::fromRawData(row[2],lengths[2]);
             if (!ba.isEmpty())
                 p.loadFromData(ba);
+
+            if (checkFS) {
+                QFileInfo fi(QString::fromUtf8(row[1]));
+                if (fi.exists()) continue;
+            }
 
             emit gotFile(SQLMangaEntry(QString::fromUtf8(row[0]),
                                        QString::fromUtf8(row[1]),
@@ -709,7 +719,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         emit errorMsg(tr("Album name cannot be empty"));
         return;
     }
-    if (album.startsWith("#")) {
+    if (album.startsWith("#") || album.startsWith("%")) {
         emit errorMsg(tr("Reserved character in album name"));
         return;
     }
@@ -1067,6 +1077,7 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
 {
     if (oldName==newName || oldName.isEmpty() || newName.isEmpty()) return;
     if (newName.startsWith("#") || oldName.startsWith("#")) return;
+    if (newName.startsWith("%") || oldName.startsWith("%")) return;
     QString delqr = QString("UPDATE albums SET name='%1' WHERE name='%2';").
             arg(escapeParam(newName)).arg(escapeParam(oldName));
     MYSQL* db = sqlOpenBase();
