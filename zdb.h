@@ -30,6 +30,7 @@ private:
     void sqlCloseBase(MYSQL* db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
     void fsAddImagesDir(const QString& dir, const QString& album);
+    QString prepareSearchQuery(const QString& search);
 
 public:
     explicit ZDB(QObject *parent = 0);

@@ -329,12 +329,8 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
             tqr += QString("WHERE (album="
                            "  (SELECT id FROM albums WHERE (name = '%1'))"
                            ") ").arg(escapeParam(album));
-    } else if (!search.isEmpty()){
-        if (search.contains(QRegExp("\\s")))
-          tqr += QString("WHERE MATCH(files.name) AGAINST('%%%1%%' IN BOOLEAN MODE) ").arg(escapeParam(search));
-        else
-          tqr += QString("WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
-    }
+    } else if (!search.isEmpty())
+        tqr += prepareSearchQuery(search);
     if (!specQuery) {
         tqr+="ORDER BY ";
         tqr+=Z::sqlColumns.value(sortOrder);
@@ -974,6 +970,29 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     sqlRescanIndexedDirs();
     emit filesAdded(cnt,cnt,tmr.elapsed());
     emit albumsListUpdated();
+}
+
+QString ZDB::prepareSearchQuery(const QString &search)
+{
+    QStringList operators;
+    operators << " +" << " ~" << " -" << "* " << "\"";
+    QString msearch = search;
+    if (search.contains(QRegExp("\\s"))) {
+        bool haveops = false;
+        for (int i=0;i<operators.count();i++)
+            if (msearch.contains(operators.at(i))) {
+                haveops = true;
+                break;
+            }
+        if (!haveops) {
+            msearch.replace(QRegExp("\\s+"),"* +");
+            msearch.prepend(QChar('+'));
+            msearch.append(QChar('*'));
+        }
+        return QString("WHERE MATCH(files.name) AGAINST('%1' IN BOOLEAN MODE) ").arg(escapeParam(msearch));
+    } else {
+        return QString("WHERE (files.name LIKE '%%%1%%') ").arg(escapeParam(search));
+    }
 }
 
 void ZDB::sqlCancelAdding()
