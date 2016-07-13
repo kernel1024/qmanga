@@ -709,8 +709,9 @@ QString mysqlEscapeString(MYSQL* db, const QString& str)
     QByteArray pba = str.toUtf8();
     char* pbae = (char*) malloc(pba.length()*2+1);
     int pbaelen = mysql_real_escape_string(db,pbae,pba.constData(),pba.length());
-    pba = QByteArray::fromRawData(pbae,pbaelen);
-    return QString::fromUtf8(pba);
+    QString res = QString::fromUtf8(pbae,pbaelen);
+    free(pbae);
+    return res;
 }
 
 void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)

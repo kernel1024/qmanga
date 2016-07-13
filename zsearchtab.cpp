@@ -214,8 +214,8 @@ void ZSearchTab::ctxMenu(QPoint pos)
                        tr("Open containing directory"),this,SLOT(ctxOpenDir()));
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
 
-    acm = cm.addAction(QIcon::fromTheme("fork"),
-                       tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
+    cm.addAction(QIcon::fromTheme("fork"),
+                 tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
 
     cm.exec(ui->srcList->mapToGlobal(pos));
 }
