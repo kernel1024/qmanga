@@ -254,7 +254,7 @@ void ZMangaListItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem
 
         int widthAcc = 0;
 
-        QStyleOptionViewItemV4 opt = option;
+        QStyleOptionViewItem opt = option;
         initStyleOption( &opt, index );
 
         QRect srctr = opt.rect;
