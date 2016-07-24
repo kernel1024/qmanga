@@ -120,6 +120,9 @@ MainWindow::MainWindow(QWidget *parent) :
     savedSize=size();
     savedMaximized=isMaximized();
     dispPage(-1,QString());
+
+    if (QApplication::arguments().count()>1)
+        openAuxFile(QApplication::arguments().at(1));
 }
 
 MainWindow::~MainWindow()
@@ -161,6 +164,15 @@ bool MainWindow::isMangaOpened()
     return (ui->mangaView->getPageCount()>0);
 }
 
+void MainWindow::openAuxFile(const QString &filename)
+{
+    QFileInfo fi(filename);
+    zg->savedAuxOpenDir = fi.path();
+
+    ui->tabWidget->setCurrentIndex(0);
+    ui->mangaView->openFile(filename);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (zg!=NULL)
@@ -185,13 +197,8 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 void MainWindow::openAux()
 {
     QString filename = getOpenFileNameD(this,tr("Open manga or image"),zg->savedAuxOpenDir);
-    if (!filename.isEmpty()) {
-        QFileInfo fi(filename);
-        zg->savedAuxOpenDir = fi.path();
-
-        ui->tabWidget->setCurrentIndex(0);
-        ui->mangaView->openFile(filename);
-    }
+    if (!filename.isEmpty())
+        openAuxFile(filename);
 }
 
 void MainWindow::openClipboard()

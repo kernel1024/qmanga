@@ -50,6 +50,7 @@ private:
     QPoint savedPos;
     QSize savedSize;
     QMessageBox indexerMsgBox;
+    void openAuxFile(const QString& filename);
 
 protected:
     void closeEvent(QCloseEvent * event);
