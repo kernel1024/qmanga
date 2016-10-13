@@ -606,7 +606,7 @@ void ZDB::sqlSearchMissingManga()
     QString qr;
     qr = "CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
          "`filename` varchar(16383), INDEX ifilename (filename)"
-         ") ENGINE=MEMORY DEFAULT CHARSET=utf8;";
+         ") ENGINE=MyISAM DEFAULT CHARSET=utf8;";
     if (mysql_query(db,qr.toUtf8())) {
         emit errorMsg(tr("Unable to create temporary table `tmp_exfiles`\n\n%1")
                       .arg(mysql_error(db)));
