@@ -1,4 +1,6 @@
 #include <QApplication>
+#include <QTemporaryFile>
+#include <QTextStream>
 #include "zdb.h"
 
 #define FT_DETAILS "1. Edit my.cnf file and save\n" \
@@ -580,27 +582,78 @@ void ZDB::sqlSearchMissingManga()
     QStringList foundFiles;
     foundFiles.clear();
 
-    MYSQL* db = sqlOpenBase();
-    if (db==NULL) return;
+    QTemporaryFile f;
+    if (!f.open()) {
+        emit errorMsg(tr("Unable to create temporary file."));
+        problems[tr("Temporary file")] = tr("Unable to create temporary file");
+        return;
+    }
+    QTextStream ts(&f);
 
     foreach (const QString& d, indexedDirs) {
         QDir dir(d);
         QFileInfoList fl = dir.entryInfoList(QStringList("*"));
         for (int i=0;i<fl.count();i++)
-            if (fl.at(i).isReadable() && fl.at(i).isFile()) {
-                bool err1,err2;
-                if (!isFileInTable(db,fl.at(i).absoluteFilePath(),"files",&err1) &&
-                        !isFileInTable(db,fl.at(i).absoluteFilePath(),"ignored_files",&err2)) {
-                    if (!err1 && !err2) {
-                        foundFiles << fl.at(i).absoluteFilePath();
-                    } else {
-                        qDebug() << mysql_error(db);
-                        sqlCloseBase(db);
-                        return;
-                    }
-                }
-            }
+            if (fl.at(i).isReadable() && fl.at(i).isFile())
+                ts << fl.at(i).absoluteFilePath() << endl;
     }
+    ts.flush();
+    f.close();
+
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
+
+    QString qr;
+    qr = "CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
+         "`filename` varchar(16383), INDEX ifilename (filename)"
+         ") ENGINE=MEMORY DEFAULT CHARSET=utf8;";
+    if (mysql_query(db,qr.toUtf8())) {
+        emit errorMsg(tr("Unable to create temporary table `tmp_exfiles`\n\n%1")
+                      .arg(mysql_error(db)));
+        problems[tr("Create tables - tmp_exfiles")] = tr("Unable to create temporary table `tmp_exfiles`.\n"
+                                                         "CREATE TABLE query failed.");
+        sqlCloseBase(db);
+        return;
+    }
+
+    qr = "TRUNCATE TABLE `tmp_exfiles`;";
+    if (mysql_query(db,qr.toUtf8())) {
+        emit errorMsg(tr("Unable to truncate temporary table `tmp_exfiles`\n\n%1")
+                      .arg(mysql_error(db)));
+        problems[tr("Truncate table - tmp_exfiles")] = tr("Unable to truncate temporary table `tmp_exfiles`.\n"
+                                                          "TRUNCATE TABLE query failed.");
+        sqlCloseBase(db);
+        return;
+    }
+
+    qr = QString("LOAD DATA LOCAL INFILE '%1' INTO TABLE `tmp_exfiles`;").arg(escapeParam(f.fileName()));
+    if (mysql_query(db,qr.toUtf8())) {
+        emit errorMsg(tr("Unable to load data to table `tmp_exfiles`\n\n%1")
+                      .arg(mysql_error(db)));
+        problems[tr("Load data infile - tmp_exfiles")] = tr("Unable to load data to temporary table `tmp_exfiles`.\n"
+                                                            "LOAD DATA INFILE query failed.");
+        sqlCloseBase(db);
+        return;
+    }
+
+    qr = QString("SELECT tmp_exfiles.filename FROM tmp_exfiles "
+                 "LEFT JOIN files ON tmp_exfiles.filename=files.filename "
+                 "LEFT JOIN ignored_files ON tmp_exfiles.filename=ignored_files.filename "
+                 "WHERE (files.filename IS NULL) AND (ignored_files.filename IS NULL);");
+    if (!mysql_query(db,qr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(res)) != NULL)
+            foundFiles << QString::fromUtf8(row[0]);
+        mysql_free_result(res);
+    } else
+        qDebug() << mysql_error(db);
+
+    qr = QString("DROP TABLE `tmp_exfiles`;");
+    if (mysql_query(db,qr.toUtf8()))
+        qDebug() << mysql_error(db);
+
     sqlCloseBase(db);
 
     emit foundNewFiles(foundFiles);
