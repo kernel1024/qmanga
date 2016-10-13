@@ -19,6 +19,7 @@ qrc_*.cpp
 Debug/
 Release/
 *.log
+.*.stash
 
 # QtCreator project files
 *.pro.user
