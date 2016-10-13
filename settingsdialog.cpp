@@ -41,15 +41,20 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
         ui->comboFilter->removeItem(ui->comboFilter->count()-1);
 #endif
 
-    connect(ui->btnDeleteBookmark,SIGNAL(clicked()),this,SLOT(delBookmark()));
-    connect(ui->btnBkColor,SIGNAL(clicked()),this,SLOT(bkColorDlg()));
-    connect(ui->btnFontIndexer,SIGNAL(clicked()),this,SLOT(idxFontDlg()));
-    connect(ui->btnFontOCR,SIGNAL(clicked()),this,SLOT(ocrFontDlg()));
-    connect(ui->btnFrameColor,SIGNAL(clicked()),this,SLOT(frameColorDlg()));
+    connect(ui->btnDeleteBookmark,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
+    connect(ui->btnBkColor,&QPushButton::clicked,this,&SettingsDialog::bkColorDlg);
+    connect(ui->btnFontIndexer,&QPushButton::clicked,this,&SettingsDialog::idxFontDlg);
+    connect(ui->btnFontOCR,&QPushButton::clicked,this,&SettingsDialog::ocrFontDlg);
+    connect(ui->btnFrameColor,&QPushButton::clicked,this,&SettingsDialog::frameColorDlg);
 
-    connect(ui->btnDynAdd,SIGNAL(clicked()),this,SLOT(dynAdd()));
-    connect(ui->btnDynEdit,SIGNAL(clicked()),this,SLOT(dynEdit()));
-    connect(ui->btnDynDelete,SIGNAL(clicked()),this,SLOT(dynDelete()));
+    connect(ui->btnDynAdd,&QPushButton::clicked,this,&SettingsDialog::dynAdd);
+    connect(ui->btnDynEdit,&QPushButton::clicked,this,&SettingsDialog::dynEdit);
+    connect(ui->btnDynDelete,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
+    connect(ui->btnDeleteIgnored,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
+
+    delLookup[ui->btnDeleteBookmark] = ui->listBookmarks;
+    delLookup[ui->btnDynDelete] = ui->listDynAlbums;
+    delLookup[ui->btnDeleteIgnored] = ui->listIgnoredFiles;
 }
 
 SettingsDialog::~SettingsDialog()
@@ -77,11 +82,36 @@ QColor SettingsDialog::getFrameColor()
     return frameColor;
 }
 
-void SettingsDialog::delBookmark()
+QStringList SettingsDialog::getIgnoredFiles()
 {
-    QList<QListWidgetItem *> dl = ui->listBookmarks->selectedItems();
+    QStringList res;
+    for(int i=0;i<ui->listIgnoredFiles->count();i++)
+        res << ui->listIgnoredFiles->item(i)->data(Qt::UserRole).toString();
+    return res;
+}
+
+void SettingsDialog::setIgnoredFiles(const QStringList& files)
+{
+    ui->listIgnoredFiles->clear();
+    foreach(const QString& fname, files) {
+        QFileInfo fi(fname);
+        QListWidgetItem* li = new QListWidgetItem(fi.fileName());
+        li->setData(Qt::UserRole,fname);
+        li->setToolTip(fname);
+        ui->listIgnoredFiles->addItem(li);
+    }
+}
+
+void SettingsDialog::delListWidgetItem()
+{
+    QPushButton* btn = qobject_cast<QPushButton *>(sender());
+    if (btn==NULL || !delLookup.contains(btn)) return;
+    QListWidget* list = delLookup.value(btn);
+    if (list==NULL) return;
+
+    QList<QListWidgetItem *> dl = list->selectedItems();
     foreach (QListWidgetItem* i, dl) {
-        ui->listBookmarks->removeItemWidget(i);
+        list->removeItemWidget(i);
         delete i;
     }
 }
@@ -188,13 +218,4 @@ void SettingsDialog::dynEdit()
     }
     dlg->setParent(NULL);
     delete dlg;
-}
-
-void SettingsDialog::dynDelete()
-{
-    QList<QListWidgetItem *> dl = ui->listDynAlbums->selectedItems();
-    foreach (QListWidgetItem* i, dl) {
-        ui->listDynAlbums->removeItemWidget(i);
-        delete i;
-    }
 }

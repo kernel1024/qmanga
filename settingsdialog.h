@@ -44,15 +44,18 @@ public:
     QFont getIdxFont();
     QFont getOCRFont();
     QColor getFrameColor();
+    QStringList getIgnoredFiles();
+    void setIgnoredFiles(const QStringList &files);
     
 private:
     QColor bkColor, frameColor;
     QFont idxFont;
     QFont ocrFont;
     Ui::SettingsDialog *ui;
+    QMap<QPushButton *, QListWidget *> delLookup;
 
 public slots:
-    void delBookmark();
+    void delListWidgetItem();
     void bkColorDlg();
     void idxFontDlg();
     void ocrFontDlg();
@@ -63,7 +66,6 @@ public slots:
     void updateFrameColor(QColor c);
     void dynAdd();
     void dynEdit();
-    void dynDelete();
 
 };
 

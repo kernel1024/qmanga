@@ -37,16 +37,18 @@ ZGlobal::ZGlobal(QObject *parent) :
 
     threadDB = new QThread();
     db = new ZDB();
-    connect(this,SIGNAL(dbSetCredentials(QString,QString,QString)),
-            db,SLOT(setCredentials(QString,QString,QString)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbCheckBase()),db,SLOT(sqlCheckBase()),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbCheckEmptyAlbums()),db,SLOT(sqlDelEmptyAlbums()),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbRescanIndexedDirs()),db,SLOT(sqlRescanIndexedDirs()),Qt::QueuedConnection);
-    connect(db,SIGNAL(updateWatchDirList(QStringList)),
-            this,SLOT(updateWatchDirList(QStringList)),Qt::QueuedConnection);
-    connect(db,SIGNAL(baseCheckComplete()),
-            this,SLOT(dbCheckComplete()),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbSetDynAlbums(ZStrMap)),db,SLOT(setDynAlbums(ZStrMap)),Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbSetCredentials,
+            db,&ZDB::setCredentials,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbCheckBase,db,&ZDB::sqlCheckBase,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbCheckEmptyAlbums,db,&ZDB::sqlDelEmptyAlbums,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbRescanIndexedDirs,db,&ZDB::sqlRescanIndexedDirs,Qt::QueuedConnection);
+    connect(db,&ZDB::updateWatchDirList,
+            this,&ZGlobal::updateWatchDirList,Qt::QueuedConnection);
+    connect(db,&ZDB::baseCheckComplete,
+            this,&ZGlobal::dbCheckComplete,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbSetDynAlbums,db,&ZDB::setDynAlbums,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbSetIgnoredFiles,
+            db,&ZDB::sqlSetIgnoredFiles,Qt::QueuedConnection);
     db->moveToThread(threadDB);
     threadDB->start();
 
@@ -323,6 +325,7 @@ void ZGlobal::settingsDlg()
         li->setData(Qt::UserRole+1,query);
         dlg->listDynAlbums->addItem(li);
     }
+    dlg->setIgnoredFiles(db->sqlGetIgnoredFiles());
 
     if (dlg->exec()) {
         dbUser=dlg->editMySqlLogin->text();
@@ -362,6 +365,7 @@ void ZGlobal::settingsDlg()
                 w->searchTab->updateAlbumsList();
         }
         emit dbCheckBase();
+        emit dbSetIgnoredFiles(dlg->getIgnoredFiles());
         if (filesystemWatcher)
             emit dbRescanIndexedDirs();
         if (ocrEditor!=NULL)

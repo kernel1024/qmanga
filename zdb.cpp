@@ -659,13 +659,37 @@ void ZDB::sqlSearchMissingManga()
     emit foundNewFiles(foundFiles);
 }
 
-void ZDB::sqlAddIgnoredFiles(const QStringList &files)
+void ZDB::sqlAddIgnoredFiles(const QStringList& files)
+{
+    sqlInsertIgnoredFilesPrivate(files,false);
+}
+
+void ZDB::sqlSetIgnoredFiles(const QStringList& files)
+{
+    sqlInsertIgnoredFilesPrivate(files,true);
+}
+
+void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable)
 {
     MYSQL* db = sqlOpenBase();
     if (db==NULL) return;
 
+    QString qr;
+
+    if (cleanTable) {
+        qr = "TRUNCATE TABLE `ignored_files`;";
+        if (mysql_query(db,qr.toUtf8())) {
+            emit errorMsg(tr("Unable to truncate table `ignored_files`\n\n%1")
+                          .arg(mysql_error(db)));
+            problems[tr("Truncate table - ignored_files")] = tr("Unable to truncate table `ignored_files`.\n"
+                                                                "TRUNCATE TABLE query failed.");
+            sqlCloseBase(db);
+            return;
+        }
+    }
+
     foreach (const QString& file, files) {
-        QString qr = QString("INSERT INTO ignored_files (filename) VALUES ('%1');").arg(escapeParam(file));
+        qr = QString("INSERT INTO ignored_files (filename) VALUES ('%1');").arg(escapeParam(file));
         if (mysql_query(db,qr.toUtf8())) {
             emit errorMsg(tr("Unable to add ignored file `%1`\n%2").
                           arg(file).
@@ -675,6 +699,28 @@ void ZDB::sqlAddIgnoredFiles(const QStringList &files)
         }
     }
     sqlCloseBase(db);
+}
+
+QStringList ZDB::sqlGetIgnoredFiles()
+{
+    QStringList sl;
+
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return sl;
+
+    QString qr;
+    qr = QString("SELECT filename FROM ignored_files;");
+    if (!mysql_query(db,qr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(res)) != NULL)
+            sl << QString::fromUtf8(row[0]);
+        mysql_free_result(res);
+    }
+    sqlCloseBase(db);
+
+    return sl;
 }
 
 void ZDB::sqlGetTablesDescription()

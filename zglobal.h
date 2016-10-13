@@ -72,6 +72,7 @@ signals:
     void dbRescanIndexedDirs();
     void fsFilesAdded();
     void dbSetDynAlbums(const ZStrMap& albums);
+    void dbSetIgnoredFiles(const QStringList& files);
 
 };
 

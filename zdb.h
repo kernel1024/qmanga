@@ -31,6 +31,7 @@ private:
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
     void fsAddImagesDir(const QString& dir, const QString& album);
     QString prepareSearchQuery(const QString& search);
+    void sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable);
 
 public:
     explicit ZDB(QObject *parent = 0);
@@ -38,6 +39,7 @@ public:
     int getAlbumsCount();
     ZStrMap getDynAlbums();
     QStrHash getConfigProblems();
+    QStringList sqlGetIgnoredFiles();
 
 signals:
     void errorMsg(const QString& msg);
@@ -73,8 +75,8 @@ public slots:
     void sqlUpdateFileStats(const QString& fileName);
     void sqlSearchMissingManga();
     void sqlAddIgnoredFiles(const QStringList& files);
+    void sqlSetIgnoredFiles(const QStringList &files);
     void sqlGetTablesDescription();
-
 };
 
 #endif // ZDB_H
