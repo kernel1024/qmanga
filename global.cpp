@@ -290,6 +290,7 @@ SQLMangaEntry::SQLMangaEntry()
     fileDT = QDateTime();
     addingDT = QDateTime();
     dbid = -1;
+    rendering = Z::PDFRendering::Autodetect;
 }
 
 SQLMangaEntry::SQLMangaEntry(int aDbid)
@@ -304,12 +305,13 @@ SQLMangaEntry::SQLMangaEntry(int aDbid)
     fileDT = QDateTime();
     addingDT = QDateTime();
     dbid = aDbid;
+    rendering = Z::PDFRendering::Autodetect;
 }
 
 SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, const QString &aAlbum,
                              const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
                              const QString &aFileMagic, const QDateTime &aFileDT,
-                             const QDateTime &aAddingDT, int aDbid)
+                             const QDateTime &aAddingDT, int aDbid, Z::PDFRendering aRendering)
 {
     name = aName;
     filename = aFilename;
@@ -321,6 +323,7 @@ SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, con
     fileDT = aFileDT;
     addingDT = aAddingDT;
     dbid = aDbid;
+    rendering = aRendering;
 }
 
 SQLMangaEntry &SQLMangaEntry::operator =(const SQLMangaEntry &other)
@@ -335,6 +338,7 @@ SQLMangaEntry &SQLMangaEntry::operator =(const SQLMangaEntry &other)
     fileDT = other.fileDT;
     addingDT = other.addingDT;
     dbid = other.dbid;
+    rendering = other.rendering;
     return *this;
 }
 

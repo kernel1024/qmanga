@@ -40,6 +40,8 @@ public:
     ZStrMap getDynAlbums();
     QStrHash getConfigProblems();
     QStringList sqlGetIgnoredFiles();
+    Z::PDFRendering getPreferredRendering(const QString& filename);
+    bool setPreferredRendering(const QString& filename, Z::PDFRendering mode);
 
 signals:
     void errorMsg(const QString& msg);

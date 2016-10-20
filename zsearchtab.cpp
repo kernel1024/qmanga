@@ -217,7 +217,51 @@ void ZSearchTab::ctxMenu(QPoint pos)
     cm.addAction(QIcon::fromTheme("fork"),
                  tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
 
+    if (li.count()==1) {
+        SQLMangaEntry m = model->getItem(li.first().row());
+        if (m.fileMagic == "PDF") {
+            cm.addSeparator();
+            dmenu = cm.addMenu(tr("Preferred PDF rendering"));
+
+            acm = dmenu->addAction(tr("Autodetect"));
+            acm->setCheckable(true);
+            acm->setChecked(m.rendering==Z::PDFRendering::Autodetect);
+            acm->setData(static_cast<int>(Z::PDFRendering::Autodetect));
+            connect(acm,SIGNAL(triggered()),this,SLOT(ctxChangeRenderer()));
+            acm = dmenu->addAction(tr("Force rendering mode"));
+            acm->setCheckable(true);
+            acm->setChecked(m.rendering==Z::PDFRendering::PageRenderer);
+            acm->setData(static_cast<int>(Z::PDFRendering::PageRenderer));
+            connect(acm,SIGNAL(triggered()),this,SLOT(ctxChangeRenderer()));
+            acm = dmenu->addAction(tr("Force catalog mode"));
+            acm->setCheckable(true);
+            acm->setChecked(m.rendering==Z::PDFRendering::ImageCatalog);
+            acm->setData(static_cast<int>(Z::PDFRendering::ImageCatalog));
+            connect(acm,SIGNAL(triggered()),this,SLOT(ctxChangeRenderer()));
+        }
+    }
+
     cm.exec(ui->srcList->mapToGlobal(pos));
+}
+
+void ZSearchTab::ctxChangeRenderer()
+{
+    QAction* am = qobject_cast<QAction *>(sender());
+    QModelIndexList li = ui->srcList->selectionModel()->selectedIndexes();
+    if (am==NULL || li.count()!=1) return;
+
+    SQLMangaEntry m = model->getItem(li.first().row());
+
+    bool ok;
+    Z::PDFRendering mode = static_cast<Z::PDFRendering>(am->data().toInt(&ok));
+    if (ok)
+        ok = zg->db->setPreferredRendering(m.filename, mode);
+
+    albumClicked(ui->srcAlbums->currentItem());
+
+    if (!ok)
+        QMessageBox::warning(this,tr("QManga"),
+                             tr("Unable to update preferred rendering."));
 }
 
 void ZSearchTab::ctxAlbumMenu(QPoint pos)

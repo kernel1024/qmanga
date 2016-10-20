@@ -108,34 +108,31 @@ bool ZDB::sqlCheckBasePriv()
 
 bool ZDB::checkTablesParams(MYSQL* db)
 {
-    // Convert tables to MyISAM (if necessary)
-    QStringList toconv;
-    QString qr = QString("SELECT table_name FROM information_schema.tables "
-                         "WHERE (table_schema = DATABASE() AND Engine = \"InnoDB\");");
+    QString qr;
 
+    // Add fulltext index for manga names
+    qr = QString("SHOW COLUMNS FROM files;");
     if (mysql_query(db,qr.toUtf8())) {
-        qDebug() << "Unable to get tables engine." << mysql_error(db);
+        qDebug() << "Unable to get columns list." << mysql_error(db);
 
-        problems[tr("MyISAM table engine")] = tr("Unable to check engines for qmanga tables.\n"
-                                                 "SELECT query failed.\n"
-                                                 "All qmanga tables must be created with MyISAM engine.");
+        problems[tr("Check for columns")] = tr("Unable to check columns for qmanga table 'files'.\n"
+                                               "SHOW COLUMNS query failed.\n");
 
         return false;
     }
     MYSQL_RES* res = mysql_use_result(db);
     MYSQL_ROW row;
+    QStringList cols;
     while ((row = mysql_fetch_row(res)) != NULL)
-        toconv << QString::fromUtf8(row[0]);
+        cols << QString::fromUtf8(row[0]);
     mysql_free_result(res);
-
-    foreach (const QString& tbl, toconv) {
-        qr = QString("ALTER TABLE %1 ENGINE=MyISAM;").arg(tbl);
+    if (!cols.contains("preferredRendering",Qt::CaseInsensitive)) {
+        qr = QString("ALTER TABLE `files` ADD COLUMN `preferredRendering` INT(11) DEFAULT 0;");
         if (mysql_query(db,qr.toUtf8())) {
-            qDebug() << "Engine conversion to MyISAM failed on table" << tbl << mysql_error(db);
+            qDebug() << "Unable to add column for files table." << mysql_error(db);
 
-            problems[tr("MyISAM table conversion")] = tr("Unable to convert qmanga tables.\n"
-                                                         "ALTER TABLE query failed.\n"
-                                                         "All qmanga tables must be created with MyISAM engine.");
+            problems[tr("Adding column")] = tr("Unable to add column for qmanga files table.\n"
+                                               "ALTER TABLE query failed.");
 
             return false;
         }
@@ -246,6 +243,7 @@ void ZDB::sqlCreateTables()
       "`fileMagic` varchar(32) NOT NULL,"
       "`fileDT` datetime NOT NULL,"
       "`addingDT` datetime NOT NULL,"
+      "`preferredRendering` int(11) default 0,"
       "PRIMARY KEY (`id`),"
       "FULLTEXT KEY `name_ft` (`name`)"
     ") ENGINE=MyISAM  DEFAULT CHARSET=utf8;";
@@ -321,7 +319,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
     tmr.start();
 
     QString tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                         "addingDT, files.id, albums.name "
+                         "addingDT, files.id, albums.name, files.preferredRendering "
                          "FROM files LEFT JOIN albums ON files.album=albums.id ");
     bool specQuery = false;
     bool checkFS = false;
@@ -372,7 +370,9 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                                        QString::fromUtf8(row[5]),
                                        QDateTime::fromString(QString::fromUtf8(row[6]),"yyyy-MM-dd H:mm:ss"),
                                        QDateTime::fromString(QString::fromUtf8(row[7]),"yyyy-MM-dd H:mm:ss"),
-                                       QString::fromUtf8(row[8]).toInt()), sortOrder, reverseOrder);
+                                       QString::fromUtf8(row[8]).toInt(),
+                                       static_cast<Z::PDFRendering>(QString::fromUtf8(row[10]).toInt())),
+                    sortOrder, reverseOrder);
             QApplication::processEvents();
             idx++;
         }
@@ -721,6 +721,53 @@ QStringList ZDB::sqlGetIgnoredFiles()
     sqlCloseBase(db);
 
     return sl;
+}
+
+Z::PDFRendering ZDB::getPreferredRendering(const QString &filename)
+{
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return Z::PDFRendering::Autodetect;
+
+    QString qr;
+    qr = QString("SELECT preferredRendering FROM files WHERE filename='%1';").
+         arg(escapeParam(filename));
+    if (!mysql_query(db,qr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        if ((row = mysql_fetch_row(res)) != NULL) {
+            bool ok;
+            Z::PDFRendering mres = static_cast<Z::PDFRendering>(QString::fromUtf8(row[0]).toInt(&ok));
+            if (ok) return mres;
+        }
+        mysql_free_result(res);
+    }
+    sqlCloseBase(db);
+
+    return Z::PDFRendering::Autodetect;
+}
+
+bool ZDB::setPreferredRendering(const QString &filename, Z::PDFRendering mode)
+{
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return Z::PDFRendering::Autodetect;
+
+    QString qr;
+    qr = QString("UPDATE files SET preferredRendering=%1 WHERE filename='%2';").
+         arg(static_cast<int>(mode)).arg(escapeParam(filename));
+    bool res = true;
+    if (mysql_query(db,qr.toUtf8())) {
+        QString msg = tr("Unable to change preferred rendering for '%1'.\n%2")
+                .arg(filename)
+                .arg(mysql_error(db));
+        qDebug() << msg;
+        emit errorMsg(msg);
+        res = false;
+    }
+    sqlCloseBase(db);
+
+    return res;
+
 }
 
 void ZDB::sqlGetTablesDescription()

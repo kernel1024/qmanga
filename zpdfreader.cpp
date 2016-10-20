@@ -12,6 +12,8 @@ GlobalParams* globalParams = NULL;
 
 #include <QMutex>
 #include "zpdfreader.h"
+#include "global.h"
+#include "zdb.h"
 
 static QMutex indexerMutex;
 
@@ -55,15 +57,19 @@ bool ZPdfReader::openFile()
 
     outDev = new ZPDFImageOutputDev();
 
-    if (zg->pdfRendering==Z::Autodetect || zg->pdfRendering==Z::ImageCatalog) {
+    Z::PDFRendering mode = zg->db->getPreferredRendering(fileName);
+    if (mode==Z::Autodetect)
+        mode = zg->pdfRendering;
+
+    if (mode==Z::Autodetect || mode==Z::ImageCatalog) {
         outDev->imageCounting = true;
 
         if (outDev->isOk())
             doc->displayPages(outDev, 1, doc->getNumPages(), 72, 72, 0,
                               gTrue, gFalse, gFalse);
     }
-    if ((zg->pdfRendering==Z::Autodetect && outDev->getPageCount()==doc->getNumPages()) ||
-            (zg->pdfRendering==Z::ImageCatalog && outDev->getPageCount()>0)) {
+    if ((mode==Z::Autodetect && outDev->getPageCount()==doc->getNumPages()) ||
+            (mode==Z::ImageCatalog && outDev->getPageCount()>0)) {
         useImageCatalog = true;
         numPages = outDev->getPageCount();
         emit auxMessage(tr("PDF images catalog"));

@@ -81,6 +81,7 @@ public slots:
     void dbFilesLoaded(const int count, const int elapsed);
     void dbErrorMsg(const QString& msg);
     void dbNeedTableCreation();
+    void ctxChangeRenderer();
 
 signals:
     void mangaDblClick(QString filename);

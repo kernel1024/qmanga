@@ -111,11 +111,13 @@ public:
     QString fileMagic;
     QDateTime fileDT;
     QDateTime addingDT;
+    Z::PDFRendering rendering;
     SQLMangaEntry();
     SQLMangaEntry(int aDbid);
     SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
                   const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
-                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT, int aDbid);
+                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT,
+                  int aDbid, Z::PDFRendering aRendering);
     SQLMangaEntry &operator=(const SQLMangaEntry& other);
     bool operator==(const SQLMangaEntry& ref) const;
     bool operator!=(const SQLMangaEntry& ref) const;
