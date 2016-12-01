@@ -4,6 +4,7 @@
 ZZipReader::ZZipReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
 {
+    mainZFile = NULL;
 }
 
 bool ZZipReader::openFile()
