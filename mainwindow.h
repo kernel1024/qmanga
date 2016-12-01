@@ -18,6 +18,7 @@ public:
     QString album;
     QString fileName;
     ZFSFile();
+    ZFSFile(const ZFSFile& other);
     ZFSFile(QString aName, QString aFileName, QString aAlbum);
     ZFSFile &operator=(const ZFSFile& other);
 };

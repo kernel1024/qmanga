@@ -381,6 +381,12 @@ ZFileEntry::ZFileEntry()
     idx = -1;
 }
 
+ZFileEntry::ZFileEntry(const ZFileEntry &other)
+{
+    name = other.name;
+    idx = other.idx;
+}
+
 ZFileEntry::ZFileEntry(QString aName, int aIdx)
 {
     name = aName;

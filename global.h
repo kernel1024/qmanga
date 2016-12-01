@@ -113,6 +113,7 @@ public:
     QDateTime addingDT;
     Z::PDFRendering rendering;
     SQLMangaEntry();
+    SQLMangaEntry(const SQLMangaEntry& other);
     SQLMangaEntry(int aDbid);
     SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
                   const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
@@ -131,6 +132,7 @@ public:
     int jobCount;
 
     ZLoaderHelper();
+    ZLoaderHelper(const ZLoaderHelper& other);
     ZLoaderHelper(QUuid aThreadID);
     ZLoaderHelper(QThread* aThread, ZMangaLoader* aLoader);
     ZLoaderHelper(QPointer<QThread> aThread, QPointer<ZMangaLoader> aLoader);

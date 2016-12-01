@@ -31,10 +31,8 @@ int ZDB::getAlbumsCount()
     MYSQL_RES* res = mysql_use_result(db);
     int cnt = 0;
     MYSQL_ROW row;
-    while ((row = mysql_fetch_row(res)) != NULL) {
+    if ((row = mysql_fetch_row(res)) != NULL)
         cnt = QString::fromUtf8(row[0]).toInt();
-        break;
-    }
     mysql_free_result(res);
     sqlCloseBase(db);
     return cnt;
@@ -190,7 +188,7 @@ void ZDB::checkConfigOpts(MYSQL *db, bool silent)
     if ((row = mysql_fetch_row(res)) != NULL) {
         bool okconv;
         int ftlen = QString::fromUtf8(row[0]).toInt(&okconv);
-        if ((ftlen>2 && okconv) || !okconv) {
+        if (!okconv || (ftlen>2)) {
             if (!silent)
                 emit errorMsg(tr(FT_DETAILS));
             problems[tr("MySQL config fulltext")] = tr(FT_DETAILS);
@@ -1250,10 +1248,8 @@ void ZDB::sqlDelAlbum(const QString &album)
     if (!mysql_query(db,qra.toUtf8())) {
         MYSQL_RES* res = mysql_use_result(db);
         MYSQL_ROW row;
-        while ((row = mysql_fetch_row(res)) != NULL) {
+        if ((row = mysql_fetch_row(res)) != NULL)
             id = QString::fromUtf8(row[0]).toInt();
-            break;
-        }
         mysql_free_result(res);
     }
     if (id==-1) {

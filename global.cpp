@@ -293,6 +293,21 @@ SQLMangaEntry::SQLMangaEntry()
     rendering = Z::PDFRendering::Autodetect;
 }
 
+SQLMangaEntry::SQLMangaEntry(const SQLMangaEntry &other)
+{
+    name = other.name;
+    filename = other.filename;
+    album = other.album;
+    cover = other.cover;
+    pagesCount = other.pagesCount;
+    fileSize = other.fileSize;
+    fileMagic = other.fileMagic;
+    fileDT = other.fileDT;
+    addingDT = other.addingDT;
+    dbid = other.dbid;
+    rendering = other.rendering;
+}
+
 SQLMangaEntry::SQLMangaEntry(int aDbid)
 {
     name = QString();
@@ -356,6 +371,14 @@ ZLoaderHelper::ZLoaderHelper()
 {
     id = QUuid::createUuid();
     jobCount = 0;
+}
+
+ZLoaderHelper::ZLoaderHelper(const ZLoaderHelper &other)
+{
+    id = other.id;
+    thread = other.thread;
+    loader = other.loader;
+    jobCount = other.jobCount;
 }
 
 ZLoaderHelper::ZLoaderHelper(QUuid aThreadID)

@@ -619,6 +619,13 @@ ZFSFile::ZFSFile()
     album.clear();
 }
 
+ZFSFile::ZFSFile(const ZFSFile &other)
+{
+    name = other.name;
+    fileName = other.fileName;
+    album = other.album;
+}
+
 ZFSFile::ZFSFile(QString aName, QString aFileName, QString aAlbum)
 {
     name = aName;

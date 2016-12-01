@@ -81,6 +81,7 @@ public:
     QString name;
     int idx;
     ZFileEntry();
+    ZFileEntry(const ZFileEntry& other);
     ZFileEntry(QString aName, int aIdx);
     ZFileEntry &operator=(const ZFileEntry& other);
     bool operator==(const ZFileEntry& ref) const;

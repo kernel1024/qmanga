@@ -42,6 +42,7 @@ public:
     Goffset pos, size;
     QString format;
     ZPDFImg();
+    ZPDFImg(const ZPDFImg& other);
     ZPDFImg(Goffset a_pos, Goffset a_size, QString a_format);
     ZPDFImg &operator=(const ZPDFImg& other);
     bool operator==(const ZPDFImg& ref) const;

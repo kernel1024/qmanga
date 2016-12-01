@@ -133,6 +133,13 @@ ZPDFImg::ZPDFImg()
     format = QString();
 }
 
+ZPDFImg::ZPDFImg(const ZPDFImg &other)
+{
+    pos = other.pos;
+    size = other.size;
+    format = other.format;
+}
+
 ZPDFImg::ZPDFImg(Goffset a_pos, Goffset a_size, QString a_format)
 {
     pos = a_pos;

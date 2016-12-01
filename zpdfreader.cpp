@@ -24,6 +24,8 @@ ZPdfReader::ZPdfReader(QObject *parent, QString filename) :
     doc = NULL;
     outDev = NULL;
 #endif
+    useImageCatalog = false;
+    numPages = 0;
 }
 
 ZPdfReader::~ZPdfReader()
