@@ -15,14 +15,10 @@ bool ZImagesDirReader::openFile()
 
     QDir d(fileName);
     if (!d.isReadable()) return false;
-    QFileInfoList fl = d.entryInfoList(QStringList("*"));
-    int cnt = 0;
+    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files);
+    filterSupportedImgFiles(fl);
     for (int i=0;i<fl.count();i++)
-        if (fl.at(i).isReadable() && fl.at(i).isFile() &&
-                supportedImg().contains(fl.at(i).suffix(),Qt::CaseInsensitive)) {
-            sortList << ZFileEntry(fl.at(i).absoluteFilePath(),cnt);
-            cnt++;
-        }
+        sortList << ZFileEntry(fl.at(i).absoluteFilePath(),i);
 
     qSort(sortList);
 
@@ -53,28 +49,25 @@ QByteArray ZImagesDirReader::loadPage(int num)
 
     QDir d(fileName);
     if (!d.isReadable()) return res;
-    QFileInfoList fl = d.entryInfoList(QStringList("*"));
+    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files);
+    filterSupportedImgFiles(fl);
     for (int i=0;i<fl.count();i++) {
         QFileInfo fi(fl.at(i));
-        if (fi.isReadable() && fi.isFile() &&
-                supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) {
-
-            if (idx==znum) {
-                if (fi.size()>(150*1024*1024)) {
-                    qDebug() << "Image file is too big (over 150Mb). Unable to load.";
-                    return res;
-                }
-                QFile f(fi.absoluteFilePath());
-                if (!f.open(QIODevice::ReadOnly)) {
-                    qDebug() << "Error while opening image file." << fi.absoluteFilePath();
-                    return res;
-                }
-                res=f.readAll();
-                f.close();
+        if (idx==znum) {
+            if (fi.size()>(150*1024*1024)) {
+                qDebug() << "Image file is too big (over 150Mb). Unable to load.";
                 return res;
             }
-            idx++;
+            QFile f(fi.absoluteFilePath());
+            if (!f.open(QIODevice::ReadOnly)) {
+                qDebug() << "Error while opening image file." << fi.absoluteFilePath();
+                return res;
+            }
+            res=f.readAll();
+            f.close();
+            return res;
         }
+        idx++;
     }
     return res;
 }

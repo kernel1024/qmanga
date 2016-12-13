@@ -623,6 +623,7 @@ void ZMangaView::exportPagesCtx()
         if (progressDlg==NULL)
             progressDlg = new QProgressDialog(this);
         progressDlg->setWindowModality(Qt::WindowModal);
+        progressDlg->setAutoClose(false);
         progressDlg->setWindowTitle(tr("Exporting pages..."));
         progressDlg->setValue(0);
         progressDlg->setLabelText(QString());

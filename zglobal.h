@@ -38,7 +38,7 @@ public:
     Z::PDFRendering pdfRendering;
     int cacheWidth;
     int magnifySize;
-    QString savedAuxOpenDir, savedIndexOpenDir;
+    QString savedAuxOpenDir, savedIndexOpenDir, savedAuxSaveDir;
     QColor backgroundColor, frameColor;
     QFont idxFont, ocrFont;
     int preferredWidth;

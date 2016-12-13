@@ -101,6 +101,7 @@ void ZGlobal::loadSettings()
     dbBase = settings.value("mysqlBase",QString("qmanga")).toString();
     savedAuxOpenDir = settings.value("savedAuxOpenDir",QString()).toString();
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
+    savedAuxSaveDir = settings.value("savedAuxSaveDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
     scrollDelta = settings.value("scrollDelta",120).toInt();
     pdfRendering = (Z::PDFRendering)settings.value("pdfRendering",Z::Autodetect).toInt();
@@ -174,6 +175,7 @@ void ZGlobal::saveSettings()
     settings.setValue("mysqlPassword",dbPass);
     settings.setValue("mysqlBase",dbBase);
     settings.setValue("savedAuxOpenDir",savedAuxOpenDir);
+    settings.setValue("savedAuxSaveDir",savedAuxSaveDir);
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
     settings.setValue("magnifySize",magnifySize);
     settings.setValue("scrollDelta",scrollDelta);

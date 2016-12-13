@@ -4,12 +4,14 @@
 #include <QProcess>
 #include <QFileInfo>
 #include <QCompleter>
+#include <QProgressDialog>
 
-#include "zsearchtab.h"
-#include "ui_zsearchtab.h"
+#include "zfilecopier.h"
 #include "zglobal.h"
 #include "zmangamodel.h"
 #include "albumselectordlg.h"
+#include "zsearchtab.h"
+#include "ui_zsearchtab.h"
 
 ZSearchTab::ZSearchTab(QWidget *parent) :
     QWidget(parent),
@@ -217,6 +219,9 @@ void ZSearchTab::ctxMenu(QPoint pos)
     cm.addAction(QIcon::fromTheme("fork"),
                  tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
 
+    cm.addAction(QIcon::fromTheme("edit-copy"),
+                 tr("Copy files to..."),this,SLOT(ctxFileCopy()));
+
     if (li.count()==1) {
         SQLMangaEntry m = model->getItem(li.first().row());
         if (m.fileMagic == "PDF") {
@@ -330,81 +335,58 @@ void ZSearchTab::ctxDeleteAlbum()
 
 void ZSearchTab::ctxOpenDir()
 {
-    QModelIndexList li;
-    li.clear();
-    QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
-    if (lii.isEmpty()) return;
+    QFileInfoList fl = getSelectedMangaEntries(true);
+    if (fl.isEmpty()) return;
 
-    for (int i=0;i<lii.count();i++) {
-        if (lii.at(i).column()==0)
-            li << lii.at(i);
-    }
-
-    QStringList edl;
-    QStringList dl;
-    edl.clear();
-    dl.clear();
-    for (int i=0;i<li.count();i++) {
-        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
-            QString fname = model->getItem(li.at(i).row()).filename;
-            QFileInfo fi(fname);
-            if (fi.exists() && (fi.isDir() || fi.isFile())) {
-                if (!dl.contains(fi.path()))
-                    dl << fi.path();
-            } else
-                edl << fname;
-        }
-    }
-
-    for (int i=0;i<dl.count();i++) {
+    for (int i=0;i<fl.count();i++) {
         QStringList params;
-        params << dl.at(i);
+        params << fl.at(i).path();
         QProcess::startDetached("xdg-open",params);
     }
 
-    if (!edl.isEmpty()) {
+    if (fl.isEmpty())
         QMessageBox::warning(this,tr("QManga"),
-                             tr("Error while searching file path for some files.\n\n%1").
-                             arg(edl.join("\n")));
-    }
+                             tr("Error while searching file path for some files."));
 }
 
 void ZSearchTab::ctxXdgOpen()
 {
-    QModelIndexList li;
-    li.clear();
-    QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
-    if (lii.isEmpty()) return;
+    QFileInfoList fl = getSelectedMangaEntries(true);
+    if (fl.isEmpty()) return;
 
-    for (int i=0;i<lii.count();i++) {
-        if (lii.at(i).column()==0)
-            li << lii.at(i);
-    }
-
-    QStringList dl;
-    dl.clear();
-    for (int i=0;i<li.count();i++) {
-        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
-            QString fname = model->getItem(li.at(i).row()).filename;
-            QFileInfo fi(fname);
-            if (fi.exists() && (fi.isDir() || fi.isFile())) {
-                if (!dl.contains(fi.filePath()))
-                    dl << fi.filePath();
-            }
-        }
-    }
-
-    for (int i=0;i<dl.count();i++) {
+    for (int i=0;i<fl.count();i++) {
         QStringList params;
-        params << dl.at(i);
+        params << fl.at(i).filePath();
         QProcess::startDetached("xdg-open",params);
     }
 
-    if (dl.isEmpty()) {
+    if (fl.isEmpty())
         QMessageBox::warning(this,tr("QManga"),
-                             tr("Error while searching file path for some files.\n\n%1").
-                             arg(dl.join("\n")));
-    }
+                             tr("Error while searching file path for some files."));
+}
+
+void ZSearchTab::ctxFileCopy()
+{
+    QFileInfoList fl = getSelectedMangaEntries(true);
+    if (fl.isEmpty()) return;
+
+    QString dst = getExistingDirectoryD(this,tr("Copy selected manga to..."),
+                                                    zg->savedAuxSaveDir);
+    if (dst.isEmpty()) return;
+    zg->savedAuxSaveDir = dst;
+
+    QProgressDialog *dlg = new QProgressDialog(this);
+    dlg->setWindowModality(Qt::WindowModal);
+    dlg->setWindowTitle(tr("Copying manga files..."));
+
+    ZFileCopier *zfc = new ZFileCopier(fl,dlg,dst);
+    connect(zfc,&ZFileCopier::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
+
+    QThread *zfc_thread = new QThread();
+    zfc->moveToThread(zfc_thread);
+    zfc->start();
+
+    QMetaObject::invokeMethod(zfc,"start",Qt::QueuedConnection);
 }
 
 void ZSearchTab::updateAlbumsList()
@@ -504,6 +486,32 @@ QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)
     return ret;
 }
 
+QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs)
+{
+    QFileInfoList res;
+    QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
+    if (lii.isEmpty()) return res;
+
+    QModelIndexList li;
+    for (int i=0;i<lii.count();i++) {
+        if (lii.at(i).column()==0)
+            li << lii.at(i);
+    }
+
+    for (int i=0;i<li.count();i++) {
+        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
+            QString fname = model->getItem(li.at(i).row()).filename;
+            QFileInfo fi(fname);
+            if (fi.exists() && ((fi.isDir() && includeDirs) || fi.isFile())) {
+                if (!res.contains(fi))
+                    res << fi;
+            }
+        }
+    }
+
+    return res;
+}
+
 void ZSearchTab::albumClicked(QListWidgetItem *item)
 {
     if (item==NULL) return;
@@ -599,11 +607,10 @@ void ZSearchTab::mangaAddDir()
     zg->savedIndexOpenDir = fi;
 
     QDir d(fi);
-    QFileInfoList fl = d.entryInfoList(QStringList("*"));
+    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
     QStringList files;
     for (int i=0;i<fl.count();i++)
-        if (fl.at(i).isReadable() && fl.at(i).isFile())
-            files << fl.at(i).absoluteFilePath();
+        files << fl.at(i).absoluteFilePath();
     QString album = d.dirName();
 
     album = getAlbumNameToAdd(album,-1);
@@ -650,12 +657,11 @@ void ZSearchTab::imagesAddDir()
     zg->savedIndexOpenDir = fi;
 
     QDir d(fi);
-    QFileInfoList fl = d.entryInfoList(QStringList("*"));
+    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
+    filterSupportedImgFiles(fl);
     QStringList files;
     for (int i=0;i<fl.count();i++)
-        if (fl.at(i).isReadable() && fl.at(i).isFile() &&
-                supportedImg().contains(fl.at(i).suffix(),Qt::CaseInsensitive))
-            files << fl.at(i).absoluteFilePath();
+        files << fl.at(i).absoluteFilePath();
 
     if (files.isEmpty()) {
         QMessageBox::warning(this,tr("QManga"),tr("Supported image files not found in specified directory."));

@@ -528,8 +528,18 @@ tesseract::TessBaseAPI* initializeOCR()
 
 QStringList supportedImg()
 {
-    QStringList res;
-    res.clear();
-    res << "jpg" << "jpeg" << "jpe" << "gif" << "png" << "tiff" << "tif" << "bmp";
+    QStringList res {"jpg", "jpeg", "jpe", "gif", "png", "tiff", "tif", "bmp"};
     return res;
+}
+
+void filterSupportedImgFiles(QFileInfoList& entryList)
+{
+    int idx = 0;
+    QStringList suffices = supportedImg();
+    while (idx<entryList.count()) {
+        if (!suffices.contains(entryList.at(idx).suffix(),Qt::CaseInsensitive))
+            entryList.removeAt(idx);
+        else
+            idx++;
+    }
 }

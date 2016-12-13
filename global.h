@@ -160,6 +160,7 @@ QStringList supportedImg();
 QString formatSize(qint64 size);
 QString escapeParam(QString param);
 int compareWithNumerics(QString ref1, QString ref2);
+void filterSupportedImgFiles(QFileInfoList& entryList);
 
 QString getOpenFileNameD ( QWidget * parent = 0,
                            const QString & caption = QString(),

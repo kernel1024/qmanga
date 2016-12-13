@@ -590,10 +590,9 @@ void ZDB::sqlSearchMissingManga()
 
     foreach (const QString& d, indexedDirs) {
         QDir dir(d);
-        QFileInfoList fl = dir.entryInfoList(QStringList("*"));
+        QFileInfoList fl = dir.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
         for (int i=0;i<fl.count();i++)
-            if (fl.at(i).isReadable() && fl.at(i).isFile())
-                ts << fl.at(i).absoluteFilePath() << endl;
+            ts << fl.at(i).absoluteFilePath() << endl;
     }
     ts.flush();
     f.close();
@@ -1023,14 +1022,11 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     }
 
     QDir d(dir);
-    QFileInfoList fl = d.entryInfoList(QStringList("*"));
+    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
+    filterSupportedImgFiles(fl);
     QStringList files;
     for (int i=0;i<fl.count();i++)
-        if (fl.at(i).isReadable() && fl.at(i).isFile() &&
-                supportedImg().contains(fl.at(i).suffix(),Qt::CaseInsensitive)) {
-            files << fl.at(i).absoluteFilePath();
-
-        }
+        files << fl.at(i).absoluteFilePath();
 
     if (files.isEmpty()) {
         emit errorMsg("Could not find supported image files in specified directory");

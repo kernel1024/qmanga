@@ -47,6 +47,7 @@ private:
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(QString suggest,int toAddCount);
+    QFileInfoList getSelectedMangaEntries(bool includeDirs = true);
 
 public slots:
     void albumClicked(QListWidgetItem * item);
@@ -72,6 +73,7 @@ public slots:
     void ctxDeleteAlbum();
     void ctxOpenDir();
     void ctxXdgOpen();
+    void ctxFileCopy();
 
     void dbShowProgressDialog(const bool visible, const QString &title = QString());
     void dbShowProgressState(const int value, const QString& msg);
