@@ -38,6 +38,11 @@ int ZExportDialog::getImageQuality()
     return ui->imageQuality->value();
 }
 
+void ZExportDialog::setExportDir(const QString &dir)
+{
+    ui->exportDir->setText(dir);
+}
+
 QString ZExportDialog::getImageFormat()
 {
     return ui->imageFormat->currentText();

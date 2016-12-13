@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui dbus widgets
+QT       += core gui dbus widgets concurrent
 
 TARGET = qmanga
 TEMPLATE = app

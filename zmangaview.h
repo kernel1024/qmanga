@@ -5,7 +5,6 @@
 #include <QRubberBand>
 #include <QPixmap>
 #include <QScrollArea>
-#include <QProgressDialog>
 
 #include "global.h"
 #include "zabstractreader.h"
@@ -46,9 +45,6 @@ protected:
 
     ZExportDialog exportDialog;
 
-    QProgressDialog *progressDlg;
-    bool exportStop;
-
     int scrollAccumulator;
 
     void cacheDropUnusable();
@@ -56,6 +52,9 @@ protected:
     QIntList cacheGetActivePages();
     void displayCurrentPage();
     void cacheGetPage(int num);
+
+private:
+    bool exportFileError;
 
 public:
     int currentPage;
@@ -99,7 +98,6 @@ public slots:
     void closeFileCtx();
     void changeMangaCoverCtx();
     void exportPagesCtx();
-    void exportCancel();
 
     void navFirst();
     void navPrev();

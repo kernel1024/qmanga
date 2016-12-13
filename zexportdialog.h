@@ -21,6 +21,7 @@ public:
     QString getImageFormat();
     int getPagesCount();
     int getImageQuality();
+    void setExportDir(const QString& dir);
 
 public slots:
     void dirSelectBtn();

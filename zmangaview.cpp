@@ -7,6 +7,9 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QContextMenuEvent>
+#include <QProgressDialog>
+#include <QtConcurrentMap>
+#include <QFutureWatcher>
 
 #include <limits.h>
 #include "zmangaloader.h"
@@ -21,7 +24,6 @@ ZMangaView::ZMangaView(QWidget *parent) :
     privPageCount = 0;
     rotation = 0;
     scrollAccumulator = 0;
-    exportStop = false;
     zoomMode = Fit;
     zoomDynamic = false;
     zoomPos = QPoint();
@@ -54,9 +56,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
     connect(this,SIGNAL(updateFileStats(QString)),
             zg->db,SLOT(sqlUpdateFileStats(QString)),Qt::QueuedConnection);
 
-    progressDlg=NULL;
-
-    int cnt = QThread::idealThreadCount()+1;
+    int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
     for (int i=0;i<cnt;i++) {
         QThread* th = new QThread();
@@ -605,64 +605,89 @@ void ZMangaView::exportPagesCtx()
 {
     if (openedFile.isEmpty()) return;
     if (currentPage<0 || currentPage>=privPageCount) return;
-    ZMangaLoader* zl = cacheLoaders.first().loader;
-    if (zl==NULL) {
-        QMessageBox::critical(this,tr("QManga"),tr("Manga reader is empty. Unable to extract pages."));
-        return;
-    }
 
     exportDialog.setPagesMaximum(privPageCount-currentPage);
     exportDialog.setParent(window(),Qt::Dialog);
-    if (exportDialog.exec()) {
-        QString fmt = exportDialog.getImageFormat();
-        QDir dir(exportDialog.getExportDir());
-        int cnt = exportDialog.getPagesCount();
-        int fnlen = QString::number(cnt).length();
+    exportDialog.setExportDir(zg->savedAuxSaveDir);
+    if (!exportDialog.exec()) return;
 
-        exportStop = false;
-        if (progressDlg==NULL)
-            progressDlg = new QProgressDialog(this);
-        progressDlg->setWindowModality(Qt::WindowModal);
-        progressDlg->setAutoClose(false);
-        progressDlg->setWindowTitle(tr("Exporting pages..."));
-        progressDlg->setValue(0);
-        progressDlg->setLabelText(QString());
-        progressDlg->show();
+    QString fmt = exportDialog.getImageFormat();
+    QDir dir(exportDialog.getExportDir());
+    zg->savedAuxSaveDir = exportDialog.getExportDir();
 
-        for (int i=0;i<cnt;i++) {
-            QString fname = dir.filePath(tr("%1.%2").arg(i+1,fnlen,10,QChar('0')).arg(fmt.toLower()));
-            QByteArray ba = zl->getPageSync(currentPage+i);
-            if (ba.isEmpty()) continue;
+    int cnt = exportDialog.getPagesCount();
+    int fnlen = QString::number(cnt).length();
+    int quality = exportDialog.getImageQuality();
+
+    QProgressDialog *dlg = new QProgressDialog(this);
+    dlg->setWindowModality(Qt::WindowModal);
+    dlg->setAutoClose(false);
+    dlg->setWindowTitle(tr("Exporting pages..."));
+    dlg->show();
+    exportFileError = false;
+
+    QList<int> nums;
+    for (int i=0;i<cnt;i++)
+        nums << i;
+    QFuture<void> saveMap = QtConcurrent::map(nums,[dir,fnlen,fmt,quality,this](int idx){
+        if (exportFileError) return;
+        QString fname = dir.filePath(tr("%1.%2").arg(idx+1,fnlen,10,QChar('0')).arg(fmt.toLower()));
+        ZMangaLoader *zl = new ZMangaLoader();
+        connect(zl,&ZMangaLoader::gotError,[this](const QString&){
+            exportFileError = true;
+        });
+        connect(zl,&ZMangaLoader::gotPage,[fname,fmt,quality,this](const QByteArray& page, const int&,
+                const QString&, const QUuid&){
+            if (exportFileError) return;
+            if (page.isEmpty()) return;
 
             QPixmap p = QPixmap();
-            if (!p.loadFromData(ba))
+            if (!p.loadFromData(page))
                 p = QPixmap();
-            if (p.isNull()) continue;
-            if (!p.save(fname,fmt.toLatin1(),exportDialog.getImageQuality())) {
-                QMessageBox::critical(this,tr("QManga"),tr("Error caught while saving image. Cannot create file. Check your permissions."));
-                exportStop = true;
-                break;
+            if (p.isNull()) return;
+            if (!p.save(fname,fmt.toLatin1(),quality)) {
+                exportFileError = true;
+                return;
             }
+        });
 
-            if ((100*i/cnt)!=progressDlg->value())
-                progressDlg->setValue(100*i/cnt);
+        zl->openFile(openedFile,0);
+        if (!exportFileError)
+            zl->getPage(idx);
+        zl->closeFile();
+        delete zl;
+    });
 
-            QApplication::processEvents();
-            if (exportStop)
-                break;
-        }
-        progressDlg->hide();
-
+    QFutureWatcher<void> mapWatcher;
+    connect(&mapWatcher,&QFutureWatcher<void>::progressValueChanged,
+            dlg,&QProgressDialog::setValue);
+    connect(&mapWatcher,&QFutureWatcher<void>::progressRangeChanged,
+            dlg,&QProgressDialog::setRange);
+    connect(dlg,&QProgressDialog::canceled,&mapWatcher,&QFutureWatcher<void>::cancel);
+    connect(&mapWatcher,&QFutureWatcher<void>::progressTextChanged,
+            dlg,&QProgressDialog::setLabelText);
+    connect(&mapWatcher,&QFutureWatcher<void>::finished,[this,dlg](){
         QString msg = tr("Pages export completed.");
-        if (exportStop)
-            msg = tr("Pages export aborted");
+        if (exportFileError)
+            msg = tr("Error caught while saving image. Cannot create file. Check your permissions.");
+        if (dlg->wasCanceled())
+            msg = tr("Pages export aborted.");
         QMessageBox::information(this,tr("QManga"),msg);
-    }
-}
+        dlg->close();
+        dlg->deleteLater();
+    });
 
-void ZMangaView::exportCancel()
-{
-    exportStop = true;
+    QThread *watcherThread = new QThread();
+    mapWatcher.moveToThread(watcherThread);
+    mapWatcher.setFuture(saveMap);
+    watcherThread->start();
+
+    mapWatcher.waitForFinished(); // TODO: do something....
+
+/*    while (mapWatcher.isRunning()) {
+        QApplication::processEvents();
+        QThread::sleep(200);
+    }*/
 }
 
 void ZMangaView::navFirst()
