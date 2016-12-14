@@ -10,7 +10,7 @@
 #include <QProgressDialog>
 #include <QtConcurrentMap>
 #include <QFutureWatcher>
-
+#include <functional>
 #include <limits.h>
 #include "zmangaloader.h"
 #include "zmangaview.h"
@@ -601,6 +601,37 @@ void ZMangaView::changeMangaCoverCtx()
     emit changeMangaCover(openedFile,currentPage);
 }
 
+int exportMangaPage(ZMangaView* view, const QDir& dir, int fnlen, const QString& fmt, int quality, int idx)
+{
+    if (view->exportFileError) return -1;
+    QString fname = dir.filePath(QString("%1.%2").arg(idx+1,fnlen,10,QChar('0')).arg(fmt.toLower()));
+    ZMangaLoader *zl = new ZMangaLoader();
+    view->connect(zl,&ZMangaLoader::gotError,[view](const QString&){
+        view->exportFileError = true;
+    });
+    view->connect(zl,&ZMangaLoader::gotPage,[idx,fname,fmt,quality,view](const QByteArray& page, const int&,
+            const QString&, const QUuid&){
+        if (view->exportFileError) return;
+        if (page.isEmpty()) return;
+
+        QPixmap p = QPixmap();
+        if (!p.loadFromData(page))
+            p = QPixmap();
+        if (p.isNull()) return;
+        if (!p.save(fname,fmt.toLatin1(),quality)) {
+            view->exportFileError = true;
+            return;
+        }
+    });
+
+    zl->openFile(view->openedFile,0);
+    if (!view->exportFileError)
+        zl->getPage(idx);
+    zl->closeFile();
+    delete zl;
+    return idx;
+}
+
 void ZMangaView::exportPagesCtx()
 {
     if (openedFile.isEmpty()) return;
@@ -629,44 +660,21 @@ void ZMangaView::exportPagesCtx()
     QList<int> nums;
     for (int i=0;i<cnt;i++)
         nums << i;
-    QFuture<void> saveMap = QtConcurrent::map(nums,[dir,fnlen,fmt,quality,this](int idx){
-        if (exportFileError) return;
-        QString fname = dir.filePath(tr("%1.%2").arg(idx+1,fnlen,10,QChar('0')).arg(fmt.toLower()));
-        ZMangaLoader *zl = new ZMangaLoader();
-        connect(zl,&ZMangaLoader::gotError,[this](const QString&){
-            exportFileError = true;
-        });
-        connect(zl,&ZMangaLoader::gotPage,[fname,fmt,quality,this](const QByteArray& page, const int&,
-                const QString&, const QUuid&){
-            if (exportFileError) return;
-            if (page.isEmpty()) return;
 
-            QPixmap p = QPixmap();
-            if (!p.loadFromData(page))
-                p = QPixmap();
-            if (p.isNull()) return;
-            if (!p.save(fname,fmt.toLatin1(),quality)) {
-                exportFileError = true;
-                return;
-            }
-        });
+    using namespace std::placeholders; // QTBUG-33735 workaround
+    auto save_F = std::bind(exportMangaPage, this, dir, fnlen, fmt, quality, _1);
+    QFuture<int> saveMap = QtConcurrent::mapped(nums,save_F);
 
-        zl->openFile(openedFile,0);
-        if (!exportFileError)
-            zl->getPage(idx);
-        zl->closeFile();
-        delete zl;
-    });
+    QFutureWatcher<void> *mapWatcher = new QFutureWatcher<void>();
 
-    QFutureWatcher<void> mapWatcher;
-    connect(&mapWatcher,&QFutureWatcher<void>::progressValueChanged,
-            dlg,&QProgressDialog::setValue);
-    connect(&mapWatcher,&QFutureWatcher<void>::progressRangeChanged,
-            dlg,&QProgressDialog::setRange);
-    connect(dlg,&QProgressDialog::canceled,&mapWatcher,&QFutureWatcher<void>::cancel);
-    connect(&mapWatcher,&QFutureWatcher<void>::progressTextChanged,
-            dlg,&QProgressDialog::setLabelText);
-    connect(&mapWatcher,&QFutureWatcher<void>::finished,[this,dlg](){
+    connect(mapWatcher,&QFutureWatcher<void>::progressValueChanged,
+            dlg,&QProgressDialog::setValue,Qt::QueuedConnection);
+    connect(mapWatcher,&QFutureWatcher<void>::progressRangeChanged,
+            dlg,&QProgressDialog::setRange,Qt::QueuedConnection);
+    connect(dlg,&QProgressDialog::canceled,mapWatcher,&QFutureWatcher<void>::cancel);
+    connect(mapWatcher,&QFutureWatcher<void>::progressTextChanged,
+            dlg,&QProgressDialog::setLabelText,Qt::QueuedConnection);
+    connect(mapWatcher,&QFutureWatcher<void>::finished,[this,dlg,mapWatcher](){
         QString msg = tr("Pages export completed.");
         if (exportFileError)
             msg = tr("Error caught while saving image. Cannot create file. Check your permissions.");
@@ -675,19 +683,9 @@ void ZMangaView::exportPagesCtx()
         QMessageBox::information(this,tr("QManga"),msg);
         dlg->close();
         dlg->deleteLater();
+        mapWatcher->deleteLater();
     });
-
-    QThread *watcherThread = new QThread();
-    mapWatcher.moveToThread(watcherThread);
-    mapWatcher.setFuture(saveMap);
-    watcherThread->start();
-
-    mapWatcher.waitForFinished(); // TODO: do something....
-
-/*    while (mapWatcher.isRunning()) {
-        QApplication::processEvents();
-        QThread::sleep(200);
-    }*/
+    mapWatcher->setFuture(saveMap);
 }
 
 void ZMangaView::navFirst()

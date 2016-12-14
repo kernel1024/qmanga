@@ -53,15 +53,13 @@ protected:
     void displayCurrentPage();
     void cacheGetPage(int num);
 
-private:
-    bool exportFileError;
-
 public:
     int currentPage;
     QScrollArea* scroller;
     bool zoomDynamic;
     QString openedFile;
     int zoomAny;
+    bool exportFileError;
 
     explicit ZMangaView(QWidget *parent = 0);
     ~ZMangaView();
