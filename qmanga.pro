@@ -75,12 +75,6 @@ exists( /usr/include/magic.h ) {
     error("Dependency error: libmagic not found.")
 }
 
-exists( /usr/include/X11/Xlib.h ) {
-   LIBS += -lX11
-} else {
-    error("libX11 not found.")
-}
-
 packagesExist(zziplib) {
     PKGCONFIG += zziplib
 } else {
