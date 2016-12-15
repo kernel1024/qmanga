@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QSettings>
+#include <QStateMachine>
 
 #include "zglobal.h"
 #include "zmangamodel.h"

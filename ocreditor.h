@@ -4,8 +4,11 @@
 #include <QDialog>
 #include <QAction>
 #include <QTimer>
+
+#ifdef QT_DBUS_LIB
 #include "auxtranslator_interface.h"
 #include "dictionary_interface.h"
+#endif
 
 namespace Ui {
 class ZOCREditor;
@@ -23,8 +26,10 @@ public:
     
 private:
     Ui::ZOCREditor *ui;
+#ifdef QT_DBUS_LIB
     OrgJpreaderAuxtranslatorInterface* translator;
     OrgQjradDictionaryInterface* dictionary;
+#endif
     QAction* dictSearch;
     QTimer* selectionTimer;
     QString storedSelection;

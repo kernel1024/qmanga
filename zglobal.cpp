@@ -1,6 +1,7 @@
 #include <QDesktopWidget>
 #include <QListView>
 #include <QApplication>
+#include <QThread>
 
 #include "global.h"
 #include "zglobal.h"
@@ -99,6 +100,8 @@ void ZGlobal::loadSettings()
     dbUser = settings.value("mysqlUser",QString()).toString();
     dbPass = settings.value("mysqlPassword",QString()).toString();
     dbBase = settings.value("mysqlBase",QString("qmanga")).toString();
+    dbHost = settings.value("mysqlHost",QString("localhost")).toString();
+    rarCmd = settings.value("rarCmd",QString()).toString();
     savedAuxOpenDir = settings.value("savedAuxOpenDir",QString()).toString();
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     savedAuxSaveDir = settings.value("savedAuxSaveDir",QString()).toString();
@@ -140,7 +143,7 @@ void ZGlobal::loadSettings()
 
     settings.endGroup();
 
-    emit dbSetCredentials(dbBase,dbUser,dbPass);
+    emit dbSetCredentials(dbHost,dbBase,dbUser,dbPass);
 
     if (w!=NULL) {
         if (showMaximized)
@@ -174,6 +177,8 @@ void ZGlobal::saveSettings()
     settings.setValue("mysqlUser",dbUser);
     settings.setValue("mysqlPassword",dbPass);
     settings.setValue("mysqlBase",dbBase);
+    settings.setValue("mysqlHost",dbHost);
+    settings.setValue("rarCmd",rarCmd);
     settings.setValue("savedAuxOpenDir",savedAuxOpenDir);
     settings.setValue("savedAuxSaveDir",savedAuxSaveDir);
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
@@ -287,6 +292,8 @@ void ZGlobal::settingsDlg()
     dlg->editMySqlLogin->setText(dbUser);
     dlg->editMySqlPassword->setText(dbPass);
     dlg->editMySqlBase->setText(dbBase);
+    dlg->editMySqlHost->setText(dbHost);
+    dlg->editRar->setText(rarCmd);
     dlg->spinCacheWidth->setValue(cacheWidth);
     dlg->spinMagnify->setValue(magnifySize);
     dlg->spinScrollDelta->setValue(scrollDelta);
@@ -333,6 +340,8 @@ void ZGlobal::settingsDlg()
         dbUser=dlg->editMySqlLogin->text();
         dbPass=dlg->editMySqlPassword->text();
         dbBase=dlg->editMySqlBase->text();
+        dbHost=dlg->editMySqlHost->text();
+        rarCmd=dlg->editRar->text();
         cacheWidth=dlg->spinCacheWidth->value();
         magnifySize=dlg->spinMagnify->value();
         scrollDelta=dlg->spinScrollDelta->value();
@@ -353,7 +362,7 @@ void ZGlobal::settingsDlg()
         for (int i=0; i<dlg->listBookmarks->count(); i++)
             bookmarks[dlg->listBookmarks->item(i)->data(Qt::UserRole).toString()]=
                     dlg->listBookmarks->item(i)->data(Qt::UserRole+1).toString();
-        emit dbSetCredentials(dbBase,dbUser,dbPass);
+        emit dbSetCredentials(dbHost,dbBase,dbUser,dbPass);
         albums.clear();
         for (int i=0; i<dlg->listDynAlbums->count(); i++)
             albums[dlg->listDynAlbums->item(i)->data(Qt::UserRole).toString()]=

@@ -5,6 +5,8 @@
 #include <QFileInfo>
 #include <QCompleter>
 #include <QProgressDialog>
+#include <QApplication>
+#include <QDebug>
 
 #include "zfilecopier.h"
 #include "zglobal.h"

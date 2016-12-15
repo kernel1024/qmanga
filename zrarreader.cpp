@@ -1,3 +1,5 @@
+#include <QProcess>
+#include <QDebug>
 #include "zrarreader.h"
 
 ZRarReader::ZRarReader(QObject *parent, QString filename) :
@@ -17,14 +19,16 @@ bool ZRarReader::openFile()
         return false;
     }
 
-    rarExec = QString();
-    if (QProcess::execute("rar",QStringList() << "-inul")<0) {
-        if (QProcess::execute("unrar",QStringList() << "-inul")<0)
-            return false;
-        else
-            rarExec = QString("unrar");
-    } else
-        rarExec = QString("rar");
+    rarExec = zg->rarCmd;
+    if (rarExec.isEmpty()) {
+        if (QProcess::execute("rar",QStringList() << "-inul")<0) {
+            if (QProcess::execute("unrar",QStringList() << "-inul")<0)
+                return false;
+            else
+                rarExec = QString("unrar");
+        } else
+            rarExec = QString("rar");
+    }
 
     int cnt = 0;
     QProcess rar;

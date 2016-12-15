@@ -17,7 +17,7 @@ class ZGlobal : public QObject
     Q_OBJECT
 private:
     QThread* threadDB;
-    QString dbBase, dbUser, dbPass;
+    QString dbHost, dbBase, dbUser, dbPass;
     QHash<QString,QStringList> dirWatchList;
 
     void checkSQLProblems(QWidget *parent);
@@ -41,6 +41,7 @@ public:
     QString savedAuxOpenDir, savedIndexOpenDir, savedAuxSaveDir;
     QColor backgroundColor, frameColor;
     QFont idxFont, ocrFont;
+    QString rarCmd;
     int preferredWidth;
     int scrollDelta;
     int detectedDelta;
@@ -66,7 +67,8 @@ public slots:
     void dbCheckComplete();
 
 signals:
-    void dbSetCredentials(const QString& base, const QString& user, const QString& password);
+    void dbSetCredentials(const QString& host, const QString& base,
+                          const QString& user, const QString& password);
     void dbCheckBase();
     void dbCheckEmptyAlbums();
     void dbRescanIndexedDirs();

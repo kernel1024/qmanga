@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QClipboard>
+#include <QMimeData>
 #include <QImage>
 #include <QBuffer>
 #include <QScreen>
@@ -121,8 +122,11 @@ MainWindow::MainWindow(QWidget *parent) :
     savedMaximized=isMaximized();
     dispPage(-1,QString());
 
+    QString fname;
     if (QApplication::arguments().count()>1)
-        openAuxFile(QApplication::arguments().at(1));
+        fname = QApplication::arguments().at(1);
+    if (!fname.isEmpty() && !fname.startsWith("--"))
+        openAuxFile(fname);
 }
 
 MainWindow::~MainWindow()

@@ -16,7 +16,7 @@ class ZDB : public QObject
 {
     Q_OBJECT
 private:
-    QString dbBase, dbUser, dbPass;
+    QString dbHost, dbBase, dbUser, dbPass;
     QStringList indexedDirs;
     ZStrMap dynAlbums;
     QStrHash problems;
@@ -60,7 +60,8 @@ signals:
     void gotTablesDescription(const QString& text);
 
 public slots:
-    void setCredentials(const QString& base, const QString& user, const QString& password);
+    void setCredentials(const QString &host, const QString& base,
+                        const QString& user, const QString& password);
     void setDynAlbums(const ZStrMap &albums);
     void sqlCheckBase();
     void sqlCreateTables();

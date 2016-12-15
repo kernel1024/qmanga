@@ -1,4 +1,5 @@
 #include <zzip/zzip.h>
+#include <QDebug>
 #include "zzipreader.h"
 
 ZZipReader::ZZipReader(QObject *parent, QString filename) :

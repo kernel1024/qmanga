@@ -11,12 +11,14 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     ui(new Ui::ZOCREditor)
 {
     ui->setupUi(this);
+
+#ifdef QT_DBUS_LIB
     translator = new OrgJpreaderAuxtranslatorInterface("org.jpreader.auxtranslator","/",
                                                        QDBusConnection::sessionBus(),this);
 
     dictionary = new OrgQjradDictionaryInterface("org.qjrad.dictionary","/",
                                                  QDBusConnection::sessionBus(),this);
-
+#endif
     ui->editor->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->editor,&QPlainTextEdit::customContextMenuRequested,
             this,&ZOCREditor::contextMenu);
@@ -33,14 +35,15 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     connect(selectionTimer,&QTimer::timeout,this,&ZOCREditor::selectionShow);
     storedSelection.clear();
 
-    connect(translator,&OrgJpreaderAuxtranslatorInterface::gotTranslation,
-            this,&ZOCREditor::gotTranslation);
     connect(ui->translateButton,&QToolButton::clicked,
             this,&ZOCREditor::translate);
+#ifdef QT_DBUS_LIB
+    connect(translator,&OrgJpreaderAuxtranslatorInterface::gotTranslation,
+            this,&ZOCREditor::gotTranslation);
 
     connect(dictionary,&OrgQjradDictionaryInterface::gotWordTranslation,
             this,&ZOCREditor::showDictToolTip);
-
+#endif
     ui->status->clear();
 }
 
@@ -64,12 +67,14 @@ void ZOCREditor::setEditorFont(const QFont &font)
 void ZOCREditor::findWordTranslation(const QString &text)
 {
     if (text.isEmpty()) return;
+#ifdef QT_DBUS_LIB
     if (!dictionary->isValid())
         ui->status->setText(tr("Dictionary not ready."));
     else {
         dictionary->findWordTranslation(text);
         ui->status->setText(tr("Searching in dictionary..."));
     }
+#endif
 }
 
 void ZOCREditor::showWnd()
@@ -82,6 +87,7 @@ void ZOCREditor::showWnd()
 void ZOCREditor::translate()
 {
     ui->status->clear();
+#ifdef QT_DBUS_LIB
     if (translator!=NULL) {
         if (!translator->isValid())
             ui->status->setText(tr("Aux translator not ready."));
@@ -93,6 +99,7 @@ void ZOCREditor::translate()
             ui->status->setText(tr("Translation in progress..."));
         }
     }
+#endif
 }
 
 void ZOCREditor::gotTranslation(const QString &text)
@@ -126,6 +133,7 @@ void ZOCREditor::contextMenu(const QPoint &pos)
     if (ui->editor->textCursor().hasSelection()) {
         cm.addSeparator();
 
+#ifdef QT_DBUS_LIB
         cm.addAction(dictSearch);
 
         ac = new QAction(QIcon::fromTheme("accessories-dictionary"),tr("Show qjrad window"),NULL);
@@ -134,6 +142,7 @@ void ZOCREditor::contextMenu(const QPoint &pos)
                 dictionary->showDictionaryWindow(ui->editor->textCursor().selectedText());
         });
         cm.addAction(ac);
+#endif
     }
 
     cm.exec(ui->editor->mapToGlobal(pos));
@@ -143,15 +152,19 @@ void ZOCREditor::selectionChanged()
 {
     storedSelection = ui->editor->textCursor().selectedText();
 
+#ifdef QT_DBUS_LIB
     if (dictSearch->isChecked() && !storedSelection.isEmpty() && dictionary!=NULL)
         selectionTimer->start();
+#endif
 }
 
 void ZOCREditor::selectionShow()
 {
+#ifdef QT_DBUS_LIB
     if (dictionary==NULL || storedSelection.isEmpty()) return;
 
     findWordTranslation(storedSelection);
+#endif
 }
 
 void ZOCREditor::showDictToolTip(const QString &html)

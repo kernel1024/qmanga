@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "zmangaloader.h"
 
 ZMangaLoader::ZMangaLoader(QObject *parent) :
@@ -13,9 +14,6 @@ void ZMangaLoader::openFile(QString filename, int preferred)
 
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,filename,&mimeOk,false);
-    connect(za,&ZAbstractReader::auxMessage,[this](const QString& msg){
-       emit auxMessage(msg);
-    });
     if ((za == NULL) && (!mimeOk)) {
         emit closeFileRequest();
         emit gotError(tr("File format not supported."));
@@ -32,6 +30,9 @@ void ZMangaLoader::openFile(QString filename, int preferred)
         delete za;
         return;
     }
+    connect(za,&ZAbstractReader::auxMessage,[this](const QString& msg){
+       emit auxMessage(msg);
+    });
     mReader = za;
     int pagecnt = mReader->getPageCount();
     emit gotPageCount(pagecnt,preferred);

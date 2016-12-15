@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "zimagesdirreader.h"
 
 ZImagesDirReader::ZImagesDirReader(QObject *parent, QString filename)

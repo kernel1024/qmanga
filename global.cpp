@@ -1,4 +1,7 @@
 #include <QMessageBox>
+#include <QMutex>
+#include <QTextCodec>
+#include <QTextEncoder>
 #include <QDebug>
 
 #include "zmangaloader.h"
@@ -12,6 +15,14 @@
 #include "zglobal.h"
 #include "zmangaview.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#ifdef WITH_LIBMAGIC
+#include <magic.h>
+#endif
+
 #ifdef WITH_MAGICK
 #define MAGICKCORE_QUANTUM_DEPTH 8
 #define MAGICKCORE_HDRI_ENABLE 0
@@ -19,6 +30,34 @@
 #include <Magick++.h>
 
 using namespace Magick;
+#endif
+
+#ifndef WITH_LIBMAGIC
+// some magic here!
+
+struct MagicSample {
+    qint64 offset;
+    qint64 size;
+    const char* sample;
+    const char* mime;
+};
+
+static const MagicSample magicList[] = {
+    { 0, 4, "\x50\x4b\x03\x04", "application/zip" },
+    { 0, 4, "\x52\x61\x72\x21", "application/rar" },
+    { 0, 4, "\x25\x50\x44\x46", "application/pdf" },
+    { 0, 4, "\xFF\xD8\xFF\xDB", "image/jpeg" },
+    { 6, 4, "\x4A\x46\x49\x46", "image/jpeg" },
+    { 6, 4, "\x45\x78\x69\x66", "image/jpeg" },
+    { 0, 4, "\x89\x50\x4E\x47", "image/png" },
+    { 0, 6, "\x47\x49\x46\x38\x37\x61", "image/gif" },
+    { 0, 6, "\x47\x49\x46\x38\x39\x61", "image/gif" },
+    { 0, 4, "\x49\x49\x2A\x00", "image/tiff" },
+    { 0, 4, "\x4D\x4D\x00\x2A", "image/tiff" },
+    { 0, 2, "\x42\x4D", "image/bmp" },
+    { 0, 0, NULL, NULL }
+};
+
 #endif
 
 ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
@@ -72,6 +111,67 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
         *mimeOk = false;
         return NULL;
     }
+}
+
+QByteArray toUtf16(const QString &str)
+{
+    QTextCodec *codec = QTextCodec::codecForName("UTF-16LE");
+    QTextEncoder *encoderWithoutBom = codec->makeEncoder( QTextCodec::IgnoreHeader );
+    QByteArray ba  = encoderWithoutBom ->fromUnicode( str );
+    delete encoderWithoutBom;
+    ba.append('\0'); ba.append('\0');
+    return ba;
+}
+
+void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    static QMutex loggerMutex;
+
+    loggerMutex.lock();
+
+    QString lmsg = QString();
+
+    int line = context.line;
+    QString file = QString(context.file);
+    QString category = QString(context.category);
+    if (category==QString("default"))
+        category.clear();
+    else
+        category.append(' ');
+
+    switch (type) {
+        case QtDebugMsg:
+            lmsg = QString("%1Debug: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            break;
+        case QtWarningMsg:
+            lmsg = QString("%1Warning: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            break;
+        case QtCriticalMsg:
+            lmsg = QString("%1Critical: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            break;
+        case QtFatalMsg:
+            lmsg = QString("%1Fatal: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            break;
+        case QtInfoMsg:
+            lmsg = QString("%1Info: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            break;
+    }
+
+    if (!lmsg.isEmpty()) {
+        QString fmsg = QTime::currentTime().toString("h:mm:ss") + " "+lmsg;
+        fmsg.append("\r\n");
+
+#ifdef _WIN32
+        HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
+        QByteArray buf = toUtf16(fmsg);
+        DWORD wr = 0;
+        WriteConsoleW(con,buf.constData(),fmsg.length(),&wr,NULL);
+#else
+        fprintf(stderr, "%s", fmsg.toLocal8Bit().constData());
+#endif
+    }
+
+    loggerMutex.unlock();
 }
 
 QString formatSize(qint64 size)
@@ -175,8 +275,9 @@ QString	getExistingDirectoryD ( QWidget * parent, const QString & caption, const
     return QFileDialog::getExistingDirectory(parent,caption,dir,options);
 }
 
-QString detectMIME(QString filename)
+QString detectMIME(const QString& filename)
 {
+#ifdef WITH_LIBMAGIC
     magic_t myt = magic_open(MAGIC_ERROR|MAGIC_MIME_TYPE);
     magic_load(myt,NULL);
     QByteArray bma = filename.toUtf8();
@@ -189,10 +290,19 @@ QString detectMIME(QString filename)
     QString mag(mg);
     magic_close(myt);
     return mag;
+#else
+    QFile f(filename);
+    if (!f.open(QIODevice::ReadOnly))
+        return QString("text/plain");
+    QByteArray ba = f.read(1024);
+    f.close();
+    return detectMIME(ba);
+#endif
 }
 
-QString detectMIME(QByteArray buf)
+QString detectMIME(const QByteArray &buf)
 {
+#ifdef WITH_LIBMAGIC
     magic_t myt = magic_open(MAGIC_ERROR|MAGIC_MIME_TYPE);
     magic_load(myt,NULL);
     const char* mg = magic_buffer(myt,buf.data(),buf.length());
@@ -203,6 +313,15 @@ QString detectMIME(QByteArray buf)
     QString mag(mg);
     magic_close(myt);
     return mag;
+#else
+    for (int idx=0;magicList[idx].sample!=NULL;idx++) {
+        QByteArray test = buf.mid(magicList[idx].offset,magicList[idx].size);
+        QByteArray sample = QByteArray::fromRawData(magicList[idx].sample,magicList[idx].size);
+        if (test==sample)
+            return QString::fromLatin1(magicList[idx].mime);
+    }
+    return QString("text/plain");
+#endif
 }
 
 QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFilter filter,
@@ -218,6 +337,7 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFi
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
 #ifndef WITH_MAGICK
     else
+        Q_UNUSED(mangaView)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
 #else
     else {

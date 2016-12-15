@@ -12,6 +12,7 @@
 #include <QFutureWatcher>
 #include <functional>
 #include <limits.h>
+#include <math.h>
 #include "zmangaloader.h"
 #include "zmangaview.h"
 #include "zglobal.h"

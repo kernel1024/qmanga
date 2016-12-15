@@ -124,8 +124,6 @@ void ZPDFImageOutputDev::drawSoftMaskedImage(
     writeImage(state, ref, str, width, height, colorMap, gFalse);
 }
 
-#endif
-
 ZPDFImg::ZPDFImg()
 {
     pos = 0;
@@ -164,3 +162,4 @@ bool ZPDFImg::operator!=(const ZPDFImg &ref) const
 {
     return (pos!=ref.pos || size!=ref.size || format!=ref.format);
 }
+#endif

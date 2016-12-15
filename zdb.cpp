@@ -1,6 +1,8 @@
 #include <QApplication>
 #include <QTemporaryFile>
 #include <QTextStream>
+#include <QBuffer>
+#include <QDebug>
 #include "zdb.h"
 
 #define FT_DETAILS "1. Edit my.cnf file and save\n" \
@@ -13,6 +15,7 @@
 ZDB::ZDB(QObject *parent) :
     QObject(parent)
 {
+    dbHost = QString("localhost");
     dbBase = QString("qmanga");
     dbUser = QString();
     dbPass = QString();
@@ -48,8 +51,9 @@ QStrHash ZDB::getConfigProblems()
     return problems;
 }
 
-void ZDB::setCredentials(const QString &base, const QString &user, const QString &password)
+void ZDB::setCredentials(const QString &host, const QString &base, const QString &user, const QString &password)
 {
+    dbHost = host;
     dbBase = base;
     dbUser = user;
     dbPass = password;
@@ -261,7 +265,7 @@ MYSQL* ZDB::sqlOpenBase()
 {
     if (dbUser.isEmpty()) return NULL;
     MYSQL* db = mysql_init(NULL);
-    if (!mysql_real_connect(db,"localhost",dbUser.toUtf8(),dbPass.toUtf8(),dbBase.toUtf8(),0,NULL,0)) {
+    if (!mysql_real_connect(db,dbHost.toUtf8(),dbUser.toUtf8(),dbPass.toUtf8(),dbBase.toUtf8(),0,NULL,0)) {
         emit errorMsg(tr("Unable to open MySQL connection. Check login info.\n%1")
                       .arg(mysql_error(db)));
         problems[tr("Connection")] = tr("Unable to connect to MySQL.\n"
@@ -580,6 +584,7 @@ void ZDB::sqlSearchMissingManga()
     QStringList foundFiles;
     foundFiles.clear();
 
+#ifndef _WIN32
     QTemporaryFile f;
     if (!f.open()) {
         emit errorMsg(tr("Unable to create temporary file."));
@@ -587,18 +592,37 @@ void ZDB::sqlSearchMissingManga()
         return;
     }
     QTextStream ts(&f);
+#endif
+
+    MYSQL* db = sqlOpenBase();
+    if (db==NULL) return;
 
     foreach (const QString& d, indexedDirs) {
         QDir dir(d);
         QFileInfoList fl = dir.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
         for (int i=0;i<fl.count();i++)
+#ifdef _WIN32
+            if (fl.at(i).isReadable() && fl.at(i).isFile()) {
+                bool err1,err2;
+                if (!isFileInTable(db,fl.at(i).absoluteFilePath(),"files",&err1) &&
+                        !isFileInTable(db,fl.at(i).absoluteFilePath(),"ignored_files",&err2)) {
+                    if (!err1 && !err2) {
+                        foundFiles << fl.at(i).absoluteFilePath();
+                    } else {
+                        qDebug() << mysql_error(db);
+                        sqlCloseBase(db);
+                        return;
+                    }
+                }
+            }
+#else
             ts << fl.at(i).absoluteFilePath() << endl;
+#endif
     }
+
+#ifndef _WIN32
     ts.flush();
     f.close();
-
-    MYSQL* db = sqlOpenBase();
-    if (db==NULL) return;
 
     QString qr;
     qr = "CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
@@ -650,7 +674,7 @@ void ZDB::sqlSearchMissingManga()
     qr = QString("DROP TABLE `tmp_exfiles`;");
     if (mysql_query(db,qr.toUtf8()))
         qDebug() << mysql_error(db);
-
+#endif
     sqlCloseBase(db);
 
     emit foundNewFiles(foundFiles);

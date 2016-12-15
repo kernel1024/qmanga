@@ -173,6 +173,8 @@ QByteArray ZPdfReader::loadPage(int num)
         qimg = QImage();
     }
 
+#else
+    Q_UNUSED(num)
 #endif
     return res;
 }

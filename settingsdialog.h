@@ -26,6 +26,8 @@ public:
     QLineEdit* editMySqlLogin;
     QLineEdit* editMySqlPassword;
     QLineEdit* editMySqlBase;
+    QLineEdit* editMySqlHost;
+    QLineEdit* editRar;
     QListWidget* listBookmarks;
     QRadioButton* radioCachePixmaps;
     QRadioButton* radioCacheData;
@@ -66,6 +68,7 @@ public slots:
     void updateFrameColor(QColor c);
     void dynAdd();
     void dynEdit();
+    void openRar();
 
 };
 

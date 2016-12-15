@@ -5,6 +5,7 @@
 #include "bookmarkdlg.h"
 #include "ui_settingsdialog.h"
 #include "zglobal.h"
+#include "global.h"
 #include "zdb.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
@@ -21,9 +22,11 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     comboFilter = ui->comboFilter;
     spinCacheWidth = ui->spinCacheWidth;
     spinMagnify = ui->spinMagnify;
+    editMySqlHost = ui->editMySqlHost;
     editMySqlBase = ui->editMySqlBase;
     editMySqlLogin = ui->editMySqlLogin;
     editMySqlPassword = ui->editMySqlPassword;
+    editRar = ui->editRar;
     listBookmarks = ui->listBookmarks;
     radioCachePixmaps = ui->rbCachePixmaps;
     radioCacheData = ui->rbCacheData;
@@ -41,11 +44,18 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
         ui->comboFilter->removeItem(ui->comboFilter->count()-1);
 #endif
 
+#ifdef _WIN32
+    ui->editRar->setPlaceholderText("rar.exe");
+#else
+    ui->editRar->setPlaceholderText("rar");
+#endif
+
     connect(ui->btnDeleteBookmark,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
     connect(ui->btnBkColor,&QPushButton::clicked,this,&SettingsDialog::bkColorDlg);
     connect(ui->btnFontIndexer,&QPushButton::clicked,this,&SettingsDialog::idxFontDlg);
     connect(ui->btnFontOCR,&QPushButton::clicked,this,&SettingsDialog::ocrFontDlg);
     connect(ui->btnFrameColor,&QPushButton::clicked,this,&SettingsDialog::frameColorDlg);
+    connect(ui->btnRar,&QToolButton::clicked,this,&SettingsDialog::openRar);
 
     connect(ui->btnDynAdd,&QPushButton::clicked,this,&SettingsDialog::dynAdd);
     connect(ui->btnDynEdit,&QPushButton::clicked,this,&SettingsDialog::dynEdit);
@@ -218,4 +228,15 @@ void SettingsDialog::dynEdit()
     }
     dlg->setParent(NULL);
     delete dlg;
+}
+
+void SettingsDialog::openRar()
+{
+    QString filter = QString("*");
+#ifdef _WIN32
+    filter = tr("Executable files (*.exe)");
+#endif
+    QString filename = getOpenFileNameD(this,tr("Select console RAR binary"),zg->savedAuxOpenDir,filter);
+    if (!filename.isEmpty())
+        ui->editRar->setText(filename);
 }

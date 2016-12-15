@@ -36,7 +36,7 @@
 #include <QWidget>
 #include "qxtglobal.h"
 
-class QXT_GUI_EXPORT QxtToolTip
+class QxtToolTip
 {
     QxtToolTip();
 

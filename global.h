@@ -9,7 +9,7 @@
 #include <QUuid>
 #include <QPointer>
 #include <QTimer>
-#include <magic.h>
+#include <QThread>
 
 #ifdef WITH_OCR
 #include <baseapi.h>
@@ -161,6 +161,7 @@ QString formatSize(qint64 size);
 QString escapeParam(QString param);
 int compareWithNumerics(QString ref1, QString ref2);
 void filterSupportedImgFiles(QFileInfoList& entryList);
+void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 QString getOpenFileNameD ( QWidget * parent = 0,
                            const QString & caption = QString(),
@@ -186,8 +187,8 @@ QString	getExistingDirectoryD ( QWidget * parent = 0,
                                 QFileDialog::Options options = QFileDialog::ShowDirsOnly |
         QFileDialog::DontUseNativeDialog);
 
-QString detectMIME(QString filename);
-QString detectMIME(QByteArray buf);
+QString detectMIME(const QString &filename);
+QString detectMIME(const QByteArray &buf);
 QPixmap resizeImage(QPixmap src, QSize targetSize,
                     bool forceFilter = false,
                     Z::ResizeFilter filter = Z::Lanczos,
