@@ -21,6 +21,7 @@ bool ZRarReader::openFile()
 
     rarExec = zg->rarCmd;
     if (rarExec.isEmpty()) {
+#ifndef _WIN32
         if (QProcess::execute("rar",QStringList() << "-inul")<0) {
             if (QProcess::execute("unrar",QStringList() << "-inul")<0)
                 return false;
@@ -28,6 +29,9 @@ bool ZRarReader::openFile()
                 rarExec = QString("unrar");
         } else
             rarExec = QString("rar");
+#else
+        rarExec = QString("rar.exe");
+#endif
     }
 
     int cnt = 0;

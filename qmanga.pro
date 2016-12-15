@@ -140,7 +140,7 @@ win32 {
     PKGCONFIG += zziplib
 
     MYSQL_INC = -I$$(SYSROOT)/include/mysql
-    MYSQL_LIBS = -L/usr/lib  -lmysqlclient -lpthread -lz -lm
+    MYSQL_LIBS = -L$$(SYSROOT)/lib  -lmysqlclient -lpthread -lz -lm
     LIBS += $$MYSQL_LIBS
     INCLUDEPATH += $$MYSQL_INC
 }
