@@ -166,7 +166,7 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
         wchar_t* wmsg = toUtf16(fmsg);
         DWORD wr = 0;
         WriteConsoleW(con,wmsg,fmsg.length(),&wr,NULL);
-        delete wmsg;
+        delete[] wmsg;
 #else
         fprintf(stderr, "%s", fmsg.toLocal8Bit().constData());
 #endif
