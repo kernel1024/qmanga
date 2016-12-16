@@ -2,6 +2,7 @@
 #include <QMutex>
 #include <QTextCodec>
 #include <QTextEncoder>
+#include <QBuffer>
 #include <QDebug>
 
 #include "zmangaloader.h"
@@ -24,8 +25,10 @@
 #endif
 
 #ifdef WITH_MAGICK
+#ifndef _WIN32
 #define MAGICKCORE_QUANTUM_DEPTH 8
 #define MAGICKCORE_HDRI_ENABLE 0
+#endif
 
 #include <Magick++.h>
 
@@ -381,9 +384,16 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFi
             bufSrc=QByteArray::fromRawData((char*)(oBlob.data()),oBlob.length());
             dst.loadFromData(bufSrc);
             bufSrc.clear();
+        } catch ( Exception & error ) {
+            imagickOk = false;
+            qDebug() << "ImageMagick crashed. Using Qt image scaling. Exception: " << error.what();
+            if (mangaView!=NULL)
+                QMetaObject::invokeMethod(mangaView,"asyncMsg",Qt::QueuedConnection,
+                                          Q_ARG(QString,"ImageMagick crashed. Using Qt image scaling."));
+            return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
         } catch (...) {
             imagickOk = false;
-            qDebug() << "ImageMagick crashed. Using Qt image scaling.";
+            qDebug() << "ImageMagick crashed. Using Qt image scaling. Unknown exception.";
             if (mangaView!=NULL)
                 QMetaObject::invokeMethod(mangaView,"asyncMsg",Qt::QueuedConnection,
                                           Q_ARG(QString,"ImageMagick crashed. Using Qt image scaling."));

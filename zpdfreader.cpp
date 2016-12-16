@@ -11,6 +11,8 @@ GlobalParams* globalParams = NULL;
 #endif
 
 #include <QMutex>
+#include <QBuffer>
+#include <QDebug>
 #include "zpdfreader.h"
 #include "global.h"
 #include "zdb.h"

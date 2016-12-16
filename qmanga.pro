@@ -142,12 +142,27 @@ CONFIG += warn_on link_pkgconfig c++11
 win32 {
     PKGCONFIG += zziplib
 
+    DEFINES += WITH_POPPLER=1
+    PKGCONFIG += poppler
+
     MYSQL_INC = -I$$(SYSROOT)/include/mysql
     MYSQL_LIBS = -L$$(SYSROOT)/lib  -lmysqlclient -lpthread -lz -lm
     LIBS += $$MYSQL_LIBS
     INCLUDEPATH += $$MYSQL_INC
 
+    QMAKE_CFLAGS += -g
+    QMAKE_CXXFLAGS += -g
+
     RC_FILE = qmanga.rc
+
+    DEFINES += WITH_MAGICK=1
+    PKGCONFIG += Magick++
+#    MAGICK_CXX = $$system($$(SYSROOT)/bin/Magick++-config --cxxflags | sed 's/^.*-I/-I/')
+#    MAGICK_LIBS = $$system($$(SYSROOT)/bin/Magick++-config --libs)
+#    QMAKE_CXXFLAGS += $$MAGICK_CXX
+#    message($$(MAGICK_CXX))
+#    message($$(MAGICK_LIBS))
+#    LIBS += $$MAGICK_LIBS
 }
 
 include( miniqxt/miniqxt.pri )
