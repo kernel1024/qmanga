@@ -418,7 +418,9 @@ void MainWindow::helpAbout()
 {
     QMessageBox::about(this, tr("QManga"),
                        tr("Manga reader with MySQL indexer.\n\nLicensed under GPL v3 license.\n\n"
-                          "Author: kernelonline.\nApp icon (Alien9) designer: EXO."));
+                          "Author: kernelonline.\n"
+                          "App icon (Alien9) designer: EXO.\n"
+                          "Icon pack: KDE team Oxygen project."));
 
 }
 

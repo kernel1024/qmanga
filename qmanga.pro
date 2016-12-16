@@ -134,6 +134,9 @@ CONFIG += warn_on link_pkgconfig c++11
     QMAKE_CXXFLAGS += $$MYSQL_CXX
     LIBS += $$MYSQL_LIBS
     INCLUDEPATH += $$MYSQL_INC
+
+    DBUS_INTERFACES = org.jpreader.auxtranslator.xml \
+        org.qjrad.dictionary.xml
 }
 
 win32 {
@@ -143,6 +146,8 @@ win32 {
     MYSQL_LIBS = -L$$(SYSROOT)/lib  -lmysqlclient -lpthread -lz -lm
     LIBS += $$MYSQL_LIBS
     INCLUDEPATH += $$MYSQL_INC
+
+    RC_FILE = qmanga.rc
 }
 
 include( miniqxt/miniqxt.pri )
@@ -150,8 +155,3 @@ include( miniqxt/miniqxt.pri )
 OTHER_FILES += \
     org.jpreader.auxtranslator.xml \
     org.qjrad.dictionary.xml
-
-!win32 {
-    DBUS_INTERFACES = org.jpreader.auxtranslator.xml \
-        org.qjrad.dictionary.xml
-}

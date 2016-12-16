@@ -1,12 +1,15 @@
 #include <QMenu>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QProcess>
 #include <QFileInfo>
 #include <QCompleter>
 #include <QProgressDialog>
 #include <QApplication>
+#include <QDesktopServices>
 #include <QDebug>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include "zfilecopier.h"
 #include "zglobal.h"
@@ -340,11 +343,8 @@ void ZSearchTab::ctxOpenDir()
     QFileInfoList fl = getSelectedMangaEntries(true);
     if (fl.isEmpty()) return;
 
-    for (int i=0;i<fl.count();i++) {
-        QStringList params;
-        params << fl.at(i).path();
-        QProcess::startDetached("xdg-open",params);
-    }
+    for (int i=0;i<fl.count();i++)
+        QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(fl.at(i).path()),QUrl::TolerantMode));
 
     if (fl.isEmpty())
         QMessageBox::warning(this,tr("QManga"),
@@ -356,11 +356,8 @@ void ZSearchTab::ctxXdgOpen()
     QFileInfoList fl = getSelectedMangaEntries(true);
     if (fl.isEmpty()) return;
 
-    for (int i=0;i<fl.count();i++) {
-        QStringList params;
-        params << fl.at(i).filePath();
-        QProcess::startDetached("xdg-open",params);
-    }
+    for (int i=0;i<fl.count();i++)
+        QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(fl.at(i).filePath()),QUrl::TolerantMode));
 
     if (fl.isEmpty())
         QMessageBox::warning(this,tr("QManga"),

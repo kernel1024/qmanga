@@ -162,6 +162,7 @@ QString escapeParam(QString param);
 int compareWithNumerics(QString ref1, QString ref2);
 void filterSupportedImgFiles(QFileInfoList& entryList);
 void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
+wchar_t* toUtf16(const QString &str);
 
 QString getOpenFileNameD ( QWidget * parent = 0,
                            const QString & caption = QString(),

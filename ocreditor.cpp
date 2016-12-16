@@ -43,6 +43,9 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
 
     connect(dictionary,&OrgQjradDictionaryInterface::gotWordTranslation,
             this,&ZOCREditor::showDictToolTip);
+#else
+    ui->groupTranslation->hide();
+    ui->translateButton->setEnabled(false);
 #endif
     ui->status->clear();
 }

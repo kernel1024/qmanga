@@ -113,14 +113,11 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
     }
 }
 
-QByteArray toUtf16(const QString &str)
+wchar_t *toUtf16(const QString &str)
 {
-    QTextCodec *codec = QTextCodec::codecForName("UTF-16LE");
-    QTextEncoder *encoderWithoutBom = codec->makeEncoder( QTextCodec::IgnoreHeader );
-    QByteArray ba  = encoderWithoutBom ->fromUnicode( str );
-    delete encoderWithoutBom;
-    ba.append('\0'); ba.append('\0');
-    return ba;
+    wchar_t* res = new wchar_t[str.length()];
+    str.toWCharArray(res);
+    return res;
 }
 
 void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -163,9 +160,10 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
 
 #ifdef _WIN32
         HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
-        QByteArray buf = toUtf16(fmsg);
+        wchar_t* wmsg = toUtf16(fmsg);
         DWORD wr = 0;
-        WriteConsoleW(con,buf.constData(),fmsg.length(),&wr,NULL);
+        WriteConsoleW(con,wmsg,fmsg.length(),&wr,NULL);
+        delete wmsg;
 #else
         fprintf(stderr, "%s", fmsg.toLocal8Bit().constData());
 #endif
