@@ -1,7 +1,56 @@
 <RCC>
     <qresource prefix="/">
-        <file>img/edit-delete.png</file>
-        <file>img/Alien9.png</file>
-        <file>img/book.png</file>
+        <file alias="Alien9">img/Alien9.png</file>
+    </qresource>
+    <qresource prefix="/32">
+        <file alias="edit-delete">img/32x32/edit-delete.png</file>
+    </qresource>
+    <qresource prefix="/22">
+        <file alias="book">img/22x22/book.png</file>
+        <file alias="document-open">img/22x22/document-open.png</file>
+        <file alias="go-last">img/22x22/go-last.png</file>
+        <file alias="go-next">img/22x22/go-next.png</file>
+        <file alias="go-previous">img/22x22/go-previous.png</file>
+        <file alias="object-rotate-left">img/22x22/object-rotate-left.png</file>
+        <file alias="object-rotate-right">img/22x22/object-rotate-right.png</file>
+        <file alias="zoom-draw">img/22x22/zoom-draw.png</file>
+        <file alias="zoom-fit-best">img/22x22/zoom-fit-best.png</file>
+        <file alias="zoom-fit-height">img/22x22/zoom-fit-height.png</file>
+        <file alias="zoom-fit-width">img/22x22/zoom-fit-width.png</file>
+        <file alias="zoom-original">img/22x22/zoom-original.png</file>
+        <file alias="go-first">img/22x22/go-first.png</file>
+    </qresource>
+    <qresource prefix="/16">
+        <file alias="accessories-dictionary">img/16x16/accessories-dictionary.png</file>
+        <file alias="application-exit">img/16x16/application-exit.png</file>
+        <file alias="configure">img/16x16/configure.png</file>
+        <file alias="dialog-cancel">img/16x16/dialog-cancel.png</file>
+        <file alias="dialog-close">img/16x16/dialog-close.png</file>
+        <file alias="document-close">img/16x16/document-close.png</file>
+        <file alias="document-edit-verify">img/16x16/document-edit-verify.png</file>
+        <file alias="document-open-folder">img/16x16/document-open-folder.png</file>
+        <file alias="document-open">img/16x16/document-open.png</file>
+        <file alias="document-preview">img/16x16/document-preview.png</file>
+        <file alias="edit-clear">img/16x16/edit-clear.png</file>
+        <file alias="edit-copy">img/16x16/edit-copy.png</file>
+        <file alias="edit-cut">img/16x16/edit-cut.png</file>
+        <file alias="edit-delete">img/16x16/edit-delete.png</file>
+        <file alias="edit-paste">img/16x16/edit-paste.png</file>
+        <file alias="edit-redo">img/16x16/edit-redo.png</file>
+        <file alias="edit-rename">img/16x16/edit-rename.png</file>
+        <file alias="edit-select-all">img/16x16/edit-select-all.png</file>
+        <file alias="edit-undo">img/16x16/edit-undo.png</file>
+        <file alias="folder-tar">img/16x16/folder-tar.png</file>
+        <file alias="fork">img/16x16/fork.png</file>
+        <file alias="go-down">img/16x16/go-down.png</file>
+        <file alias="view-fullscreen">img/16x16/view-fullscreen.png</file>
+        <file alias="view-preview">img/16x16/view-preview.png</file>
+        <file alias="view-refresh">img/16x16/view-refresh.png</file>
+        <file alias="view-sort-ascending">img/16x16/view-sort-ascending.png</file>
+        <file alias="zoom-draw">img/16x16/zoom-draw.png</file>
+        <file alias="zoom-fit-best">img/16x16/zoom-fit-best.png</file>
+        <file alias="zoom-fit-height">img/16x16/zoom-fit-height.png</file>
+        <file alias="zoom-fit-width">img/16x16/zoom-fit-width.png</file>
+        <file alias="zoom-original">img/16x16/zoom-original.png</file>
     </qresource>
 </RCC>

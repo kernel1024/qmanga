@@ -89,12 +89,12 @@
              </property>
              <property name="icon">
               <iconset resource="qmanga.qrc">
-               <normaloff>:/img/book.png</normaloff>:/img/book.png</iconset>
+               <normaloff>:/22/book</normaloff>:/22/book</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="shortcut">
@@ -114,13 +114,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="document-open">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/document-open</normaloff>:/22/document-open</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -144,13 +144,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="go-first">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/go-first</normaloff>:/22/go-first</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -167,13 +167,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="go-previous">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/go-previous</normaloff>:/22/go-previous</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -190,13 +190,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="go-next">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/go-next</normaloff>:/22/go-next</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -213,13 +213,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="go-last">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/go-last</normaloff>:/22/go-last</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -243,8 +243,14 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="object-rotate-left">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/object-rotate-left</normaloff>:/22/object-rotate-left</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>22</width>
+               <height>22</height>
+              </size>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -260,8 +266,14 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="object-rotate-right">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/object-rotate-right</normaloff>:/22/object-rotate-right</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>22</width>
+               <height>22</height>
+              </size>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -344,13 +356,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="zoom-fit-best">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/zoom-fit-best</normaloff>:/22/zoom-fit-best</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -367,13 +379,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="zoom-fit-width">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/zoom-fit-width</normaloff>:/22/zoom-fit-width</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -390,13 +402,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="zoom-fit-height">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/zoom-fit-height</normaloff>:/22/zoom-fit-height</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -413,13 +425,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="zoom-original">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/zoom-original</normaloff>:/22/zoom-original</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="flat">
@@ -443,13 +455,13 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset theme="zoom-draw">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset resource="qmanga.qrc">
+               <normaloff>:/22/zoom-draw</normaloff>:/22/zoom-draw</iconset>
              </property>
              <property name="iconSize">
               <size>
-               <width>20</width>
-               <height>20</height>
+               <width>22</width>
+               <height>22</height>
               </size>
              </property>
              <property name="checkable">
@@ -599,7 +611,7 @@
              <x>0</x>
              <y>0</y>
              <width>757</width>
-             <height>469</height>
+             <height>467</height>
             </rect>
            </property>
            <property name="focusPolicy">
@@ -827,8 +839,8 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
    <property name="icon">
-    <iconset theme="document-open">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/document-open</normaloff>:/16/document-open</iconset>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -842,8 +854,8 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/application-exit</normaloff>:/16/application-exit</iconset>
    </property>
    <property name="text">
     <string>&amp;Exit</string>
@@ -857,8 +869,8 @@
   </action>
   <action name="actionClose">
    <property name="icon">
-    <iconset theme="document-close">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/document-close</normaloff>:/16/document-close</iconset>
    </property>
    <property name="text">
     <string>&amp;Close</string>
@@ -872,8 +884,8 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset theme="configure">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/configure</normaloff>:/16/configure</iconset>
    </property>
    <property name="text">
     <string>&amp;Settings...</string>
@@ -906,8 +918,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="view-fullscreen">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/view-fullscreen</normaloff>:/16/view-fullscreen</iconset>
    </property>
    <property name="text">
     <string>&amp;Fullscreen</string>
@@ -921,8 +933,8 @@
   </action>
   <action name="actionMinimize">
    <property name="icon">
-    <iconset theme="go-down">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/go-down</normaloff>:/16/go-down</iconset>
    </property>
    <property name="text">
     <string>&amp;Minimize</string>
@@ -950,8 +962,8 @@
   </action>
   <action name="actionOpenClipboard">
    <property name="icon">
-    <iconset theme="edit-paste">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/edit-paste</normaloff>:/16/edit-paste</iconset>
    </property>
    <property name="text">
     <string>Open &amp;from clipboard</string>
@@ -962,7 +974,7 @@
   </action>
   <action name="actionShowOCR">
    <property name="text">
-    <string>Show OCR window</string>
+    <string>&amp;Show OCR window</string>
    </property>
   </action>
  </widget>
