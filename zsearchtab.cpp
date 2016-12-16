@@ -344,7 +344,7 @@ void ZSearchTab::ctxOpenDir()
     if (fl.isEmpty()) return;
 
     for (int i=0;i<fl.count();i++)
-        QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(fl.at(i).path()),QUrl::TolerantMode));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fl.at(i).path()));
 
     if (fl.isEmpty())
         QMessageBox::warning(this,tr("QManga"),
@@ -357,7 +357,7 @@ void ZSearchTab::ctxXdgOpen()
     if (fl.isEmpty()) return;
 
     for (int i=0;i<fl.count();i++)
-        QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(fl.at(i).filePath()),QUrl::TolerantMode));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fl.at(i).filePath()));
 
     if (fl.isEmpty())
         QMessageBox::warning(this,tr("QManga"),
