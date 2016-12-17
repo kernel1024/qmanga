@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if (zg->ocrEditor==NULL)
         zg->ocrEditor = new ZOCREditor(this);
 
-    setWindowIcon(QIcon(":/img/Alien9"));
+    setWindowIcon(QIcon(":/Alien9"));
 
     bookmarksMenu = ui->menuBookmarks;
     searchTab = ui->searchTab;
@@ -529,7 +529,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
     QAction* ac;
     int cnt=0;
     if (!ui->fsResults->selectedItems().isEmpty()) {
-        ac = new QAction(QIcon(":/img/16x16/dialog-cancel"),tr("Ignore these file(s)"),this);
+        ac = new QAction(QIcon(":/16/dialog-cancel"),tr("Ignore these file(s)"),this);
         connect(ac,SIGNAL(triggered()),this,SLOT(fsAddIgnoredFiles()));
         cm.addAction(ac);
         cm.addSeparator();

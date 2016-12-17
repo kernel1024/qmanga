@@ -187,7 +187,7 @@ void ZSearchTab::headerClicked(int logicalIndex)
 void ZSearchTab::ctxMenu(QPoint pos)
 {
     QMenu cm(ui->srcList);
-    QMenu* smenu = cm.addMenu(QIcon(":/img/16x16/view-sort-ascending"),tr("Sort"));
+    QMenu* smenu = cm.addMenu(QIcon(":/16/view-sort-ascending"),tr("Sort"));
 
     for (int i=0;i<sortActions.count();i++) {
         if (i==(sortActions.count()-1))
@@ -197,7 +197,7 @@ void ZSearchTab::ctxMenu(QPoint pos)
     cm.addSeparator();
 
     QAction* acm;
-    acm = cm.addAction(QIcon(":/img/16x16/edit-select-all"),tr("Select All"));
+    acm = cm.addAction(QIcon(":/16/edit-select-all"),tr("Select All"));
     connect(acm,SIGNAL(triggered()),ui->srcList,SLOT(selectAll()));
 
     cm.addSeparator();
@@ -208,7 +208,7 @@ void ZSearchTab::ctxMenu(QPoint pos)
         if (li.at(i).column()==0)
             cnt++;
     }
-    QMenu* dmenu = cm.addMenu(QIcon(":/img/16x16/edit-delete"),
+    QMenu* dmenu = cm.addMenu(QIcon(":/16/edit-delete"),
                               tr("Delete selected %1 files").arg(cnt));
     acm = dmenu->addAction(tr("Delete only from database"),this,SLOT(mangaDel()));
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
@@ -217,14 +217,14 @@ void ZSearchTab::ctxMenu(QPoint pos)
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
     acm->setData(2);
 
-    acm = cm.addAction(QIcon(":/img/16x16/document-open-folder"),
+    acm = cm.addAction(QIcon(":/16/document-open-folder"),
                        tr("Open containing directory"),this,SLOT(ctxOpenDir()));
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
 
-    cm.addAction(QIcon(":/img/16x16/fork"),
+    cm.addAction(QIcon(":/16/fork"),
                  tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
 
-    cm.addAction(QIcon(":/img/16x16/edit-copy"),
+    cm.addAction(QIcon(":/16/edit-copy"),
                  tr("Copy files to..."),this,SLOT(ctxFileCopy()));
 
     if (li.count()==1) {
@@ -281,10 +281,10 @@ void ZSearchTab::ctxAlbumMenu(QPoint pos)
 
     QMenu cm(ui->srcAlbums);
     QAction* acm;
-    acm = cm.addAction(QIcon(":/img/16x16/edit-rename"),tr("Rename album"),
+    acm = cm.addAction(QIcon(":/16/edit-rename"),tr("Rename album"),
                        this,SLOT(ctxRenameAlbum()));
     acm->setData(itm->text());
-    acm = cm.addAction(QIcon(":/img/16x16/edit-delete"),tr("Delete album"),
+    acm = cm.addAction(QIcon(":/16/edit-delete"),tr("Delete album"),
                        this,SLOT(ctxDeleteAlbum()));
     acm->setData(itm->text());
 

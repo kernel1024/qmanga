@@ -23,7 +23,7 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     connect(ui->editor,&QPlainTextEdit::customContextMenuRequested,
             this,&ZOCREditor::contextMenu);
 
-    dictSearch = new QAction(QIcon(":/img/16x16/document-preview"),tr("Dictionary search"),this);
+    dictSearch = new QAction(QIcon(":/16/document-preview"),tr("Dictionary search"),this);
     dictSearch->setCheckable(true);
     dictSearch->setChecked(false);
     connect(ui->editor,&QPlainTextEdit::selectionChanged,
@@ -117,19 +117,19 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 
     QAction *ac;
 
-    ac = new QAction(QIcon(":/img/16x16/edit-cut"),tr("Cut"),NULL);
+    ac = new QAction(QIcon(":/16/edit-cut"),tr("Cut"),NULL);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::cut);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/img/16x16/edit-copy"),tr("Copy"),NULL);
+    ac = new QAction(QIcon(":/16/edit-copy"),tr("Copy"),NULL);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::copy);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/img/16x16/edit-paste"),tr("Paste"),NULL);
+    ac = new QAction(QIcon(":/16/edit-paste"),tr("Paste"),NULL);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::paste);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/img/16x16/edit-clear"),tr("Clear"),NULL);
+    ac = new QAction(QIcon(":/16/edit-clear"),tr("Clear"),NULL);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::clear);
     cm.addAction(ac);
 
@@ -139,7 +139,7 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 #ifdef QT_DBUS_LIB
         cm.addAction(dictSearch);
 
-        ac = new QAction(QIcon(":/img/16x16/accessories-dictionary"),tr("Show qjrad window"),NULL);
+        ac = new QAction(QIcon(":/16/accessories-dictionary"),tr("Show qjrad window"),NULL);
         connect(ac,&QAction::triggered,[this](){
             if (dictionary->isValid())
                 dictionary->showDictionaryWindow(ui->editor->textCursor().selectedText());
