@@ -316,7 +316,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
         }
     } else {
         if ((iCacheData.contains(currentPage) || iCachePixmaps.contains(currentPage)) && curUmPixmap.isNull()) {
-            QPixmap p(":/img/edit-delete.png");
+            QPixmap p(":/32/edit-delete");
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
             w.setPen(QPen(zg->foregroundColor()));
             w.drawText(0,(height()-p.height())/2+p.height()+5,width(),w.fontMetrics().height(),Qt::AlignCenter,

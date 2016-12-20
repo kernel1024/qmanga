@@ -52,7 +52,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
         SQLMangaEntry itm = mList.at(idx);
         QPixmap p = QPixmap::fromImage(itm.cover);
         if (p.isNull())
-            p = QPixmap(":/img/edit-delete.png");
+            p = QPixmap(":/32/edit-delete");
         p.detach();
 
         p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
