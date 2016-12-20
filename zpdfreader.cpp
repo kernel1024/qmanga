@@ -5,8 +5,7 @@
 #include <poppler/GlobalParams.h>
 #include <poppler/SplashOutputDev.h>
 #include <poppler/splash/SplashBitmap.h>
-
-GlobalParams* globalParams = NULL;
+#include <poppler/GlobalParams.h>
 
 #endif
 
