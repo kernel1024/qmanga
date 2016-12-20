@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QBuffer>
 #include <QScreen>
+#include <math.h>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -161,6 +162,14 @@ void MainWindow::centerWindow(bool moveWindow)
 
     zg->dpiX = QApplication::screens().at(screen)->physicalDotsPerInchX();
     zg->dpiY = QApplication::screens().at(screen)->physicalDotsPerInchY();
+#ifdef _WIN32
+    if (abs(zg->dpiX-zg->dpiY)>20.0) {
+        qreal dpi = qMax(zg->dpiX,zg->dpiY);
+        if (dpi<130.0) dpi=130.0;
+        zg->dpiX = dpi;
+        zg->dpiY = dpi;
+    }
+#endif
 }
 
 bool MainWindow::isMangaOpened()
