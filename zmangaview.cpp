@@ -302,7 +302,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
                     if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
                     if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
                     QPixmap zoomed = curUmPixmap.copy(cutBox);
-                    zoomed = resizeImage(zoomed,zoomed.size()*3.0,true,Z::Lanczos);
+                    zoomed = resizeImage(zoomed,zoomed.size()*3.0,true,Blitz::LanczosFilter);
                     baseRect = QRect(QPoint(zoomPos.x()-zoomed.width()/2,zoomPos.y()-zoomed.height()/2),
                                      zoomed.size());
                     if (baseRect.left()<0) baseRect.moveLeft(0);
@@ -560,11 +560,11 @@ void ZMangaView::redrawPage()
                     curPixmap = resizeImage(curUmPixmap,sz);
                 } else {
                     QTimer *tmr = NULL;
-                    if (zg->resizeFilter!=Z::Nearest) {
+                    if (zg->resizeFilter!=Blitz::UndefinedFilter) {
                         tmr = new QPageTimer(this,100,currentPage);
                         connect(tmr,SIGNAL(timeout()),this,SLOT(redrawPage()));
                     }
-                    curPixmap = resizeImage(curUmPixmap,sz,true,Z::Nearest);
+                    curPixmap = resizeImage(curUmPixmap,sz,true,Blitz::UndefinedFilter);
                     if (tmr!=NULL)
                         tmr->start();
                 }

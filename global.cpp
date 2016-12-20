@@ -15,6 +15,7 @@
 #include "zsingleimagereader.h"
 #include "zglobal.h"
 #include "zmangaview.h"
+#include "scalefilter.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -22,17 +23,6 @@
 
 #ifdef WITH_LIBMAGIC
 #include <magic.h>
-#endif
-
-#ifdef WITH_MAGICK
-#ifndef _WIN32
-#define MAGICKCORE_QUANTUM_DEPTH 8
-#define MAGICKCORE_HDRI_ENABLE 0
-#endif
-
-#include <Magick++.h>
-
-using namespace Magick;
 #endif
 
 #ifndef WITH_LIBMAGIC
@@ -325,85 +315,29 @@ QString detectMIME(const QByteArray &buf)
 #endif
 }
 
-QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Z::ResizeFilter filter,
+QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Blitz::ScaleFilterType filter,
                     ZMangaView *mangaView)
 {
-    static bool imagickOk = true;
-    Z::ResizeFilter rf = zg->resizeFilter;
+    Q_UNUSED(mangaView)
+
+    Blitz::ScaleFilterType rf = zg->resizeFilter;
     if (forceFilter)
         rf = filter;
-    if (rf==Z::Nearest || !imagickOk)
+    if (rf==Blitz::UndefinedFilter)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
-    else if (rf==Z::Bilinear)
+    else if (rf==Blitz::Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-#ifndef WITH_MAGICK
-    else
-        Q_UNUSED(mangaView)
-        return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
-#else
     else {
         QTime tmr;
         tmr.start();
 
-        QPixmap dst = QPixmap();
-        try {
-            // Load QImage to ImageMagick image
-            QByteArray bufSrc;
-            QBuffer buf(&bufSrc);
-            buf.open(QIODevice::WriteOnly);
-            src.save(&buf,"BMP");
-            buf.close();
-            Blob iBlob(bufSrc.data(),bufSrc.size());
-            Image iImage(iBlob,Geometry(src.width(),src.height()),"BMP");
+        QPixmap dst = QPixmap::fromImage(
+                          Blitz::smoothScaleFilter(src.toImage(),targetSize,zg->resizeBlur,
+                                                   rf,Qt::KeepAspectRatio));
 
-            // Resize image
-            if (rf==Z::Lanczos)
-                iImage.filterType(LanczosFilter);
-            else if (rf==Z::Gaussian)
-                iImage.filterType(GaussianFilter);
-            else if (rf==Z::Lanczos2)
-                iImage.filterType(Lanczos2Filter);
-            else if (rf==Z::Cubic)
-                iImage.filterType(CubicFilter);
-            else if (rf==Z::Sinc)
-                iImage.filterType(SincFilter);
-            else if (rf==Z::Triangle)
-                iImage.filterType(TriangleFilter);
-            else if (rf==Z::Mitchell)
-                iImage.filterType(MitchellFilter);
-            else
-                iImage.filterType(LanczosFilter);
-
-            iImage.resize(Geometry(targetSize.width(),targetSize.height()));
-
-            // Convert image to QImage
-            Blob oBlob;
-            iImage.magick("BMP");
-            iImage.write(&oBlob);
-            bufSrc.clear();
-            bufSrc=QByteArray::fromRawData((char*)(oBlob.data()),oBlob.length());
-            dst.loadFromData(bufSrc);
-            bufSrc.clear();
-        } catch ( Exception & error ) {
-            imagickOk = false;
-            qDebug() << "ImageMagick crashed. Using Qt image scaling. Exception: " << error.what();
-            if (mangaView!=NULL)
-                QMetaObject::invokeMethod(mangaView,"asyncMsg",Qt::QueuedConnection,
-                                          Q_ARG(QString,"ImageMagick crashed. Using Qt image scaling."));
-            return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
-        } catch (...) {
-            imagickOk = false;
-            qDebug() << "ImageMagick crashed. Using Qt image scaling. Unknown exception.";
-            if (mangaView!=NULL)
-                QMetaObject::invokeMethod(mangaView,"asyncMsg",Qt::QueuedConnection,
-                                          Q_ARG(QString,"ImageMagick crashed. Using Qt image scaling."));
-            return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
-        }
-
-        //qDebug() << "ImageMagick ms: " << tmr.elapsed();
+        //qDebug() << "smoothScaleFilter ms: " << tmr.elapsed();
         return dst;
     }
-#endif
 }
 
 SQLMangaEntry::SQLMangaEntry()

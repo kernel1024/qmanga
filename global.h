@@ -16,9 +16,7 @@
 #include <leptonica/allheaders.h>
 #endif
 
-#ifndef ARGUNUSED
-#define ARGUNUSED(x) (void)(x)
-#endif
+#include <scalefilter.h>
 
 #define maxPreviewSize 500
 #define previewProps 364/257
@@ -38,18 +36,6 @@ enum PDFRendering {
     Autodetect = 0,
     PageRenderer = 1,
     ImageCatalog = 2
-};
-
-enum ResizeFilter {
-    Nearest = 0,
-    Bilinear = 1,
-    Lanczos = 2,
-    Gaussian = 3,
-    Lanczos2 = 4,
-    Cubic = 5,
-    Sinc = 6,
-    Triangle = 7,
-    Mitchell = 8
 };
 
 enum Ordering {
@@ -96,7 +82,7 @@ static const QHash<Ordering,QString> sortMenu = {
 
 }
 
-Q_DECLARE_METATYPE(Z::ResizeFilter)
+//Q_DECLARE_METATYPE(Z::ResizeFilter)
 Q_DECLARE_METATYPE(Z::Ordering)
 
 class SQLMangaEntry {
@@ -192,7 +178,7 @@ QString detectMIME(const QString &filename);
 QString detectMIME(const QByteArray &buf);
 QPixmap resizeImage(QPixmap src, QSize targetSize,
                     bool forceFilter = false,
-                    Z::ResizeFilter filter = Z::Lanczos,
+                    Blitz::ScaleFilterType filter = Blitz::LanczosFilter,
                     ZMangaView* mangaView = NULL);
 
 #ifdef WITH_OCR

@@ -96,7 +96,7 @@ void ZGlobal::loadSettings()
     QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",6).toInt();
-    resizeFilter = (Z::ResizeFilter)settings.value("resizeFilter",0).toInt();
+    resizeFilter = (Blitz::ScaleFilterType)settings.value("resizeFilter",0).toInt();
     dbUser = settings.value("mysqlUser",QString()).toString();
     dbPass = settings.value("mysqlPassword",QString()).toString();
     dbBase = settings.value("mysqlBase",QString("qmanga")).toString();
@@ -106,6 +106,7 @@ void ZGlobal::loadSettings()
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     savedAuxSaveDir = settings.value("savedAuxSaveDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
+    resizeBlur = settings.value("resizingBlur",1.0).toFloat();
     scrollDelta = settings.value("scrollDelta",120).toInt();
     pdfRendering = (Z::PDFRendering)settings.value("pdfRendering",Z::Autodetect).toInt();
     forceDPI = settings.value("forceDPI",-1.0).toFloat();
@@ -183,6 +184,7 @@ void ZGlobal::saveSettings()
     settings.setValue("savedAuxSaveDir",savedAuxSaveDir);
     settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
     settings.setValue("magnifySize",magnifySize);
+    settings.setValue("resizingBlur",resizeBlur);
     settings.setValue("scrollDelta",scrollDelta);
     settings.setValue("pdfRendering",pdfRendering);
     settings.setValue("forceDPI",forceDPI);
@@ -296,6 +298,7 @@ void ZGlobal::settingsDlg()
     dlg->editRar->setText(rarCmd);
     dlg->spinCacheWidth->setValue(cacheWidth);
     dlg->spinMagnify->setValue(magnifySize);
+    dlg->spinBlur->setValue(resizeBlur);
     dlg->spinScrollDelta->setValue(scrollDelta);
     dlg->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(detectedDelta));
     if (cachePixmaps)
@@ -344,6 +347,7 @@ void ZGlobal::settingsDlg()
         rarCmd=dlg->editRar->text();
         cacheWidth=dlg->spinCacheWidth->value();
         magnifySize=dlg->spinMagnify->value();
+        resizeBlur=dlg->spinBlur->value();
         scrollDelta=dlg->spinScrollDelta->value();
         backgroundColor=dlg->getBkColor();
         frameColor=dlg->getFrameColor();
@@ -352,7 +356,7 @@ void ZGlobal::settingsDlg()
         cachePixmaps=dlg->radioCachePixmaps->isChecked();
         useFineRendering=dlg->checkFineRendering->isChecked();
         filesystemWatcher=dlg->checkFSWatcher->isChecked();
-        resizeFilter=(Z::ResizeFilter)dlg->comboFilter->currentIndex();
+        resizeFilter=(Blitz::ScaleFilterType)dlg->comboFilter->currentIndex();
         pdfRendering = (Z::PDFRendering)dlg->comboPDFRendererMode->currentIndex();
         if (dlg->checkForceDPI->isChecked())
             forceDPI = dlg->spinForceDPI->value();

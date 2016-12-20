@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     zexportdialog.cpp \
     zimagesdirreader.cpp \
     zpdfimageoutdev.cpp \
-    zfilecopier.cpp
+    zfilecopier.cpp \
+    scalefilter.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -58,7 +59,8 @@ HEADERS  += mainwindow.h \
     zexportdialog.h \
     zimagesdirreader.h \
     zpdfimageoutdev.h \
-    zfilecopier.h
+    zfilecopier.h \
+    scalefilter.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
@@ -101,21 +103,6 @@ CONFIG += warn_on link_pkgconfig c++11
         message("Using Tesseract OCR:  NO")
     }
 
-    system(Magick++-config --version > /dev/null) {
-        CONFIG += use_magick
-        message("Using ImageMagick:    YES")
-    } else {
-        message("Using ImageMagick:    NO")
-    }
-
-    use_magick {
-        DEFINES += WITH_MAGICK=1
-        MAGICK_CXX = $$system(Magick++-config --cxxflags | sed 's/^.*-I/-I/')
-        MAGICK_LIBS = $$system(Magick++-config --libs)
-        QMAKE_CXXFLAGS += $$MAGICK_CXX
-        LIBS += $$MAGICK_LIBS
-    }
-
     use_poppler {
         DEFINES += WITH_POPPLER=1
         PKGCONFIG += poppler
@@ -150,19 +137,11 @@ win32 {
     LIBS += $$MYSQL_LIBS
     INCLUDEPATH += $$MYSQL_INC
 
-    QMAKE_CFLAGS += -g
-    QMAKE_CXXFLAGS += -g
-
     RC_FILE = qmanga.rc
+}
 
-    DEFINES += WITH_MAGICK=1
-    PKGCONFIG += Magick++
-#    MAGICK_CXX = $$system($$(SYSROOT)/bin/Magick++-config --cxxflags | sed 's/^.*-I/-I/')
-#    MAGICK_LIBS = $$system($$(SYSROOT)/bin/Magick++-config --libs)
-#    QMAKE_CXXFLAGS += $$MAGICK_CXX
-#    message($$(MAGICK_CXX))
-#    message($$(MAGICK_LIBS))
-#    LIBS += $$MAGICK_LIBS
+CONFIG(release, debug|release) {
+    CONFIG += optimize_full
 }
 
 include( miniqxt/miniqxt.pri )

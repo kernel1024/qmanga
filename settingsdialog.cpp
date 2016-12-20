@@ -38,11 +38,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     comboPDFRendererMode = ui->comboPDFRenderMode;
     checkForceDPI = ui->checkPDFDPI;
     spinForceDPI = ui->spinPDFDPI;
-
-#ifndef WITH_MAGICK
-    while (ui->comboFilter->count()>2)
-        ui->comboFilter->removeItem(ui->comboFilter->count()-1);
-#endif
+    spinBlur = ui->spinBlur;
 
 #ifdef _WIN32
     ui->editRar->setPlaceholderText("rar.exe");

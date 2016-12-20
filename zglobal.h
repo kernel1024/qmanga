@@ -33,11 +33,12 @@ public:
 
     ZStrMap bookmarks;
 
-    Z::ResizeFilter resizeFilter;
+    Blitz::ScaleFilterType resizeFilter;
     Z::Ordering defaultOrdering;
     Z::PDFRendering pdfRendering;
     int cacheWidth;
     int magnifySize;
+    qreal resizeBlur;
     QString savedAuxOpenDir, savedIndexOpenDir, savedAuxSaveDir;
     QColor backgroundColor, frameColor;
     QFont idxFont, ocrFont;

@@ -39,6 +39,7 @@ public:
     QComboBox* comboPDFRendererMode;
     QCheckBox* checkForceDPI;
     QDoubleSpinBox* spinForceDPI;
+    QDoubleSpinBox* spinBlur;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
