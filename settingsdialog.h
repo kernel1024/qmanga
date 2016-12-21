@@ -11,6 +11,8 @@
 #include <QCheckBox>
 #include <QLabel>
 
+#include "zglobal.h"
+
 namespace Ui {
 class SettingsDialog;
 }
@@ -49,6 +51,8 @@ public:
     QColor getFrameColor();
     QStringList getIgnoredFiles();
     void setIgnoredFiles(const QStringList &files);
+    void setSearchEngines(const ZStrMap &engines);
+    ZStrMap getSearchEngines() const;
     
 private:
     QColor bkColor, frameColor;
@@ -69,8 +73,10 @@ public slots:
     void updateFrameColor(QColor c);
     void dynAdd();
     void dynEdit();
-    void openRar();
-
+    void openRar(); 
+    void addSearchEngine();
+    void delSearchEngine();
+    void setDefaultSearch();
 };
 
 #endif // SETTINGSDIALOG_H

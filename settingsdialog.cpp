@@ -1,8 +1,10 @@
 #include <QColorDialog>
 #include <QFontDialog>
+#include <QMessageBox>
 
 #include "settingsdialog.h"
 #include "bookmarkdlg.h"
+#include "multiinputdialog.h"
 #include "ui_settingsdialog.h"
 #include "zglobal.h"
 #include "global.h"
@@ -58,6 +60,10 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     connect(ui->btnDynDelete,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
     connect(ui->btnDeleteIgnored,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
 
+    connect(ui->btnAddSearch, &QPushButton::clicked, this, &SettingsDialog::addSearchEngine);
+    connect(ui->btnDelSearch, &QPushButton::clicked, this, &SettingsDialog::delSearchEngine);
+    connect(ui->btnDefaultSearch, &QPushButton::clicked, this, &SettingsDialog::setDefaultSearch);
+
     delLookup[ui->btnDeleteBookmark] = ui->listBookmarks;
     delLookup[ui->btnDynDelete] = ui->listDynAlbums;
     delLookup[ui->btnDeleteIgnored] = ui->listIgnoredFiles;
@@ -106,6 +112,80 @@ void SettingsDialog::setIgnoredFiles(const QStringList& files)
         li->setToolTip(fname);
         ui->listIgnoredFiles->addItem(li);
     }
+}
+
+void SettingsDialog::setSearchEngines(const ZStrMap &engines)
+{
+    ui->listSearch->clear();
+    foreach (const QString &t, engines.keys()) {
+        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ] %3").
+                                                  arg(t,
+                                                  engines.value(t),
+                t==zg->defaultSearchEngine ? tr("(default)") : QString()));
+        li->setData(Qt::UserRole,t);
+        li->setData(Qt::UserRole+1,engines.value(t));
+        ui->listSearch->addItem(li);
+    }
+}
+
+ZStrMap SettingsDialog::getSearchEngines() const
+{
+    ZStrMap engines;
+    engines.clear();
+    for (int i=0; i<ui->listSearch->count(); i++)
+        engines[ui->listSearch->item(i)->data(Qt::UserRole).toString()] =
+                ui->listSearch->item(i)->data(Qt::UserRole+1).toString();
+    return engines;
+
+}
+
+void SettingsDialog::addSearchEngine()
+{
+    ZStrMap data;
+    data["Url template"]=QString();
+    data["Menu title"]=QString();
+
+    QString hlp = tr("In the url template you can use following substitutions\n"
+                     "  %s - search text\n"
+                     "  %ps - percent-encoded search text");
+
+    CMultiInputDialog *dlg = new CMultiInputDialog(this,tr("Add new search engine"),data,hlp);
+    if (dlg->exec()) {
+        data = dlg->getInputData();
+
+        if (getSearchEngines().keys().contains(data["Menu title"]))
+            QMessageBox::warning(this,tr("QManga"),tr("Unable to add two or more engines with same names.\n"
+                                                      "Use another name for new engine."));
+        else {
+            QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ] %3").
+                                                      arg(data["Menu title"],
+                                                      data["Url template"],
+                    data["Menu title"]==zg->defaultSearchEngine ? tr("(default)") : QString()));
+            li->setData(Qt::UserRole,data["Menu title"]);
+            li->setData(Qt::UserRole+1,data["Url template"]);
+            ui->listSearch->addItem(li);
+        }
+    }
+    dlg->deleteLater();
+}
+
+void SettingsDialog::delSearchEngine()
+{
+    QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
+    foreach (QListWidgetItem* i, dl) {
+        ui->listBookmarks->removeItemWidget(i);
+        delete i;
+    }
+}
+
+void SettingsDialog::setDefaultSearch()
+{
+    QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
+    if (dl.isEmpty()) return;
+
+    zg->defaultSearchEngine = dl.first()->data(Qt::UserRole).toString();
+
+    setSearchEngines(getSearchEngines());
 }
 
 void SettingsDialog::delListWidgetItem()

@@ -2,6 +2,8 @@
 #include <QToolTip>
 #include <QUrl>
 #include <QUrlQuery>
+#include <QDesktopServices>
+#include "zglobal.h"
 #include "qxttooltip.h"
 #include "ocreditor.h"
 #include "ui_ocreditor.h"
@@ -133,19 +135,40 @@ void ZOCREditor::contextMenu(const QPoint &pos)
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::clear);
     cm.addAction(ac);
 
-    if (ui->editor->textCursor().hasSelection()) {
+    QString sText;
+    if (ui->editor->textCursor().hasSelection())
+        sText = ui->editor->textCursor().selectedText();
+
+    if (!sText.isEmpty()) {
         cm.addSeparator();
 
 #ifdef QT_DBUS_LIB
         cm.addAction(dictSearch);
 
         ac = new QAction(QIcon(":/16/accessories-dictionary"),tr("Show qjrad window"),NULL);
-        connect(ac,&QAction::triggered,[this](){
+        connect(ac,&QAction::triggered,[this,sText](){
             if (dictionary->isValid())
-                dictionary->showDictionaryWindow(ui->editor->textCursor().selectedText());
+                dictionary->showDictionaryWindow(sText);
         });
         cm.addAction(ac);
 #endif
+
+        if (!zg->ctxSearchEngines.isEmpty()) {
+            cm.addSeparator();
+
+            QStringList searchNames = zg->ctxSearchEngines.keys();
+            searchNames.sort(Qt::CaseInsensitive);
+            foreach (const QString& name, searchNames) {
+                QUrl url = zg->createSearchUrl(sText,name);
+                if (!url.isEmpty() && url.isValid()) {
+                    ac = new QAction(name,NULL);
+                    connect(ac, &QAction::triggered, [url,this](){
+                        QDesktopServices::openUrl(url);
+                    });
+                    cm.addAction(ac);
+                }
+            }
+        }
     }
 
     cm.exec(ui->editor->mapToGlobal(pos));

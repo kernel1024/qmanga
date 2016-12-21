@@ -20,6 +20,8 @@ ZGlobal::ZGlobal(QObject *parent) :
     cacheWidth = 6;
     detectedDelta = 120;
     bookmarks.clear();
+    ctxSearchEngines.clear();
+    defaultSearchEngine.clear();
     cachePixmaps = false;
     useFineRendering = true;
     ocrEditor = NULL;
@@ -116,6 +118,10 @@ void ZGlobal::loadSettings()
     useFineRendering = settings.value("fineRendering",true).toBool();
     filesystemWatcher = settings.value("filesystemWatcher",false).toBool();
     defaultOrdering = (Z::Ordering)settings.value("defaultOrdering",Z::Name).toInt();
+    defaultSearchEngine = settings.value("defaultSearchEngine",QString()).toString();
+    ctxSearchEngines = settings.value("ctxSearchEngines").value<ZStrMap>();
+
+
     if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
         idxFont = QApplication::font("QListView");
     if (!ocrFont.fromString(settings.value("ocrFont",QString()).toString()))
@@ -196,6 +202,9 @@ void ZGlobal::saveSettings()
     settings.setValue("idxFont",idxFont.toString());
     settings.setValue("ocrFont",ocrFont.toString());
     settings.setValue("defaultOrdering",(int)defaultOrdering);
+    settings.setValue("defaultSearchEngine",defaultSearchEngine);
+    settings.setValue("ctxSearchEngines",QVariant::fromValue(ctxSearchEngines));
+
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
     if (w!=NULL) {
@@ -338,6 +347,7 @@ void ZGlobal::settingsDlg()
         dlg->listDynAlbums->addItem(li);
     }
     dlg->setIgnoredFiles(db->sqlGetIgnoredFiles());
+    dlg->setSearchEngines(ctxSearchEngines);
 
     if (dlg->exec()) {
         dbUser=dlg->editMySqlLogin->text();
@@ -358,6 +368,7 @@ void ZGlobal::settingsDlg()
         filesystemWatcher=dlg->checkFSWatcher->isChecked();
         resizeFilter=(Blitz::ScaleFilterType)dlg->comboFilter->currentIndex();
         pdfRendering = (Z::PDFRendering)dlg->comboPDFRendererMode->currentIndex();
+        ctxSearchEngines=dlg->getSearchEngines();
         if (dlg->checkForceDPI->isChecked())
             forceDPI = dlg->spinForceDPI->value();
         else
@@ -389,6 +400,24 @@ void ZGlobal::settingsDlg()
     dlg->setParent(NULL);
     delete dlg;
 }
+
+QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine)
+{
+    if (ctxSearchEngines.isEmpty())
+        return QUrl();
+
+    QString url = ctxSearchEngines.values().first();
+    if (engine.isEmpty() && !defaultSearchEngine.isEmpty())
+        url = ctxSearchEngines.value(defaultSearchEngine);
+    if (!engine.isEmpty() && ctxSearchEngines.contains(engine))
+        url = ctxSearchEngines.value(engine);
+
+    url.replace("%s",text);
+    url.replace("%ps",QUrl::toPercentEncoding(text));
+
+    return QUrl::fromUserInput(url);
+}
+
 
 ZFileEntry::ZFileEntry()
 {

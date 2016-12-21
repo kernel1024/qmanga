@@ -36,7 +36,8 @@ SOURCES += main.cpp\
     zimagesdirreader.cpp \
     zpdfimageoutdev.cpp \
     zfilecopier.cpp \
-    scalefilter.cpp
+    scalefilter.cpp \
+    multiinputdialog.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -60,7 +61,8 @@ HEADERS  += mainwindow.h \
     zimagesdirreader.h \
     zpdfimageoutdev.h \
     zfilecopier.h \
-    scalefilter.h
+    scalefilter.h \
+    multiinputdialog.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
@@ -68,7 +70,8 @@ FORMS    += mainwindow.ui \
     zsearchtab.ui \
     albumselectordlg.ui \
     ocreditor.ui \
-    zexportdialog.ui
+    zexportdialog.ui \
+    multiinputdialog.ui
 
 RESOURCES += \
     qmanga.qrc

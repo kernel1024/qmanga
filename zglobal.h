@@ -4,6 +4,7 @@
 #include <QFileSystemWatcher>
 #include <QHash>
 #include <QMap>
+#include <QUrl>
 #include "global.h"
 #include "ocreditor.h"
 
@@ -33,6 +34,9 @@ public:
 
     ZStrMap bookmarks;
 
+    ZStrMap ctxSearchEngines;
+    QString defaultSearchEngine;
+
     Blitz::ScaleFilterType resizeFilter;
     Z::Ordering defaultOrdering;
     Z::PDFRendering pdfRendering;
@@ -57,6 +61,7 @@ public:
     QColor foregroundColor();
 
     void fsCheckFilesAvailability();
+    QUrl createSearchUrl(const QString &text, const QString &engine = QString());
 
 public slots:
     void settingsDlg();
