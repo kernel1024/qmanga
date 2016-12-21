@@ -830,9 +830,6 @@ void ZDB::sqlGetTablesDescription()
             case MYSQL_TYPE_NEWDATE:    types << "NEWDATE"; break;
             case MYSQL_TYPE_VARCHAR:    types << "VARCHAR"; break;
             case MYSQL_TYPE_BIT:        types << "BIT"; break;
-            case MYSQL_TYPE_TIMESTAMP2: types << "TIMESTAMP2"; break;
-            case MYSQL_TYPE_DATETIME2:  types << "DATETIME2"; break;
-            case MYSQL_TYPE_TIME2:      types << "TIME2"; break;
             case MYSQL_TYPE_NEWDECIMAL: types << "NEWDECIMAL"; break;
             case MYSQL_TYPE_ENUM:       types << "ENUM"; break;
             case MYSQL_TYPE_SET:        types << "SET"; break;

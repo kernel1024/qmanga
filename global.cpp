@@ -3,6 +3,8 @@
 #include <QTextCodec>
 #include <QTextEncoder>
 #include <QBuffer>
+#include <QDir>
+#include <QApplication>
 #include <QDebug>
 
 #include "zmangaloader.h"
@@ -157,9 +159,8 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
         DWORD wr = 0;
         WriteConsoleW(con,wmsg,fmsg.length(),&wr,NULL);
         delete[] wmsg;
-#else
-        fprintf(stderr, "%s", fmsg.toLocal8Bit().constData());
 #endif
+        fprintf(stderr, "%s", fmsg.toLocal8Bit().constData());
     }
 
     loggerMutex.unlock();
@@ -577,7 +578,13 @@ QImage PIX2QImage(PIX *pixImage) {
 tesseract::TessBaseAPI* initializeOCR()
 {
     ocr = new tesseract::TessBaseAPI();
-    if (ocr->Init(NULL,"jpn")) {
+    const char* datapath = NULL;
+#ifdef _WIN32
+    QDir appDir(qApp->applicationDirPath());
+    QByteArray tesspath = appDir.absoluteFilePath("tessdata").toUtf8();
+    datapath = tesspath.constData();
+#endif
+    if (ocr->Init(datapath,"jpn")) {
         QMessageBox::critical(NULL,"QManga error",
                               "Could not initialize Tesseract.\n"
                               "Maybe japanese language training data is not installed.");

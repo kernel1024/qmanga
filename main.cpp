@@ -14,9 +14,6 @@ tesseract::TessBaseAPI* ocr = NULL;
 int main(int argc, char *argv[])
 {
     setlocale (LC_NUMERIC, "C");
-#ifdef WITH_OCR
-    ocr = initializeOCR();
-#endif
     qInstallMessageHandler(stdConsoleOutput);
     qRegisterMetaType<QIntList>("QIntList");
     qRegisterMetaType<QImageHash>("QImageHash");
@@ -27,6 +24,11 @@ int main(int argc, char *argv[])
     qRegisterMetaTypeStreamOperators<ZStrMap>("ZStrMap");
 
     QApplication a(argc, argv);
+
+#ifdef WITH_OCR
+    ocr = initializeOCR();
+#endif
+
     MainWindow w;
 
 #ifdef _WIN32
@@ -36,7 +38,6 @@ int main(int argc, char *argv[])
     if (qApp->arguments().contains("--debug"))
         AllocConsole();
 #endif
-
 
     w.show();
     
