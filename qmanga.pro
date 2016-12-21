@@ -132,7 +132,7 @@ win32 {
     DEFINES += WITH_POPPLER=1
     PKGCONFIG += poppler
 
-    MYSQL_INC = -I$$(SYSROOT)/include/mysql
+    MYSQL_INC = $$(SYSROOT)/include/mysql
     MYSQL_LIBS = -L$$(SYSROOT)/lib  -lmysqlclient -lpthread -lz -lm
     LIBS += $$MYSQL_LIBS
     INCLUDEPATH += $$MYSQL_INC
