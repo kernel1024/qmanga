@@ -149,6 +149,7 @@ SQLMangaEntry ZMangaModel::getItem(int idx) const
 
 void ZMangaModel::deleteAllItems()
 {
+    if (mList.isEmpty()) return;
     beginRemoveRows(QModelIndex(),0,mList.count()-1);
     mList.clear();
     endRemoveRows();
@@ -213,15 +214,19 @@ Qt::ItemFlags ZMangaSearchHistoryModel::flags(const QModelIndex &index) const
 
 void ZMangaSearchHistoryModel::setHistoryItems(const QStringList &items)
 {
-    beginRemoveRows(QModelIndex(),0,historyItems.count()-1);
-    historyItems.clear();
-    endRemoveRows();
+    if (!historyItems.isEmpty()) {
+        beginRemoveRows(QModelIndex(),0,historyItems.count()-1);
+        historyItems.clear();
+        endRemoveRows();
+    }
 
     QStringList sl = items;
     sl.removeDuplicates();
-    beginInsertRows(QModelIndex(),0,sl.count()-1);
-    historyItems.append(sl);
-    endInsertRows();
+    if (!sl.isEmpty()) {
+        beginInsertRows(QModelIndex(),0,sl.count()-1);
+        historyItems.append(sl);
+        endInsertRows();
+    }
 }
 
 QStringList ZMangaSearchHistoryModel::getHistoryItems() const
@@ -233,7 +238,7 @@ void ZMangaSearchHistoryModel::appendHistoryItem(const QString &item)
 {
     if (historyItems.contains(item)) return;
 
-    beginInsertRows(QModelIndex(),historyItems.count()-1,historyItems.count());
+    beginInsertRows(QModelIndex(),historyItems.count(),historyItems.count());
     historyItems.append(item);
     endInsertRows();
 }
