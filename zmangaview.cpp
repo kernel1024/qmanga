@@ -341,7 +341,9 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
             }
             dragPos = event->pos();
         } else {
+#ifdef WITH_OCR
             copySelection->setGeometry(QRect(event->pos(),copyPos).normalized());
+#endif
         }
     } else {
         if ((QApplication::keyboardModifiers() & Qt::ControlModifier) == 0) {
@@ -361,9 +363,11 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
         event->accept();
     } else if (event->button()==Qt::LeftButton) {
         if ((QApplication::keyboardModifiers() & Qt::AltModifier) == 0) {
+#ifdef WITH_OCR
             copyPos = event->pos();
             copySelection->setGeometry(copyPos.x(),copyPos.y(),0,0);
             copySelection->show();
+#endif
         }
     }
 }
@@ -376,6 +380,7 @@ void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
 
 void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 {
+#ifdef WITH_OCR
     if (event->button()==Qt::LeftButton &&
             !copyPos.isNull() &&
             (QApplication::keyboardModifiers() & Qt::AltModifier) == 0) {
@@ -387,7 +392,6 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             cp.setWidth(cp.width()*curUmPixmap.width()/curPixmap.width());
             cp.setHeight(cp.height()*curUmPixmap.height()/curPixmap.height());
             cp = cp.intersected(curUmPixmap.rect());
-#ifdef WITH_OCR
             if (ocr!=NULL && cp.width()>20 && cp.height()>20) {
                 QImage cpx = curUmPixmap.copy(cp).toImage();
                 ocr->SetImage(Image2PIX(cpx));
@@ -414,9 +418,9 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                     zg->ocrEditor->showWnd();
                 }
             }
-#endif
         }
     }
+#endif
     dragPos = QPoint();
     copyPos = QPoint();
     copySelection->hide();
