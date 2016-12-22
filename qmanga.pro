@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     zpdfimageoutdev.cpp \
     zfilecopier.cpp \
     scalefilter.cpp \
-    multiinputdialog.cpp
+    multiinputdialog.cpp \
+    zfinescaler.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -62,7 +63,8 @@ HEADERS  += mainwindow.h \
     zpdfimageoutdev.h \
     zfilecopier.h \
     scalefilter.h \
-    multiinputdialog.h
+    multiinputdialog.h \
+    zfinescaler.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \

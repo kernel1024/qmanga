@@ -176,9 +176,8 @@ QString	getExistingDirectoryD ( QWidget * parent = 0,
 
 QString detectMIME(const QString &filename);
 QString detectMIME(const QByteArray &buf);
-QPixmap resizeImage(QPixmap src, QSize targetSize,
-                    bool forceFilter = false,
-                    Blitz::ScaleFilterType filter = Blitz::LanczosFilter);
+QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
+                    Blitz::ScaleFilterType filter = Blitz::LanczosFilter, bool *stopFlag = NULL);
 
 #ifdef WITH_OCR
 extern tesseract::TessBaseAPI* ocr;

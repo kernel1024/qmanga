@@ -15,6 +15,7 @@
 #include <math.h>
 #include "zmangaloader.h"
 #include "zmangaview.h"
+#include "zfinescaler.h"
 #include "zglobal.h"
 #include "mainwindow.h"
 
@@ -302,7 +303,8 @@ void ZMangaView::paintEvent(QPaintEvent *)
                     if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
                     if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
                     QPixmap zoomed = curUmPixmap.copy(cutBox);
-                    zoomed = resizeImage(zoomed,zoomed.size()*3.0,true,zg->upscaleFilter);
+                    zoomed = QPixmap::fromImage(
+                                 resizeImage(zoomed.toImage(),zoomed.size()*3.0,true,zg->upscaleFilter));
                     baseRect = QRect(QPoint(zoomPos.x()-zoomed.width()/2,zoomPos.y()-zoomed.height()/2),
                                      zoomed.size());
                     if (baseRect.left()<0) baseRect.moveLeft(0);
@@ -513,22 +515,19 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
 
 void ZMangaView::redrawPage()
 {
-    QPageTimer* fTimer = qobject_cast<QPageTimer *>(sender());
-    bool fineDraw = (fTimer!=NULL);
-    int savedPage = -1;
-    if (fineDraw) {
-        savedPage = fTimer->savedPage;
-        fTimer->deleteLater();
-    }
+    redrawPageEx(QImage(),currentPage);
+}
 
-    if (fineDraw && savedPage!=currentPage) return;
+void ZMangaView::redrawPageEx(const QImage& scaled, int page)
+{
+    if (!scaled.isNull() && page!=currentPage) return;
 
     QPalette p = palette();
     p.setBrush(QPalette::Dark,QBrush(zg->backgroundColor));
     setPalette(p);
 
     if (openedFile.isEmpty()) return;
-    if (currentPage<0 || currentPage>=privPageCount) return;
+    if (page<0 || page>=privPageCount) return;
 
     int scb = 6;
     if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
@@ -565,23 +564,34 @@ void ZMangaView::redrawPage()
             }
 
             if (targetSize!=curUmPixmap.size()) {
-                if (fineDraw || !zg->useFineRendering) {
-                    curPixmap = resizeImage(curUmPixmap,targetSize);
+                if (!scaled.isNull()) {
+                    curPixmap = QPixmap::fromImage(scaled);
                 } else {
-                    Blitz::ScaleFilterType filter;
-                    if (targetSize.width()>curUmPixmap.width())
-                        filter = zg->upscaleFilter;
-                    else
-                        filter = zg->downscaleFilter;
+                    // fast inplace resampling
+                    curPixmap = curUmPixmap.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
 
-                    QTimer *tmr = NULL;
-                    if (filter!=Blitz::UndefinedFilter) {
-                        tmr = new QPageTimer(this,100,currentPage);
-                        connect(tmr,SIGNAL(timeout()),this,SLOT(redrawPage()));
+                    if (zg->useFineRendering) {
+                        Blitz::ScaleFilterType filter;
+                        if (targetSize.width()>curUmPixmap.width())
+                            filter = zg->upscaleFilter;
+                        else
+                            filter = zg->downscaleFilter;
+
+                        if (filter!=Blitz::UndefinedFilter) {
+                            ZFineScaler* fs = new ZFineScaler();
+                            QThread* th = new QThread();
+
+                            fs->setSource(curUmPixmap.toImage(),targetSize,page,filter,this);
+                            connect(this,&ZMangaView::loadedPage,fs,&ZFineScaler::pageChanged);
+
+                            connect(th,&QThread::started,fs,&ZFineScaler::resample);
+                            connect(fs,&ZFineScaler::finished,th,&QThread::quit);
+                            connect(th,&QThread::finished,th,&QObject::deleteLater);
+
+                            fs->moveToThread(th);
+                            th->start();
+                        }
                     }
-                    curPixmap = resizeImage(curUmPixmap,targetSize,true,Blitz::UndefinedFilter);
-                    if (tmr!=NULL)
-                        tmr->start();
                 }
             }
         }

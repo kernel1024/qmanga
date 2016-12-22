@@ -85,13 +85,13 @@ public:
                                     float blur=1.0,
                                     ScaleFilterType filter=BlackmanFilter,
                                     Qt::AspectRatioMode aspectRatio =
-            Qt::IgnoreAspectRatio);
+            Qt::IgnoreAspectRatio, bool *stopFlag = NULL);
 
     static QImage smoothScaleFilter(const QImage &img, int dwX, int dwY,
                                     float blur=1.0,
                                     ScaleFilterType filter=BlackmanFilter,
                                     Qt::AspectRatioMode aspectRatio =
-            Qt::IgnoreAspectRatio);
+            Qt::IgnoreAspectRatio, bool *stopFlag = NULL);
 
 
 

@@ -98,8 +98,8 @@ void ZGlobal::loadSettings()
     QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",6).toInt();
-    downscaleFilter = (Blitz::ScaleFilterType)settings.value("downscaleFilter",0).toInt();
-    upscaleFilter = (Blitz::ScaleFilterType)settings.value("upscaleFilter",0).toInt();
+    downscaleFilter = (Blitz::ScaleFilterType)settings.value("downscaleFilter",Blitz::LanczosFilter).toInt();
+    upscaleFilter = (Blitz::ScaleFilterType)settings.value("upscaleFilter",Blitz::MitchellFilter).toInt();
     dbUser = settings.value("mysqlUser",QString()).toString();
     dbPass = settings.value("mysqlPassword",QString()).toString();
     dbBase = settings.value("mysqlBase",QString("qmanga")).toString();

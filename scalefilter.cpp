@@ -56,6 +56,7 @@ ImageMagick Studio.
 */
 
 #include <QImage>
+#include <QApplication>
 #include <cmath>
 #include "scalefilter.h"
 /**
@@ -76,14 +77,18 @@ typedef struct{
     unsigned int pixel;
 } ContributionInfo;
 
+const int checkEventsFreq = 25;
+
 bool horizontalFilter(const QImage *srcImg, QImage *destImg,
                       float x_factor, float blur,
                       ContributionInfo *contribution,
-                      Blitz::ScaleFilterType filter);
+                      Blitz::ScaleFilterType filter,
+                      bool *stopFlag);
 bool verticalFilter(const QImage *srcImg, QImage *destImg,
                     float y_factor, float blur,
                     ContributionInfo *contribution,
-                    Blitz::ScaleFilterType filter);
+                    Blitz::ScaleFilterType filter,
+                    bool *stopFlag);
 
 // These arrays were moved from their respective functions because they
 // are inline
@@ -363,7 +368,8 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
                                         QImage *destImg,
                                         float x_factor, float blur,
                                         ContributionInfo *contribution,
-                                        Blitz::ScaleFilterType filter)
+                                        Blitz::ScaleFilterType filter,
+                                        bool *stopFlag)
 {
     int n, start, stop, i, x, y;
     float center, density, scale, support;
@@ -501,6 +507,11 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
                                          (unsigned char)b,
                                          (unsigned char)a);
         }
+        if (x%checkEventsFreq == 0) {
+            qApp->processEvents();
+            if (*stopFlag) return(false);
+        }
+
     }
     return(true);
 }
@@ -509,7 +520,8 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
                                       QImage *destImg,
                                       float y_factor, float blur,
                                       ContributionInfo *contribution,
-                                      Blitz::ScaleFilterType filter)
+                                      Blitz::ScaleFilterType filter,
+                                      bool *stopFlag)
 {
     int n, start, stop, i, x, y;
     float center, density, scale, support;
@@ -648,20 +660,26 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
                                          (unsigned char)b,
                                          (unsigned char)a);
         }
+        if (y%checkEventsFreq == 0) {
+            qApp->processEvents();
+            if (*stopFlag) return(false);
+        }
     }
     return(true);
 }
 
 QImage Blitz::smoothScaleFilter(const QImage &img, int w, int h,
                                 float blur, ScaleFilterType filter,
-                                Qt::AspectRatioMode aspectRatio)
+                                Qt::AspectRatioMode aspectRatio,
+                                bool *stopFlag)
 {
-    return(smoothScaleFilter(img, QSize(w, h), blur, filter, aspectRatio));
+    return(smoothScaleFilter(img, QSize(w, h), blur, filter, aspectRatio, stopFlag));
 }
 
 QImage Blitz::smoothScaleFilter(const QImage &img, const QSize &sz,
                                 float blur, ScaleFilterType filter,
-                                Qt::AspectRatioMode aspectRatio)
+                                Qt::AspectRatioMode aspectRatio,
+                                bool *stopFlag)
 {
     QSize destSize(img.size());
     destSize.scale(sz, aspectRatio);
@@ -712,13 +730,16 @@ QImage Blitz::smoothScaleFilter(const QImage &img, const QSize &sz,
     //
     if((dw*(imgc.height()+dh)) > (dh*(imgc.width()+dw))){
         QImage tmp(dw, imgc.height(), buffer.format());
-        horizontalFilter(&imgc, &tmp, x_factor, blur, contribution, filter);
-        verticalFilter(&tmp, &buffer, y_factor, blur, contribution, filter);
-    }
-    else{
+        if (!horizontalFilter(&imgc, &tmp, x_factor, blur, contribution, filter, stopFlag))
+            buffer = QImage();
+        else if (!verticalFilter(&tmp, &buffer, y_factor, blur, contribution, filter, stopFlag))
+            buffer = QImage();
+    } else {
         QImage tmp(imgc.width(), dh, buffer.format());
-        verticalFilter(&imgc, &tmp, y_factor, blur, contribution, filter);
-        horizontalFilter(&tmp, &buffer, x_factor, blur, contribution, filter);
+        if (!verticalFilter(&imgc, &tmp, y_factor, blur, contribution, filter, stopFlag))
+            buffer = QImage();
+        else if (!horizontalFilter(&tmp, &buffer, x_factor, blur, contribution, filter, stopFlag))
+            buffer = QImage();
     }
 
     delete[] contribution;

@@ -316,7 +316,8 @@ QString detectMIME(const QByteArray &buf)
 #endif
 }
 
-QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Blitz::ScaleFilterType filter)
+QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
+                   Blitz::ScaleFilterType filter, bool *stopFlag)
 {
     QSize dsize = src.size().scaled(targetSize,Qt::KeepAspectRatio);
 
@@ -326,20 +327,14 @@ QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Blitz::Scal
 
     if (forceFilter)
         rf = filter;
+
     if (rf==Blitz::UndefinedFilter)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
     else if (rf==Blitz::Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
     else {
-        QTime tmr;
-        tmr.start();
-
-        QPixmap dst = QPixmap::fromImage(
-                          Blitz::smoothScaleFilter(src.toImage(),targetSize,zg->resizeBlur,
-                                                   rf,Qt::KeepAspectRatio));
-
-        //qDebug() << "smoothScaleFilter ms: " << tmr.elapsed();
-        return dst;
+        return Blitz::smoothScaleFilter(src,targetSize,zg->resizeBlur,
+                                        rf,Qt::KeepAspectRatio,stopFlag);
     }
 }
 

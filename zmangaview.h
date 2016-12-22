@@ -91,6 +91,7 @@ public slots:
     void closeFile();
     void setPage(int page);
     void redrawPage();
+    void redrawPageEx(const QImage &scaled = QImage(), int page = -1);
     void ownerResized(const QSize& size);
     void minimizeWindowCtx();
     void closeFileCtx();
