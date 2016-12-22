@@ -98,7 +98,8 @@ void ZGlobal::loadSettings()
     QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",6).toInt();
-    resizeFilter = (Blitz::ScaleFilterType)settings.value("resizeFilter",0).toInt();
+    downscaleFilter = (Blitz::ScaleFilterType)settings.value("downscaleFilter",0).toInt();
+    upscaleFilter = (Blitz::ScaleFilterType)settings.value("upscaleFilter",0).toInt();
     dbUser = settings.value("mysqlUser",QString()).toString();
     dbPass = settings.value("mysqlPassword",QString()).toString();
     dbBase = settings.value("mysqlBase",QString("qmanga")).toString();
@@ -180,7 +181,8 @@ void ZGlobal::saveSettings()
     settings.beginGroup("MainWindow");
     settings.remove("");
     settings.setValue("cacheWidth",cacheWidth);
-    settings.setValue("resizeFilter",(int)resizeFilter);
+    settings.setValue("downscaleFilter",(int)downscaleFilter);
+    settings.setValue("upscaleFilter",(int)downscaleFilter);
     settings.setValue("mysqlUser",dbUser);
     settings.setValue("mysqlPassword",dbPass);
     settings.setValue("mysqlBase",dbBase);
@@ -320,7 +322,8 @@ void ZGlobal::settingsDlg()
     dlg->updateOCRFont(ocrFont);
     dlg->updateFrameColor(frameColor);
     dlg->checkFSWatcher->setChecked(filesystemWatcher);
-    dlg->comboFilter->setCurrentIndex((int)resizeFilter);
+    dlg->comboUpscaleFilter->setCurrentIndex((int)upscaleFilter);
+    dlg->comboDownscaleFilter->setCurrentIndex((int)downscaleFilter);
     dlg->comboPDFRendererMode->setCurrentIndex((int)pdfRendering);
     dlg->spinForceDPI->setEnabled(forceDPI>0.0);
     dlg->checkForceDPI->setChecked(forceDPI>0.0);
@@ -366,7 +369,8 @@ void ZGlobal::settingsDlg()
         cachePixmaps=dlg->radioCachePixmaps->isChecked();
         useFineRendering=dlg->checkFineRendering->isChecked();
         filesystemWatcher=dlg->checkFSWatcher->isChecked();
-        resizeFilter=(Blitz::ScaleFilterType)dlg->comboFilter->currentIndex();
+        upscaleFilter=(Blitz::ScaleFilterType)dlg->comboUpscaleFilter->currentIndex();
+        downscaleFilter=(Blitz::ScaleFilterType)dlg->comboDownscaleFilter->currentIndex();
         pdfRendering = (Z::PDFRendering)dlg->comboPDFRendererMode->currentIndex();
         ctxSearchEngines=dlg->getSearchEngines();
         if (dlg->checkForceDPI->isChecked())

@@ -408,17 +408,17 @@
          </property>
          <layout class="QFormLayout" name="formLayout">
           <item row="0" column="0">
-           <widget class="QLabel" name="label">
+           <widget class="QLabel" name="labelUpscaleFilter">
             <property name="text">
-             <string>Resize &amp;filter</string>
+             <string>&amp;Upscale filter</string>
             </property>
             <property name="buddy">
-             <cstring>comboFilter</cstring>
+             <cstring>comboUpscaleFilter</cstring>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QComboBox" name="comboFilter">
+           <widget class="QComboBox" name="comboUpscaleFilter">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -507,17 +507,130 @@
             </item>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_11">
-            <property name="text">
-             <string>&amp;PDF catalog detection</string>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="comboDownscaleFilter">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
-            <property name="buddy">
-             <cstring>comboPDFRenderMode</cstring>
-            </property>
+            <item>
+             <property name="text">
+              <string>Nearest</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bilinear</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Point</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Box</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Triangle</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Hermite</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Hanning</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Hamming</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Blackman</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Gaussian</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Quadratic</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Cubic</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Catrom</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Mitchell</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Lanczos</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bessel</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="2" column="1">
+           <widget class="QDoubleSpinBox" name="spinBlur">
+            <property name="minimum">
+             <double>0.010000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelDownscaleFilter">
+            <property name="text">
+             <string>Downscale &amp;filter</string>
+            </property>
+            <property name="buddy">
+             <cstring>comboDownscaleFilter</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="labelResizingBlur">
+            <property name="text">
+             <string>Resizing &amp;blur</string>
+            </property>
+            <property name="buddy">
+             <cstring>spinBlur</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
            <widget class="QComboBox" name="comboPDFRenderMode">
             <property name="toolTip">
              <string>Automatic - use catalog mode if PDF consists of single images,
@@ -540,17 +653,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
             </item>
            </widget>
           </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>&amp;Magnifier size</string>
-            </property>
-            <property name="buddy">
-             <cstring>spinMagnify</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
+          <item row="4" column="1">
            <widget class="QSpinBox" name="spinMagnify">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -566,33 +669,30 @@ one per page, with supported format. Use rendering mode as fallback.</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="1">
+          <item row="5" column="1">
            <widget class="QCheckBox" name="checkFineRendering">
             <property name="text">
              <string>Use fine postrendering</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="spinBlur">
-            <property name="minimum">
-             <double>0.010000000000000</double>
+          <item row="3" column="0">
+           <widget class="QLabel" name="labelPDFCatalog">
+            <property name="text">
+             <string>&amp;PDF catalog detection</string>
             </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
+            <property name="buddy">
+             <cstring>comboPDFRenderMode</cstring>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_14">
+          <item row="4" column="0">
+           <widget class="QLabel" name="labelMagnifierSize">
             <property name="text">
-             <string>Resizing &amp;blur</string>
+             <string>&amp;Magnifier size</string>
             </property>
             <property name="buddy">
-             <cstring>spinBlur</cstring>
+             <cstring>spinMagnify</cstring>
             </property>
            </widget>
           </item>
@@ -919,7 +1019,8 @@ one per page, with supported format. Use rendering mode as fallback.</string>
   <tabstop>btnFontIndexer</tabstop>
   <tabstop>btnFontOCR</tabstop>
   <tabstop>spinScrollDelta</tabstop>
-  <tabstop>comboFilter</tabstop>
+  <tabstop>comboUpscaleFilter</tabstop>
+  <tabstop>comboDownscaleFilter</tabstop>
   <tabstop>spinBlur</tabstop>
   <tabstop>comboPDFRenderMode</tabstop>
   <tabstop>spinMagnify</tabstop>

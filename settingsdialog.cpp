@@ -21,7 +21,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ocrFont = QApplication::font("QPlainTextView");
     frameColor = QColor(Qt::lightGray);
 
-    comboFilter = ui->comboFilter;
+    comboUpscaleFilter = ui->comboUpscaleFilter;
+    comboDownscaleFilter = ui->comboDownscaleFilter;
     spinCacheWidth = ui->spinCacheWidth;
     spinMagnify = ui->spinMagnify;
     editMySqlHost = ui->editMySqlHost;

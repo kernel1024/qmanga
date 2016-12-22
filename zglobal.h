@@ -37,7 +37,7 @@ public:
     ZStrMap ctxSearchEngines;
     QString defaultSearchEngine;
 
-    Blitz::ScaleFilterType resizeFilter;
+    Blitz::ScaleFilterType downscaleFilter, upscaleFilter;
     Z::Ordering defaultOrdering;
     Z::PDFRendering pdfRendering;
     int cacheWidth;

@@ -316,12 +316,14 @@ QString detectMIME(const QByteArray &buf)
 #endif
 }
 
-QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Blitz::ScaleFilterType filter,
-                    ZMangaView *mangaView)
+QPixmap resizeImage(QPixmap src, QSize targetSize, bool forceFilter, Blitz::ScaleFilterType filter)
 {
-    Q_UNUSED(mangaView)
+    QSize dsize = src.size().scaled(targetSize,Qt::KeepAspectRatio);
 
-    Blitz::ScaleFilterType rf = zg->resizeFilter;
+    Blitz::ScaleFilterType rf = zg->downscaleFilter;
+    if (dsize.width()>src.size().width())
+        rf = zg->upscaleFilter;
+
     if (forceFilter)
         rf = filter;
     if (rf==Blitz::UndefinedFilter)

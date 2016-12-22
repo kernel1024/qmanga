@@ -178,8 +178,7 @@ QString detectMIME(const QString &filename);
 QString detectMIME(const QByteArray &buf);
 QPixmap resizeImage(QPixmap src, QSize targetSize,
                     bool forceFilter = false,
-                    Blitz::ScaleFilterType filter = Blitz::LanczosFilter,
-                    ZMangaView* mangaView = NULL);
+                    Blitz::ScaleFilterType filter = Blitz::LanczosFilter);
 
 #ifdef WITH_OCR
 extern tesseract::TessBaseAPI* ocr;

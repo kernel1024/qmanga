@@ -302,7 +302,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
                     if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
                     if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
                     QPixmap zoomed = curUmPixmap.copy(cutBox);
-                    zoomed = resizeImage(zoomed,zoomed.size()*3.0,true,Blitz::LanczosFilter);
+                    zoomed = resizeImage(zoomed,zoomed.size()*3.0,true,zg->upscaleFilter);
                     baseRect = QRect(QPoint(zoomPos.x()-zoomed.width()/2,zoomPos.y()-zoomed.height()/2),
                                      zoomed.size());
                     if (baseRect.left()<0) baseRect.moveLeft(0);
@@ -541,34 +541,45 @@ void ZMangaView::redrawPage()
     curPixmap = QPixmap();
 
     if (!curUmPixmap.isNull()) {
-        QSize sz(scroller->size().width()-scb*2,scroller->size().height()-scb*2);
-        QSize ssz = sz;
+        QSize scrollerSize(scroller->size().width()-scb*2,scroller->size().height()-scb*2);
+        QSize targetSize = curUmPixmap.size();
         curPixmap = curUmPixmap;
         if (!curUmPixmap.isNull() && curUmPixmap.height()>0) {
             double pixAspect = (double)curUmPixmap.width()/(double)curUmPixmap.height();
             double myAspect = (double)width()/(double)height();
             if (zoomAny>0) {
-                sz = curUmPixmap.size()*((double)(zoomAny)/100.0);
+                targetSize = curUmPixmap.size()*((double)(zoomAny)/100.0);
             } else if (zoomMode==Fit) {
                 if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
-                    sz.setHeight(round(((double)sz.width())/pixAspect));
+                    targetSize = QSize(scrollerSize.width(),
+                                       round(((double)scrollerSize.width())/pixAspect));
                 else
-                    sz.setWidth(round(((double)sz.height())*pixAspect));
+                    targetSize = QSize(round(((double)scrollerSize.height())*pixAspect),
+                                       scrollerSize.height());
             } else if (zoomMode==Width) {
-                sz.setHeight(round(((double)sz.width())/pixAspect));
+                targetSize = QSize(scrollerSize.width(),
+                                   round(((double)scrollerSize.width())/pixAspect));
             } else if (zoomMode==Height) {
-                sz.setWidth(round(((double)sz.height())*pixAspect));
+                targetSize = QSize(round(((double)scrollerSize.height())*pixAspect),
+                                   scrollerSize.height());
             }
-            if (sz!=ssz) {
+
+            if (targetSize!=curUmPixmap.size()) {
                 if (fineDraw || !zg->useFineRendering) {
-                    curPixmap = resizeImage(curUmPixmap,sz);
+                    curPixmap = resizeImage(curUmPixmap,targetSize);
                 } else {
+                    Blitz::ScaleFilterType filter;
+                    if (targetSize.width()>curUmPixmap.width())
+                        filter = zg->upscaleFilter;
+                    else
+                        filter = zg->downscaleFilter;
+
                     QTimer *tmr = NULL;
-                    if (zg->resizeFilter!=Blitz::UndefinedFilter) {
+                    if (filter!=Blitz::UndefinedFilter) {
                         tmr = new QPageTimer(this,100,currentPage);
                         connect(tmr,SIGNAL(timeout()),this,SLOT(redrawPage()));
                     }
-                    curPixmap = resizeImage(curUmPixmap,sz,true,Blitz::UndefinedFilter);
+                    curPixmap = resizeImage(curUmPixmap,targetSize,true,Blitz::UndefinedFilter);
                     if (tmr!=NULL)
                         tmr->start();
                 }
@@ -576,9 +587,9 @@ void ZMangaView::redrawPage()
         }
         setMinimumSize(curPixmap.width(),curPixmap.height());
 
-        if (sz.height()<ssz.height()) sz.setHeight(ssz.height());
-        if (sz.width()<ssz.width()) sz.setWidth(ssz.width());
-        resize(sz);
+        if (targetSize.height()<scrollerSize.height()) targetSize.setHeight(scrollerSize.height());
+        if (targetSize.width()<scrollerSize.width()) targetSize.setWidth(scrollerSize.width());
+        resize(targetSize);
     }
     update();
 }

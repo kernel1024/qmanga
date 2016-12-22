@@ -22,7 +22,7 @@ class SettingsDialog : public QDialog
     Q_OBJECT
     
 public:
-    QComboBox* comboFilter;
+    QComboBox *comboUpscaleFilter, *comboDownscaleFilter;
     QSpinBox* spinCacheWidth;
     QSpinBox* spinMagnify;
     QLineEdit* editMySqlLogin;
