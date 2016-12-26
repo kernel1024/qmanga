@@ -685,7 +685,7 @@ void ZMangaView::exportPagesCtx()
 
     QList<int> nums;
     for (int i=0;i<cnt;i++)
-        nums << i;
+        nums << (i+currentPage);
 
     using namespace std::placeholders; // QTBUG-33735 workaround
     auto save_F = std::bind(exportMangaPage, this, dir, fnlen, fmt, quality, _1);
