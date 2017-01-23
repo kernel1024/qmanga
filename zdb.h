@@ -17,9 +17,10 @@ class ZDB : public QObject
     Q_OBJECT
 private:
     QString dbHost, dbBase, dbUser, dbPass;
-    QStringList indexedDirs;
+    QStringList indexedDirs, ignoredFiles;
     ZStrMap dynAlbums;
     QStrHash problems;
+    QHash<QString,int> preferredRendering;
 
     bool wasCanceled;
 
@@ -28,6 +29,7 @@ private:
     void checkConfigOpts(MYSQL *db, bool silent);
     MYSQL* sqlOpenBase();
     void sqlCloseBase(MYSQL* db);
+    void sqlUpdateIgnoredFiles(MYSQL* db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
     void fsAddImagesDir(const QString& dir, const QString& album);
     QString prepareSearchQuery(const QString& search);
@@ -37,11 +39,10 @@ public:
     explicit ZDB(QObject *parent = 0);
 
     int getAlbumsCount();
-    ZStrMap getDynAlbums();
-    QStrHash getConfigProblems();
-    QStringList sqlGetIgnoredFiles();
-    Z::PDFRendering getPreferredRendering(const QString& filename);
-    bool setPreferredRendering(const QString& filename, Z::PDFRendering mode);
+    ZStrMap getDynAlbums() const;
+    QStrHash getConfigProblems() const;
+    QStringList sqlGetIgnoredFiles() const;
+    Z::PDFRendering getPreferredRendering(const QString& filename) const;
 
 signals:
     void errorMsg(const QString& msg);
@@ -80,6 +81,7 @@ public slots:
     void sqlAddIgnoredFiles(const QStringList& files);
     void sqlSetIgnoredFiles(const QStringList &files);
     void sqlGetTablesDescription();
+    bool sqlSetPreferredRendering(const QString& filename, int mode);
 };
 
 #endif // ZDB_H

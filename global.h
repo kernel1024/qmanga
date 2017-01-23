@@ -82,7 +82,6 @@ static const QHash<Ordering,QString> sortMenu = {
 
 }
 
-//Q_DECLARE_METATYPE(Z::ResizeFilter)
 Q_DECLARE_METATYPE(Z::Ordering)
 
 class SQLMangaEntry {

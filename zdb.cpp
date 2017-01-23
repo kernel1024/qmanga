@@ -22,6 +22,8 @@ ZDB::ZDB(QObject *parent) :
     wasCanceled = false;
     indexedDirs.clear();
     problems.clear();
+    ignoredFiles.clear();
+    preferredRendering.clear();
 }
 
 int ZDB::getAlbumsCount()
@@ -41,12 +43,12 @@ int ZDB::getAlbumsCount()
     return cnt;
 }
 
-ZStrMap ZDB::getDynAlbums()
+ZStrMap ZDB::getDynAlbums() const
 {
     return dynAlbums;
 }
 
-QStrHash ZDB::getConfigProblems()
+QStrHash ZDB::getConfigProblems() const
 {
     return problems;
 }
@@ -285,6 +287,23 @@ void ZDB::sqlCloseBase(MYSQL *db)
         mysql_close(db);
 }
 
+void ZDB::sqlUpdateIgnoredFiles(MYSQL *db)
+{
+    QStringList sl;
+    QString qr;
+    qr = QString("SELECT filename FROM ignored_files;");
+    if (!mysql_query(db,qr.toUtf8())) {
+        MYSQL_RES* res = mysql_use_result(db);
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(res)) != NULL)
+            sl << QString::fromUtf8(row[0]);
+        mysql_free_result(res);
+    }
+
+    ignoredFiles = sl;
+}
+
 void ZDB::sqlGetAlbums()
 {
     QStringList result;
@@ -302,6 +321,8 @@ void ZDB::sqlGetAlbums()
         result << QString::fromUtf8(row[0]);
     }
     mysql_free_result(res);
+
+    sqlUpdateIgnoredFiles(db);
 
     sqlCloseBase(db);
     foreach (const QString& title, dynAlbums.keys())
@@ -363,7 +384,11 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                 if (fi.exists()) continue;
             }
 
-            emit gotFile(SQLMangaEntry(QString::fromUtf8(row[0]),
+            int prefRendering = QString::fromUtf8(row[10]).toInt();
+            QString fileName = QString::fromUtf8(row[0]);
+            preferredRendering[fileName] = prefRendering;
+
+            emit gotFile(SQLMangaEntry(fileName,
                                        QString::fromUtf8(row[1]),
                                        QString::fromUtf8(row[9]),
                                        p,
@@ -373,7 +398,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                                        QDateTime::fromString(QString::fromUtf8(row[6]),"yyyy-MM-dd H:mm:ss"),
                                        QDateTime::fromString(QString::fromUtf8(row[7]),"yyyy-MM-dd H:mm:ss"),
                                        QString::fromUtf8(row[8]).toInt(),
-                                       static_cast<Z::PDFRendering>(QString::fromUtf8(row[10]).toInt())),
+                                       static_cast<Z::PDFRendering>(prefRendering)),
                     sortOrder, reverseOrder);
             QApplication::processEvents();
             idx++;
@@ -707,6 +732,7 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
             sqlCloseBase(db);
             return;
         }
+        ignoredFiles.clear();
     }
 
     foreach (const QString& file, files) {
@@ -718,64 +744,32 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
             sqlCloseBase(db);
             return;
         }
+        ignoredFiles << file;
     }
     sqlCloseBase(db);
 }
 
-QStringList ZDB::sqlGetIgnoredFiles()
+QStringList ZDB::sqlGetIgnoredFiles() const
 {
-    QStringList sl;
-
-    MYSQL* db = sqlOpenBase();
-    if (db==NULL) return sl;
-
-    QString qr;
-    qr = QString("SELECT filename FROM ignored_files;");
-    if (!mysql_query(db,qr.toUtf8())) {
-        MYSQL_RES* res = mysql_use_result(db);
-
-        MYSQL_ROW row;
-        while ((row = mysql_fetch_row(res)) != NULL)
-            sl << QString::fromUtf8(row[0]);
-        mysql_free_result(res);
-    }
-    sqlCloseBase(db);
-
-    return sl;
+    return ignoredFiles;
 }
 
-Z::PDFRendering ZDB::getPreferredRendering(const QString &filename)
+Z::PDFRendering ZDB::getPreferredRendering(const QString &filename) const
 {
-    MYSQL* db = sqlOpenBase();
-    if (db==NULL) return Z::PDFRendering::Autodetect;
-
-    QString qr;
-    qr = QString("SELECT preferredRendering FROM files WHERE filename='%1';").
-         arg(escapeParam(filename));
-    if (!mysql_query(db,qr.toUtf8())) {
-        MYSQL_RES* res = mysql_use_result(db);
-
-        MYSQL_ROW row;
-        if ((row = mysql_fetch_row(res)) != NULL) {
-            bool ok;
-            Z::PDFRendering mres = static_cast<Z::PDFRendering>(QString::fromUtf8(row[0]).toInt(&ok));
-            if (ok) return mres;
-        }
-        mysql_free_result(res);
-    }
-    sqlCloseBase(db);
-
-    return Z::PDFRendering::Autodetect;
+    if (preferredRendering.contains(filename))
+        return static_cast<Z::PDFRendering>(preferredRendering.value(filename));
+    else
+        return Z::PDFRendering::Autodetect;
 }
 
-bool ZDB::setPreferredRendering(const QString &filename, Z::PDFRendering mode)
+bool ZDB::sqlSetPreferredRendering(const QString &filename, int mode)
 {
     MYSQL* db = sqlOpenBase();
     if (db==NULL) return Z::PDFRendering::Autodetect;
 
     QString qr;
     qr = QString("UPDATE files SET preferredRendering=%1 WHERE filename='%2';").
-         arg(static_cast<int>(mode)).arg(escapeParam(filename));
+         arg(mode).arg(escapeParam(filename));
     bool res = true;
     if (mysql_query(db,qr.toUtf8())) {
         QString msg = tr("Unable to change preferred rendering for '%1'.\n%2")
@@ -785,6 +779,7 @@ bool ZDB::setPreferredRendering(const QString &filename, Z::PDFRendering mode)
         emit errorMsg(msg);
         res = false;
     }
+    preferredRendering[filename] = mode;
     sqlCloseBase(db);
 
     return res;

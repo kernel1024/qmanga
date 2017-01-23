@@ -263,15 +263,16 @@ void ZSearchTab::ctxChangeRenderer()
     SQLMangaEntry m = model->getItem(li.first().row());
 
     bool ok;
-    Z::PDFRendering mode = static_cast<Z::PDFRendering>(am->data().toInt(&ok));
+    int mode = am->data().toInt(&ok);
     if (ok)
-        ok = zg->db->setPreferredRendering(m.filename, mode);
+        QMetaObject::invokeMethod(zg->db,"sqlSetPreferredRendering",Qt::QueuedConnection,
+                                  Q_ARG(QString,m.filename),Q_ARG(int,mode));
+    else
+        QMessageBox::warning(this,tr("QManga"),
+                             tr("Unable to update preferred rendering."));
 
     albumClicked(ui->srcAlbums->currentItem());
 
-    if (!ok)
-        QMessageBox::warning(this,tr("QManga"),
-                             tr("Unable to update preferred rendering."));
 }
 
 void ZSearchTab::ctxAlbumMenu(QPoint pos)
