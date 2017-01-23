@@ -3,14 +3,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QSqlDatabase>
 #include "zabstractreader.h"
 #include "global.h"
-
-namespace mysql {
-    #include <mysql/mysql.h>
-}
-
-using namespace mysql;
 
 class ZDB : public QObject
 {
@@ -25,15 +20,16 @@ private:
     bool wasCanceled;
 
     bool sqlCheckBasePriv();
-    bool checkTablesParams(MYSQL *db);
-    void checkConfigOpts(MYSQL *db, bool silent);
-    MYSQL* sqlOpenBase();
-    void sqlCloseBase(MYSQL* db);
-    void sqlUpdateIgnoredFiles(MYSQL* db);
+    bool checkTablesParams(QSqlDatabase &db);
+    void checkConfigOpts(QSqlDatabase &db, bool silent);
+    QSqlDatabase sqlOpenBase();
+    void sqlCloseBase(QSqlDatabase &db);
+    void sqlUpdateIgnoredFiles(QSqlDatabase &db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);
     void fsAddImagesDir(const QString& dir, const QString& album);
     QString prepareSearchQuery(const QString& search);
     void sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable);
+    bool isMySQL(QSqlDatabase &db);
 
 public:
     explicit ZDB(QObject *parent = 0);

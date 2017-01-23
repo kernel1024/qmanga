@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets concurrent
+QT       += core gui widgets sql concurrent
 
 !win32 {
     QT += dbus
@@ -120,13 +120,6 @@ CONFIG += warn_on link_pkgconfig c++11
         LIBS += -llept
     }
 
-    MYSQL_CXX = $$system(mysql_config --cflags)
-    MYSQL_LIBS = $$system(mysql_config --libs)
-    MYSQL_INC = $$system(mysql_config --include)
-    QMAKE_CXXFLAGS += $$MYSQL_CXX
-    LIBS += $$MYSQL_LIBS
-    INCLUDEPATH += $$MYSQL_INC
-
     DBUS_INTERFACES = org.jpreader.auxtranslator.xml \
         org.qjrad.dictionary.xml
 }
@@ -141,11 +134,6 @@ win32 {
     QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
     PKGCONFIG += tesseract
     LIBS += -llept
-
-    MYSQL_INC = $$(SYSROOT)/include/mysql
-    MYSQL_LIBS = -L$$(SYSROOT)/lib  -lmysqlclient -lpthread -lz -lm
-    LIBS += $$MYSQL_LIBS
-    INCLUDEPATH += $$MYSQL_INC
 
     RC_FILE = qmanga.rc
 }
