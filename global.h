@@ -32,6 +32,12 @@ class ZMangaView;
 
 namespace Z {
 
+enum DBMS {
+    UndefinedDB = -1,
+    MySQL = 0,
+    SQLite = 1
+};
+
 enum PDFRendering {
     Autodetect = 0,
     PageRenderer = 1,

@@ -19,7 +19,7 @@ private:
 
     bool wasCanceled;
 
-    bool sqlCheckBasePriv();
+    bool sqlCheckBasePriv(QSqlDatabase &db, bool silent);
     bool checkTablesParams(QSqlDatabase &db);
     void checkConfigOpts(QSqlDatabase &db, bool silent);
     QSqlDatabase sqlOpenBase();
@@ -29,7 +29,8 @@ private:
     void fsAddImagesDir(const QString& dir, const QString& album);
     QString prepareSearchQuery(const QString& search);
     void sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable);
-    bool isMySQL(QSqlDatabase &db);
+    Z::DBMS sqlDbEngine(QSqlDatabase &db);
+    bool sqlHaveTables(QSqlDatabase &db);
 
 public:
     explicit ZDB(QObject *parent = 0);

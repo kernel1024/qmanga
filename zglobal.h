@@ -40,6 +40,7 @@ public:
     Blitz::ScaleFilterType downscaleFilter, upscaleFilter;
     Z::Ordering defaultOrdering;
     Z::PDFRendering pdfRendering;
+    Z::DBMS dbEngine;
     int cacheWidth;
     int magnifySize;
     qreal resizeBlur;

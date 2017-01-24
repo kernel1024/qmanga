@@ -42,6 +42,8 @@ public:
     QCheckBox* checkForceDPI;
     QDoubleSpinBox* spinForceDPI;
     QDoubleSpinBox* spinBlur;
+    QRadioButton* radioMySQL;
+    QRadioButton* radioSQLite;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
@@ -77,6 +79,7 @@ public slots:
     void addSearchEngine();
     void delSearchEngine();
     void setDefaultSearch();
+    void updateSQLFields(bool checked);
 };
 
 #endif // SETTINGSDIALOG_H

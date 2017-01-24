@@ -42,6 +42,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     checkForceDPI = ui->checkPDFDPI;
     spinForceDPI = ui->spinPDFDPI;
     spinBlur = ui->spinBlur;
+    radioMySQL = ui->rbMySQL;
+    radioSQLite = ui->rbSQLite;
 
 #ifdef _WIN32
     ui->editRar->setPlaceholderText("rar.exe");
@@ -65,9 +67,14 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     connect(ui->btnDelSearch, &QPushButton::clicked, this, &SettingsDialog::delSearchEngine);
     connect(ui->btnDefaultSearch, &QPushButton::clicked, this, &SettingsDialog::setDefaultSearch);
 
+    connect(ui->rbMySQL, &QRadioButton::toggled, this, &SettingsDialog::updateSQLFields);
+    connect(ui->rbSQLite, &QRadioButton::toggled, this, &SettingsDialog::updateSQLFields);
+
     delLookup[ui->btnDeleteBookmark] = ui->listBookmarks;
     delLookup[ui->btnDynDelete] = ui->listDynAlbums;
     delLookup[ui->btnDeleteIgnored] = ui->listIgnoredFiles;
+
+    updateSQLFields(false);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -187,6 +194,17 @@ void SettingsDialog::setDefaultSearch()
     zg->defaultSearchEngine = dl.first()->data(Qt::UserRole).toString();
 
     setSearchEngines(getSearchEngines());
+}
+
+void SettingsDialog::updateSQLFields(bool checked)
+{
+    Q_UNUSED(checked)
+
+    bool useLogin = ui->rbMySQL->isChecked();
+    ui->editMySqlBase->setEnabled(useLogin);
+    ui->editMySqlHost->setEnabled(useLogin);
+    ui->editMySqlLogin->setEnabled(useLogin);
+    ui->editMySqlPassword->setEnabled(useLogin);
 }
 
 void SettingsDialog::delListWidgetItem()

@@ -73,19 +73,20 @@ void ZDB::setDynAlbums(const ZStrMap &albums)
 
 void ZDB::sqlCheckBase()
 {
-    sqlCheckBasePriv();
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
+
+    sqlCheckBasePriv(db,false);
+
+    sqlCloseBase(db);
+
     emit baseCheckComplete();
 }
 
-bool ZDB::sqlCheckBasePriv()
+bool ZDB::sqlCheckBasePriv(QSqlDatabase& db, bool silent)
 {
-    if (dbUser.isEmpty()) return false;
-
     QStringList tables;
     tables << "files" << "albums" << "ignored_files";
-
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return false;
 
     int cnt=0;
     foreach (const QString& s, db.tables(QSql::Tables)) {
@@ -96,20 +97,19 @@ bool ZDB::sqlCheckBasePriv()
     bool noTables = (cnt!=3);
 
     if (noTables) {
-        emit needTableCreation();
-        sqlCloseBase(db);
+        if (!silent)
+            emit needTableCreation();
         return false;
     }
 
-    bool ret = checkTablesParams(db);
-    sqlCloseBase(db);
+    if (silent) return true;
 
-    return ret;
+    return checkTablesParams(db);
 }
 
 bool ZDB::checkTablesParams(QSqlDatabase &db)
 {
-    if (!isMySQL(db)) return true;
+    if (sqlDbEngine(db)!=Z::MySQL) return true;
 
     QSqlQuery qr(db);
 
@@ -168,6 +168,8 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
 
 void ZDB::checkConfigOpts(QSqlDatabase &db, bool silent)
 {
+    if (sqlDbEngine(db)!=Z::MySQL) return;
+
     QSqlQuery qr(db);
     if (!qr.exec("SELECT @@ft_min_word_len")) {
         qDebug() << "Unable to check MySQL config options";
@@ -197,7 +199,7 @@ void ZDB::sqlCreateTables()
     checkConfigOpts(db,false);
     QSqlQuery qr(db);
 
-    if (isMySQL(db)) {
+    if (sqlDbEngine(db)==Z::MySQL) {
         if (!qr.exec("CREATE TABLE IF NOT EXISTS `albums` ("
                      "`id` int(11) NOT NULL AUTO_INCREMENT,"
                      "`name` varchar(2048) NOT NULL,"
@@ -245,8 +247,51 @@ void ZDB::sqlCreateTables()
             sqlCloseBase(db);
             return;
         }
+    } else if (sqlDbEngine(db)==Z::SQLite){
+        if (!qr.exec("CREATE TABLE IF NOT EXISTS `albums` ("
+                     "`id` INTEGER PRIMARY KEY AUTOINCREMENT,"
+                     "`name` TEXT)")) {
+            emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2")
+                          .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
+            problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
+                                                        "CREATE TABLE query failed.");
+            sqlCloseBase(db);
+            return;
+        }
+
+        if (!qr.exec("CREATE TABLE IF NOT EXISTS `ignored_files` ("
+                     "`id` INTEGER PRIMARY KEY,"
+                     "`filename` TEXT)")) {
+            emit errorMsg(tr("Unable to create table `ignored_files`\n\n%1\n%2")
+                          .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
+            problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
+                                                               "CREATE TABLE query failed.");
+            sqlCloseBase(db);
+            return;
+        }
+        if (!qr.exec("CREATE TABLE IF NOT EXISTS `files` ("
+                     "`id` INTEGER PRIMARY KEY,"
+                     "`name` TEXT,"
+                     "`filename` TEXT,"
+                     "`album` INTEGER,"
+                     "`cover` BLOB,"
+                     "`pagesCount` INTEGER,"
+                     "`fileSize` INTEGER,"
+                     "`fileMagic` TEXT,"
+                     "`fileDT` TEXT,"
+                     "`addingDT` TEXT,"
+                     "`preferredRendering` INTEGER DEFAULT 0)")) {
+            emit errorMsg(tr("Unable to create table `files`\n\n%1\n%2")
+                          .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
+            problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
+                                                       "CREATE TABLE query failed.");
+            sqlCloseBase(db);
+            return;
+        }
     } else {
-        // TODO: add support for sqlite
+        emit errorMsg(tr("Unable to create tables. Unknown DB engine"));
+        problems[tr("Create tables")] = tr("Unable to create tables.\n"
+                                           "Unknown DB engine.");
     }
     sqlCloseBase(db);
     return;
@@ -254,31 +299,43 @@ void ZDB::sqlCreateTables()
 
 QSqlDatabase ZDB::sqlOpenBase()
 {
-    if (dbUser.isEmpty()) return QSqlDatabase();
     QSqlDatabase db;
 
-    bool useMySQL = !dbHost.isEmpty() && !dbBase.isEmpty();
-    if (useMySQL)
+    if (zg->dbEngine==Z::MySQL) {
         db = QSqlDatabase::addDatabase("QMYSQL",QUuid::createUuid().toString());
-    else
-        db = QSqlDatabase::addDatabase("QSQLITE",QUuid::createUuid().toString());
+        if (!db.isValid()) return QSqlDatabase();
 
-    if (db.isValid()) {
-        if (useMySQL) {
-            db.setHostName(dbHost);
-            db.setDatabaseName(dbBase);
-            db.setUserName(dbUser);
-            db.setPassword(dbPass);
-            if (!db.open()) {
+        db.setHostName(dbHost);
+        db.setDatabaseName(dbBase);
+        db.setUserName(dbUser);
+        db.setPassword(dbPass);
+
+    } else if (zg->dbEngine==Z::SQLite) {
+        db = QSqlDatabase::addDatabase("QSQLITE",QUuid::createUuid().toString());
+        if (!db.isValid()) return QSqlDatabase();
+
+        QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QDir dbDir(dir);
+        if (!dbDir.exists())
+            if (!dbDir.mkpath(dir)) {
                 db = QSqlDatabase();
-                emit errorMsg(tr("Unable to open MySQL connection. Check login info.\n%1\n%2")
-                              .arg(db.lastError().driverText(),db.lastError().databaseText()));
-                problems[tr("Connection")] = tr("Unable to connect to MySQL.\n"
-                                                "Check credentials and MySQL running.");
+                emit errorMsg(tr("Unable to create SQLite database file. Check file permissions.\n%1")
+                              .arg(dir));
+                problems[tr("Connection")] = tr("Unable to create SQLite database file.");
+                return db;
             }
-        } else {
-            // TODO: open sqlite base
-        }
+
+        db.setDatabaseName(dbDir.filePath("qmanga.sqlite"));
+
+    } else
+        return db;
+
+    if (!db.open()) {
+        db = QSqlDatabase();
+        emit errorMsg(tr("Unable to open database connection. Check connection info.\n%1\n%2")
+                      .arg(db.lastError().driverText(),db.lastError().databaseText()));
+        problems[tr("Connection")] = tr("Unable to connect to database.\n"
+                                        "Check credentials and SQL server running.");
     }
 
     return db;
@@ -355,7 +412,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
         }
     } else if (!search.isEmpty()) {
         QString sqr;
-        if (isMySQL(db))
+        if (sqlDbEngine(db)==Z::MySQL)
             sqr = prepareSearchQuery(search);
         if (sqr.isEmpty()) {
             sqr = QString("WHERE (files.name LIKE ?) ");
@@ -378,7 +435,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
     if (albumBind)
         qr.addBindValue(album);
     if (searchBind)
-        qr.addBindValue(search);
+        qr.addBindValue(QString("%%%1%%").arg(search));
 
     if (qr.exec()) {
         while (qr.next()) {
@@ -574,21 +631,6 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     return;
 }
 
-bool isFileInTable(QSqlDatabase &db, const QString& filename, const QString& table, bool *error)
-{
-    *error=false;
-
-    QSqlQuery qr(db);
-    qr.prepare(QString("SELECT id FROM %1 WHERE filename=?").arg(table));
-    qr.addBindValue(filename);
-    if (qr.exec()) {
-        if (qr.size()>0) return true;
-    } else {
-        *error=true;
-    }
-    return false;
-}
-
 void ZDB::sqlSearchMissingManga()
 {
     QStringList foundFiles;
@@ -597,95 +639,76 @@ void ZDB::sqlSearchMissingManga()
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
 
-#ifdef _WIN32
-    const bool isWin32 = true;
-#else
-    const bool isWin32 = false;
-#endif
-    bool useSimple = isWin32 || !isMySQL(db);
-
     QStringList filenames;
 
     foreach (const QString& d, indexedDirs) {
         QDir dir(d);
         QFileInfoList fl = dir.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
         for (int i=0;i<fl.count();i++)
-            if (useSimple) {
-                if (fl.at(i).isReadable() && fl.at(i).isFile()) {
-                    bool err1,err2;
-                    if (!isFileInTable(db,fl.at(i).absoluteFilePath(),"files",&err1) &&
-                            !isFileInTable(db,fl.at(i).absoluteFilePath(),"ignored_files",&err2)) {
-                        if (!err1 && !err2) {
-                            foundFiles << fl.at(i).absoluteFilePath();
-                        } else {
-                            qDebug() << db.lastError().databaseText() << db.lastError().driverText();
-                            sqlCloseBase(db);
-                            return;
-                        }
-                    }
-                }
-            } else {
-                filenames << fl.at(i).absoluteFilePath();
-            }
+            filenames << fl.at(i).absoluteFilePath();
     }
 
-    if (!useSimple) {
-        QSqlQuery qr(db);
+    QSqlQuery qr(db);
+
+    qr.prepare("DROP TABLE IF EXISTS `tmp_exfiles`");
+    if (!qr.exec()) {
+        emit errorMsg(tr("Unable to drop table `tmp_exfiles`\n\n%1\n%2")
+                      .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
+        problems[tr("Drop tables - tmp_exfiles")] = tr("Unable to drop temporary table `tmp_exfiles`.\n"
+                                                       "DROP TABLE query failed.");
+        sqlCloseBase(db);
+        return;
+    }
+
+    qr.clear();
+    if (sqlDbEngine(db)==Z::MySQL)
         qr.prepare("CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
                    "`filename` varchar(16383), INDEX ifilename (filename)"
                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8");
-        if (!qr.exec()) {
-            emit errorMsg(tr("Unable to create temporary table `tmp_exfiles`\n\n%1\n%2")
-                          .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Create tables - tmp_exfiles")] = tr("Unable to create temporary table `tmp_exfiles`.\n"
-                                                             "CREATE TABLE query failed.");
-            sqlCloseBase(db);
-            return;
-        }
+    else if (sqlDbEngine(db)==Z::SQLite)
+        qr.prepare("CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` (`filename` TEXT)");
+    if (!qr.exec()) {
+        emit errorMsg(tr("Unable to create temporary table `tmp_exfiles`\n\n%1\n%2")
+                      .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
+        problems[tr("Create tables - tmp_exfiles")] = tr("Unable to create temporary table `tmp_exfiles`.\n"
+                                                         "CREATE TABLE query failed.");
+        sqlCloseBase(db);
+        return;
+    }
 
-        qr.prepare("TRUNCATE TABLE `tmp_exfiles`");
-        if (!qr.exec()) {
-            emit errorMsg(tr("Unable to truncate temporary table `tmp_exfiles`\n\n%1\n%2")
-                          .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Truncate table - tmp_exfiles")] = tr("Unable to truncate temporary table `tmp_exfiles`.\n"
-                                                              "TRUNCATE TABLE query failed.");
-            sqlCloseBase(db);
-            return;
-        }
-
-        while (!filenames.isEmpty()) {
-            QVariantList sl;
-            while (sl.count()<32 && !filenames.isEmpty())
-                sl << filenames.takeFirst();
-            if (!sl.isEmpty()) {
-                qr.prepare("INSERT INTO `tmp_exfiles` VALUES (?)");
-                qr.addBindValue(sl);
-                if (!qr.execBatch()) {
-                    emit errorMsg(tr("Unable to load data to table `tmp_exfiles`\n\n%1\n%2")
-                                  .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-                    problems[tr("Load data infile - tmp_exfiles")] =
-                            tr("Unable to load data to temporary table `tmp_exfiles`.\n"
-                               "LOAD DATA INFILE query failed.");
-                    sqlCloseBase(db);
-                    return;
-                }
+    while (!filenames.isEmpty()) {
+        QVariantList sl;
+        while (sl.count()<64 && !filenames.isEmpty())
+            sl << filenames.takeFirst();
+        if (!sl.isEmpty()) {
+            qr.prepare("INSERT INTO `tmp_exfiles` VALUES (?)");
+            qr.addBindValue(sl);
+            if (!qr.execBatch()) {
+                emit errorMsg(tr("Unable to load data to table `tmp_exfiles`\n\n%1\n%2")
+                              .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
+                problems[tr("Load data infile - tmp_exfiles")] =
+                        tr("Unable to load data to temporary table `tmp_exfiles`.\n"
+                           "INSERT INTO query failed.");
+                sqlCloseBase(db);
+                return;
             }
         }
-
-        qr.prepare("SELECT tmp_exfiles.filename FROM tmp_exfiles "
-                   "LEFT JOIN files ON tmp_exfiles.filename=files.filename "
-                   "LEFT JOIN ignored_files ON tmp_exfiles.filename=ignored_files.filename "
-                   "WHERE (files.filename IS NULL) AND (ignored_files.filename IS NULL)");
-        if (qr.exec()) {
-            while (qr.next())
-                foundFiles << qr.value(0).toString();
-        } else
-            qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
-
-        qr.prepare("DROP TABLE `tmp_exfiles`");
-        if (!qr.exec())
-            qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
     }
+
+    qr.prepare("SELECT tmp_exfiles.filename FROM tmp_exfiles "
+               "LEFT JOIN files ON tmp_exfiles.filename=files.filename "
+               "LEFT JOIN ignored_files ON tmp_exfiles.filename=ignored_files.filename "
+               "WHERE (files.filename IS NULL) AND (ignored_files.filename IS NULL)");
+    if (qr.exec()) {
+        while (qr.next())
+            foundFiles << qr.value(0).toString();
+    } else
+        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
+
+    qr.prepare("DROP TABLE `tmp_exfiles`");
+    if (!qr.exec())
+        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
+
     sqlCloseBase(db);
 
     emit foundNewFiles(foundFiles);
@@ -705,16 +728,20 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
 {
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
+    if (!sqlHaveTables(db)) {
+        sqlCloseBase(db);
+        return;
+    }
 
     QSqlQuery qr(db);
 
     if (cleanTable) {
-        qr.prepare("TRUNCATE TABLE `ignored_files`");
+        qr.prepare("DELETE FROM `ignored_files`");
         if (!qr.exec()) {
-            emit errorMsg(tr("Unable to truncate table `ignored_files`\n\n%1\n%2")
+            emit errorMsg(tr("Unable to delete from table `ignored_files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Truncate table - ignored_files")] = tr("Unable to truncate table `ignored_files`.\n"
-                                                                "TRUNCATE TABLE query failed.");
+            problems[tr("Delete from table - ignored_files")] = tr("Unable to delete from table `ignored_files`.\n"
+                                                                   "DELETE FROM query failed.");
             sqlCloseBase(db);
             return;
         }
@@ -735,10 +762,18 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
     sqlCloseBase(db);
 }
 
-bool ZDB::isMySQL(QSqlDatabase &db)
+Z::DBMS ZDB::sqlDbEngine(QSqlDatabase &db)
 {
-    if (!db.isValid() || db.driver()==NULL) return false;
-    return db.driver()->dbmsType()==QSqlDriver::MySqlServer;
+    if (db.isValid() && db.driver()!=NULL) {
+        if (db.driver()->dbmsType()==QSqlDriver::MySqlServer) return Z::MySQL;
+        if (db.driver()->dbmsType()==QSqlDriver::SQLite) return Z::SQLite;
+    }
+    return Z::UndefinedDB;
+}
+
+bool ZDB::sqlHaveTables(QSqlDatabase &db)
+{
+    return sqlCheckBasePriv(db,true);
 }
 
 QStringList ZDB::sqlGetIgnoredFiles() const
@@ -937,7 +972,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
         QByteArray pba = createMangaPreview(za,0);
         qr.prepare("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
-                   "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                   "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         qr.bindValue(0,fi.completeBaseName());
         qr.bindValue(1,files.at(i));
         qr.bindValue(2,ialbum);
@@ -946,6 +981,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         qr.bindValue(5,fi.size());
         qr.bindValue(6,za->getMagic());
         qr.bindValue(7,fi.created());
+        qr.bindValue(8,QDateTime::currentDateTime());
         if (!qr.exec())
             qDebug() << files.at(i) << "unable to add" <<
                         qr.lastError().databaseText() << qr.lastError().driverText();
@@ -1083,7 +1119,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     // add dynamic album to base
     int cnt = 0;
     qr.prepare("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
-               "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+               "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     qr.bindValue(0,d.dirName());
     qr.bindValue(1,d.absolutePath());
     qr.bindValue(2,ialbum);
@@ -1092,6 +1128,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     qr.bindValue(5,0);
     qr.bindValue(6,QString("DYN"));
     qr.bindValue(7,fi.created());
+    qr.bindValue(8,QDateTime::currentDateTime());
     if (!qr.exec())
         qDebug() << "unable to add dynamic album" << dir <<
                     qr.lastError().databaseText() << qr.lastError().driverText();
@@ -1177,6 +1214,7 @@ void ZDB::sqlDelFiles(const QIntList &dbids, const bool fullDelete)
         return;
     }
     sqlCloseBase(db);
+    sqlRescanIndexedDirs();
     sqlDelEmptyAlbums();
 
     emit deleteItemsFromModel(dbids);
@@ -1190,9 +1228,15 @@ void ZDB::sqlDelEmptyAlbums()
 {
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
+    if (!sqlHaveTables(db)) {
+        sqlCloseBase(db);
+        return;
+    }
+
     QSqlQuery qr(db);
     if (!qr.exec("DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album FROM files)"))
         qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
+
     sqlCloseBase(db);
     emit albumsListUpdated();
 }
@@ -1251,5 +1295,6 @@ void ZDB::sqlDelAlbum(const QString &album)
         return;
     }
     sqlCloseBase(db);
+    sqlRescanIndexedDirs();
     sqlDelEmptyAlbums();
 }

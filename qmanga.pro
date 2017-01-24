@@ -146,4 +146,5 @@ include( miniqxt/miniqxt.pri )
 
 OTHER_FILES += \
     org.jpreader.auxtranslator.xml \
-    org.qjrad.dictionary.xml
+    org.qjrad.dictionary.xml \
+    README.md

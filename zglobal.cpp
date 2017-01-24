@@ -27,6 +27,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     ocrEditor = NULL;
     defaultOrdering = Z::Name;
     pdfRendering = Z::Autodetect;
+    dbEngine = Z::SQLite;
     scrollDelta = 120;
     dpiX = 75.0;
     dpiY = 75.0;
@@ -98,8 +99,8 @@ void ZGlobal::loadSettings()
     QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",6).toInt();
-    downscaleFilter = (Blitz::ScaleFilterType)settings.value("downscaleFilter",Blitz::LanczosFilter).toInt();
-    upscaleFilter = (Blitz::ScaleFilterType)settings.value("upscaleFilter",Blitz::MitchellFilter).toInt();
+    downscaleFilter = static_cast<Blitz::ScaleFilterType>(settings.value("downscaleFilter",Blitz::LanczosFilter).toInt());
+    upscaleFilter = static_cast<Blitz::ScaleFilterType>(settings.value("upscaleFilter",Blitz::MitchellFilter).toInt());
     dbUser = settings.value("mysqlUser",QString()).toString();
     dbPass = settings.value("mysqlPassword",QString()).toString();
     dbBase = settings.value("mysqlBase",QString("qmanga")).toString();
@@ -111,14 +112,15 @@ void ZGlobal::loadSettings()
     magnifySize = settings.value("magnifySize",150).toInt();
     resizeBlur = settings.value("resizingBlur",1.0).toFloat();
     scrollDelta = settings.value("scrollDelta",120).toInt();
-    pdfRendering = (Z::PDFRendering)settings.value("pdfRendering",Z::Autodetect).toInt();
+    pdfRendering = static_cast<Z::PDFRendering>(settings.value("pdfRendering",Z::Autodetect).toInt());
+    dbEngine = static_cast<Z::DBMS>(settings.value("dbEngine",Z::SQLite).toInt());
     forceDPI = settings.value("forceDPI",-1.0).toFloat();
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
     frameColor = QColor(settings.value("frameColor",QColor(Qt::lightGray).name()).toString());
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
     useFineRendering = settings.value("fineRendering",true).toBool();
     filesystemWatcher = settings.value("filesystemWatcher",false).toBool();
-    defaultOrdering = (Z::Ordering)settings.value("defaultOrdering",Z::Name).toInt();
+    defaultOrdering = static_cast<Z::Ordering>(settings.value("defaultOrdering",Z::Name).toInt());
     defaultSearchEngine = settings.value("defaultSearchEngine",QString()).toString();
     ctxSearchEngines = settings.value("ctxSearchEngines").value<ZStrMap>();
 
@@ -195,6 +197,7 @@ void ZGlobal::saveSettings()
     settings.setValue("resizingBlur",resizeBlur);
     settings.setValue("scrollDelta",scrollDelta);
     settings.setValue("pdfRendering",pdfRendering);
+    settings.setValue("dbEngine",dbEngine);
     settings.setValue("forceDPI",forceDPI);
     settings.setValue("backgroundColor",backgroundColor.name());
     settings.setValue("frameColor",frameColor.name());
@@ -316,15 +319,21 @@ void ZGlobal::settingsDlg()
         dlg->radioCachePixmaps->setChecked(true);
     else
         dlg->radioCacheData->setChecked(true);
+    if (dbEngine==Z::MySQL)
+        dlg->radioMySQL->setChecked(true);
+    else if (dbEngine==Z::SQLite)
+        dlg->radioSQLite->setChecked(true);
+    else
+        dlg->radioSQLite->setChecked(true);
     dlg->checkFineRendering->setChecked(useFineRendering);
     dlg->updateBkColor(backgroundColor);
     dlg->updateIdxFont(idxFont);
     dlg->updateOCRFont(ocrFont);
     dlg->updateFrameColor(frameColor);
     dlg->checkFSWatcher->setChecked(filesystemWatcher);
-    dlg->comboUpscaleFilter->setCurrentIndex((int)upscaleFilter);
-    dlg->comboDownscaleFilter->setCurrentIndex((int)downscaleFilter);
-    dlg->comboPDFRendererMode->setCurrentIndex((int)pdfRendering);
+    dlg->comboUpscaleFilter->setCurrentIndex(static_cast<int>(upscaleFilter));
+    dlg->comboDownscaleFilter->setCurrentIndex(static_cast<int>(downscaleFilter));
+    dlg->comboPDFRendererMode->setCurrentIndex(static_cast<int>(pdfRendering));
     dlg->spinForceDPI->setEnabled(forceDPI>0.0);
     dlg->checkForceDPI->setChecked(forceDPI>0.0);
     if (forceDPI<=0.0)
@@ -351,6 +360,7 @@ void ZGlobal::settingsDlg()
     }
     dlg->setIgnoredFiles(db->sqlGetIgnoredFiles());
     dlg->setSearchEngines(ctxSearchEngines);
+    dlg->updateSQLFields(false);
 
     if (dlg->exec()) {
         dbUser=dlg->editMySqlLogin->text();
@@ -369,14 +379,18 @@ void ZGlobal::settingsDlg()
         cachePixmaps=dlg->radioCachePixmaps->isChecked();
         useFineRendering=dlg->checkFineRendering->isChecked();
         filesystemWatcher=dlg->checkFSWatcher->isChecked();
-        upscaleFilter=(Blitz::ScaleFilterType)dlg->comboUpscaleFilter->currentIndex();
-        downscaleFilter=(Blitz::ScaleFilterType)dlg->comboDownscaleFilter->currentIndex();
-        pdfRendering = (Z::PDFRendering)dlg->comboPDFRendererMode->currentIndex();
+        upscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg->comboUpscaleFilter->currentIndex());
+        downscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg->comboDownscaleFilter->currentIndex());
+        pdfRendering = static_cast<Z::PDFRendering>(dlg->comboPDFRendererMode->currentIndex());
         ctxSearchEngines=dlg->getSearchEngines();
         if (dlg->checkForceDPI->isChecked())
             forceDPI = dlg->spinForceDPI->value();
         else
             forceDPI = -1.0;
+        if (dlg->radioMySQL->isChecked())
+            dbEngine = Z::MySQL;
+        else if (dlg->radioSQLite->isChecked())
+            dbEngine = Z::SQLite;
         bookmarks.clear();
         for (int i=0; i<dlg->listBookmarks->count(); i++)
             bookmarks[dlg->listBookmarks->item(i)->data(Qt::UserRole).toString()]=
