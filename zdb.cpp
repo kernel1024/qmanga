@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QTemporaryFile>
 #include <QTextStream>
+#include <QStandardPaths>
 #include <QBuffer>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -303,7 +304,12 @@ QSqlDatabase ZDB::sqlOpenBase()
 
     if (zg->dbEngine==Z::MySQL) {
         db = QSqlDatabase::addDatabase("QMYSQL",QUuid::createUuid().toString());
-        if (!db.isValid()) return QSqlDatabase();
+        if (!db.isValid()) {
+            db = QSqlDatabase();
+            emit errorMsg(tr("Unable to create MySQL driver instance."));
+            problems[tr("Connection")] = tr("Unable to create MySQL driver instance.");
+            return db;
+        }
 
         db.setHostName(dbHost);
         db.setDatabaseName(dbBase);
@@ -312,7 +318,12 @@ QSqlDatabase ZDB::sqlOpenBase()
 
     } else if (zg->dbEngine==Z::SQLite) {
         db = QSqlDatabase::addDatabase("QSQLITE",QUuid::createUuid().toString());
-        if (!db.isValid()) return QSqlDatabase();
+        if (!db.isValid()) {
+            db = QSqlDatabase();
+            emit errorMsg(tr("Unable to create SQLite driver instance."));
+            problems[tr("Connection")] = tr("Unable to create SQLite driver instance.");
+            return db;
+        }
 
         QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         QDir dbDir(dir);

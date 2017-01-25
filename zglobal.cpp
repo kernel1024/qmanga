@@ -161,7 +161,7 @@ void ZGlobal::loadSettings()
 
         w->updateBookmarks();
         w->updateViewer();
-        w->searchTab->setEnabled(!dbUser.isEmpty());
+        w->searchTab->setEnabled(dbEngine!=Z::UndefinedDB);
         if (w->searchTab->isEnabled()) {
             w->searchTab->updateAlbumsList();
             w->searchTab->applyOrder(defaultOrdering,false,false);
@@ -404,7 +404,7 @@ void ZGlobal::settingsDlg()
         if (w!=NULL) {
             w->updateBookmarks();
             w->updateViewer();
-            w->searchTab->setEnabled(!dbUser.isEmpty());
+            w->searchTab->setEnabled(dbEngine!=Z::UndefinedDB);
             if (w->searchTab->isEnabled())
                 w->searchTab->updateAlbumsList();
         }
