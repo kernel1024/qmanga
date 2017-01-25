@@ -50,6 +50,9 @@ private:
     QString getAlbumNameToAdd(QString suggest,int toAddCount);
     QFileInfoList getSelectedMangaEntries(bool includeDirs = true);
 
+protected:
+    void showEvent(QShowEvent * event);
+
 public slots:
     void albumClicked(QListWidgetItem * item);
 

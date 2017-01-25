@@ -55,6 +55,8 @@ public:
     void setModel(QAbstractItemModel *model);
     void setViewMode(ViewMode mode);
     void updateHeaderView(const Z::Ordering sortOrder, const bool reverseOrder);
+public slots:
+    void resizeHeaderView();
 };
 
 class ZMangaListItemDelegate : public QStyledItemDelegate {
@@ -65,13 +67,6 @@ private:
 public:
     explicit ZMangaListItemDelegate(QObject *parent, ZMangaListView *aView, ZMangaModel *aModel);
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-};
-
-class ZMangaListHeaderView : public QHeaderView {
-    Q_OBJECT
-public:
-    ZMangaListHeaderView(Qt::Orientation orientation, QListView *parent = 0);
-    QSize sizeHint();
 };
 
 class ZMangaSearchHistoryModel : public QAbstractListModel {

@@ -512,6 +512,12 @@ QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs)
     return res;
 }
 
+void ZSearchTab::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    ui->srcList->resizeHeaderView();
+}
+
 void ZSearchTab::albumClicked(QListWidgetItem *item)
 {
     if (item==NULL) return;
@@ -718,6 +724,7 @@ void ZSearchTab::dbFilesAdded(const int count, const int total, const int elapse
 void ZSearchTab::dbFilesLoaded(const int count, const int elapsed)
 {
     emit statusBarMsg(QString("Found %1 results in %2s").arg(count).arg((double)elapsed/1000.0,1,'f',2));
+    ui->srcList->resizeHeaderView();
 }
 
 void ZSearchTab::dbErrorMsg(const QString &msg)

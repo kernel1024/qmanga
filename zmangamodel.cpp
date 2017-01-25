@@ -306,42 +306,18 @@ void ZMangaListItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem
         QStyledItemDelegate::paint(painter, option, index);
 }
 
-ZMangaListHeaderView::ZMangaListHeaderView(Qt::Orientation orientation, QListView *parent)
-    : QHeaderView(orientation, parent)
-{
-
-}
-
-QSize ZMangaListHeaderView::sizeHint()
-{
-    QSize sz = QHeaderView::sizeHint();
-    QListView* lv = qobject_cast<QListView *>(parent());
-    if (lv!=NULL) {
-        QFontMetrics fm(lv->font());
-        sz.setHeight(4*fm.height()/3);
-    }
-    return sz;
-}
-
 void ZMangaListView::resizeEvent(QResizeEvent *e)
 {
     Q_UNUSED(e)
 
-    if (header->isVisible()) {
-        setViewportMargins(0,headerHeight,0,0);
-
-        QRect hg = viewport()->geometry();
-        header->setGeometry(hg.topLeft().x(), hg.topLeft().y()-headerHeight, hg.width(), headerHeight);
-    } else
-        setViewportMargins(0,0,0,0);
+    resizeHeaderView();
 }
 
 ZMangaListView::ZMangaListView(QWidget *parent)
     : QListView(parent)
 {
-    QFontMetrics fm(QApplication::font());
-    headerHeight = 6*fm.height()/5;
     header = new QHeaderView(Qt::Horizontal, this);
+    headerHeight = header->sizeHint().height();
     header->setSortIndicatorShown(true);
     header->setSectionsClickable(true);
     header->hide();
@@ -397,4 +373,16 @@ void ZMangaListView::updateHeaderView(const Z::Ordering sortOrder, const bool re
         else if (!oneAlbum && header->isSectionHidden(Z::Album))
             header->showSection(Z::Album);
     }
+}
+
+void ZMangaListView::resizeHeaderView()
+{
+    headerHeight = header->sizeHint().height();
+    if (header->isVisible()) {
+        setViewportMargins(0,headerHeight,0,0);
+
+        QRect hg = viewport()->geometry();
+        header->setGeometry(hg.topLeft().x(), hg.topLeft().y()-headerHeight, hg.width(), headerHeight);
+    } else
+        setViewportMargins(0,0,0,0);
 }
