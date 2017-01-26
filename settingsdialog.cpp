@@ -45,7 +45,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     radioMySQL = ui->rbMySQL;
     radioSQLite = ui->rbSQLite;
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     ui->editRar->setPlaceholderText("rar.exe");
 #else
     ui->editRar->setPlaceholderText("rar");
@@ -328,7 +328,7 @@ void SettingsDialog::dynEdit()
 void SettingsDialog::openRar()
 {
     QString filter = QString("*");
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     filter = tr("Executable files (*.exe)");
 #endif
     QString filename = getOpenFileNameD(this,tr("Select console RAR binary"),zg->savedAuxOpenDir,filter);

@@ -6,8 +6,9 @@
 #include <QProgressDialog>
 #include <QApplication>
 #include <QDesktopServices>
+#include <QClipboard>
 #include <QDebug>
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
@@ -224,8 +225,15 @@ void ZSearchTab::ctxMenu(QPoint pos)
     cm.addAction(QIcon(":/16/fork"),
                  tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
 
+    cm.addSeparator();
+
+#ifndef Q_OS_WIN
     cm.addAction(QIcon(":/16/edit-copy"),
-                 tr("Copy files to..."),this,SLOT(ctxFileCopy()));
+                 tr("Copy files"),this,SLOT(ctxFileCopyClipboard()));
+#endif
+
+    cm.addAction(QIcon(":/16/edit-copy"),
+                 tr("Copy files to directory..."),this,SLOT(ctxFileCopy()));
 
     if (li.count()==1) {
         SQLMangaEntry m = model->getItem(li.first().row());
@@ -363,6 +371,34 @@ void ZSearchTab::ctxXdgOpen()
     if (fl.isEmpty())
         QMessageBox::warning(this,tr("QManga"),
                              tr("Error while searching file path for some files."));
+}
+
+void ZSearchTab::ctxFileCopyClipboard()
+{
+    QFileInfoList fl = getSelectedMangaEntries(true);
+    if (fl.isEmpty()) return;
+
+    QByteArray uriList;
+    QByteArray plainList;
+
+    foreach (const QFileInfo& fi, fl) {
+        QByteArray ba = QUrl::fromLocalFile(fi.filePath()).toEncoded();
+        if (!ba.isEmpty()) {
+            uriList.append(ba); uriList.append('\x0D'); uriList.append('\x0A');
+            plainList.append(ba); plainList.append('\x0A');
+        }
+    }
+
+    if (uriList.isEmpty()) return;
+
+    QMimeData *data = new QMimeData();
+    data->setData("text/uri-list",uriList);
+    data->setData("text/plain",plainList);
+    data->setData("application/x-kde4-urilist",uriList);
+
+    QClipboard *cl = qApp->clipboard();
+    cl->clear();
+    cl->setMimeData(data);
 }
 
 void ZSearchTab::ctxFileCopy()

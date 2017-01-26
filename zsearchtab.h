@@ -78,6 +78,7 @@ public slots:
     void ctxOpenDir();
     void ctxXdgOpen();
     void ctxFileCopy();
+    void ctxFileCopyClipboard();
 
     void dbShowProgressDialog(const bool visible, const QString &title = QString());
     void dbShowProgressState(const int value, const QString& msg);

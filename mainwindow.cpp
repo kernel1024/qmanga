@@ -162,7 +162,7 @@ void MainWindow::centerWindow(bool moveWindow)
 
     zg->dpiX = QApplication::screens().at(screen)->physicalDotsPerInchX();
     zg->dpiY = QApplication::screens().at(screen)->physicalDotsPerInchY();
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     if (abs(zg->dpiX-zg->dpiY)>20.0) {
         qreal dpi = qMax(zg->dpiX,zg->dpiY);
         if (dpi<130.0) dpi=130.0;

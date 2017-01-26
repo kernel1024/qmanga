@@ -214,7 +214,7 @@ QPoint QxtToolTipPrivate::calculatePos(int scr, const QPoint& eventPos) const
 
     QPoint p = eventPos;
     p += QPoint(2,
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
                 24
 #else
                 16

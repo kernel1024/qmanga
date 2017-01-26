@@ -19,7 +19,7 @@
 #include "zmangaview.h"
 #include "scalefilter.h"
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
@@ -153,7 +153,7 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
         QString fmsg = QTime::currentTime().toString("h:mm:ss") + " "+lmsg;
         fmsg.append("\r\n");
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
         HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
         wchar_t* wmsg = toUtf16(fmsg);
         DWORD wr = 0;
@@ -576,7 +576,7 @@ tesseract::TessBaseAPI* initializeOCR()
 {
     ocr = new tesseract::TessBaseAPI();
     const char* datapath = NULL;
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     QDir appDir(qApp->applicationDirPath());
     QByteArray tesspath = appDir.absoluteFilePath("tessdata").toUtf8();
     datapath = tesspath.constData();

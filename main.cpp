@@ -3,7 +3,7 @@
 #include <locale.h>
 #include "mainwindow.h"
 #include "global.h"
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     MainWindow w;
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     QDir appDir(qApp->applicationDirPath());
     qApp->addLibraryPath(appDir.absoluteFilePath("imageformats"));
 
