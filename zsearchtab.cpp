@@ -7,6 +7,7 @@
 #include <QApplication>
 #include <QDesktopServices>
 #include <QClipboard>
+#include <QMimeData>
 #include <QDebug>
 #ifdef Q_OS_WIN
 #include <windows.h>
