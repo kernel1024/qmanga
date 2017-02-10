@@ -23,12 +23,13 @@ public:
     explicit ZFineScaler(QObject *parent = 0);
     void setSource(const QImage& image, const QSize& targetSize, int page,
                    Blitz::ScaleFilterType filter, ZMangaView *view);
+    ~ZFineScaler();
 signals:
     void finished();
 
 public slots:
     void resample();
-    void pageChanged(int num, QString msg);
+    void abortScaling(int num, QString msg);
 
 
 };

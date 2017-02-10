@@ -582,10 +582,12 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                             QThread* th = new QThread();
 
                             fs->setSource(curUmPixmap.toImage(),targetSize,page,filter,this);
-                            connect(this,&ZMangaView::loadedPage,fs,&ZFineScaler::pageChanged);
+                            connect(this,&ZMangaView::loadedPage,fs,&ZFineScaler::abortScaling);
 
                             connect(th,&QThread::started,fs,&ZFineScaler::resample);
                             connect(fs,&ZFineScaler::finished,th,&QThread::quit);
+
+                            connect(fs,&ZFineScaler::finished,fs,&QObject::deleteLater);
                             connect(th,&QThread::finished,th,&QObject::deleteLater);
 
                             fs->moveToThread(th);

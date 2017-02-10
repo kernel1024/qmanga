@@ -23,6 +23,10 @@ void ZFineScaler::setSource(const QImage &image, const QSize &targetSize, int pa
     m_view = view;
 }
 
+ZFineScaler::~ZFineScaler()
+{
+}
+
 void ZFineScaler::resample()
 {
     m_abort = false;
@@ -36,7 +40,7 @@ void ZFineScaler::resample()
     emit finished();
 }
 
-void ZFineScaler::pageChanged(int num, QString msg)
+void ZFineScaler::abortScaling(int num, QString msg)
 {
     Q_UNUSED(msg)
 
