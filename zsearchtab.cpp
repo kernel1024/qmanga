@@ -416,13 +416,18 @@ void ZSearchTab::ctxFileCopy()
     dlg->setWindowTitle(tr("Copying manga files..."));
 
     ZFileCopier *zfc = new ZFileCopier(fl,dlg,dst);
-    connect(zfc,&ZFileCopier::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
-
     QThread *zfc_thread = new QThread();
-    zfc->moveToThread(zfc_thread);
-    zfc->start();
 
-    QMetaObject::invokeMethod(zfc,"start",Qt::QueuedConnection);
+    connect(zfc,&ZFileCopier::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
+    connect(dlg,&QProgressDialog::canceled,zfc,&ZFileCopier::abort,Qt::QueuedConnection);
+
+    connect(zfc_thread,&QThread::started,zfc,&ZFileCopier::start);
+    connect(zfc,&ZFileCopier::finished,zfc_thread,&QThread::quit);
+    connect(zfc,&ZFileCopier::finished,zfc,&QObject::deleteLater);
+    connect(zfc_thread,&QThread::finished,zfc_thread,&QObject::deleteLater);
+
+    zfc->moveToThread(zfc_thread);
+    zfc_thread->start();
 }
 
 void ZSearchTab::updateAlbumsList()

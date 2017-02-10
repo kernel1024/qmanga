@@ -133,6 +133,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+    zg = NULL;
 }
 
 void MainWindow::centerWindow(bool moveWindow)

@@ -76,6 +76,9 @@ ZMangaView::ZMangaView(QWidget *parent) :
         connect(this,SIGNAL(cacheOpenFile(QString,int)),ld,SLOT(openFile(QString,int)),Qt::QueuedConnection);
         connect(this,SIGNAL(cacheCloseFile()),ld,SLOT(closeFile()),Qt::QueuedConnection);
 
+        connect(th,&QThread::finished,ld,&QObject::deleteLater);
+        connect(th,&QThread::finished,th,&QObject::deleteLater);
+
         if (i==0) {
             connect(ld,SIGNAL(gotPageCount(int,int)),
                     this,SLOT(cacheGotPageCount(int, int)),Qt::QueuedConnection);

@@ -28,9 +28,11 @@ signals:
     void progressShow();
     void progressClose();
     void errorMsg(const QString& msg);
+    void finished();
 
 public slots:
     void start();
+    void abort();
 };
 
 #endif // ZFILECOPIER_H

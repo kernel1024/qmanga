@@ -12,6 +12,7 @@ protected:
 
 public:
     explicit ZMangaLoader(QObject *parent = 0);
+    ~ZMangaLoader();
     QUuid threadID;
     QByteArray getPageSync(int num);
 

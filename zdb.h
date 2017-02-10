@@ -34,6 +34,7 @@ private:
 
 public:
     explicit ZDB(QObject *parent = 0);
+    ~ZDB();
 
     int getAlbumsCount();
     ZStrMap getDynAlbums() const;

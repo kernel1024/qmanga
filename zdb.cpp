@@ -34,6 +34,10 @@ ZDB::ZDB(QObject *parent) :
     preferredRendering.clear();
 }
 
+ZDB::~ZDB()
+{
+}
+
 int ZDB::getAlbumsCount()
 {
     QSqlDatabase db = sqlOpenBase();
@@ -302,6 +306,8 @@ QSqlDatabase ZDB::sqlOpenBase()
 {
     QSqlDatabase db;
 
+    if (zg==NULL) return db;
+
     if (zg->dbEngine==Z::MySQL) {
         db = QSqlDatabase::addDatabase("QMYSQL",QUuid::createUuid().toString());
         if (!db.isValid()) {
@@ -449,6 +455,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
         qr.addBindValue(QString("%%%1%%").arg(search));
 
     if (qr.exec()) {
+        preferredRendering.clear();
         while (qr.next()) {
             QImage p = QImage();
             QByteArray ba = qr.value(2).toByteArray();

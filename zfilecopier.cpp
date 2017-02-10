@@ -14,9 +14,6 @@ ZFileCopier::ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
     m_dstDir = dstDir;
     m_abort = false;
 
-    connect(m_dialog,&QProgressDialog::canceled,[this](){
-        m_abort = true;
-    });
     m_dialog->setAttribute(Qt::WA_DeleteOnClose);
     m_dialog->setAutoClose(false);
     m_dialog->setMinimum(0);
@@ -66,7 +63,12 @@ void ZFileCopier::start()
 
     emit progressClose();
     QApplication::processEvents();
-    deleteLater();
+    emit finished();
+}
+
+void ZFileCopier::abort()
+{
+    m_abort = true;
 }
 
 bool ZFileCopier::copyDir(const QFileInfo &src)

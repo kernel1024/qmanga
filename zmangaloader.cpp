@@ -7,6 +7,12 @@ ZMangaLoader::ZMangaLoader(QObject *parent) :
     mReader = NULL;
 }
 
+ZMangaLoader::~ZMangaLoader()
+{
+    if (mReader!=NULL)
+        closeFile();
+}
+
 void ZMangaLoader::openFile(QString filename, int preferred)
 {
     if (mReader!=NULL)
