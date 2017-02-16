@@ -5,6 +5,7 @@
 #include <QRubberBand>
 #include <QPixmap>
 #include <QScrollArea>
+#include <QThreadPool>
 
 #include "global.h"
 #include "zabstractreader.h"
@@ -22,7 +23,7 @@ public:
         Original
     };
 
-protected:
+private:
     ZoomMode zoomMode;
     int rotation;
     QPixmap curPixmap, curUmPixmap;
@@ -44,6 +45,8 @@ protected:
     QList<int> lastFileSizes;
 
     ZExportDialog exportDialog;
+
+    QThreadPool resamplersPool;
 
     int scrollAccumulator;
 

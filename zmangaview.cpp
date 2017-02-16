@@ -9,13 +9,14 @@
 #include <QContextMenuEvent>
 #include <QProgressDialog>
 #include <QtConcurrentMap>
+#include <QtConcurrentRun>
 #include <QFutureWatcher>
+#include <QThreadPool>
 #include <functional>
 #include <limits.h>
 #include <math.h>
 #include "zmangaloader.h"
 #include "zmangaview.h"
-#include "zfinescaler.h"
 #include "zglobal.h"
 #include "mainwindow.h"
 
@@ -581,20 +582,15 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                             filter = zg->downscaleFilter;
 
                         if (filter!=Blitz::UndefinedFilter) {
-                            ZFineScaler* fs = new ZFineScaler();
-                            QThread* th = new QThread();
+                            QImage image = curUmPixmap.toImage();
+                            QtConcurrent::run(&resamplersPool,[this,targetSize,filter,image,page](){
+                                QImage res = resizeImage(image,targetSize,true,filter,page,&currentPage);
 
-                            fs->setSource(curUmPixmap.toImage(),targetSize,page,filter,this);
-                            connect(this,&ZMangaView::loadedPage,fs,&ZFineScaler::abortScaling);
-
-                            connect(th,&QThread::started,fs,&ZFineScaler::resample);
-                            connect(fs,&ZFineScaler::finished,th,&QThread::quit);
-
-                            connect(fs,&ZFineScaler::finished,fs,&QObject::deleteLater);
-                            connect(th,&QThread::finished,th,&QObject::deleteLater);
-
-                            fs->moveToThread(th);
-                            th->start();
+                                if (!res.isNull())
+                                    QMetaObject::invokeMethod(this,"redrawPageEx",Qt::QueuedConnection,
+                                                              Q_ARG(QImage, res),
+                                                              Q_ARG(int, page));
+                            });
                         }
                     }
                 }

@@ -317,7 +317,7 @@ QString detectMIME(const QByteArray &buf)
 }
 
 QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
-                   Blitz::ScaleFilterType filter, bool *stopFlag)
+                   Blitz::ScaleFilterType filter, int page, const int *currentPage)
 {
     QSize dsize = src.size().scaled(targetSize,Qt::KeepAspectRatio);
 
@@ -334,7 +334,7 @@ QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
     else {
         return Blitz::smoothScaleFilter(src,targetSize,zg->resizeBlur,
-                                        rf,Qt::KeepAspectRatio,stopFlag);
+                                        rf,Qt::KeepAspectRatio,page,currentPage);
     }
 }
 
