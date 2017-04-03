@@ -25,6 +25,7 @@ void ZExportDialog::setPages(const int currentPage, const int pagesMaximum)
 {
     m_currentPage = currentPage;
     ui->pageCount->setMaximum(pagesMaximum);
+    updateRange(ui->pageCount->value());
 }
 
 QString ZExportDialog::getExportDir()
@@ -62,5 +63,5 @@ void ZExportDialog::dirSelectBtn()
 
 void ZExportDialog::updateRange(int value)
 {
-    ui->labelRange->setText(tr("From %1 to %2.").arg(m_currentPage).arg(m_currentPage+value-1));
+    ui->labelRange->setText(tr("From %1 to %2.").arg(m_currentPage+1).arg(m_currentPage+value));
 }
