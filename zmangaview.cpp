@@ -664,7 +664,7 @@ void ZMangaView::exportPagesCtx()
     if (openedFile.isEmpty()) return;
     if (currentPage<0 || currentPage>=privPageCount) return;
 
-    exportDialog.setPagesMaximum(privPageCount-currentPage);
+    exportDialog.setPages(currentPage,privPageCount-currentPage);
     exportDialog.setParent(window(),Qt::Dialog);
     exportDialog.setExportDir(zg->savedAuxSaveDir);
     if (!exportDialog.exec()) return;

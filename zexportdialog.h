@@ -16,7 +16,7 @@ class ZExportDialog : public QDialog
 public:
     explicit ZExportDialog(QWidget *parent = 0);
     ~ZExportDialog();
-    void setPagesMaximum(const int pagesMaximum);
+    void setPages(const int currentPage, const int pagesMaximum);
     QString getExportDir();
     QString getImageFormat();
     int getPagesCount();
@@ -25,9 +25,11 @@ public:
 
 public slots:
     void dirSelectBtn();
+    void updateRange(int value);
 
 private:
     Ui::ZExportDialog *ui;
+    int m_currentPage;
 };
 
 #endif // ZEXPORTDIALOG_H

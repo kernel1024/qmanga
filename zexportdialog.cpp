@@ -6,11 +6,14 @@ ZExportDialog::ZExportDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ZExportDialog)
 {
+    m_currentPage = 0;
+
     ui->setupUi(this);
 
     ui->exportDir->setText(QDir::currentPath());
 
     connect(ui->exportDirBtn,SIGNAL(clicked()),this,SLOT(dirSelectBtn()));
+    connect(ui->pageCount,SIGNAL(valueChanged(int)),this,SLOT(updateRange(int)));
 }
 
 ZExportDialog::~ZExportDialog()
@@ -18,8 +21,9 @@ ZExportDialog::~ZExportDialog()
     delete ui;
 }
 
-void ZExportDialog::setPagesMaximum(const int pagesMaximum)
+void ZExportDialog::setPages(const int currentPage, const int pagesMaximum)
 {
+    m_currentPage = currentPage;
     ui->pageCount->setMaximum(pagesMaximum);
 }
 
@@ -54,4 +58,9 @@ void ZExportDialog::dirSelectBtn()
     QFileInfo fi(s);
     if (fi.exists())
         ui->exportDir->setText(s);
+}
+
+void ZExportDialog::updateRange(int value)
+{
+    ui->labelRange->setText(tr("From %1 to %2.").arg(m_currentPage).arg(m_currentPage+value-1));
 }
