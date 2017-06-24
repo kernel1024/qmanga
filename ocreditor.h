@@ -7,6 +7,7 @@
 
 #ifdef QT_DBUS_LIB
 #include "auxtranslator_interface.h"
+#include "browsercontroller_interface.h"
 #include "dictionary_interface.h"
 #endif
 
@@ -27,7 +28,8 @@ public:
 private:
     Ui::ZOCREditor *ui;
 #ifdef QT_DBUS_LIB
-    OrgJpreaderAuxtranslatorInterface* translator;
+    OrgKernel1024JpreaderAuxtranslatorInterface* translator;
+    OrgKernel1024JpreaderBrowsercontrollerInterface* browser;
     OrgQjradDictionaryInterface* dictionary;
 #endif
     QAction* dictSearch;

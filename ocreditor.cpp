@@ -3,6 +3,7 @@
 #include <QUrl>
 #include <QUrlQuery>
 #include <QDesktopServices>
+#include <QToolButton>
 #include "zglobal.h"
 #include "qxttooltip.h"
 #include "ocreditor.h"
@@ -15,8 +16,11 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     ui->setupUi(this);
 
 #ifdef QT_DBUS_LIB
-    translator = new OrgJpreaderAuxtranslatorInterface("org.jpreader.auxtranslator","/",
-                                                       QDBusConnection::sessionBus(),this);
+    translator = new OrgKernel1024JpreaderAuxtranslatorInterface("org.kernel1024.jpreader","/auxTranslator",
+                                                                 QDBusConnection::sessionBus(),this);
+
+    browser = new OrgKernel1024JpreaderBrowsercontrollerInterface("org.kernel1024.jpreader","/browserController",
+                                                                 QDBusConnection::sessionBus(),this);
 
     dictionary = new OrgQjradDictionaryInterface("org.qjrad.dictionary","/",
                                                  QDBusConnection::sessionBus(),this);
@@ -31,6 +35,8 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     connect(ui->editor,&QPlainTextEdit::selectionChanged,
             this,&ZOCREditor::selectionChanged);
 
+    ui->dictSearchButton->setDefaultAction(dictSearch);
+
     selectionTimer = new QTimer(this);
     selectionTimer->setInterval(1000);
     selectionTimer->setSingleShot(true);
@@ -40,7 +46,7 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     connect(ui->translateButton,&QToolButton::clicked,
             this,&ZOCREditor::translate);
 #ifdef QT_DBUS_LIB
-    connect(translator,&OrgJpreaderAuxtranslatorInterface::gotTranslation,
+    connect(translator,&OrgKernel1024JpreaderAuxtranslatorInterface::gotTranslation,
             this,&ZOCREditor::gotTranslation);
 
     connect(dictionary,&OrgQjradDictionaryInterface::gotWordTranslation,
@@ -149,6 +155,19 @@ void ZOCREditor::contextMenu(const QPoint &pos)
         connect(ac,&QAction::triggered,[this,sText](){
             if (dictionary->isValid())
                 dictionary->showDictionaryWindow(sText);
+        });
+        cm.addAction(ac);
+
+        ac = new QAction(QIcon(":/16/jpreader"),tr("Search with jpreader"),NULL);
+        connect(ac,&QAction::triggered,[this,sText](){
+            if (browser->isValid()) {
+                if (sText.trimmed().startsWith("http",Qt::CaseInsensitive)) {
+                    QUrl u = QUrl::fromUserInput(sText);
+                    if (u.isValid())
+                        browser->openUrl(u.toString());
+                } else
+                    browser->openDefaultSearch(sText);
+            }
         });
         cm.addAction(ac);
 #endif

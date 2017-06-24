@@ -118,7 +118,8 @@ CONFIG += warn_on link_pkgconfig c++11
         LIBS += -llept
     }
 
-    DBUS_INTERFACES = org.jpreader.auxtranslator.xml \
+    DBUS_INTERFACES = org.kernel1024.jpreader.auxtranslator.xml \
+        org.kernel1024.jpreader.browsercontroller.xml \
         org.qjrad.dictionary.xml
 }
 
@@ -143,6 +144,7 @@ CONFIG(release, debug|release) {
 include( miniqxt/miniqxt.pri )
 
 OTHER_FILES += \
-    org.jpreader.auxtranslator.xml \
+    org.kernel1024.jpreader.auxtranslator.xml \
+    org.kernel1024.jpreader.browsercontroller.xml \
     org.qjrad.dictionary.xml \
     README.md

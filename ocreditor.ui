@@ -136,6 +136,30 @@
          </widget>
         </item>
         <item>
+         <widget class="Line" name="line_5">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="dictSearchButton">
+          <property name="toolTip">
+           <string>Dictionary search</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset resource="qmanga.qrc">
+            <normaloff>:/16/document-preview</normaloff>:/16/document-preview</iconset>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -343,8 +367,16 @@
   <tabstop>copyButton</tabstop>
   <tabstop>pasteButton</tabstop>
   <tabstop>clearButton</tabstop>
+  <tabstop>dictSearchButton</tabstop>
   <tabstop>translateButton</tabstop>
   <tabstop>closeButton</tabstop>
+  <tabstop>translatedEditor</tabstop>
+  <tabstop>undoButton_2</tabstop>
+  <tabstop>redoButton_2</tabstop>
+  <tabstop>cutButton_2</tabstop>
+  <tabstop>copyButton_2</tabstop>
+  <tabstop>pasteButton_2</tabstop>
+  <tabstop>clearButton_2</tabstop>
  </tabstops>
  <resources>
   <include location="qmanga.qrc"/>

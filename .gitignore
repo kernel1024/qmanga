@@ -20,6 +20,8 @@ Debug/
 Release/
 *.log
 .*.stash
+moc_*.h
+*_interface.*
 
 # QtCreator project files
 *.pro.user
@@ -30,5 +32,3 @@ Release/
 # Project specific
 qmanga
 qmanga_*.pro
-auxtranslator_interface.*
-dictionary_interface.*

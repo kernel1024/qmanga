@@ -52,5 +52,6 @@
         <file alias="zoom-fit-height">img/16x16/zoom-fit-height.png</file>
         <file alias="zoom-fit-width">img/16x16/zoom-fit-width.png</file>
         <file alias="zoom-original">img/16x16/zoom-original.png</file>
+        <file alias="jpreader">img/16x16/globe_16.png</file>
     </qresource>
 </RCC>
