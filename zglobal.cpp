@@ -29,6 +29,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     pdfRendering = Z::Autodetect;
     dbEngine = Z::SQLite;
     scrollDelta = 120;
+    scrollFactor = 3;
     dpiX = 75.0;
     dpiY = 75.0;
     forceDPI = -1.0;
@@ -112,6 +113,7 @@ void ZGlobal::loadSettings()
     magnifySize = settings.value("magnifySize",150).toInt();
     resizeBlur = settings.value("resizingBlur",1.0).toFloat();
     scrollDelta = settings.value("scrollDelta",120).toInt();
+    scrollFactor = settings.value("scrollFactor",5).toInt();
     pdfRendering = static_cast<Z::PDFRendering>(settings.value("pdfRendering",Z::Autodetect).toInt());
     dbEngine = static_cast<Z::DBMS>(settings.value("dbEngine",Z::SQLite).toInt());
     forceDPI = settings.value("forceDPI",-1.0).toFloat();
@@ -196,6 +198,7 @@ void ZGlobal::saveSettings()
     settings.setValue("magnifySize",magnifySize);
     settings.setValue("resizingBlur",resizeBlur);
     settings.setValue("scrollDelta",scrollDelta);
+    settings.setValue("scrollFactor",scrollFactor);
     settings.setValue("pdfRendering",pdfRendering);
     settings.setValue("dbEngine",dbEngine);
     settings.setValue("forceDPI",forceDPI);
@@ -314,6 +317,7 @@ void ZGlobal::settingsDlg()
     dlg->spinMagnify->setValue(magnifySize);
     dlg->spinBlur->setValue(resizeBlur);
     dlg->spinScrollDelta->setValue(scrollDelta);
+    dlg->spinScrollFactor->setValue(scrollFactor);
     dlg->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(detectedDelta));
     if (cachePixmaps)
         dlg->radioCachePixmaps->setChecked(true);
@@ -372,6 +376,7 @@ void ZGlobal::settingsDlg()
         magnifySize=dlg->spinMagnify->value();
         resizeBlur=dlg->spinBlur->value();
         scrollDelta=dlg->spinScrollDelta->value();
+        scrollFactor=dlg->spinScrollFactor->value();
         backgroundColor=dlg->getBkColor();
         frameColor=dlg->getFrameColor();
         idxFont=dlg->getIdxFont();

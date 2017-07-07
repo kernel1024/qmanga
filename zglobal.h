@@ -51,6 +51,7 @@ public:
     int preferredWidth;
     int scrollDelta;
     int detectedDelta;
+    int scrollFactor;
 
     bool cachePixmaps;
     bool useFineRendering;

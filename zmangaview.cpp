@@ -135,6 +135,12 @@ int ZMangaView::getPageCount()
 void ZMangaView::getPage(int num)
 {
     currentPage = num;
+
+    if (scroller->verticalScrollBar()->isVisible())
+        scroller->verticalScrollBar()->setValue(0);
+    if (scroller->horizontalScrollBar()->isVisible())
+        scroller->horizontalScrollBar()->setValue(0);
+
     cacheDropUnusable();
     if ((zg->cachePixmaps && iCachePixmaps.contains(currentPage)) ||
             (!zg->cachePixmaps && iCacheData.contains(currentPage)))
@@ -229,30 +235,37 @@ void ZMangaView::closeFile()
 
 void ZMangaView::setPage(int page)
 {
+    scrollAccumulator = 0;
     if (page<0 || page>=privPageCount) return;
     getPage(page);
 }
 
 void ZMangaView::wheelEvent(QWheelEvent *event)
 {
-    if (scroller->verticalScrollBar()->isVisible()) {
-        event->ignore();
-        return;
+    int sf = 1;
+    int dy = event->angleDelta().y();
+    QScrollBar *vb = scroller->verticalScrollBar();
+    if (vb!=NULL && vb->isVisible()) { // page is zoomed and scrollable
+        if (((vb->value()>vb->minimum()) && (vb->value()<vb->maximum()))    // somewhere middle of page
+                || ((vb->value()==vb->minimum()) && (dy<0))                 // at top, scrolling down
+                || ((vb->value()==vb->maximum()) && (dy>0))) {              // at bottom, scrolling up
+            scrollAccumulator = 0;
+            event->ignore();
+            return;
+        } else { // at the page border, attempting to flip the page
+            sf = zg->scrollFactor;
+        }
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-    scrollAccumulator+= event->angleDelta().y();
-    zg->detectedDelta = abs(event->angleDelta().y());
-#else
-    scrollAccumulator+= event->delta();
-    zg->detectedDelta = abs(event->delta());
-#endif
+    if (abs(dy)<zg->detectedDelta)
+        zg->detectedDelta = abs(dy);
 
-    int numSteps = scrollAccumulator / zg->scrollDelta;
-    scrollAccumulator-= numSteps * zg->scrollDelta;
+    scrollAccumulator+= dy;
+    int numSteps = scrollAccumulator / (zg->scrollDelta * sf);
 
     if (numSteps!=0)
         setPage(currentPage-numSteps);
+
     event->accept();
 }
 

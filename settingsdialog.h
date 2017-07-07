@@ -36,6 +36,7 @@ public:
     QCheckBox* checkFineRendering;
     QCheckBox* checkFSWatcher;
     QSpinBox* spinScrollDelta;
+    QSpinBox* spinScrollFactor;
     QLabel* labelDetectedDelta;
     QListWidget* listDynAlbums;
     QComboBox* comboPDFRendererMode;
