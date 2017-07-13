@@ -95,6 +95,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),ui->mangaView,SLOT(setZoomDynamic(bool)));
 
     connect(ui->btnSearchTab,SIGNAL(clicked()),this,SLOT(openSearchTab()));
+    connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(tabChanged(int)));
 
     connect(ui->fastScrollSlider,SIGNAL(valueChanged(int)),this,SLOT(fastScroll(int)));
     connect(ui->fastScrollPanel,SIGNAL(showWidget()),this,SLOT(updateFastScrollPosition()));
@@ -347,6 +348,12 @@ void MainWindow::updateFastScrollPosition()
     ui->fastScrollSlider->blockSignals(true);
     ui->fastScrollSlider->setValue(ui->mangaView->currentPage+1);
     ui->fastScrollSlider->blockSignals(false);
+}
+
+void MainWindow::tabChanged(int idx)
+{
+    if (idx==1 && searchTab!=NULL)
+        searchTab->updateFocus();
 }
 
 void MainWindow::updateBookmarks()

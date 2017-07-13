@@ -76,6 +76,7 @@ public slots:
     void rotationUpdated(int degree);
     void fastScroll(int page);
     void updateFastScrollPosition();
+    void tabChanged(int idx);
 
     void updateBookmarks();
     void updateTitle();

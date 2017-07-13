@@ -26,6 +26,7 @@ public:
     ~ZSearchTab();
 
     void updateAlbumsList();
+    void updateFocus();
     void applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI = false);
     QStringList getAlbums();
     void setListViewOptions(const QListView::ViewMode mode, const int iconSize);

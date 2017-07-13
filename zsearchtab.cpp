@@ -436,6 +436,12 @@ void ZSearchTab::updateAlbumsList()
     emit dbGetAlbums();
 }
 
+void ZSearchTab::updateFocus()
+{
+    if (ui->srcList->model()->rowCount()==0)
+        ui->srcEdit->setFocus();
+}
+
 void ZSearchTab::applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI)
 {
     order = aOrder;
