@@ -99,7 +99,7 @@ void ZPDFImageOutputDev::writeImage(GfxState *state, Object *ref, Stream *str,
 void ZPDFImageOutputDev::drawImageMask(GfxState *state, Object *ref, Stream *str,
                                        int width, int height, GBool,
                                        GBool, GBool inlineImg) {
-    writeImage(state, ref, str, width, height, NULL, inlineImg);
+    writeImage(state, ref, str, width, height, nullptr, inlineImg);
 }
 
 void ZPDFImageOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,

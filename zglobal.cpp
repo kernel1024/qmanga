@@ -12,7 +12,7 @@
 #include "zdb.h"
 #include "zpdfreader.h"
 
-ZGlobal* zg = NULL;
+ZGlobal* zg = nullptr;
 
 ZGlobal::ZGlobal(QObject *parent) :
     QObject(parent)
@@ -24,7 +24,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     defaultSearchEngine.clear();
     cachePixmaps = false;
     useFineRendering = true;
-    ocrEditor = NULL;
+    ocrEditor = nullptr;
     defaultOrdering = Z::Name;
     pdfRendering = Z::Autodetect;
     dbEngine = Z::SQLite;
@@ -74,7 +74,7 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
     if (problems.isEmpty()) return;
 
     MainWindow* mw = qobject_cast<MainWindow *>(parent);
-    if (mw!=NULL) {
+    if (mw!=nullptr) {
         mw->lblSearchStatus->setText(tr("%1 problems with MySQL").arg(problems.keys().count()));
         return;
     }
@@ -137,14 +137,14 @@ void ZGlobal::loadSettings()
         frameColor = QColor(Qt::lightGray);
 
     bool showMaximized = false;
-    if (w!=NULL)
+    if (w!=nullptr)
         showMaximized = settings.value("maximized",false).toBool();
 
     bookmarks = settings.value("bookmarks").value<ZStrMap>();
     ZStrMap albums = settings.value("dynAlbums").value<ZStrMap>();
     emit dbSetDynAlbums(albums);
 
-    if (w!=NULL) {
+    if (w!=nullptr) {
         QListView::ViewMode m = QListView::IconMode;
         if (settings.value("listMode",false).toBool())
             m = QListView::ListMode;
@@ -157,7 +157,7 @@ void ZGlobal::loadSettings()
 
     emit dbSetCredentials(dbHost,dbBase,dbUser,dbPass);
 
-    if (w!=NULL) {
+    if (w!=nullptr) {
         if (showMaximized)
             w->showMaximized();
 
@@ -173,7 +173,7 @@ void ZGlobal::loadSettings()
     if (filesystemWatcher)
         emit dbRescanIndexedDirs();
 
-    if (ocrEditor!=NULL)
+    if (ocrEditor!=nullptr)
         ocrEditor->setEditorFont(ocrFont);
 
     checkSQLProblems(w);
@@ -215,7 +215,7 @@ void ZGlobal::saveSettings()
 
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
-    if (w!=NULL) {
+    if (w!=nullptr) {
         settings.setValue("maximized",w->isMaximized());
 
         settings.setValue("listMode",w->searchTab->getListViewMode()==QListView::ListMode);
@@ -303,7 +303,7 @@ void ZGlobal::fsCheckFilesAvailability()
 
 void ZGlobal::settingsDlg()
 {
-    checkSQLProblems(NULL);
+    checkSQLProblems(nullptr);
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
     SettingsDialog* dlg = new SettingsDialog(w);
@@ -406,7 +406,7 @@ void ZGlobal::settingsDlg()
             albums[dlg->listDynAlbums->item(i)->data(Qt::UserRole).toString()]=
                     dlg->listDynAlbums->item(i)->data(Qt::UserRole+1).toString();
         emit dbSetDynAlbums(albums);
-        if (w!=NULL) {
+        if (w!=nullptr) {
             w->updateBookmarks();
             w->updateViewer();
             w->searchTab->setEnabled(dbEngine!=Z::UndefinedDB);
@@ -417,10 +417,10 @@ void ZGlobal::settingsDlg()
         emit dbSetIgnoredFiles(dlg->getIgnoredFiles());
         if (filesystemWatcher)
             emit dbRescanIndexedDirs();
-        if (ocrEditor!=NULL)
+        if (ocrEditor!=nullptr)
             ocrEditor->setEditorFont(ocrFont);
     }
-    dlg->setParent(NULL);
+    dlg->setParent(nullptr);
     delete dlg;
 }
 

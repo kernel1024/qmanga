@@ -8,7 +8,7 @@
 #endif
 
 #ifdef WITH_OCR
-tesseract::TessBaseAPI* ocr = NULL;
+tesseract::TessBaseAPI* ocr = nullptr;
 #endif
 
 int main(int argc, char *argv[])

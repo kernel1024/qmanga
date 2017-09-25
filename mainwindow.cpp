@@ -22,12 +22,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    if (zg==NULL)
+    if (zg==nullptr)
         zg = new ZGlobal(this);
 
     ui->setupUi(this);
 
-    if (zg->ocrEditor==NULL)
+    if (zg->ocrEditor==nullptr)
         zg->ocrEditor = new ZOCREditor(this);
 
     setWindowIcon(QIcon(":/Alien9"));
@@ -134,7 +134,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-    zg = NULL;
+    zg = nullptr;
 }
 
 void MainWindow::centerWindow(bool moveWindow)
@@ -190,7 +190,7 @@ void MainWindow::openAuxFile(const QString &filename)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (zg!=NULL)
+    if (zg!=nullptr)
         zg->saveSettings();
     event->accept();
 }
@@ -298,11 +298,11 @@ void MainWindow::switchFullscreen()
     ui->toolbar->setVisible(!fullScreen);
     int m = 2;
     if (fullScreen) m = 0;
-    if (ui->centralWidget!=NULL) {
+    if (ui->centralWidget!=nullptr) {
         ui->centralWidget->layout()->setMargin(m);
         ui->centralWidget->layout()->setContentsMargins(m,m,m,m);
     }
-    if (ui->tabWidget->currentWidget()!=NULL) {
+    if (ui->tabWidget->currentWidget()!=nullptr) {
         ui->tabWidget->currentWidget()->layout()->setMargin(m);
         ui->tabWidget->currentWidget()->layout()->setContentsMargins(m,m,m,m);
     }
@@ -352,7 +352,7 @@ void MainWindow::updateFastScrollPosition()
 
 void MainWindow::tabChanged(int idx)
 {
-    if (idx==1 && searchTab!=NULL)
+    if (idx==1 && searchTab!=nullptr)
         searchTab->updateFocus();
 }
 
@@ -398,14 +398,14 @@ void MainWindow::createBookmark()
             QMessageBox::warning(this,tr("QManga"),
                                  tr("Unable to add bookmark (frame is empty or duplicate title). Try again."));
     }
-    dlg->setParent(NULL);
+    dlg->setParent(nullptr);
     delete dlg;
 }
 
 void MainWindow::openBookmark()
 {
     QAction* a = qobject_cast<QAction *>(sender());
-    if (a==NULL) return;
+    if (a==nullptr) return;
 
     QString f = a->data().toString();
     QStringList sl = a->data().toString().split('\n');
@@ -533,7 +533,7 @@ void MainWindow::fsUpdateFileList()
         ui->fsResults->setItem(i,0,new QTableWidgetItem(fsScannedFiles[i].name));
         ui->fsResults->setItem(i,1,new QTableWidgetItem(fsScannedFiles[i].album));
         QTableWidgetItem* w = ui->fsResults->item(i,0);
-        if (w!=NULL)
+        if (w!=nullptr)
                 w->setToolTip(fsScannedFiles[i].fileName);
     }
     ui->fsResults->setColumnWidth(0,ui->tabWidget->width()/2);
@@ -554,7 +554,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
     }
     for (int i=0;i<albums.count();i++) {
         if (albums.at(i).startsWith("#")) continue;
-        ac = new QAction(albums.at(i),NULL);
+        ac = new QAction(albums.at(i),nullptr);
         connect(ac,SIGNAL(triggered()),this,SLOT(fsResultsCtxApplyAlbum()));
         cm.addAction(ac);
         cnt++;
@@ -566,7 +566,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
 void MainWindow::fsResultsCtxApplyAlbum()
 {
     QAction* ac = qobject_cast<QAction *>(sender());
-    if (ac==NULL) return;
+    if (ac==nullptr) return;
     QString s = ac->text();
     QList<int> idxs;
     idxs.clear();
@@ -575,7 +575,7 @@ void MainWindow::fsResultsCtxApplyAlbum()
         idxs << ui->fsResults->selectedItems().at(i)->row();
 
     for (int i=0;i<idxs.count();i++)
-        if (ui->fsResults->item(idxs.at(i),1)!=NULL)
+        if (ui->fsResults->item(idxs.at(i),1)!=nullptr)
             ui->fsResults->item(idxs.at(i),1)->setText(s);
 
 }
@@ -668,7 +668,7 @@ ZFSFile &ZFSFile::operator=(const ZFSFile &other)
 ZPopupFrame::ZPopupFrame(QWidget *parent) :
     QFrame(parent)
 {
-    mwnd = NULL;
+    mwnd = nullptr;
     hideChildren();
 }
 
@@ -690,17 +690,17 @@ void ZPopupFrame::leaveEvent(QEvent *)
 void ZPopupFrame::hideChildren()
 {
     foreach (QWidget* w, findChildren<QWidget *>())
-        if (w!=NULL) w->hide();
+        if (w!=nullptr) w->hide();
     emit hideWidget();
 }
 
 void ZPopupFrame::showChildren()
 {
-    if (mwnd!=NULL && !mwnd->isMangaOpened())
+    if (mwnd!=nullptr && !mwnd->isMangaOpened())
         hideChildren();
     else {
         foreach (QWidget* w, findChildren<QWidget *>())
-            if (w!=NULL) w->show();
+            if (w!=nullptr) w->show();
         emit showWidget();
     }
 }

@@ -28,7 +28,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     cachedAlbums.clear();
 
-    progressDlg = NULL;
+    progressDlg = nullptr;
 
     descTemplate = ui->srcDesc->toHtml();
     ui->srcDesc->clear();
@@ -267,7 +267,7 @@ void ZSearchTab::ctxChangeRenderer()
 {
     QAction* am = qobject_cast<QAction *>(sender());
     QModelIndexList li = ui->srcList->selectionModel()->selectedIndexes();
-    if (am==NULL || li.count()!=1) return;
+    if (am==nullptr || li.count()!=1) return;
 
     SQLMangaEntry m = model->getItem(li.first().row());
 
@@ -287,7 +287,7 @@ void ZSearchTab::ctxChangeRenderer()
 void ZSearchTab::ctxAlbumMenu(QPoint pos)
 {
     QListWidgetItem* itm = ui->srcAlbums->itemAt(pos);
-    if (itm==NULL) return;
+    if (itm==nullptr) return;
 
     QMenu cm(ui->srcAlbums);
     QAction* acm;
@@ -303,13 +303,13 @@ void ZSearchTab::ctxAlbumMenu(QPoint pos)
 
 void ZSearchTab::ctxSorting()
 {
-    QAction* am = NULL;
-    if (sender()!=NULL)
+    QAction* am = nullptr;
+    if (sender()!=nullptr)
         am = qobject_cast<QAction *>(sender());
 
     Z::Ordering a = order;
     bool r = reverseOrder;
-    if (am!=NULL) {
+    if (am!=nullptr) {
         bool ok;
         int s = am->data().toInt(&ok);
         if (ok && s>=0 && s<Z::maxOrdering)
@@ -323,7 +323,7 @@ void ZSearchTab::ctxSorting()
 void ZSearchTab::ctxRenameAlbum()
 {
     QAction* nt = qobject_cast<QAction *>(sender());
-    if (nt==NULL) return;
+    if (nt==nullptr) return;
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
 
@@ -338,7 +338,7 @@ void ZSearchTab::ctxRenameAlbum()
 void ZSearchTab::ctxDeleteAlbum()
 {
     QAction* nt = qobject_cast<QAction *>(sender());
-    if (nt==NULL) return;
+    if (nt==nullptr) return;
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
 
@@ -485,7 +485,7 @@ QListView::ViewMode ZSearchTab::getListViewMode() const
 
 void ZSearchTab::loadSearchItems(QSettings &settings)
 {
-    if (searchHistoryModel==NULL) return;
+    if (searchHistoryModel==nullptr) return;
 
     QStringList sl;
 
@@ -508,7 +508,7 @@ void ZSearchTab::loadSearchItems(QSettings &settings)
 
 void ZSearchTab::saveSearchItems(QSettings &settings)
 {
-    if (searchHistoryModel==NULL) return;
+    if (searchHistoryModel==nullptr) return;
 
     settings.setValue("search_history",QVariant::fromValue(searchHistoryModel->getHistoryItems()));
 }
@@ -529,7 +529,7 @@ QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)
     if (dlg->exec()) {
         ret = dlg->listAlbums->lineEdit()->text();
     }
-    dlg->setParent(NULL);
+    dlg->setParent(nullptr);
     delete dlg;
     return ret;
 }
@@ -568,7 +568,7 @@ void ZSearchTab::showEvent(QShowEvent *event)
 
 void ZSearchTab::albumClicked(QListWidgetItem *item)
 {
-    if (item==NULL) return;
+    if (item==nullptr) return;
 
     emit statusBarMsg(tr("Searching..."));
 
@@ -677,7 +677,7 @@ void ZSearchTab::mangaDel()
 {
     if (!model) return;
     QAction *ac = qobject_cast<QAction *>(sender());
-    if (ac==NULL) return;
+    if (ac==nullptr) return;
     bool delFiles = (ac->data().toInt() == 2);
 
     QIntList dl;
@@ -790,7 +790,7 @@ void ZSearchTab::dbNeedTableCreation()
 void ZSearchTab::dbShowProgressDialog(const bool visible, const QString& title)
 {
     if (visible) {
-        if (progressDlg==NULL) {
+        if (progressDlg==nullptr) {
             progressDlg = new QProgressDialog(tr("Adding files"),tr("Cancel"),0,100,this);
             connect(progressDlg,SIGNAL(canceled()),
                     zg->db,SLOT(sqlCancelAdding()),Qt::QueuedConnection);
@@ -810,7 +810,7 @@ void ZSearchTab::dbShowProgressDialog(const bool visible, const QString& title)
 
 void ZSearchTab::dbShowProgressState(const int value, const QString &msg)
 {
-    if (progressDlg!=NULL) {
+    if (progressDlg!=nullptr) {
         progressDlg->setValue(value);
         progressDlg->setLabelText(msg);
     }

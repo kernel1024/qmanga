@@ -245,7 +245,7 @@ void ZMangaView::wheelEvent(QWheelEvent *event)
     int sf = 1;
     int dy = event->angleDelta().y();
     QScrollBar *vb = scroller->verticalScrollBar();
-    if (vb!=NULL && vb->isVisible()) { // page is zoomed and scrollable
+    if (vb!=nullptr && vb->isVisible()) { // page is zoomed and scrollable
         if (((vb->value()>vb->minimum()) && (vb->value()<vb->maximum()))    // somewhere middle of page
                 || ((vb->value()==vb->minimum()) && (dy<0))                 // at top, scrolling down
                 || ((vb->value()==vb->maximum()) && (dy>0))) {              // at bottom, scrolling up
@@ -411,7 +411,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             cp.setWidth(cp.width()*curUmPixmap.width()/curPixmap.width());
             cp.setHeight(cp.height()*curUmPixmap.height()/curPixmap.height());
             cp = cp.intersected(curUmPixmap.rect());
-            if (ocr!=NULL && cp.width()>20 && cp.height()>20) {
+            if (ocr!=nullptr && cp.width()>20 && cp.height()>20) {
                 QImage cpx = curUmPixmap.copy(cp).toImage();
                 ocr->SetImage(Image2PIX(cpx));
                 char* rtext = ocr->GetUTF8Text();
@@ -432,7 +432,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                             sl2[maxlen-j-1][i]=sl[i][j];
                     sl = sl2;
                 }
-                if (zg->ocrEditor!=NULL) {
+                if (zg->ocrEditor!=nullptr) {
                     zg->ocrEditor->addText(sl);
                     zg->ocrEditor->showWnd();
                 }
@@ -490,40 +490,40 @@ void ZMangaView::keyPressEvent(QKeyEvent *event)
 void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu cm(this);
-    QAction* nt = new QAction(QIcon(":/16/zoom-fit-best"),tr("Zoom fit"),NULL);
+    QAction* nt = new QAction(QIcon(":/16/zoom-fit-best"),tr("Zoom fit"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(setZoomFit()));
     cm.addAction(nt);
-    nt = new QAction(QIcon(":/16/zoom-fit-width"),tr("Zoom width"),NULL);
+    nt = new QAction(QIcon(":/16/zoom-fit-width"),tr("Zoom width"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(setZoomWidth()));
     cm.addAction(nt);
-    nt = new QAction(QIcon(":/16/zoom-fit-height"),tr("Zoom height"),NULL);
+    nt = new QAction(QIcon(":/16/zoom-fit-height"),tr("Zoom height"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(setZoomHeight()));
     cm.addAction(nt);
-    nt = new QAction(QIcon(":/16/zoom-original"),tr("Zoom original"),NULL);
+    nt = new QAction(QIcon(":/16/zoom-original"),tr("Zoom original"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(setZoomOriginal()));
     cm.addAction(nt);
     cm.addSeparator();
-    nt = new QAction(QIcon(":/16/zoom-draw.png"),tr("Zoom dynamic"),NULL);
+    nt = new QAction(QIcon(":/16/zoom-draw.png"),tr("Zoom dynamic"),nullptr);
     nt->setCheckable(true);
     nt->setChecked(zoomDynamic);
     connect(nt,SIGNAL(triggered(bool)),this,SLOT(setZoomDynamic(bool)));
     cm.addAction(nt);
     cm.addSeparator();
-    nt = new QAction(QIcon(":/16/view-refresh"),tr("Redraw page"),NULL);
+    nt = new QAction(QIcon(":/16/view-refresh"),tr("Redraw page"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(redrawPage()));
     cm.addAction(nt);
     cm.addSeparator();
-    nt = new QAction(QIcon(":/16/document-close"),tr("Close manga"),NULL);
+    nt = new QAction(QIcon(":/16/document-close"),tr("Close manga"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(closeFileCtx()));
     cm.addAction(nt);
-    nt = new QAction(QIcon(":/16/view-preview"),tr("Set page as cover"),NULL);
+    nt = new QAction(QIcon(":/16/view-preview"),tr("Set page as cover"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(changeMangaCoverCtx()));
     cm.addAction(nt);
-    nt = new QAction(QIcon(":/16/folder-tar"),tr("Export pages to directory"),NULL);
+    nt = new QAction(QIcon(":/16/folder-tar"),tr("Export pages to directory"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(exportPagesCtx()));
     cm.addAction(nt);
     cm.addSeparator();
-    nt = new QAction(QIcon(":/16/go-down"),tr("Minimize window"),NULL);
+    nt = new QAction(QIcon(":/16/go-down"),tr("Minimize window"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(minimizeWindowCtx()));
     cm.addAction(nt);
     cm.exec(event->globalPos());

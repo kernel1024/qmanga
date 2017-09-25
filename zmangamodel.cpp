@@ -32,7 +32,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
 
 QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverride) const
 {
-    if (!index.isValid() || zg==NULL) return QVariant();
+    if (!index.isValid() || zg==nullptr) return QVariant();
     int idx = index.row();
 
     int maxl = mList.count();
@@ -97,7 +97,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
 
 int ZMangaModel::rowCount(const QModelIndex &) const
 {
-    if (zg==NULL) return mList.count();
+    if (zg==nullptr) return mList.count();
 
     if (view->palette().base().color()!=zg->backgroundColor) {
         QPalette pl = view->palette();
@@ -174,7 +174,7 @@ void ZMangaModel::addItem(const SQLMangaEntry &file, const Z::Ordering sortOrder
     mList.append(file);
     endInsertRows();
 
-    if (view->verticalScrollBar()!=NULL)
+    if (view->verticalScrollBar()!=nullptr)
         view->verticalScrollBar()->setSingleStep(view->verticalScrollBar()->pageStep()/2);
 
     view->updateHeaderView(sortOrder, reverseOrder);
@@ -324,7 +324,7 @@ ZMangaListView::ZMangaListView(QWidget *parent)
 
     connect(header, &QHeaderView::sectionResized, [this](int, int, int){
         ZMangaModel* m = qobject_cast<ZMangaModel *>(model());
-        if (m!=NULL)
+        if (m!=nullptr)
             for (int i=0;i<m->rowCount();i++)
                 update(m->index(i));
     });
@@ -332,7 +332,7 @@ ZMangaListView::ZMangaListView(QWidget *parent)
 
 ZMangaListView::~ZMangaListView()
 {
-    if (header!=NULL)
+    if (header!=nullptr)
         header->deleteLater();
 }
 
@@ -360,7 +360,7 @@ void ZMangaListView::updateHeaderView(const Z::Ordering sortOrder, const bool re
 
     // Hide album column when all items from one album
     ZMangaModel* m = qobject_cast<ZMangaModel *>(model());
-    if (m!=NULL && m->rowCount()>0) {
+    if (m!=nullptr && m->rowCount()>0) {
         bool oneAlbum = true;
         QString a = m->getItem(0).album;
         for (int i=1;i<m->rowCount();i++)

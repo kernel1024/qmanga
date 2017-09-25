@@ -4,27 +4,27 @@
 ZMangaLoader::ZMangaLoader(QObject *parent) :
     QObject(parent)
 {
-    mReader = NULL;
+    mReader = nullptr;
 }
 
 ZMangaLoader::~ZMangaLoader()
 {
-    if (mReader!=NULL)
+    if (mReader!=nullptr)
         closeFile();
 }
 
 void ZMangaLoader::openFile(QString filename, int preferred)
 {
-    if (mReader!=NULL)
+    if (mReader!=nullptr)
         closeFile();
 
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,filename,&mimeOk,false);
-    if ((za == NULL) && (!mimeOk)) {
+    if ((za == nullptr) && (!mimeOk)) {
         emit closeFileRequest();
         emit gotError(tr("File format not supported."));
         return;
-    } else if ((za == NULL) && (mimeOk)) {
+    } else if ((za == nullptr) && (mimeOk)) {
         emit closeFileRequest();
         emit gotError(tr("File not found. Update database or restore file."));
         return;
@@ -32,7 +32,7 @@ void ZMangaLoader::openFile(QString filename, int preferred)
     if (!za->openFile()) {
         emit closeFileRequest();
         emit gotError(tr("Unable to open file."));
-        za->setParent(NULL);
+        za->setParent(nullptr);
         delete za;
         return;
     }
@@ -59,10 +59,10 @@ QByteArray ZMangaLoader::getPageSync(int num)
 
 void ZMangaLoader::closeFile()
 {
-    if (mReader!=NULL) {
+    if (mReader!=nullptr) {
         mReader->closeFile();
-        mReader->setParent(NULL);
+        mReader->setParent(nullptr);
         delete mReader;
     }
-    mReader = NULL;
+    mReader = nullptr;
 }

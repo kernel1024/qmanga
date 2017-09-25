@@ -306,7 +306,7 @@ QSqlDatabase ZDB::sqlOpenBase()
 {
     QSqlDatabase db;
 
-    if (zg==NULL) return db;
+    if (zg==nullptr) return db;
 
     if (zg->dbEngine==Z::MySQL) {
         db = QSqlDatabase::addDatabase("QMYSQL",QUuid::createUuid().toString());
@@ -528,7 +528,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
 
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
-    if (za == NULL) {
+    if (za == nullptr) {
         qDebug() << fname << "File format not supported";
         emit errorMsg(tr("%1 file format not supported.").arg(fname));
         sqlCloseBase(db);
@@ -538,7 +538,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     if (!za->openFile()) {
         qDebug() << fname << "Unable to open file.";
         emit errorMsg(tr("Unable to open file %1.").arg(fname));
-        za->setParent(NULL);
+        za->setParent(nullptr);
         delete za;
         sqlCloseBase(db);
         return;
@@ -556,7 +556,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     }
     pba.clear();
     za->closeFile();
-    za->setParent(NULL);
+    za->setParent(nullptr);
     delete za;
 
     sqlCloseBase(db);
@@ -609,14 +609,14 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
 
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
-    if (za == NULL) {
+    if (za == nullptr) {
         qDebug() << fname << "File format not supported.";
         return;
     }
 
     if (!za->openFile()) {
         qDebug() << fname << "Unable to open file.";
-        za->setParent(NULL);
+        za->setParent(nullptr);
         delete za;
         return;
     }
@@ -638,7 +638,7 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     qr.bindValue(4,fname);
 
     za->closeFile();
-    za->setParent(NULL);
+    za->setParent(nullptr);
     delete za;
 
     if (!qr.exec())
@@ -782,7 +782,7 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
 
 Z::DBMS ZDB::sqlDbEngine(QSqlDatabase &db)
 {
-    if (db.isValid() && db.driver()!=NULL) {
+    if (db.isValid() && db.driver()!=nullptr) {
         if (db.driver()->dbmsType()==QSqlDriver::MySqlServer) return Z::MySQL;
         if (db.driver()->dbmsType()==QSqlDriver::SQLite) return Z::SQLite;
     }
@@ -835,7 +835,7 @@ void ZDB::sqlGetTablesDescription()
 {
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
-    if (db.driver()==NULL) {
+    if (db.driver()==nullptr) {
         sqlCloseBase(db);
         return;
     }
@@ -976,14 +976,14 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
         bool mimeOk = false;
         ZAbstractReader* za = readerFactory(this,files.at(i),&mimeOk,true);
-        if (za == NULL) {
+        if (za == nullptr) {
             qDebug() << files.at(i) << "File format not supported.";
             continue;
         }
 
         if (!za->openFile()) {
             qDebug() << files.at(i) << "Unable to open file.";
-            za->setParent(NULL);
+            za->setParent(nullptr);
             delete za;
             continue;
         }
@@ -1007,7 +1007,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
             cnt++;
         pba.clear();
         za->closeFile();
-        za->setParent(NULL);
+        za->setParent(nullptr);
         delete za;
 
         QString s = fi.fileName();

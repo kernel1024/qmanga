@@ -211,9 +211,9 @@ void SettingsDialog::updateSQLFields(bool checked)
 void SettingsDialog::delListWidgetItem()
 {
     QPushButton* btn = qobject_cast<QPushButton *>(sender());
-    if (btn==NULL || !delLookup.contains(btn)) return;
+    if (btn==nullptr || !delLookup.contains(btn)) return;
     QListWidget* list = delLookup.value(btn);
-    if (list==NULL) return;
+    if (list==nullptr) return;
 
     QList<QListWidgetItem *> dl = list->selectedItems();
     foreach (QListWidgetItem* i, dl) {
@@ -301,7 +301,7 @@ void SettingsDialog::dynAdd()
         li->setData(Qt::UserRole+1,dlg->getDlgEdit2());
         ui->listDynAlbums->addItem(li);
     }
-    dlg->setParent(NULL);
+    dlg->setParent(nullptr);
     delete dlg;
 }
 
@@ -322,7 +322,7 @@ void SettingsDialog::dynEdit()
         ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole,dlg->getDlgEdit1());
         ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole+1,dlg->getDlgEdit2());
     }
-    dlg->setParent(NULL);
+    dlg->setParent(nullptr);
     delete dlg;
 }
 

@@ -99,7 +99,7 @@ void ZOCREditor::translate()
 {
     ui->status->clear();
 #ifdef QT_DBUS_LIB
-    if (translator!=NULL) {
+    if (translator!=nullptr) {
         if (!translator->isValid())
             ui->status->setText(tr("Aux translator not ready."));
         else {
@@ -125,19 +125,19 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 
     QAction *ac;
 
-    ac = new QAction(QIcon(":/16/edit-cut"),tr("Cut"),NULL);
+    ac = new QAction(QIcon(":/16/edit-cut"),tr("Cut"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::cut);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/16/edit-copy"),tr("Copy"),NULL);
+    ac = new QAction(QIcon(":/16/edit-copy"),tr("Copy"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::copy);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/16/edit-paste"),tr("Paste"),NULL);
+    ac = new QAction(QIcon(":/16/edit-paste"),tr("Paste"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::paste);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/16/edit-clear"),tr("Clear"),NULL);
+    ac = new QAction(QIcon(":/16/edit-clear"),tr("Clear"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::clear);
     cm.addAction(ac);
 
@@ -151,14 +151,14 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 #ifdef QT_DBUS_LIB
         cm.addAction(dictSearch);
 
-        ac = new QAction(QIcon(":/16/accessories-dictionary"),tr("Show qjrad window"),NULL);
+        ac = new QAction(QIcon(":/16/accessories-dictionary"),tr("Show qjrad window"),nullptr);
         connect(ac,&QAction::triggered,[this,sText](){
             if (dictionary->isValid())
                 dictionary->showDictionaryWindow(sText);
         });
         cm.addAction(ac);
 
-        ac = new QAction(QIcon(":/16/jpreader"),tr("Search with jpreader"),NULL);
+        ac = new QAction(QIcon(":/16/jpreader"),tr("Search with jpreader"),nullptr);
         connect(ac,&QAction::triggered,[this,sText](){
             if (browser->isValid()) {
                 if (sText.trimmed().startsWith("http",Qt::CaseInsensitive)) {
@@ -180,7 +180,7 @@ void ZOCREditor::contextMenu(const QPoint &pos)
             foreach (const QString& name, searchNames) {
                 QUrl url = zg->createSearchUrl(sText,name);
                 if (!url.isEmpty() && url.isValid()) {
-                    ac = new QAction(name,NULL);
+                    ac = new QAction(name,nullptr);
                     connect(ac, &QAction::triggered, [url,this](){
                         QDesktopServices::openUrl(url);
                     });
@@ -198,7 +198,7 @@ void ZOCREditor::selectionChanged()
     storedSelection = ui->editor->textCursor().selectedText();
 
 #ifdef QT_DBUS_LIB
-    if (dictSearch->isChecked() && !storedSelection.isEmpty() && dictionary!=NULL)
+    if (dictSearch->isChecked() && !storedSelection.isEmpty() && dictionary!=nullptr)
         selectionTimer->start();
 #endif
 }
@@ -206,7 +206,7 @@ void ZOCREditor::selectionChanged()
 void ZOCREditor::selectionShow()
 {
 #ifdef QT_DBUS_LIB
-    if (dictionary==NULL || storedSelection.isEmpty()) return;
+    if (dictionary==nullptr || storedSelection.isEmpty()) return;
 
     findWordTranslation(storedSelection);
 #endif

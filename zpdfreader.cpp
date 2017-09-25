@@ -22,8 +22,8 @@ ZPdfReader::ZPdfReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
 {
 #ifdef WITH_POPPLER
-    doc = NULL;
-    outDev = NULL;
+    doc = nullptr;
+    outDev = nullptr;
 #endif
     useImageCatalog = false;
     numPages = 0;
@@ -40,7 +40,7 @@ bool ZPdfReader::openFile()
     numPages = 0;
 
 #ifdef WITH_POPPLER
-    if (opened || globalParams==NULL)
+    if (opened || globalParams==nullptr)
         return false;
 
     sortList.clear();
@@ -55,7 +55,7 @@ bool ZPdfReader::openFile()
     GooString fname(fileName.toUtf8());
     doc = PDFDocFactory().createPDFDoc(fname);
 
-    if (doc==NULL || !doc->isOk())
+    if (doc==nullptr || !doc->isOk())
         return false;
 
     outDev = new ZPDFImageOutputDev();
@@ -105,13 +105,13 @@ void ZPdfReader::closeFile()
     if (!opened)
         return;
 
-    if (doc!=NULL)
+    if (doc!=nullptr)
         delete doc;
-    doc = NULL;
+    doc = nullptr;
 
-    if (outDev!=NULL)
+    if (outDev!=nullptr)
         delete outDev;
-    outDev = NULL;
+    outDev = nullptr;
 #endif
 
     opened = false;
@@ -125,7 +125,7 @@ QByteArray ZPdfReader::loadPage(int num)
     QByteArray res;
     res.clear();
 #ifdef WITH_POPPLER
-    if (!opened || doc==NULL || globalParams==NULL)
+    if (!opened || doc==nullptr || globalParams==nullptr)
         return res;
 
     if (num<0 || num>=sortList.count()) return res;
@@ -195,7 +195,7 @@ void initPdfReader()
 void freePdfReader()
 {
     delete globalParams;
-    globalParams = NULL;
+    globalParams = nullptr;
 }
 
 #else // WITH_POPPLER

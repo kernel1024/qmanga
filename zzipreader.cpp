@@ -5,7 +5,7 @@
 ZZipReader::ZZipReader(QObject *parent, QString filename) :
     ZAbstractReader(parent,filename)
 {
-    mainZFile = NULL;
+    mainZFile = nullptr;
 }
 
 bool ZZipReader::openFile()
@@ -46,7 +46,7 @@ void ZZipReader::closeFile()
     if (!opened)
         return;
 
-    if (mainZFile!=NULL)
+    if (mainZFile!=nullptr)
         zzip_closedir(mainZFile);
     opened = false;
     sortList.clear();

@@ -25,9 +25,8 @@
 
 #ifdef WITH_LIBMAGIC
 #include <magic.h>
-#endif
 
-#ifndef WITH_LIBMAGIC
+#else
 // some magic here!
 
 struct MagicSample {
@@ -50,7 +49,7 @@ static const MagicSample magicList[] = {
     { 0, 4, "\x49\x49\x2A\x00", "image/tiff" },
     { 0, 4, "\x4D\x4D\x00\x2A", "image/tiff" },
     { 0, 2, "\x42\x4D", "image/bmp" },
-    { 0, 0, NULL, NULL }
+    { 0, 0, nullptr, nullptr }
 };
 
 #endif
@@ -63,7 +62,7 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
         if (createReader)
             return new ZSingleImageReader(parent,filename);
         else
-            return NULL;
+            return nullptr;
     }
 
     if (filename.startsWith("#DYN#")) {
@@ -72,39 +71,39 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
         if (createReader)
             return new ZImagesDirReader(parent,fname);
         else
-            return NULL;
+            return nullptr;
 
     }
     QFileInfo fi(filename);
-    if (!fi.exists()) return NULL;
+    if (!fi.exists()) return nullptr;
 
     QString mime = detectMIME(filename).toLower();
     if (mime.contains("application/zip",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZZipReader(parent,filename);
         else
-            return NULL;
+            return nullptr;
     } else if (mime.contains("application/x-rar",Qt::CaseInsensitive) ||
                mime.contains("application/rar",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZRarReader(parent,filename);
         else
-            return NULL;
+            return nullptr;
 #ifdef WITH_POPPLER
     } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZPdfReader(parent,filename);
         else
-            return NULL;
+            return nullptr;
 #endif
     } else if (mime.contains("image/",Qt::CaseInsensitive) && !onlyArchives) {
         if (createReader)
             return new ZSingleImageReader(parent,filename);
         else
-            return NULL;
+            return nullptr;
     } else {
         *mimeOk = false;
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -271,11 +270,11 @@ QString detectMIME(const QString& filename)
 {
 #ifdef WITH_LIBMAGIC
     magic_t myt = magic_open(MAGIC_ERROR|MAGIC_MIME_TYPE);
-    magic_load(myt,NULL);
+    magic_load(myt,nullptr);
     QByteArray bma = filename.toUtf8();
     const char* bm = bma.data();
     const char* mg = magic_file(myt,bm);
-    if (mg==NULL) {
+    if (mg==nullptr) {
         qDebug() << "libmagic error: " << magic_errno(myt) << QString::fromUtf8(magic_error(myt));
         return QString("text/plain");
     }
@@ -296,9 +295,9 @@ QString detectMIME(const QByteArray &buf)
 {
 #ifdef WITH_LIBMAGIC
     magic_t myt = magic_open(MAGIC_ERROR|MAGIC_MIME_TYPE);
-    magic_load(myt,NULL);
+    magic_load(myt,nullptr);
     const char* mg = magic_buffer(myt,buf.data(),buf.length());
-    if (mg==NULL) {
+    if (mg==nullptr) {
         qDebug() << "libmagic error: " << magic_errno(myt) << QString::fromUtf8(magic_error(myt));
         return QString("text/plain");
     }
@@ -306,7 +305,7 @@ QString detectMIME(const QByteArray &buf)
     magic_close(myt);
     return mag;
 #else
-    for (int idx=0;magicList[idx].sample!=NULL;idx++) {
+    for (int idx=0;magicList[idx].sample!=nullptr;idx++) {
         QByteArray test = buf.mid(magicList[idx].offset,magicList[idx].size);
         QByteArray sample = QByteArray::fromRawData(magicList[idx].sample,magicList[idx].size);
         if (test==sample)
@@ -515,7 +514,7 @@ PIX* Image2PIX(QImage& qImage) {
 
   pixs = pixCreate(width, height, depth);
   pixSetWpl(pixs, wpl);
-  pixSetColormap(pixs, NULL);
+  pixSetColormap(pixs, nullptr);
   l_uint32 *datas = pixs->data;
 
   for (int y = 0; y < height; y++) {
@@ -575,17 +574,17 @@ QImage PIX2QImage(PIX *pixImage) {
 tesseract::TessBaseAPI* initializeOCR()
 {
     ocr = new tesseract::TessBaseAPI();
-    const char* datapath = NULL;
+    const char* datapath = nullptr;
 #ifdef Q_OS_WIN
     QDir appDir(qApp->applicationDirPath());
     QByteArray tesspath = appDir.absoluteFilePath("tessdata").toUtf8();
     datapath = tesspath.constData();
 #endif
     if (ocr->Init(datapath,"jpn")) {
-        QMessageBox::critical(NULL,"QManga error",
+        QMessageBox::critical(nullptr,"QManga error",
                               "Could not initialize Tesseract.\n"
                               "Maybe japanese language training data is not installed.");
-        return NULL;
+        return nullptr;
     }
     return ocr;
 }
