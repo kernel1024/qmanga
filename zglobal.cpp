@@ -59,7 +59,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     threadDB->start();
 
     initPdfReader();
-    initDjVuReader();
+    ZDjVuController::instance()->initDjVuReader();
 
     resetPreferredWidth();
 }
@@ -68,7 +68,7 @@ ZGlobal::~ZGlobal()
 {
     threadDB->quit();
     freePdfReader();
-    freeDjVuReader();
+    ZDjVuController::instance()->freeDjVuReader();
 }
 
 void ZGlobal::checkSQLProblems(QWidget *parent)

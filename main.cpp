@@ -3,6 +3,7 @@
 #include <locale.h>
 #include "mainwindow.h"
 #include "global.h"
+#include "zdjvureader.h"
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
@@ -22,6 +23,10 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QUuid>("QUuid");
     qRegisterMetaType<Z::Ordering>("Z::Ordering");
     qRegisterMetaTypeStreamOperators<ZStrMap>("ZStrMap");
+#ifdef WITH_DJVU
+    qRegisterMetaType<ZDjVuDocument>("ZDjVuDocument");
+#endif
+
 
     QApplication a(argc, argv);
 

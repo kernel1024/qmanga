@@ -17,12 +17,6 @@ class ZDjVuReader : public ZAbstractReader
 private:
     int numPages;
 
-#ifdef WITH_DJVU
-    DDJVUAPI ddjvu_document_t * document;
-
-    void handle_ddjvu_messages(ddjvu_context_t *ctx, int wait);
-#endif
-
 public:
     explicit ZDjVuReader(QObject *parent, QString filename);
     ~ZDjVuReader();
@@ -33,7 +27,49 @@ public:
 
 };
 
-void initDjVuReader();
-void freeDjVuReader();
+#ifdef WITH_DJVU
+class ZDjVuDocument {
+public:
+    DDJVUAPI ddjvu_document_t * document;
+    QString filename;
+    int pageNum;
+    int ref;
+    ZDjVuDocument();
+    ZDjVuDocument(const ZDjVuDocument& other);
+    ZDjVuDocument(const QString& aFilename);
+    ZDjVuDocument(DDJVUAPI ddjvu_document_t * aDocument, const QString& aFilename,  int aPageNum);
+    ZDjVuDocument &operator=(const ZDjVuDocument& other);
+    bool operator==(const ZDjVuDocument& ref) const;
+    bool operator!=(const ZDjVuDocument& ref) const;
+};
+#endif
+
+class ZDjVuController : public QObject
+{
+    Q_OBJECT
+
+private:
+    static ZDjVuController* m_instance;
+#ifdef WITH_DJVU
+    DDJVUAPI ddjvu_context_t  * djvuContext;
+    QList<ZDjVuDocument> documents;
+
+    void handle_ddjvu_messages(ddjvu_context_t *ctx, int wait);
+#endif
+
+public:
+    static ZDjVuController *instance();
+    void initDjVuReader();
+    void freeDjVuReader();
+    bool loadDjVu(const QString& filename, int &numPages);
+    void closeDjVu(const QString& filename);
+#ifdef WITH_DJVU
+    DDJVUAPI ddjvu_document_t* getDocument(const QString &filename);
+#endif
+
+    friend class ZDjVuReader;
+
+};
+
 
 #endif // ZDJVUREADER_H
