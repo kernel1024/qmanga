@@ -13,6 +13,7 @@
 #include "zzipreader.h"
 #include "zrarreader.h"
 #include "zpdfreader.h"
+#include "zdjvureader.h"
 #include "zimagesdirreader.h"
 #include "zsingleimagereader.h"
 #include "zglobal.h"
@@ -93,6 +94,13 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
     } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZPdfReader(parent,filename);
+        else
+            return nullptr;
+#endif
+#ifdef WITH_DJVU
+    } else if (mime.contains("image/vnd.djvu",Qt::CaseInsensitive)) {
+        if (createReader)
+            return new ZDjVuReader(parent,filename);
         else
             return nullptr;
 #endif

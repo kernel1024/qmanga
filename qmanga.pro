@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     zpdfimageoutdev.cpp \
     zfilecopier.cpp \
     scalefilter.cpp \
-    multiinputdialog.cpp
+    multiinputdialog.cpp \
+    zdjvureader.cpp
 
 HEADERS  += mainwindow.h \
     zmangaview.h \
@@ -62,7 +63,8 @@ HEADERS  += mainwindow.h \
     zpdfimageoutdev.h \
     zfilecopier.h \
     scalefilter.h \
-    multiinputdialog.h
+    multiinputdialog.h \
+    zdjvureader.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui \
@@ -106,6 +108,13 @@ CONFIG += warn_on link_pkgconfig c++11
         message("Using Tesseract OCR:  NO")
     }
 
+    packagesExist(ddjvuapi) {
+        CONFIG += use_djvu
+        message("Using DjVuLibre:      YES")
+    } else {
+        message("Using DjVuLibre:      NO")
+    }
+
     use_poppler {
         DEFINES += WITH_POPPLER=1
         PKGCONFIG += poppler
@@ -116,6 +125,11 @@ CONFIG += warn_on link_pkgconfig c++11
         QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
         PKGCONFIG += tesseract
         LIBS += -llept
+    }
+
+    use_djvu {
+        DEFINES += WITH_DJVU=1
+        PKGCONFIG += ddjvuapi
     }
 
     DBUS_INTERFACES = org.kernel1024.jpreader.auxtranslator.xml \

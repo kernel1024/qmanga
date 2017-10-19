@@ -11,6 +11,7 @@
 #include "zmangamodel.h"
 #include "zdb.h"
 #include "zpdfreader.h"
+#include "zdjvureader.h"
 
 ZGlobal* zg = nullptr;
 
@@ -58,6 +59,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     threadDB->start();
 
     initPdfReader();
+    initDjVuReader();
 
     resetPreferredWidth();
 }
@@ -66,6 +68,7 @@ ZGlobal::~ZGlobal()
 {
     threadDB->quit();
     freePdfReader();
+    freeDjVuReader();
 }
 
 void ZGlobal::checkSQLProblems(QWidget *parent)
