@@ -61,7 +61,6 @@ ZMangaView::ZMangaView(QWidget *parent) :
 
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
-    cnt = 1;
     for (int i=0;i<cnt;i++) {
         QThread* th = new QThread();
         ZMangaLoader* ld = new ZMangaLoader();
