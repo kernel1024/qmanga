@@ -575,9 +575,9 @@ void MainWindow::fsResultsCtxApplyAlbum()
         idxs << ui->fsResults->selectedItems().at(i)->row();
 
     for (int i=0;i<idxs.count();i++)
-        if (ui->fsResults->item(idxs.at(i),1)!=nullptr)
-            ui->fsResults->item(idxs.at(i),1)->setText(s);
+        fsScannedFiles[idxs.at(i)].album = s;
 
+    fsUpdateFileList();
 }
 
 void MainWindow::fsFindNewFiles()
