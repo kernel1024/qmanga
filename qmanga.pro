@@ -148,6 +148,9 @@ win32 {
     PKGCONFIG += tesseract
     LIBS += -llept
 
+    DEFINES += WITH_DJVU=1
+    PKGCONFIG += ddjvuapi
+
     RC_FILE = qmanga.rc
 }
 

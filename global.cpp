@@ -50,6 +50,7 @@ static const MagicSample magicList[] = {
     { 0, 4, "\x49\x49\x2A\x00", "image/tiff" },
     { 0, 4, "\x4D\x4D\x00\x2A", "image/tiff" },
     { 0, 2, "\x42\x4D", "image/bmp" },
+    { 12, 3,"\x44\x4A\x56", "image/vnd.djvu"},
     { 0, 0, nullptr, nullptr }
 };
 

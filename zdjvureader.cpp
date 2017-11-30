@@ -63,7 +63,7 @@ QByteArray ZDjVuReader::loadPage(int num)
     QByteArray res;
     res.clear();
 #ifdef WITH_DJVU
-    DDJVUAPI ddjvu_document_t* document = ZDjVuController::instance()->getDocument(fileName);
+    ddjvu_document_t* document = ZDjVuController::instance()->getDocument(fileName);
     if (!opened || document==nullptr) {
         qWarning() << "Uninitialized context for page " << num;
         return res;
@@ -222,7 +222,7 @@ bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
     }
 
 
-    DDJVUAPI ddjvu_document_t* document = ddjvu_document_create_by_filename_utf8(
+    ddjvu_document_t* document = ddjvu_document_create_by_filename_utf8(
                                               djvuContext, filename.toUtf8().constData(), 0);
     if (!document) {
         qWarning() << "Unable to create document context for " << filename;
@@ -268,7 +268,7 @@ void ZDjVuController::closeDjVu(const QString &filename)
 ddjvu_document_t *ZDjVuController::getDocument(const QString& filename)
 {
     docMutex.lock();
-    DDJVUAPI ddjvu_document_t* res = nullptr;
+    ddjvu_document_t* res = nullptr;
     int dIdx = documents.indexOf(ZDjVuDocument(filename));
     if (dIdx >= 0)
         res = documents.at(dIdx).document;
