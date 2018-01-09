@@ -556,6 +556,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
         if (albums.at(i).startsWith("#")) continue;
         ac = new QAction(albums.at(i),nullptr);
         connect(ac,SIGNAL(triggered()),this,SLOT(fsResultsCtxApplyAlbum()));
+        ac->setData(albums.at(i));
         cm.addAction(ac);
         cnt++;
     }
@@ -567,7 +568,11 @@ void MainWindow::fsResultsCtxApplyAlbum()
 {
     QAction* ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
-    QString s = ac->text();
+    QString s = ac->data().toString();
+    if (s.isEmpty()) {
+        QMessageBox::warning(this,tr("QManga"),tr("Unable to apply album name"));
+        return;
+    }
     QList<int> idxs;
     idxs.clear();
 
