@@ -588,7 +588,7 @@ void ZSearchTab::mangaSearch()
     if (model)
         model->deleteAllItems();
 
-    QString s = ui->srcEdit->text();
+    QString s = ui->srcEdit->text().trimmed();
 
     searchHistoryModel->appendHistoryItem(s);
 
