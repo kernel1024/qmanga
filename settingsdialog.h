@@ -5,6 +5,7 @@
 #include <QDialog>
 #include <QComboBox>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QRadioButton>
@@ -45,6 +46,7 @@ public:
     QDoubleSpinBox* spinBlur;
     QRadioButton* radioMySQL;
     QRadioButton* radioSQLite;
+    QDoubleSpinBox* spinSearchScrollFactor;
 
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();

@@ -8,6 +8,7 @@
 #include <QDesktopServices>
 #include <QClipboard>
 #include <QMimeData>
+#include <QScrollBar>
 #include <QDebug>
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -45,7 +46,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcIconSize->setMaximum(maxPreviewSize);
     ui->srcIconSize->setValue(128);
     ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
-    ui->srcList->setVerticalScrollMode(QAbstractItemView::ScrollPerItem);
+    ui->srcList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->srcModeIcon->setChecked(ui->srcList->viewMode()==QListView::IconMode);
     ui->srcModeList->setChecked(ui->srcList->viewMode()==QListView::ListMode);
     ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);

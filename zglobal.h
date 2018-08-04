@@ -52,6 +52,7 @@ public:
     int scrollDelta;
     int detectedDelta;
     int scrollFactor;
+    double searchScrollFactor;
 
     bool cachePixmaps;
     bool useFineRendering;

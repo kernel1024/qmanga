@@ -31,6 +31,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     dbEngine = Z::SQLite;
     scrollDelta = 120;
     scrollFactor = 3;
+    searchScrollFactor = 0.1;
     dpiX = 75.0;
     dpiY = 75.0;
     forceDPI = -1.0;
@@ -114,12 +115,13 @@ void ZGlobal::loadSettings()
     savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
     savedAuxSaveDir = settings.value("savedAuxSaveDir",QString()).toString();
     magnifySize = settings.value("magnifySize",150).toInt();
-    resizeBlur = settings.value("resizingBlur",1.0).toFloat();
+    resizeBlur = settings.value("resizingBlur",1.0).toDouble();
     scrollDelta = settings.value("scrollDelta",120).toInt();
     scrollFactor = settings.value("scrollFactor",5).toInt();
+    searchScrollFactor = settings.value("searchScrollFactor",0.1).toDouble();
     pdfRendering = static_cast<Z::PDFRendering>(settings.value("pdfRendering",Z::Autodetect).toInt());
     dbEngine = static_cast<Z::DBMS>(settings.value("dbEngine",Z::SQLite).toInt());
-    forceDPI = settings.value("forceDPI",-1.0).toFloat();
+    forceDPI = settings.value("forceDPI",-1.0).toDouble();
     backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
     frameColor = QColor(settings.value("frameColor",QColor(Qt::lightGray).name()).toString());
     cachePixmaps = settings.value("cachePixmaps",false).toBool();
@@ -202,6 +204,7 @@ void ZGlobal::saveSettings()
     settings.setValue("resizingBlur",resizeBlur);
     settings.setValue("scrollDelta",scrollDelta);
     settings.setValue("scrollFactor",scrollFactor);
+    settings.setValue("searchScrollFactor",searchScrollFactor);
     settings.setValue("pdfRendering",pdfRendering);
     settings.setValue("dbEngine",dbEngine);
     settings.setValue("forceDPI",forceDPI);
@@ -321,6 +324,7 @@ void ZGlobal::settingsDlg()
     dlg->spinBlur->setValue(resizeBlur);
     dlg->spinScrollDelta->setValue(scrollDelta);
     dlg->spinScrollFactor->setValue(scrollFactor);
+    dlg->spinSearchScrollFactor->setValue(searchScrollFactor);
     dlg->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(detectedDelta));
     if (cachePixmaps)
         dlg->radioCachePixmaps->setChecked(true);
@@ -380,6 +384,7 @@ void ZGlobal::settingsDlg()
         resizeBlur=dlg->spinBlur->value();
         scrollDelta=dlg->spinScrollDelta->value();
         scrollFactor=dlg->spinScrollFactor->value();
+        searchScrollFactor=dlg->spinSearchScrollFactor->value();
         backgroundColor=dlg->getBkColor();
         frameColor=dlg->getFrameColor();
         idxFont=dlg->getIdxFont();

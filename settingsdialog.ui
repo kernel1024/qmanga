@@ -745,7 +745,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <layout class="QHBoxLayout" name="horizontalLayout_13">
          <item>
           <widget class="QGroupBox" name="groupBox_8">
            <property name="title">
@@ -788,6 +788,41 @@ one per page, with supported format. Use rendering mode as fallback.</string>
                </widget>
               </item>
              </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_9">
+           <property name="title">
+            <string>Search tab scrolling</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Scr&amp;oll step factor</string>
+              </property>
+              <property name="buddy">
+               <cstring>spinSearchScrollFactor</cstring>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="spinSearchScrollFactor">
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -1075,6 +1110,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
   <tabstop>checkFineRendering</tabstop>
   <tabstop>checkPDFDPI</tabstop>
   <tabstop>spinPDFDPI</tabstop>
+  <tabstop>spinSearchScrollFactor</tabstop>
   <tabstop>listBookmarks</tabstop>
   <tabstop>btnDeleteBookmark</tabstop>
   <tabstop>listDynAlbums</tabstop>

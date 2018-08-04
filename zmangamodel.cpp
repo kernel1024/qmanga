@@ -375,6 +375,14 @@ void ZMangaListView::updateHeaderView(const Z::Ordering sortOrder, const bool re
     }
 }
 
+void ZMangaListView::updateGeometries()
+{
+    QListView::updateGeometries();
+    if (verticalScrollBar()!=nullptr)
+        verticalScrollBar()->setSingleStep(
+                    static_cast<int>(static_cast<double>(gridSize().height())*zg->searchScrollFactor));
+}
+
 void ZMangaListView::resizeHeaderView()
 {
     headerHeight = header->sizeHint().height();

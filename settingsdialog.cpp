@@ -37,6 +37,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     checkFSWatcher = ui->checkFSWatcher;
     spinScrollDelta = ui->spinScrollDelta;
     spinScrollFactor = ui->spinScrollFactor;
+    spinSearchScrollFactor = ui->spinSearchScrollFactor;
     labelDetectedDelta = ui->labelDetectedDelta;
     listDynAlbums = ui->listDynAlbums;
     comboPDFRendererMode = ui->comboPDFRenderMode;

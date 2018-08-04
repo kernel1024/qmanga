@@ -55,6 +55,8 @@ public:
     void setModel(QAbstractItemModel *model);
     void setViewMode(ViewMode mode);
     void updateHeaderView(const Z::Ordering sortOrder, const bool reverseOrder);
+protected:
+    virtual void updateGeometries();
 public slots:
     void resizeHeaderView();
 };
