@@ -4,11 +4,20 @@
     <signal name="gotTranslation">
       <arg name="text" type="s" direction="out"/>
     </signal>
-    <method name="startAuxTranslation">
+    <method name="setText">
       <arg name="text" type="s" direction="in"/>
+    </method>
+    <method name="setSrcLang">
+      <arg name="lang" type="s" direction="in"/>
+    </method>
+    <method name="setDestLang">
+      <arg name="lang" type="s" direction="in"/>
     </method>
     <method name="startTranslation">
       <arg name="deleteAfter" type="b" direction="in"/>
+    </method>
+    <method name="startAuxTranslation">
+      <arg name="text" type="s" direction="in"/>
     </method>
   </interface>
 </node>

@@ -187,6 +187,8 @@ QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter 
 #ifdef WITH_OCR
 extern tesseract::TessBaseAPI* ocr;
 
+QString ocrGetActiveLanguage();
+QString ocrGetDatapath();
 tesseract::TessBaseAPI *initializeOCR();
 PIX* Image2PIX(QImage& qImage);
 QImage PIX2QImage(PIX *pixImage);

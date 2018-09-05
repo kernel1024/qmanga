@@ -36,6 +36,10 @@ ZGlobal::ZGlobal(QObject *parent) :
     dpiY = 75.0;
     forceDPI = -1.0;
 
+    initLanguagesList();
+    tranSourceLang = QString("ja");
+    tranDestLang = QString("en");
+
     filesystemWatcher = false;
     fsWatcher = new QFileSystemWatcher(this);
     newlyAddedFiles.clear();
@@ -215,10 +219,11 @@ void ZGlobal::saveSettings()
     settings.setValue("filesystemWatcher",filesystemWatcher);
     settings.setValue("idxFont",idxFont.toString());
     settings.setValue("ocrFont",ocrFont.toString());
-    settings.setValue("defaultOrdering",(int)defaultOrdering);
+    settings.setValue("defaultOrdering",static_cast<int>(defaultOrdering));
     settings.setValue("defaultSearchEngine",defaultSearchEngine);
     settings.setValue("ctxSearchEngines",QVariant::fromValue(ctxSearchEngines));
-
+    settings.setValue("tranSourceLanguage",tranSourceLang);
+    settings.setValue("tranDestLanguage",tranDestLang);
 
     MainWindow* w = qobject_cast<MainWindow *>(parent());
     if (w!=nullptr) {
@@ -396,6 +401,12 @@ void ZGlobal::settingsDlg()
         downscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg->comboDownscaleFilter->currentIndex());
         pdfRendering = static_cast<Z::PDFRendering>(dlg->comboPDFRendererMode->currentIndex());
         ctxSearchEngines=dlg->getSearchEngines();
+
+#ifndef Q_OS_WIN
+        tranSourceLang=dlg->getTranSourceLanguage();
+        tranDestLang=dlg->getTranDestLanguage();
+#endif
+
         if (dlg->checkForceDPI->isChecked())
             forceDPI = dlg->spinForceDPI->value();
         else
@@ -427,6 +438,14 @@ void ZGlobal::settingsDlg()
             emit dbRescanIndexedDirs();
         if (ocrEditor!=nullptr)
             ocrEditor->setEditorFont(ocrFont);
+
+#ifdef WITH_OCR
+        QSettings settingsOCR("kernel1024", "qmanga-ocr");
+        settingsOCR.beginGroup("Main");
+        settingsOCR.setValue("activeLanguage", dlg->getOCRLanguage());
+        settingsOCR.setValue("datapath", dlg->editOCRDatapath->text());
+        settingsOCR.endGroup();
+#endif
     }
     dlg->setParent(nullptr);
     delete dlg;
@@ -449,6 +468,43 @@ QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine)
     return QUrl::fromUserInput(url);
 }
 
+void ZGlobal::initLanguagesList()
+{
+    QList<QLocale> allLocales = QLocale::matchingLocales(
+                QLocale::AnyLanguage,
+                QLocale::AnyScript,
+                QLocale::AnyCountry);
+
+    langNamesList.clear();
+    langSortedBCP47List.clear();
+
+    for(const QLocale &locale : allLocales) {
+        QString bcp = locale.bcp47Name();
+        QString name = QString("%1 (%2)").arg(QLocale::languageToString(locale.language()),bcp);
+
+        // filter out unsupported codes for dialects
+        if (bcp.contains('-') && !bcp.startsWith("zh")) continue;
+
+        // replace C locale with English
+        if (bcp == QString("en"))
+            name = QString("English (en)");
+
+        if (!langNamesList.contains(bcp)) {
+            langNamesList.insert(bcp,name);
+            langSortedBCP47List.insert(name,bcp);
+        }
+    }
+}
+
+QString ZGlobal::getLanguageName(const QString& bcp47Name)
+{
+    return langNamesList.value(bcp47Name);
+}
+
+QStringList ZGlobal::getLanguageCodes() const
+{
+    return langSortedBCP47List.values();
+}
 
 ZFileEntry::ZFileEntry()
 {

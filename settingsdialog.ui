@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>769</width>
+    <width>679</width>
     <height>496</height>
    </rect>
   </property>
@@ -801,7 +801,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
             <item>
              <widget class="QLabel" name="label">
               <property name="text">
-               <string>Scr&amp;oll step factor</string>
+               <string>Scro&amp;ll step factor</string>
               </property>
               <property name="buddy">
                <cstring>spinSearchScrollFactor</cstring>
@@ -838,6 +838,160 @@ one per page, with supported format. Use rendering mode as fallback.</string>
           <size>
            <width>20</width>
            <height>34</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_7">
+      <attribute name="title">
+       <string>Language</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_14">
+       <item>
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>138</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_18">
+         <property name="text">
+          <string>You will have to restart the program for the changes of Tesseract settings to take effect.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupTesseract">
+         <property name="title">
+          <string>Tesseract</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>&amp;Training datapath</string>
+            </property>
+            <property name="buddy">
+             <cstring>editOCRDatapath</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="editOCRDatapath"/>
+          </item>
+          <item row="0" column="2">
+           <widget class="QPushButton" name="btnOCRDatapath">
+            <property name="text">
+             <string>...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>Active &amp;language</string>
+            </property>
+            <property name="buddy">
+             <cstring>comboOCRLanguage</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="comboOCRLanguage">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupTranslator">
+         <property name="title">
+          <string>Translator</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>S&amp;ource language</string>
+            </property>
+            <property name="buddy">
+             <cstring>comboLangSource</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="comboLangSource">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>&amp;Destination language</string>
+            </property>
+            <property name="buddy">
+             <cstring>comboLangDest</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="comboLangDest">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_6">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>138</height>
           </size>
          </property>
         </spacer>
@@ -1111,6 +1265,11 @@ one per page, with supported format. Use rendering mode as fallback.</string>
   <tabstop>checkPDFDPI</tabstop>
   <tabstop>spinPDFDPI</tabstop>
   <tabstop>spinSearchScrollFactor</tabstop>
+  <tabstop>editOCRDatapath</tabstop>
+  <tabstop>btnOCRDatapath</tabstop>
+  <tabstop>comboOCRLanguage</tabstop>
+  <tabstop>comboLangSource</tabstop>
+  <tabstop>comboLangDest</tabstop>
   <tabstop>listBookmarks</tabstop>
   <tabstop>btnDeleteBookmark</tabstop>
   <tabstop>listDynAlbums</tabstop>

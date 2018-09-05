@@ -20,8 +20,11 @@ private:
     QThread* threadDB;
     QString dbHost, dbBase, dbUser, dbPass;
     QHash<QString,QStringList> dirWatchList;
+    QMap<QString,QString> langSortedBCP47List;  // names -> bcp (for sorting)
+    QHash<QString,QString> langNamesList;       // bcp -> names
 
     void checkSQLProblems(QWidget *parent);
+    void initLanguagesList();
 
 public:
     ZDB* db;
@@ -29,13 +32,15 @@ public:
     QFileSystemWatcher* fsWatcher;
     QStringList newlyAddedFiles;
 
-    explicit ZGlobal(QObject *parent = 0);
+    explicit ZGlobal(QObject *parent = nullptr);
     ~ZGlobal();
 
     ZStrMap bookmarks;
 
     ZStrMap ctxSearchEngines;
     QString defaultSearchEngine;
+
+    QString tranSourceLang, tranDestLang;
 
     Blitz::ScaleFilterType downscaleFilter, upscaleFilter;
     Z::Ordering defaultOrdering;
@@ -65,6 +70,9 @@ public:
 
     void fsCheckFilesAvailability();
     QUrl createSearchUrl(const QString &text, const QString &engine = QString());
+
+    QStringList getLanguageCodes() const;
+    QString getLanguageName(const QString &bcp47Name);
 
 public slots:
     void settingsDlg();

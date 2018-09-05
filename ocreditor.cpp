@@ -106,6 +106,8 @@ void ZOCREditor::translate()
             QString s = ui->editor->toPlainText();
             if (!ui->editor->textCursor().selectedText().isEmpty())
                 s = ui->editor->textCursor().selectedText();
+            translator->setSrcLang(zg->tranSourceLang);
+            translator->setDestLang(zg->tranDestLang);
             translator->startAuxTranslation(s);
             ui->status->setText(tr("Translation in progress..."));
         }

@@ -47,8 +47,9 @@ public:
     QRadioButton* radioMySQL;
     QRadioButton* radioSQLite;
     QDoubleSpinBox* spinSearchScrollFactor;
+    QLineEdit* editOCRDatapath;
 
-    explicit SettingsDialog(QWidget *parent = 0);
+    explicit SettingsDialog(QWidget *parent = nullptr);
     ~SettingsDialog();
     QColor getBkColor();
     QFont getIdxFont();
@@ -58,6 +59,9 @@ public:
     void setIgnoredFiles(const QStringList &files);
     void setSearchEngines(const ZStrMap &engines);
     ZStrMap getSearchEngines() const;
+    QString getOCRLanguage();
+    QString getTranSourceLanguage();
+    QString getTranDestLanguage();
     
 private:
     QColor bkColor, frameColor;
@@ -65,6 +69,9 @@ private:
     QFont ocrFont;
     Ui::SettingsDialog *ui;
     QMap<QPushButton *, QListWidget *> delLookup;
+
+    void updateOCRLanguages();
+    void updateTranslatorLanguages();
 
 public slots:
     void delListWidgetItem();
@@ -83,6 +90,7 @@ public slots:
     void delSearchEngine();
     void setDefaultSearch();
     void updateSQLFields(bool checked);
+    void ocrDatapathDlg();
 };
 
 #endif // SETTINGSDIALOG_H

@@ -5,6 +5,7 @@
 #include <QBuffer>
 #include <QDir>
 #include <QApplication>
+#include <QSettings>
 #include <QDebug>
 
 #include "zmangaloader.h"
@@ -580,6 +581,24 @@ QImage PIX2QImage(PIX *pixImage) {
   return result.rgbSwapped();
 }
 
+QString ocrGetActiveLanguage()
+{
+    QSettings settings("kernel1024", "qmanga-ocr");
+    settings.beginGroup("Main");
+    QString res = settings.value("activeLanguage",QString()).toString();
+    settings.endGroup();
+    return res;
+}
+
+QString ocrGetDatapath()
+{
+    QSettings settings("kernel1024", "qmanga-ocr");
+    settings.beginGroup("Main");
+    QString res = settings.value("datapath",QString("/usr/share/tessdata/")).toString();
+    settings.endGroup();
+    return res;
+}
+
 tesseract::TessBaseAPI* initializeOCR()
 {
     ocr = new tesseract::TessBaseAPI();
@@ -588,11 +607,16 @@ tesseract::TessBaseAPI* initializeOCR()
     QDir appDir(qApp->applicationDirPath());
     QByteArray tesspath = appDir.absoluteFilePath("tessdata").toUtf8();
     datapath = tesspath.constData();
+#else
+    QByteArray tesspath = ocrGetDatapath().toUtf8();
+    datapath = tesspath.constData();
 #endif
-    if (ocr->Init(datapath,"jpn")) {
+
+    QString lang = ocrGetActiveLanguage();
+    if (lang.isEmpty() || ocr->Init(datapath,lang.toUtf8().constData())) {
         QMessageBox::critical(nullptr,"QManga error",
                               "Could not initialize Tesseract.\n"
-                              "Maybe japanese language training data is not installed.");
+                              "Maybe language training data is not installed.");
         return nullptr;
     }
     return ocr;

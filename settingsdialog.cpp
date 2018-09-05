@@ -1,5 +1,8 @@
 #include <QColorDialog>
 #include <QFontDialog>
+#include <QDir>
+#include <QFileInfo>
+#include <QFileInfoList>
 #include <QMessageBox>
 
 #include "settingsdialog.h"
@@ -46,6 +49,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     spinBlur = ui->spinBlur;
     radioMySQL = ui->rbMySQL;
     radioSQLite = ui->rbSQLite;
+    editOCRDatapath = ui->editOCRDatapath;
 
 #ifdef Q_OS_WIN
     ui->editRar->setPlaceholderText("rar.exe");
@@ -72,10 +76,24 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     connect(ui->rbMySQL, &QRadioButton::toggled, this, &SettingsDialog::updateSQLFields);
     connect(ui->rbSQLite, &QRadioButton::toggled, this, &SettingsDialog::updateSQLFields);
 
+    connect(ui->btnOCRDatapath, &QPushButton::clicked, this, &SettingsDialog::ocrDatapathDlg);
+
     delLookup[ui->btnDeleteBookmark] = ui->listBookmarks;
     delLookup[ui->btnDynDelete] = ui->listDynAlbums;
     delLookup[ui->btnDeleteIgnored] = ui->listIgnoredFiles;
 
+#ifndef WITH_OCR
+    ui->groupTesseract->setEnabled(false);
+#else
+    ui->editOCRDatapath->setText(ocrGetDatapath());
+    updateOCRLanguages();
+#endif
+
+#ifdef Q_OS_WIN
+    ui->groupTranslator->setEnabled(false);
+#else
+    updateTranslatorLanguages();
+#endif
     updateSQLFields(false);
 }
 
@@ -149,6 +167,67 @@ ZStrMap SettingsDialog::getSearchEngines() const
 
 }
 
+QString SettingsDialog::getOCRLanguage()
+{
+    return ui->comboOCRLanguage->currentData().toString();
+}
+
+QString SettingsDialog::getTranSourceLanguage()
+{
+    return ui->comboLangSource->currentData().toString();
+}
+
+QString SettingsDialog::getTranDestLanguage()
+{
+    return ui->comboLangDest->currentData().toString();
+}
+
+void SettingsDialog::updateOCRLanguages()
+{
+#ifdef WITH_OCR
+    ui->comboOCRLanguage->clear();
+    QString selectedLang = ocrGetActiveLanguage();
+
+    QDir datapath(ui->editOCRDatapath->text());
+    if (datapath.isReadable()) {
+        int aidx = -1;
+        QFileInfoList files = datapath.entryInfoList({"*.traineddata"});
+        foreach (const QFileInfo& fi, files) {
+            QString base = fi.baseName();
+            ui->comboOCRLanguage->addItem(fi.fileName(),base);
+            if (base==selectedLang)
+                aidx = ui->comboOCRLanguage->count()-1;
+        }
+
+        if (aidx>=0)
+            ui->comboOCRLanguage->setCurrentIndex(aidx);
+        else if (ui->comboOCRLanguage->count()>0)
+            ui->comboOCRLanguage->setCurrentIndex(0);
+    }
+#endif
+}
+
+void SettingsDialog::updateTranslatorLanguages()
+{
+#ifndef Q_OS_WIN
+    ui->comboLangSource->clear();
+    ui->comboLangDest->clear();
+    const QStringList sl = zg->getLanguageCodes();
+    int idx1 = -1;
+    int idx2 = -1;
+    foreach (const QString& bcp, sl) {
+        ui->comboLangSource->addItem(zg->getLanguageName(bcp),QVariant::fromValue(bcp));
+        ui->comboLangDest->addItem(zg->getLanguageName(bcp),QVariant::fromValue(bcp));
+        if (bcp==zg->tranSourceLang) idx1 = ui->comboLangSource->count()-1;
+        if (bcp==zg->tranDestLang) idx2 = ui->comboLangDest->count()-1;
+    }
+    if (idx1>=0) ui->comboLangSource->setCurrentIndex(idx1);
+    else if (ui->comboLangSource->count()>0) ui->comboLangSource->setCurrentIndex(0);
+    if (idx2>=0) ui->comboLangDest->setCurrentIndex(idx2);
+    else if (ui->comboLangDest->count()>0) ui->comboLangDest->setCurrentIndex(0);
+#endif
+}
+
 void SettingsDialog::addSearchEngine()
 {
     ZStrMap data;
@@ -207,6 +286,16 @@ void SettingsDialog::updateSQLFields(bool checked)
     ui->editMySqlHost->setEnabled(useLogin);
     ui->editMySqlLogin->setEnabled(useLogin);
     ui->editMySqlPassword->setEnabled(useLogin);
+}
+
+void SettingsDialog::ocrDatapathDlg()
+{
+#ifdef WITH_OCR
+    QString datapath = getExistingDirectoryD(this,tr("Tesseract datapath"),ui->editOCRDatapath->text());
+    if (!datapath.isEmpty())
+        ui->editOCRDatapath->setText(datapath);
+    updateOCRLanguages();
+#endif
 }
 
 void SettingsDialog::delListWidgetItem()
