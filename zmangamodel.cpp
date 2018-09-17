@@ -7,8 +7,10 @@
 
 #include "zmangamodel.h"
 
-ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, ZMangaListView *aView) :
-    QAbstractListModel(parent)
+const int ModelSortRole = Qt::UserRole + 1;
+
+ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView) :
+    QAbstractTableModel(parent)
 {
     pixmapSize = aPixmapSize;
     view = aView;
@@ -27,10 +29,10 @@ Qt::ItemFlags ZMangaModel::flags(const QModelIndex &) const
 
 QVariant ZMangaModel::data(const QModelIndex &index, int role) const
 {
-    return data(index,role,-1);
+    return data(index,role,false);
 }
 
-QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverride) const
+QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) const
 {
     if (!index.isValid() || zg==nullptr) return QVariant();
     int idx = index.row();
@@ -42,7 +44,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
     if (role == Qt::DecorationRole && index.column()==0) {
         QFontMetrics fm(view->font());
         QPixmap rp;
-        if (view->viewMode()==QListView::ListMode)
+        if (listMode)
             rp = QPixmap(fm.height()*2,fm.height()*2);
         else
             rp = QPixmap(pixmapSize->value(),pixmapSize->value()*previewProps); // B4 paper proportions
@@ -75,8 +77,6 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
     } else if (role == Qt::DisplayRole) {
         SQLMangaEntry t = mList.at(idx);
         int col = index.column();
-        if (columnOverride>=0)
-            col = columnOverride;
         switch (col) {
             case 0: return t.name;
             case 1: return t.album;
@@ -85,7 +85,19 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
             case 4: return t.addingDT.toString("yyyy-MM-dd");
             case 5: return t.fileDT.toString("yyyy-MM-dd");
             case 6: return t.fileMagic;
-            default: return QVariant();
+        }
+        return QVariant();
+    } else if (role == ModelSortRole) {
+        SQLMangaEntry t = mList.at(idx);
+        int col = index.column();
+        switch (col) {
+            case 0: return t.name;
+            case 1: return t.album;
+            case 2: return t.pagesCount;
+            case 3: return t.fileSize;
+            case 4: return t.addingDT;
+            case 5: return t.fileDT;
+            case 6: return t.fileMagic;
         }
         return QVariant();
     } else if (role == Qt::ToolTipRole ||
@@ -95,15 +107,9 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, int columnOverrid
     return QVariant();
 }
 
-int ZMangaModel::rowCount(const QModelIndex &) const
+int ZMangaModel::rowCount(const QModelIndex &parent) const
 {
-    if (zg==nullptr) return mList.count();
-
-    if (view->palette().base().color()!=zg->backgroundColor) {
-        QPalette pl = view->palette();
-        pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
-        view->setPalette(pl);
-    }
+    Q_UNUSED(parent)
 
     return mList.count();
 }
@@ -117,10 +123,10 @@ int ZMangaModel::columnCount(const QModelIndex &parent) const
 
 QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    Q_UNUSED(orientation)
-
-    if (role == Qt::DisplayRole && section>=0 && section<Z::maxOrdering) {
-        Z::Ordering s = (Z::Ordering)section;
+    if (orientation == Qt::Horizontal &&
+            role == Qt::DisplayRole &&
+            section>=0 && section<Z::maxOrdering) {
+        Z::Ordering s = static_cast<Z::Ordering>(section);
         if (Z::headerColumns.contains(s))
             return Z::headerColumns.value(s);
         else
@@ -169,15 +175,13 @@ void ZMangaModel::deleteItems(const QIntList &dbids)
 
 void ZMangaModel::addItem(const SQLMangaEntry &file, const Z::Ordering sortOrder, const bool reverseOrder)
 {
+    Q_UNUSED(sortOrder)
+    Q_UNUSED(reverseOrder)
+
     int posidx = mList.count();
     beginInsertRows(QModelIndex(),posidx,posidx);
     mList.append(file);
     endInsertRows();
-
-    if (view->verticalScrollBar()!=nullptr)
-        view->verticalScrollBar()->setSingleStep(view->verticalScrollBar()->pageStep()/2);
-
-    view->updateHeaderView(sortOrder, reverseOrder);
 }
 
 ZMangaSearchHistoryModel::ZMangaSearchHistoryModel(QObject *parent)
@@ -243,136 +247,10 @@ void ZMangaSearchHistoryModel::appendHistoryItem(const QString &item)
     endInsertRows();
 }
 
-ZMangaListItemDelegate::ZMangaListItemDelegate(QObject *parent, ZMangaListView *aView, ZMangaModel *aModel)
-    : QStyledItemDelegate(parent)
-{
-    view = aView;
-    model = aModel;
-}
-
-void ZMangaListItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
-                               const QModelIndex &index) const
-{
-    if (view->viewMode()==QListView::ListMode) {
-
-        QStyle *style = view->style();
-
-        int widthAcc = 0;
-
-        QStyleOptionViewItem opt = option;
-        initStyleOption( &opt, index );
-
-        QRect srctr = opt.rect;
-        QString text = opt.text;
-        opt.text.clear();
-        // draw background for entire row, overpaint later with text from columns
-        style->drawControl( QStyle::CE_ItemViewItem, &opt, painter, view );
-
-        opt.text = text;
-        opt.rect.setWidth(view->header->sectionSize(0));
-        style->drawControl( QStyle::CE_ItemViewItem, &opt, painter, view );
-
-        widthAcc += view->header->sectionSize(0);
-
-        painter->save();
-
-        bool is_enabled = opt.state & QStyle::State_Enabled;
-        QPalette::ColorGroup cg = is_enabled ? QPalette::Normal : QPalette::Disabled;
-        if( cg == QPalette::Normal && !( opt.state & QStyle::State_Active ) )
-            cg = QPalette::Inactive;
-
-        if( opt.state & QStyle::State_Selected )
-            painter->setPen( opt.palette.color( cg, QPalette::HighlightedText) );
-        else
-            painter->setPen( opt.palette.color( cg, QPalette::Text ) );
-
-        for (int i=1;i<model->columnCount(QModelIndex());i++) {
-
-            if (view->header->isSectionHidden(i)) continue;
-
-            QRect tr = srctr;
-            tr.setWidth(view->header->sectionSize(i));
-            tr.translate(widthAcc,0);
-            widthAcc += tr.width();
-
-            QString s = model->data(index,Qt::DisplayRole,i).toString();
-            painter->drawText(tr, Qt::AlignCenter | Qt::AlignVCenter, s);
-
-        }
-
-        painter->restore();
-
-    } else
-        QStyledItemDelegate::paint(painter, option, index);
-}
-
-void ZMangaListView::resizeEvent(QResizeEvent *e)
-{
-    Q_UNUSED(e)
-
-    resizeHeaderView();
-}
-
 ZMangaListView::ZMangaListView(QWidget *parent)
     : QListView(parent)
 {
-    header = new QHeaderView(Qt::Horizontal, this);
-    headerHeight = header->sizeHint().height();
-    header->setSortIndicatorShown(true);
-    header->setSectionsClickable(true);
-    header->hide();
 
-    connect(header, &QHeaderView::sectionResized, [this](int, int, int){
-        ZMangaModel* m = qobject_cast<ZMangaModel *>(model());
-        if (m!=nullptr)
-            for (int i=0;i<m->rowCount();i++)
-                update(m->index(i));
-    });
-}
-
-ZMangaListView::~ZMangaListView()
-{
-    if (header!=nullptr)
-        header->deleteLater();
-}
-
-void ZMangaListView::setModel(QAbstractItemModel *model)
-{
-    QListView::setModel(model);
-    header->setModel(model);
-}
-
-void ZMangaListView::setViewMode(QListView::ViewMode mode)
-{
-    QListView::setViewMode(mode);
-    header->setVisible(mode==ListMode);
-    if (header->isVisible())
-        setViewportMargins(0,headerHeight,0,0);
-    else
-        setViewportMargins(0,0,0,0);
-}
-
-void ZMangaListView::updateHeaderView(const Z::Ordering sortOrder, const bool reverseOrder)
-{
-    if (((int)sortOrder!=header->sortIndicatorSection()) ||
-            ((int)reverseOrder!=(int)header->sortIndicatorOrder()))
-        header->setSortIndicator((int)sortOrder,(Qt::SortOrder)reverseOrder);
-
-    // Hide album column when all items from one album
-    ZMangaModel* m = qobject_cast<ZMangaModel *>(model());
-    if (m!=nullptr && m->rowCount()>0) {
-        bool oneAlbum = true;
-        QString a = m->getItem(0).album;
-        for (int i=1;i<m->rowCount();i++)
-            if (m->getItem(i).album!=a) {
-                oneAlbum = false;
-                break;
-            }
-        if (oneAlbum && !header->isSectionHidden(Z::Album))
-            header->hideSection(Z::Album);
-        else if (!oneAlbum && header->isSectionHidden(Z::Album))
-            header->showSection(Z::Album);
-    }
 }
 
 void ZMangaListView::updateGeometries()
@@ -383,14 +261,46 @@ void ZMangaListView::updateGeometries()
                     static_cast<int>(static_cast<double>(gridSize().height())*zg->searchScrollFactor));
 }
 
-void ZMangaListView::resizeHeaderView()
+ZMangaTableModel::ZMangaTableModel(QObject *parent, QTableView *aView)
+    : QSortFilterProxyModel(parent)
 {
-    headerHeight = header->sizeHint().height();
-    if (header->isVisible()) {
-        setViewportMargins(0,headerHeight,0,0);
+    view = aView;
+    setSortRole(ModelSortRole);
+}
 
-        QRect hg = viewport()->geometry();
-        header->setGeometry(hg.topLeft().x(), hg.topLeft().y()-headerHeight, hg.width(), headerHeight);
-    } else
-        setViewportMargins(0,0,0,0);
+int ZMangaTableModel::columnCount(const QModelIndex &) const
+{
+    if (zg!=nullptr) {
+        if (view->palette().base().color()!=zg->backgroundColor) {
+            QPalette pl = view->palette();
+            pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
+            view->setPalette(pl);
+        }
+    }
+    return 7;
+}
+
+QVariant ZMangaTableModel::data(const QModelIndex &index, int role) const
+{
+    ZMangaModel* model = qobject_cast<ZMangaModel *>(sourceModel());
+    return model->data(mapToSource(index),role,true);
+}
+
+ZMangaIconModel::ZMangaIconModel(QObject *parent, ZMangaListView *aView)
+    : QSortFilterProxyModel(parent)
+{
+    view = aView;
+    setSortRole(ModelSortRole);
+}
+
+int ZMangaIconModel::columnCount(const QModelIndex &) const
+{
+    if (zg!=nullptr) {
+        if (view->palette().base().color()!=zg->backgroundColor) {
+            QPalette pl = view->palette();
+            pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
+            view->setPalette(pl);
+        }
+    }
+    return 1;
 }

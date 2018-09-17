@@ -22,12 +22,11 @@ class ZSearchTab : public QWidget
     Q_OBJECT
     
 public:
-    explicit ZSearchTab(QWidget *parent = 0);
+    explicit ZSearchTab(QWidget *parent = nullptr);
     ~ZSearchTab();
 
     void updateAlbumsList();
     void updateFocus();
-    void applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI = false);
     QStringList getAlbums();
     void setListViewOptions(const QListView::ViewMode mode, const int iconSize);
     int getIconSize() const;
@@ -35,6 +34,7 @@ public:
 
     void loadSearchItems(QSettings &settings);
     void saveSearchItems(QSettings &settings);
+    void applySortOrder(const Z::Ordering order);
 private:
     Ui::ZSearchTab *ui;
     QStateMachine loadingState;
@@ -42,17 +42,16 @@ private:
     QPointer<ZMangaModel> model;
     QProgressDialog *progressDlg;
     QStringList cachedAlbums;
-    Z::Ordering order;
-    bool reverseOrder;
-    QList<QPointer<QAction> > sortActions;
     ZMangaSearchHistoryModel* searchHistoryModel;
+    ZMangaTableModel* tableModel;
+    ZMangaIconModel* iconModel;
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(QString suggest,int toAddCount);
     QFileInfoList getSelectedMangaEntries(bool includeDirs = true);
-
-protected:
-    void showEvent(QShowEvent * event);
+    QAbstractItemView* activeView();
+    QModelIndexList getSelectedIndexes();
+    QModelIndex mapToSource(const QModelIndex &index);
 
 public slots:
     void albumClicked(QListWidgetItem * item);
@@ -69,11 +68,8 @@ public slots:
     void iconSizeChanged(int ref);
     void updateSplitters();
 
-    void headerClicked(int logicalIndex);
-
     void ctxMenu(QPoint pos);
     void ctxAlbumMenu(QPoint pos);
-    void ctxSorting();
     void ctxRenameAlbum();
     void ctxDeleteAlbum();
     void ctxOpenDir();

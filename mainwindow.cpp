@@ -38,8 +38,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     indexerMsgBox.setWindowTitle(tr("QManga"));
 
-//    QApplication::setWheelScrollLines(1);
-
     lblSearchStatus = new QLabel(tr("Ready"));
     lblAverageSizes = new QLabel();
     lblRotation = new QLabel("Rotation: 0");

@@ -4,29 +4,31 @@
 #include <QSlider>
 #include <QListView>
 #include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include <QStyledItemDelegate>
 #include <QHeaderView>
+#include <QTableView>
 #include "global.h"
 #include "zglobal.h"
 #include "zdb.h"
 
 class ZMangaListView;
 
-class ZMangaModel : public QAbstractListModel
+class ZMangaModel : public QAbstractTableModel
 {
     Q_OBJECT
 private:
     QSlider *pixmapSize;
-    ZMangaListView *view;
+    QTableView *view;
 
     SQLMangaList mList;
 
 public:
-    explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, ZMangaListView *aView);
+    explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView);
     ~ZMangaModel();
 
     Qt::ItemFlags flags(const QModelIndex & index) const;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole, int columnOverride = -1) const;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole, bool listMode = false) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
     int rowCount( const QModelIndex & parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent) const;
@@ -42,33 +44,35 @@ public slots:
     void addItem(const SQLMangaEntry& file, const Z::Ordering sortOrder, const bool reverseOrder);
 };
 
-class ZMangaListView : public QListView {
+class ZMangaTableModel : public QSortFilterProxyModel {
     Q_OBJECT
-protected:
-    void resizeEvent(QResizeEvent *e);
 private:
-    int headerHeight;
+    QTableView *view;
+
 public:
-    QHeaderView* header;
-    ZMangaListView(QWidget *parent = 0);
-    ~ZMangaListView();
-    void setModel(QAbstractItemModel *model);
-    void setViewMode(ViewMode mode);
-    void updateHeaderView(const Z::Ordering sortOrder, const bool reverseOrder);
-protected:
-    virtual void updateGeometries();
-public slots:
-    void resizeHeaderView();
+    explicit ZMangaTableModel(QObject *parent, QTableView *aView);
+    int columnCount(const QModelIndex &parent) const;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+
 };
 
-class ZMangaListItemDelegate : public QStyledItemDelegate {
+class ZMangaIconModel : public QSortFilterProxyModel {
     Q_OBJECT
 private:
     ZMangaListView *view;
-    ZMangaModel *model;
+
 public:
-    explicit ZMangaListItemDelegate(QObject *parent, ZMangaListView *aView, ZMangaModel *aModel);
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+    explicit ZMangaIconModel(QObject *parent, ZMangaListView *aView);
+    int columnCount(const QModelIndex &parent) const;
+
+};
+
+class ZMangaListView : public QListView {
+    Q_OBJECT
+public:
+    ZMangaListView(QWidget *parent = nullptr);
+protected:
+    virtual void updateGeometries();
 };
 
 class ZMangaSearchHistoryModel : public QAbstractListModel {

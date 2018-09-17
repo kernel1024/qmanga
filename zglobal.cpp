@@ -175,7 +175,7 @@ void ZGlobal::loadSettings()
         w->searchTab->setEnabled(dbEngine!=Z::UndefinedDB);
         if (w->searchTab->isEnabled()) {
             w->searchTab->updateAlbumsList();
-            w->searchTab->applyOrder(defaultOrdering,false,false);
+            w->searchTab->applySortOrder(defaultOrdering);
         }
     }
     emit dbCheckBase();

@@ -21,6 +21,9 @@
 #include "zsearchtab.h"
 #include "ui_zsearchtab.h"
 
+#define STACK_ICONS 0
+#define STACK_TABLE 1
+
 ZSearchTab::ZSearchTab(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ZSearchTab)
@@ -47,8 +50,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcIconSize->setValue(128);
     ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     ui->srcList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    ui->srcModeIcon->setChecked(ui->srcList->viewMode()==QListView::IconMode);
-    ui->srcModeList->setChecked(ui->srcList->viewMode()==QListView::ListMode);
+    ui->srcModeIcon->setChecked(ui->srcStack->currentIndex()==STACK_ICONS);
+    ui->srcModeList->setChecked(ui->srcStack->currentIndex()==STACK_TABLE);
     ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(ui->srcAlbums,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
@@ -56,6 +59,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
             this,SLOT(ctxAlbumMenu(QPoint)));
     connect(ui->srcList,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
     connect(ui->srcList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
+    connect(ui->srcTable,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
+    connect(ui->srcTable,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
     connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
     connect(ui->srcAddDirBtn,SIGNAL(clicked()),this,SLOT(mangaAddDir()));
     connect(ui->srcAddImgDirBtn,SIGNAL(clicked()),this,SLOT(imagesAddDir()));
@@ -100,23 +105,6 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,SIGNAL(dbDeleteAlbum(QString)),
             zg->db,SLOT(sqlDelAlbum(QString)),Qt::QueuedConnection);
 
-    sortActions.clear();
-    order = zg->defaultOrdering;
-    reverseOrder = false;
-    for (int i=0;i<=Z::maxOrdering;i++) {
-        QAction* ac;
-        if (i<Z::maxOrdering)
-            ac = new QAction(Z::sortMenu.value((Z::Ordering)i),this);
-        else
-            ac = new QAction(tr("Reverse order"),this);
-        ac->setCheckable(true);
-        ac->setChecked(false);
-        connect(ac, &QAction::triggered, this, &ZSearchTab::ctxSorting);
-        ac->setData(i);
-        sortActions << ac;
-    }
-    ctxSorting();
-
     QState* sLoaded = new QState(); QState* sLoading = new QState();
     sLoading->addTransition(zg->db,SIGNAL(filesLoaded(int,int)),sLoaded);
     sLoaded->addTransition(this,SIGNAL(dbGetFiles(QString,QString,Z::Ordering,bool)),sLoading);
@@ -139,14 +127,20 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     loadingState.setInitialState(sLoaded);
     loadingState.start();
 
-    ZMangaModel* aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcList);
-    ui->srcList->setModel(aModel);
-    ui->srcList->setItemDelegate(new ZMangaListItemDelegate(this,ui->srcList,aModel));
-    ui->srcList->header->setSectionResizeMode(0,QHeaderView::Stretch);
-    connect(ui->srcList->header, SIGNAL(sectionClicked(int)),
-            this, SLOT(headerClicked(int)));
+    ZMangaModel* aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
+    tableModel = new ZMangaTableModel(this,ui->srcTable);
+    iconModel = new ZMangaIconModel(this,ui->srcList);
+    tableModel->setSourceModel(aModel);
+    iconModel->setSourceModel(aModel);
+    ui->srcList->setModel(iconModel);
+    ui->srcTable->setModel(tableModel);
+    connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,[this](int logicalIndex, Qt::SortOrder order){
+        iconModel->sort(logicalIndex,order);
+    });
 
     connect(ui->srcList->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
+    connect(ui->srcTable->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
 
     connect(zg->db,SIGNAL(gotFile(SQLMangaEntry,Z::Ordering,bool)),
@@ -156,6 +150,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     model = aModel;
 
     ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->srcTable->setContextMenuPolicy(Qt::CustomContextMenu);
 
     updateSplitters();
 }
@@ -174,38 +169,18 @@ void ZSearchTab::updateSplitters()
     ui->splitter->setSizes(widths);
 }
 
-void ZSearchTab::headerClicked(int logicalIndex)
-{
-    int s = (int)order;
-    bool r = reverseOrder;
-
-    if (s==logicalIndex)
-        r = !r;
-    else if (logicalIndex>=0 && logicalIndex<Z::maxOrdering)
-        s = logicalIndex;
-
-    applyOrder((Z::Ordering)s,r,true);
-}
-
 void ZSearchTab::ctxMenu(QPoint pos)
 {
-    QMenu cm(ui->srcList);
-    QMenu* smenu = cm.addMenu(QIcon(":/16/view-sort-ascending"),tr("Sort"));
-
-    for (int i=0;i<sortActions.count();i++) {
-        if (i==(sortActions.count()-1))
-            smenu->addSeparator();
-        smenu->addAction(sortActions.at(i));
-    }
-    cm.addSeparator();
+    QAbstractItemView *view = activeView();
+    QMenu cm(view);
 
     QAction* acm;
     acm = cm.addAction(QIcon(":/16/edit-select-all"),tr("Select All"));
-    connect(acm,SIGNAL(triggered()),ui->srcList,SLOT(selectAll()));
+    connect(acm,SIGNAL(triggered()),view,SLOT(selectAll()));
 
     cm.addSeparator();
 
-    QModelIndexList li = ui->srcList->selectionModel()->selectedIndexes();
+    QModelIndexList li = getSelectedIndexes();
     int cnt = 0;
     for (int i=0;i<li.count();i++) {
         if (li.at(i).column()==0)
@@ -261,13 +236,13 @@ void ZSearchTab::ctxMenu(QPoint pos)
         }
     }
 
-    cm.exec(ui->srcList->mapToGlobal(pos));
+    cm.exec(view->mapToGlobal(pos));
 }
 
 void ZSearchTab::ctxChangeRenderer()
 {
     QAction* am = qobject_cast<QAction *>(sender());
-    QModelIndexList li = ui->srcList->selectionModel()->selectedIndexes();
+    QModelIndexList li = getSelectedIndexes();
     if (am==nullptr || li.count()!=1) return;
 
     SQLMangaEntry m = model->getItem(li.first().row());
@@ -300,25 +275,6 @@ void ZSearchTab::ctxAlbumMenu(QPoint pos)
     acm->setData(itm->text());
 
     cm.exec(ui->srcAlbums->mapToGlobal(pos));
-}
-
-void ZSearchTab::ctxSorting()
-{
-    QAction* am = nullptr;
-    if (sender()!=nullptr)
-        am = qobject_cast<QAction *>(sender());
-
-    Z::Ordering a = order;
-    bool r = reverseOrder;
-    if (am!=nullptr) {
-        bool ok;
-        int s = am->data().toInt(&ok);
-        if (ok && s>=0 && s<Z::maxOrdering)
-            a = (Z::Ordering)s;
-        else if (ok && s==Z::maxOrdering)
-            r = !r;
-    }
-    applyOrder(a,r,true);
 }
 
 void ZSearchTab::ctxRenameAlbum()
@@ -439,27 +395,8 @@ void ZSearchTab::updateAlbumsList()
 
 void ZSearchTab::updateFocus()
 {
-    if (ui->srcList->model()->rowCount()==0)
+    if (activeView()->model()->rowCount()==0)
         ui->srcEdit->setFocus();
-}
-
-void ZSearchTab::applyOrder(Z::Ordering aOrder, bool aReverseOrder, bool updateGUI)
-{
-    order = aOrder;
-    reverseOrder = aReverseOrder;
-    for (int i=0;i<sortActions.count();i++) {
-        bool ok;
-        int s = sortActions.at(i)->data().toInt(&ok);
-        if (ok && s>=0 && s<Z::maxOrdering)
-            sortActions[i]->setChecked(((Z::Ordering)s)==order);
-        else if (ok && s==Z::maxOrdering)
-            sortActions[i]->setChecked(reverseOrder);
-    }
-
-    if (updateGUI)
-        albumClicked(ui->srcAlbums->currentItem());
-
-    zg->defaultOrdering = order;
 }
 
 QStringList ZSearchTab::getAlbums()
@@ -481,7 +418,10 @@ int ZSearchTab::getIconSize() const
 
 QListView::ViewMode ZSearchTab::getListViewMode() const
 {
-    return ui->srcList->viewMode();
+    if (ui->srcStack->currentIndex()==STACK_ICONS)
+        return QListView::IconMode;
+    else
+        return QListView::ListMode;
 }
 
 void ZSearchTab::loadSearchItems(QSettings &settings)
@@ -514,13 +454,20 @@ void ZSearchTab::saveSearchItems(QSettings &settings)
     settings.setValue("search_history",QVariant::fromValue(searchHistoryModel->getHistoryItems()));
 }
 
+void ZSearchTab::applySortOrder(const Z::Ordering order)
+{
+    int col = static_cast<int>(order);
+    if (col>=0 && col<ui->srcTable->model()->columnCount())
+        ui->srcTable->sortByColumn(col,Qt::AscendingOrder);
+}
+
 QSize ZSearchTab::gridSize(int ref)
 {
     QFontMetrics fm(font());
-    if (ui->srcList->viewMode()==QListView::IconMode)
+    if (getListViewMode()==QListView::IconMode)
         return QSize(ref+25,ref*previewProps+fm.height()*4);
 
-    return QSize(ui->srcList->width()/3,25*fm.height()/10);
+    return QSize(ui->srcStack->width()/3,25*fm.height()/10);
 }
 
 QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)
@@ -538,7 +485,7 @@ QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)
 QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs)
 {
     QFileInfoList res;
-    QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
+    QModelIndexList lii = getSelectedIndexes();
     if (lii.isEmpty()) return res;
 
     QModelIndexList li;
@@ -561,10 +508,32 @@ QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs)
     return res;
 }
 
-void ZSearchTab::showEvent(QShowEvent *event)
+QAbstractItemView *ZSearchTab::activeView()
 {
-    QWidget::showEvent(event);
-    ui->srcList->resizeHeaderView();
+    if (ui->srcStack->currentIndex()==STACK_TABLE)
+        return ui->srcTable;
+    else
+        return ui->srcList;
+}
+
+QModelIndexList ZSearchTab::getSelectedIndexes()
+{
+    QModelIndexList res;
+    foreach (const QModelIndex& idx, activeView()->selectionModel()->selectedIndexes()) {
+        QAbstractProxyModel* proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
+        if (proxy!=nullptr)
+            res.append(proxy->mapToSource(idx));
+    }
+    return res;
+}
+
+QModelIndex ZSearchTab::mapToSource(const QModelIndex& index)
+{
+    QAbstractProxyModel* proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
+    if (proxy!=nullptr)
+        return proxy->mapToSource(index);
+
+    return QModelIndex();
 }
 
 void ZSearchTab::albumClicked(QListWidgetItem *item)
@@ -577,7 +546,7 @@ void ZSearchTab::albumClicked(QListWidgetItem *item)
 
     if (model)
         model->deleteAllItems();
-    emit dbGetFiles(item->text(),QString(),order,reverseOrder);
+    emit dbGetFiles(item->text(),QString(),Z::Name,false);
 }
 
 void ZSearchTab::mangaSearch()
@@ -593,7 +562,7 @@ void ZSearchTab::mangaSearch()
 
     searchHistoryModel->appendHistoryItem(s);
 
-    emit dbGetFiles(QString(),s,order,reverseOrder);
+    emit dbGetFiles(QString(),s,Z::Name,false);
 }
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)
@@ -603,12 +572,13 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     if (!model) return;
 
     int maxl = model->getItemsCount();
+    int row = mapToSource(current).row();
 
-    if (current.row()>=maxl) return;
+    if (row>=maxl) return;
 
     ui->srcDesc->clear();
 
-    int idx = current.row();
+    int idx = row;
     const SQLMangaEntry m = model->getItem(idx);
 
     QFileInfo fi(m.filename);
@@ -627,7 +597,7 @@ void ZSearchTab::mangaOpen(const QModelIndex &index)
 
     int maxl = model->getItemsCount();
 
-    int idx = index.row();
+    int idx = mapToSource(index).row();
     if (idx>=maxl) return;
 
     QString filename = model->getItem(idx).filename;
@@ -684,7 +654,7 @@ void ZSearchTab::mangaDel()
     QIntList dl;
     int cnt = zg->db->getAlbumsCount();
     // remove other selected columns
-    QModelIndexList lii = ui->srcList->selectionModel()->selectedIndexes();
+    QModelIndexList lii = getSelectedIndexes();
     QModelIndexList li;
     for (int i=0;i<lii.count();i++) {
         if (lii.at(i).column()==0)
@@ -735,13 +705,10 @@ void ZSearchTab::imagesAddDir()
 void ZSearchTab::listModeChanged(bool)
 {
     if (ui->srcModeIcon->isChecked()) {
-        ui->srcList->setWordWrap(true);
-        ui->srcList->setViewMode(QListView::IconMode);
+        ui->srcStack->setCurrentIndex(STACK_ICONS);
         ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     } else {
-        ui->srcList->setWordWrap(false);                // QTBUG-11227 (incorrect rect height in view
-        ui->srcList->setViewMode(QListView::ListMode);  // item delegate when wordWrap enabled)
-        ui->srcList->setGridSize(gridSize(0));
+        ui->srcStack->setCurrentIndex(STACK_TABLE);
     }
 }
 
@@ -773,7 +740,7 @@ void ZSearchTab::dbFilesAdded(const int count, const int total, const int elapse
 void ZSearchTab::dbFilesLoaded(const int count, const int elapsed)
 {
     emit statusBarMsg(QString("Found %1 results in %2s").arg(count).arg((double)elapsed/1000.0,1,'f',2));
-    ui->srcList->resizeHeaderView();
+    ui->srcTable->resizeColumnsToContents();
 }
 
 void ZSearchTab::dbErrorMsg(const QString &msg)
