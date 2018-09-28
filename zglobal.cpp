@@ -257,13 +257,18 @@ void ZGlobal::updateWatchDirList(const QStringList &watchDirs)
 
 void ZGlobal::directoryChanged(const QString &dir)
 {
+    QStringList ignoredFiles;
+    if (db!=nullptr)
+        ignoredFiles = db->sqlGetIgnoredFiles();
+
     QDir d(dir);
     if (!d.isReadable()) return;
     QStringList nlist = d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
     QStringList olist = dirWatchList[d.absolutePath()];
     for (int i=0;i<nlist.count();i++) {
         QString fname = d.absoluteFilePath(nlist.at(i));
-        if (!olist.contains(nlist.at(i)) && !newlyAddedFiles.contains(fname))
+        if (!olist.contains(nlist.at(i)) && !newlyAddedFiles.contains(fname) &&
+                !ignoredFiles.contains(fname))
             newlyAddedFiles << fname;
     }
     fsCheckFilesAvailability();
