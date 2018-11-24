@@ -33,9 +33,25 @@
 
 #include <QVector>
 #include <poppler/poppler-config.h>
+#include <poppler/cpp/poppler-version.h>
 #include <stdio.h>
 #include <poppler/goo/gtypes.h>
 #include <poppler/OutputDev.h>
+
+#if POPPLER_VERSION_MAJOR==0
+    #if POPPLER_VERSION_MINOR<70
+        #define JPDF_PRE070_API 1
+    #endif
+    #if POPPLER_VERSION_MINOR<71
+        #define JPDF_PRE071_API 1
+    #endif
+#endif
+
+#ifndef JPDF_PRE071_API
+    #define GBool bool
+    #define gTrue true
+    #define gFalse false
+#endif
 
 class ZPDFImg {
 public:
@@ -89,11 +105,19 @@ public:
     virtual GBool useDrawChar() { return gFalse; }
 
     //----- path painting
+#ifdef JPDF_PRE070_API
     virtual GBool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
                                     double *pmat, int paintType, int tilingType, Dict *resDict,
                                     double *mat, double *bbox,
                                     int x0, int y0, int x1, int y1,
                                     double xStep, double yStep);
+#else
+    virtual GBool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
+                                    const double *pmat, int paintType, int tilingType, Dict *resDict,
+                                    const double *mat, const double *bbox,
+                                    int x0, int y0, int x1, int y1,
+                                    double xStep, double yStep);
+#endif
 
     //----- image drawing
     virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,

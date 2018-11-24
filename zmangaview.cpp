@@ -439,6 +439,8 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             }
         }
     }
+#else
+    Q_UNUSED(event)
 #endif
     dragPos = QPoint();
     copyPos = QPoint();

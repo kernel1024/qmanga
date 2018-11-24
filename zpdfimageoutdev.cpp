@@ -64,10 +64,18 @@ void ZPDFImageOutputDev::startPage(int, GfxState *, XRef *)
 {
 }
 
+#ifdef JPDF_PRE070_API
 GBool ZPDFImageOutputDev::tilingPatternFill(GfxState *, Gfx *, Catalog *, Object *,
                                             double *, int , int , Dict *, double *,
                                             double *, int , int , int , int ,
                                             double , double )
+#else
+GBool ZPDFImageOutputDev::tilingPatternFill(GfxState *, Gfx *, Catalog *, Object *,
+                                            const double *, int , int , Dict *,
+                                            const double *, const double *,
+                                            int , int , int , int ,
+                                            double , double )
+#endif
 {
     return gTrue;
 }

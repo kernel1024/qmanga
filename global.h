@@ -12,9 +12,13 @@
 #include <QThread>
 
 #ifdef WITH_OCR
-#include <baseapi.h>
+#include <tesseract/baseapi.h>
 #include <leptonica/allheaders.h>
+
+#if TESSERACT_MAJOR_VERSION>=4
+    #define JTESS_API4 1
 #endif
+#endif // WITH_OCR
 
 #include <scalefilter.h>
 
