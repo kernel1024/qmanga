@@ -77,8 +77,19 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
     } else if (role == Qt::DisplayRole) {
         SQLMangaEntry t = mList.at(idx);
         int col = index.column();
+        QString tmp;
+        int i;
         switch (col) {
-            case 0: return t.name;
+            case 0:
+                // insert zero-width spaces for word-wrap
+                tmp = t.name;
+                i = tmp.length()-1;
+                while (i>=0) {
+                    if (!tmp.at(i).isLetterOrNumber())
+                        tmp.insert(i,QChar(0x200b));
+                    i--;
+                }
+                return tmp;
             case 1: return t.album;
             case 2: return QString("%1").arg(t.pagesCount);
             case 3: return formatSize(t.fileSize);

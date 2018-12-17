@@ -84,6 +84,9 @@
              <property name="selectionMode">
               <enum>QAbstractItemView::ExtendedSelection</enum>
              </property>
+             <property name="textElideMode">
+              <enum>Qt::ElideNone</enum>
+             </property>
              <property name="movement">
               <enum>QListView::Static</enum>
              </property>
@@ -93,7 +96,7 @@
              <property name="viewMode">
               <enum>QListView::IconMode</enum>
              </property>
-             <property name="uniformItemSizes">
+             <property name="wordWrap">
               <bool>true</bool>
              </property>
              <property name="selectionRectVisible">
