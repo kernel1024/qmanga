@@ -55,7 +55,7 @@
 
 ZPDFImageOutputDev::ZPDFImageOutputDev()
 {
-    ok = gTrue;
+    ok = true;
     pages.clear();
     imageCounting = true;
 }
@@ -64,25 +64,18 @@ void ZPDFImageOutputDev::startPage(int, GfxState *, XRef *)
 {
 }
 
-#ifdef JPDF_PRE070_API
-GBool ZPDFImageOutputDev::tilingPatternFill(GfxState *, Gfx *, Catalog *, Object *,
-                                            double *, int , int , Dict *, double *,
-                                            double *, int , int , int , int ,
-                                            double , double )
-#else
-GBool ZPDFImageOutputDev::tilingPatternFill(GfxState *, Gfx *, Catalog *, Object *,
+bool ZPDFImageOutputDev::tilingPatternFill(GfxState *, Gfx *, Catalog *, Object *,
                                             const double *, int , int , Dict *,
                                             const double *, const double *,
                                             int , int , int , int ,
                                             double , double )
-#endif
 {
-    return gTrue;
+    return true;
 }
 
 void ZPDFImageOutputDev::writeImage(GfxState *state, Object *ref, Stream *str,
                                     int width, int height,
-                                    GfxImageColorMap *colorMap, GBool inlineImg) {
+                                    GfxImageColorMap *colorMap, bool inlineImg) {
     Q_UNUSED(state)
     Q_UNUSED(ref)
     Q_UNUSED(width)
@@ -105,31 +98,31 @@ void ZPDFImageOutputDev::writeImage(GfxState *state, Object *ref, Stream *str,
 }
 
 void ZPDFImageOutputDev::drawImageMask(GfxState *state, Object *ref, Stream *str,
-                                       int width, int height, GBool,
-                                       GBool, GBool inlineImg) {
+                                       int width, int height, bool,
+                                       bool, bool inlineImg) {
     writeImage(state, ref, str, width, height, nullptr, inlineImg);
 }
 
 void ZPDFImageOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
                                    int width, int height,
                                    GfxImageColorMap *colorMap,
-                                   GBool, int *, GBool inlineImg) {
+                                   bool, int *, bool inlineImg) {
     writeImage(state, ref, str, width, height, colorMap, inlineImg);
 }
 
 void ZPDFImageOutputDev::drawMaskedImage(
         GfxState *state, Object *ref, Stream *str,
-        int width, int height, GfxImageColorMap *colorMap, GBool,
-        Stream *, int, int, GBool, GBool) {
-    writeImage(state, ref, str, width, height, colorMap, gFalse);
+        int width, int height, GfxImageColorMap *colorMap, bool,
+        Stream *, int, int, bool, bool) {
+    writeImage(state, ref, str, width, height, colorMap, false);
 }
 
 void ZPDFImageOutputDev::drawSoftMaskedImage(
         GfxState *state, Object *ref, Stream *str,
-        int width, int height, GfxImageColorMap *colorMap, GBool,
+        int width, int height, GfxImageColorMap *colorMap, bool,
         Stream *, int, int,
-        GfxImageColorMap *, GBool) {
-    writeImage(state, ref, str, width, height, colorMap, gFalse);
+        GfxImageColorMap *, bool) {
+    writeImage(state, ref, str, width, height, colorMap, false);
 }
 
 ZPDFImg::ZPDFImg()

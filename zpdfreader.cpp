@@ -15,6 +15,7 @@
 #include "zpdfreader.h"
 #include "global.h"
 #include "zdb.h"
+#include "zpdfimageoutdev.h"
 
 static QMutex indexerMutex;
 
@@ -69,7 +70,7 @@ bool ZPdfReader::openFile()
 
         if (outDev->isOk())
             doc->displayPages(outDev, 1, doc->getNumPages(), 72, 72, 0,
-                              gTrue, gFalse, gFalse);
+                              true, false, false);
     }
     if ((mode==Z::Autodetect && outDev->getPageCount()==doc->getNumPages()) ||
             (mode==Z::ImageCatalog && outDev->getPageCount()>0)) {
@@ -137,7 +138,11 @@ QByteArray ZPdfReader::loadPage(int num)
         Goffset sz = outDev->getPage(idx).size;
         res.fill('\0',sz);
         str->setPos(outDev->getPage(idx).pos);
+#ifdef JPDF_PRE073_API
         str->doGetChars(sz,(Guchar *)res.data());
+#else
+        str->doGetChars(sz,(unsigned char *)res.data());
+#endif
     } else {
         qreal xdpi = zg->dpiX;
         qreal ydpi = zg->dpiY;
@@ -150,14 +155,14 @@ QByteArray ZPdfReader::loadPage(int num)
         bgColor[0] = paper_color & 0xff;
         bgColor[1] = (paper_color >> 8) & 0xff;
         bgColor[2] = (paper_color >> 16) & 0xff;
-        SplashOutputDev splashOutputDev(splashModeXBGR8, 4, gFalse, bgColor, gTrue);
-        splashOutputDev.setFontAntialias(gTrue);
-        splashOutputDev.setVectorAntialias(gTrue);
-        splashOutputDev.setFreeTypeHinting(gTrue, gFalse);
+        SplashOutputDev splashOutputDev(splashModeXBGR8, 4, false, bgColor, true);
+        splashOutputDev.setFontAntialias(true);
+        splashOutputDev.setVectorAntialias(true);
+        splashOutputDev.setFreeTypeHinting(true, false);
         splashOutputDev.startDoc(doc);
         doc->displayPageSlice(&splashOutputDev, idx + 1,
                               xdpi, ydpi, 0,
-                              gFalse, gTrue, gFalse,
+                              false, true, false,
                               -1, -1, -1, -1);
 
         SplashBitmap *bitmap = splashOutputDev.getBitmap();

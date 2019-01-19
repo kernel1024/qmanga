@@ -35,22 +35,18 @@
 #include <poppler/poppler-config.h>
 #include <poppler/cpp/poppler-version.h>
 #include <stdio.h>
-#include <poppler/goo/gtypes.h>
 #include <poppler/OutputDev.h>
 
 #if POPPLER_VERSION_MAJOR==0
-    #if POPPLER_VERSION_MINOR<70
-        #define JPDF_PRE070_API 1
-    #endif
-    #if POPPLER_VERSION_MINOR<71
-        #define JPDF_PRE071_API 1
+    #if POPPLER_VERSION_MINOR<73
+        #define JPDF_PRE073_API 1
     #endif
 #endif
 
-#ifndef JPDF_PRE071_API
-    #define GBool bool
-    #define gTrue true
-    #define gFalse false
+#ifdef JPDF_PRE_073
+#include <poppler/goo/gtypes.h>
+#else
+#include <poppler/goo/gfile.h>
 #endif
 
 class ZPDFImg {
@@ -78,19 +74,19 @@ public:
     int getPageCount() const { return pages.count(); }
 
     // Check if file was successfully created.
-    virtual GBool isOk() { return ok; }
+    virtual bool isOk() { return ok; }
 
     // Does this device use tilingPatternFill()?  If this returns false,
     // tiling pattern fills will be reduced to a series of other drawing
     // operations.
-    virtual GBool useTilingPatternFill() { return gTrue; }
+    virtual bool useTilingPatternFill() { return true; }
 
     // Does this device use beginType3Char/endType3Char?  Otherwise,
     // text in Type 3 fonts will be drawn with drawChar/drawString.
-    virtual GBool interpretType3Chars() { return gFalse; }
+    virtual bool interpretType3Chars() { return false; }
 
     // Does this device need non-text content?
-    virtual GBool needNonText() { return gTrue; }
+    virtual bool needNonText() { return true; }
 
     // Start a page
     virtual void startPage(int pageNumA, GfxState *state, XRef *xref);
@@ -99,53 +95,45 @@ public:
 
     // Does this device use upside-down coordinates?
     // (Upside-down means (0,0) is the top left corner of the page.)
-    virtual GBool upsideDown() { return gTrue; }
+    virtual bool upsideDown() { return true; }
 
     // Does this device use drawChar() or drawString()?
-    virtual GBool useDrawChar() { return gFalse; }
+    virtual bool useDrawChar() { return false; }
 
     //----- path painting
-#ifdef JPDF_PRE070_API
-    virtual GBool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
-                                    double *pmat, int paintType, int tilingType, Dict *resDict,
-                                    double *mat, double *bbox,
-                                    int x0, int y0, int x1, int y1,
-                                    double xStep, double yStep);
-#else
-    virtual GBool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
+    virtual bool tilingPatternFill(GfxState *state, Gfx *gfx, Catalog *cat, Object *str,
                                     const double *pmat, int paintType, int tilingType, Dict *resDict,
                                     const double *mat, const double *bbox,
                                     int x0, int y0, int x1, int y1,
                                     double xStep, double yStep);
-#endif
 
     //----- image drawing
     virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
-                               int width, int height, GBool invert,
-                               GBool interpolate, GBool inlineImg);
+                               int width, int height, bool invert,
+                               bool interpolate, bool inlineImg);
     virtual void drawImage(GfxState *state, Object *ref, Stream *str,
                            int width, int height, GfxImageColorMap *colorMap,
-                           GBool interpolate, int *maskColors, GBool inlineImg);
+                           bool interpolate, int *maskColors, bool inlineImg);
     virtual void drawMaskedImage(GfxState *state, Object *ref, Stream *str,
                                  int width, int height,
                                  GfxImageColorMap *colorMap,
-                                 GBool interpolate,
+                                 bool interpolate,
                                  Stream *maskStr, int maskWidth, int maskHeight,
-                                 GBool maskInvert, GBool maskInterpolate);
+                                 bool maskInvert, bool maskInterpolate);
     virtual void drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str,
                                      int width, int height,
                                      GfxImageColorMap *colorMap,
-                                     GBool interpolate,
+                                     bool interpolate,
                                      Stream *maskStr,
                                      int maskWidth, int maskHeight,
                                      GfxImageColorMap *maskColorMap,
-                                     GBool maskInterpolate);
+                                     bool maskInterpolate);
 
 private:
     void writeImage(GfxState *state, Object *ref, Stream *str,
-                    int width, int height, GfxImageColorMap *colorMap, GBool inlineImg);
+                    int width, int height, GfxImageColorMap *colorMap, bool inlineImg);
 
-    GBool ok;			// set up ok?
+    bool ok;			// set up ok?
 
     QVector<ZPDFImg> pages;
 };
