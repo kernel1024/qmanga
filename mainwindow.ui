@@ -701,6 +701,9 @@
           <property name="gridStyle">
            <enum>Qt::DotLine</enum>
           </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
           <property name="cornerButtonEnabled">
            <bool>false</bool>
           </property>

@@ -464,10 +464,7 @@ void ZSearchTab::applySortOrder(const Z::Ordering order)
 QSize ZSearchTab::gridSize(int ref)
 {
     QFontMetrics fm(font());
-    if (getListViewMode()==QListView::IconMode)
-        return QSize(ref+25,ref*previewProps+fm.height()*4);
-
-    return QSize(ui->srcStack->width()/3,25*fm.height()/10);
+    return QSize(ref+25,ref*previewProps+fm.height()*4);
 }
 
 QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)

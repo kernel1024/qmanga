@@ -41,8 +41,8 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
     if (idx<0 || idx>=maxl)
         return QVariant();
 
+    QFontMetrics fm(view->font());
     if (role == Qt::DecorationRole && index.column()==0) {
-        QFontMetrics fm(view->font());
         QPixmap rp;
         if (listMode)
             rp = QPixmap(fm.height()*2,fm.height()*2);
@@ -79,6 +79,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         int col = index.column();
         QString tmp;
         int i;
+        int maxLen = 0;
         switch (col) {
             case 0:
                 // insert zero-width spaces for word-wrap
@@ -89,6 +90,13 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
                         tmp.insert(i,QChar(0x200b));
                     i--;
                 }
+                // QTBUG-16134 changes workaround - elided text is too big
+                maxLen = qRound(3.5 * pixmapSize->value() / fm.averageCharWidth());
+                if (!listMode && tmp.length()>maxLen) {
+                    tmp.truncate(maxLen);
+                    tmp.append(QString("..."));
+                }
+                // -----
                 return tmp;
             case 1: return t.album;
             case 2: return QString("%1").arg(t.pagesCount);
