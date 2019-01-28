@@ -2,6 +2,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QDirIterator>
 #include <QCompleter>
 #include <QProgressDialog>
 #include <QApplication>
@@ -629,10 +630,13 @@ void ZSearchTab::mangaAddDir()
     zg->savedIndexOpenDir = fi;
 
     QDir d(fi);
-    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
+    d.setFilter(QDir::Files | QDir::Readable);
+    d.setNameFilters(QStringList("*"));
     QStringList files;
-    for (int i=0;i<fl.count();i++)
-        files << fl.at(i).absoluteFilePath();
+    QDirIterator it(d, QDirIterator::Subdirectories | QDirIterator::FollowSymlinks);
+    while (it.hasNext())
+        files << it.next();
+
     QString album = d.dirName();
 
     album = getAlbumNameToAdd(album,-1);
