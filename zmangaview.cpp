@@ -349,7 +349,7 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
     QScrollBar* vb = scroller->verticalScrollBar();
     QScrollBar* hb = scroller->horizontalScrollBar();
     if ((event->buttons() & Qt::LeftButton)>0) {
-        if ((QApplication::keyboardModifiers() & Qt::AltModifier) != 0) {
+        if ((QApplication::keyboardModifiers() & Qt::KeyboardModifierMask) == 0) {
             if (!dragPos.isNull()) {
                 int hlen = hb->maximum()-hb->minimum();
                 int vlen = vb->maximum()-vb->minimum();
@@ -358,7 +358,6 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
                 hb->setValue(hb->value()+hlen*(dragPos.x()-event->pos().x())/hvsz);
                 vb->setValue(vb->value()+vlen*(dragPos.y()-event->pos().y())/vvsz);
             }
-            dragPos = event->pos();
         } else {
 #ifdef WITH_OCR
             copySelection->setGeometry(QRect(event->pos(),copyPos).normalized());
@@ -381,12 +380,14 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
         emit minimizeRequested();
         event->accept();
     } else if (event->button()==Qt::LeftButton) {
-        if ((QApplication::keyboardModifiers() & Qt::AltModifier) == 0) {
+        if ((QApplication::keyboardModifiers() & Qt::ControlModifier) != 0) {
 #ifdef WITH_OCR
             copyPos = event->pos();
             copySelection->setGeometry(copyPos.x(),copyPos.y(),0,0);
             copySelection->show();
 #endif
+        } else if ((QApplication::keyboardModifiers() & Qt::KeyboardModifierMask) == 0) {
+            dragPos = event->pos();
         }
     }
 }
@@ -402,7 +403,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 #ifdef WITH_OCR
     if (event->button()==Qt::LeftButton &&
             !copyPos.isNull() &&
-            (QApplication::keyboardModifiers() & Qt::AltModifier) == 0) {
+            (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0) {
         if (!curPixmap.isNull()) {
             QRect cp = QRect(event->pos(),copyPos).normalized();
             cp.moveTo(cp.x()-drawPos.x(),cp.y()-drawPos.y());
