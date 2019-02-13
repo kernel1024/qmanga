@@ -31,7 +31,10 @@ private:
     QPoint zoomPos;
     QPoint dragPos;
     QPoint copyPos;
+    QPoint cropPos;
     QRubberBand* copySelection;
+    QRubberBand* cropSelection;
+    QRect cropRect;
 
     QList<ZLoaderHelper> cacheLoaders;
     int privPageCount;
@@ -80,6 +83,7 @@ signals:
     void closeFileRequested();
     void rotationUpdated(int degree);
     void auxMessage(const QString& msg);
+    void cropUpdated(const QRect& crop);
 
     // cache signals
     void cacheOpenFile(QString filename, int preferred);

@@ -43,6 +43,7 @@
         <file alias="folder-tar">img/16x16/folder-tar.png</file>
         <file alias="fork">img/16x16/fork.png</file>
         <file alias="go-down">img/16x16/go-down.png</file>
+        <file alias="transform-crop">img/16x16/transform-crop.png</file>
         <file alias="view-fullscreen">img/16x16/view-fullscreen.png</file>
         <file alias="view-preview">img/16x16/view-preview.png</file>
         <file alias="view-refresh">img/16x16/view-refresh.png</file>

@@ -41,9 +41,12 @@ MainWindow::MainWindow(QWidget *parent) :
     lblSearchStatus = new QLabel(tr("Ready"));
     lblAverageSizes = new QLabel();
     lblRotation = new QLabel("Rotation: 0");
+    lblCrop = new QLabel();
+
     statusBar()->addPermanentWidget(lblAverageSizes);
     statusBar()->addPermanentWidget(lblSearchStatus);
     statusBar()->addPermanentWidget(lblRotation);
+    statusBar()->addPermanentWidget(lblCrop);
 
     ui->spinPosition->hide();
     ui->fastScrollPanel->setMainWindow(this);
@@ -80,6 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnRotateCCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCCW()));
     connect(ui->btnRotateCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCW()));
     connect(ui->mangaView,SIGNAL(rotationUpdated(int)),this,SLOT(rotationUpdated(int)));
+    connect(ui->mangaView,&ZMangaView::cropUpdated,this,&MainWindow::cropUpdated);
 
     connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
     connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
@@ -331,6 +335,14 @@ void MainWindow::updateViewer()
 void MainWindow::rotationUpdated(int degree)
 {
     lblRotation->setText(tr("Rotation: %1").arg(degree));
+}
+
+void MainWindow::cropUpdated(const QRect &crop)
+{
+    if (!crop.isNull())
+        lblCrop->setText(tr("Cropped: %1x%2").arg(crop.width()).arg(crop.height()));
+    else
+        lblCrop->clear();
 }
 
 void MainWindow::fastScroll(int page)

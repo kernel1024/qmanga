@@ -33,9 +33,14 @@ ZMangaView::ZMangaView(QWidget *parent) :
     dragPos = QPoint();
     copyPos = QPoint();
     drawPos = QPoint();
+    cropPos = QPoint();
+    cropRect = QRect();
     copySelection = new QRubberBand(QRubberBand::Rectangle,this);
     copySelection->hide();
     copySelection->setGeometry(QRect());
+    cropSelection = new QRubberBand(QRubberBand::Rectangle,this);
+    cropSelection->hide();
+    cropSelection->setGeometry(QRect());
     curPixmap = QPixmap();
     curUmPixmap = QPixmap();
     openedFile = QString();
@@ -168,6 +173,9 @@ void ZMangaView::displayCurrentPage()
             mr.rotate(rotation*90.0);
             p = p.transformed(mr,Qt::SmoothTransformation);
         }
+        if (!cropRect.isNull()) {
+            p = p.copy(cropRect);
+        }
 
         if (!p.isNull()) {
             if (lastFileSizes.count()>10)
@@ -210,6 +218,7 @@ void ZMangaView::openFile(QString filename, int page)
     currentPage = 0;
     curUmPixmap = QPixmap();
     privPageCount = 0;
+    cropRect = QRect();
     redrawPage();
     emit loadedPage(-1,QString());
 
@@ -220,11 +229,13 @@ void ZMangaView::openFile(QString filename, int page)
         openedFile = filename;
     processingPages.clear();
     emit updateFileStats(filename);
+    emit cropUpdated(cropRect);
 }
 
 void ZMangaView::closeFile()
 {
     emit cacheCloseFile();
+    cropRect = QRect();
     curPixmap = QPixmap();
     openedFile = QString();
     privPageCount = 0;
@@ -358,6 +369,9 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
                 hb->setValue(hb->value()+hlen*(dragPos.x()-event->pos().x())/hvsz);
                 vb->setValue(vb->value()+vlen*(dragPos.y()-event->pos().y())/vvsz);
             }
+        } else if (((QApplication::keyboardModifiers() & Qt::MetaModifier) != 0)
+                   && cropRect.isNull()) {
+            cropSelection->setGeometry(QRect(event->pos(),cropPos).normalized());
         } else {
 #ifdef WITH_OCR
             copySelection->setGeometry(QRect(event->pos(),copyPos).normalized());
@@ -386,6 +400,11 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
             copySelection->setGeometry(copyPos.x(),copyPos.y(),0,0);
             copySelection->show();
 #endif
+        } else if (((QApplication::keyboardModifiers() & Qt::MetaModifier) != 0)
+                   && cropRect.isNull()) {
+            cropPos = event->pos();
+            cropSelection->setGeometry(cropPos.x(),cropPos.y(),0,0);
+            cropSelection->show();
         } else if ((QApplication::keyboardModifiers() & Qt::KeyboardModifierMask) == 0) {
             dragPos = event->pos();
         }
@@ -395,6 +414,7 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
 void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
 {
     copyPos = QPoint();
+    cropPos = QPoint();
     emit doubleClicked();
 }
 
@@ -439,14 +459,34 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                 }
             }
         }
+    } else if (event->button()==Qt::LeftButton &&
+               !cropPos.isNull() &&
+               cropRect.isNull() &&
+               (QApplication::keyboardModifiers() & Qt::MetaModifier) != 0) {
+        if (!curPixmap.isNull()) {
+            QRect cp = QRect(event->pos(),cropPos).normalized();
+            cp.moveTo(cp.x()-drawPos.x(),cp.y()-drawPos.y());
+            cp.moveTo(cp.left()*curUmPixmap.width()/curPixmap.width(),
+                      cp.top()*curUmPixmap.height()/curPixmap.height());
+            cp.setWidth(cp.width()*curUmPixmap.width()/curPixmap.width());
+            cp.setHeight(cp.height()*curUmPixmap.height()/curPixmap.height());
+            cp = cp.intersected(curUmPixmap.rect());
+
+            cropRect = cp;
+            displayCurrentPage();
+            emit cropUpdated(cropRect);
+        }
     }
 #else
     Q_UNUSED(event)
 #endif
     dragPos = QPoint();
     copyPos = QPoint();
+    cropPos = QPoint();
     copySelection->hide();
     copySelection->setGeometry(QRect());
+    cropSelection->hide();
+    cropSelection->setGeometry(QRect());
 }
 
 void ZMangaView::keyPressEvent(QKeyEvent *event)
@@ -515,6 +555,15 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     nt = new QAction(QIcon(":/16/view-refresh"),tr("Redraw page"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(redrawPage()));
     cm.addAction(nt);
+    if (!cropRect.isNull()) {
+        nt = new QAction(QIcon(":/16/transform-crop"),tr("Remove page crop"),nullptr);
+        connect(nt,&QAction::triggered,[this](){
+            cropRect = QRect();
+            displayCurrentPage();
+            emit cropUpdated(cropRect);
+        });
+        cm.addAction(nt);
+    }
     cm.addSeparator();
     nt = new QAction(QIcon(":/16/document-close"),tr("Close manga"),nullptr);
     connect(nt,SIGNAL(triggered()),this,SLOT(closeFileCtx()));

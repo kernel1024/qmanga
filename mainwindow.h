@@ -37,6 +37,7 @@ public:
     QLabel* lblSearchStatus;
     QLabel* lblAverageSizes;
     QLabel* lblRotation;
+    QLabel* lblCrop;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void centerWindow(bool moveWindow);
@@ -74,6 +75,7 @@ public slots:
     void viewerKeyPressed(int key);
     void updateViewer();
     void rotationUpdated(int degree);
+    void cropUpdated(const QRect& crop);
     void fastScroll(int page);
     void updateFastScrollPosition();
     void tabChanged(int idx);
