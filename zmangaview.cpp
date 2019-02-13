@@ -971,13 +971,19 @@ QIntList ZMangaView::cacheGetActivePages()
         else
             cacheRadius = (zg->cacheWidth+1) / 2;
     }
+
+    l << currentPage; // load current page at first
+
     for (int i=0;i<cacheRadius;i++) {
-        l << i;
+
+        if (!l.contains(i))
+            l << i; // first pages
+
         if (!l.contains(privPageCount-i-1))
-            l << privPageCount-i-1;
+            l << privPageCount-i-1;  // last pages
     }
     for (int i=(currentPage-cacheRadius);i<(currentPage+cacheRadius);i++) {
-        if (i>=0 && i<privPageCount && !l.contains(i))
+        if (i>=0 && i<privPageCount && !l.contains(i)) // pages around current page
             l << i;
     }
     return l;
