@@ -27,7 +27,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     privPageCount = 0;
     rotation = 0;
     scrollAccumulator = 0;
-    zoomMode = Fit;
+    zoomMode = zmFit;
+    mouseMode = mmOCR;
     zoomDynamic = false;
     zoomPos = QPoint();
     dragPos = QPoint();
@@ -151,6 +152,11 @@ void ZMangaView::getPage(int num)
             (!zg->cachePixmaps && iCacheData.contains(currentPage)))
         displayCurrentPage();
     cacheFillNearest();
+}
+
+void ZMangaView::setMouseMode(ZMangaView::MouseMode mode)
+{
+    mouseMode = mode;
 }
 
 void ZMangaView::displayCurrentPage()
@@ -360,7 +366,8 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
     QScrollBar* vb = scroller->verticalScrollBar();
     QScrollBar* hb = scroller->horizontalScrollBar();
     if ((event->buttons() & Qt::LeftButton)>0) {
-        if ((QApplication::keyboardModifiers() & Qt::KeyboardModifierMask) == 0) {
+        if (mouseMode == mmPan) {
+            // drag move in progress
             if (!dragPos.isNull()) {
                 int hlen = hb->maximum()-hb->minimum();
                 int vlen = vb->maximum()-vb->minimum();
@@ -369,11 +376,12 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
                 hb->setValue(hb->value()+hlen*(dragPos.x()-event->pos().x())/hvsz);
                 vb->setValue(vb->value()+vlen*(dragPos.y()-event->pos().y())/vvsz);
             }
-        } else if (((QApplication::keyboardModifiers() & Qt::MetaModifier) != 0)
-                   && cropRect.isNull()) {
+        } else if (mouseMode == mmCrop && cropRect.isNull()) {
+            // crop move in progress
             cropSelection->setGeometry(QRect(event->pos(),cropPos).normalized());
-        } else {
+        } else if (mouseMode == mmOCR){
 #ifdef WITH_OCR
+            // OCR move in progress
             copySelection->setGeometry(QRect(event->pos(),copyPos).normalized());
 #endif
         }
@@ -394,18 +402,20 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
         emit minimizeRequested();
         event->accept();
     } else if (event->button()==Qt::LeftButton) {
-        if ((QApplication::keyboardModifiers() & Qt::ControlModifier) != 0) {
+        if (mouseMode == mmOCR) {
 #ifdef WITH_OCR
+            // start OCR move
             copyPos = event->pos();
             copySelection->setGeometry(copyPos.x(),copyPos.y(),0,0);
             copySelection->show();
 #endif
-        } else if (((QApplication::keyboardModifiers() & Qt::MetaModifier) != 0)
-                   && cropRect.isNull()) {
+        } else if (mouseMode == mmCrop && cropRect.isNull()) {
+            // start crop move
             cropPos = event->pos();
             cropSelection->setGeometry(cropPos.x(),cropPos.y(),0,0);
             cropSelection->show();
-        } else if ((QApplication::keyboardModifiers() & Qt::KeyboardModifierMask) == 0) {
+        } else if (mouseMode == mmPan) {
+            // start drag move
             dragPos = event->pos();
         }
     }
@@ -423,7 +433,8 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 #ifdef WITH_OCR
     if (event->button()==Qt::LeftButton &&
             !copyPos.isNull() &&
-            (QApplication::keyboardModifiers() & Qt::ControlModifier) != 0) {
+            mouseMode == mmOCR) {
+        // OCR move completion
         if (!curPixmap.isNull()) {
             QRect cp = QRect(event->pos(),copyPos).normalized();
             cp.moveTo(cp.x()-drawPos.x(),cp.y()-drawPos.y());
@@ -462,7 +473,8 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
     } else if (event->button()==Qt::LeftButton &&
                !cropPos.isNull() &&
                cropRect.isNull() &&
-               (QApplication::keyboardModifiers() & Qt::MetaModifier) != 0) {
+               mouseMode == mmCrop) {
+        // crop move completion
         if (!curPixmap.isNull()) {
             QRect cp = QRect(event->pos(),cropPos).normalized();
             cp.moveTo(cp.x()-drawPos.x(),cp.y()-drawPos.y());
@@ -617,17 +629,17 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
             double myAspect = (double)width()/(double)height();
             if (zoomAny>0) {
                 targetSize = curUmPixmap.size()*((double)(zoomAny)/100.0);
-            } else if (zoomMode==Fit) {
+            } else if (zoomMode==zmFit) {
                 if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
                     targetSize = QSize(scrollerSize.width(),
                                        round(((double)scrollerSize.width())/pixAspect));
                 else
                     targetSize = QSize(round(((double)scrollerSize.height())*pixAspect),
                                        scrollerSize.height());
-            } else if (zoomMode==Width) {
+            } else if (zoomMode==zmWidth) {
                 targetSize = QSize(scrollerSize.width(),
                                    round(((double)scrollerSize.width())/pixAspect));
-            } else if (zoomMode==Height) {
+            } else if (zoomMode==zmHeight) {
                 targetSize = QSize(round(((double)scrollerSize.height())*pixAspect),
                                    scrollerSize.height());
             }
@@ -804,22 +816,22 @@ void ZMangaView::navLast()
 
 void ZMangaView::setZoomFit()
 {
-    setZoomMode(Fit);
+    setZoomMode(zmFit);
 }
 
 void ZMangaView::setZoomWidth()
 {
-    setZoomMode(Width);
+    setZoomMode(zmWidth);
 }
 
 void ZMangaView::setZoomHeight()
 {
-    setZoomMode(Height);
+    setZoomMode(zmHeight);
 }
 
 void ZMangaView::setZoomOriginal()
 {
-    setZoomMode(Original);
+    setZoomMode(zmOriginal);
 }
 
 void ZMangaView::setZoomDynamic(bool state)

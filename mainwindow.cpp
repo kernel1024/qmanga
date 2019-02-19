@@ -52,6 +52,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->fastScrollPanel->setMainWindow(this);
     ui->fastScrollSlider->hide();
     ui->fastScrollSlider->installEventFilter(this);
+    ui->mouseModeOCR->hide();
+    ui->mouseModePan->hide();
+    ui->mouseModeCrop->hide();
+
+    ui->mouseModeOCR->setChecked(true);
 
     ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -101,6 +106,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->fastScrollSlider,SIGNAL(valueChanged(int)),this,SLOT(fastScroll(int)));
     connect(ui->fastScrollPanel,SIGNAL(showWidget()),this,SLOT(updateFastScrollPosition()));
+
+    connect(ui->mouseModeOCR,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
+    connect(ui->mouseModePan,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
+    connect(ui->mouseModeCrop,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
 
     connect(ui->fsResults,SIGNAL(customContextMenuRequested(QPoint)),
             this,SLOT(fsResultsMenuCtx(QPoint)));
@@ -364,6 +373,18 @@ void MainWindow::tabChanged(int idx)
 {
     if (idx==1 && searchTab!=nullptr)
         searchTab->updateFocus();
+}
+
+void MainWindow::changeMouseMode(bool state)
+{
+    Q_UNUSED(state)
+
+    if (ui->mouseModeOCR->isChecked())
+        ui->mangaView->setMouseMode(ZMangaView::mmOCR);
+    else if (ui->mouseModePan->isChecked())
+        ui->mangaView->setMouseMode(ZMangaView::mmPan);
+    else if (ui->mouseModeCrop->isChecked())
+        ui->mangaView->setMouseMode(ZMangaView::mmCrop);
 }
 
 void MainWindow::updateBookmarks()

@@ -79,6 +79,7 @@ public slots:
     void fastScroll(int page);
     void updateFastScrollPosition();
     void tabChanged(int idx);
+    void changeMouseMode(bool state);
 
     void updateBookmarks();
     void updateTitle();

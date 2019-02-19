@@ -17,14 +17,21 @@ class ZMangaView : public QWidget
     Q_OBJECT
 public:
     enum ZoomMode {
-        Fit,
-        Width,
-        Height,
-        Original
+        zmFit,
+        zmWidth,
+        zmHeight,
+        zmOriginal
+    };
+
+    enum MouseMode {
+        mmOCR,
+        mmPan,
+        mmCrop
     };
 
 private:
     ZoomMode zoomMode;
+    MouseMode mouseMode;
     int rotation;
     QPixmap curPixmap, curUmPixmap;
     QPoint drawPos;
@@ -67,12 +74,13 @@ public:
     int zoomAny;
     bool exportFileError;
 
-    explicit ZMangaView(QWidget *parent = 0);
+    explicit ZMangaView(QWidget *parent = nullptr);
     ~ZMangaView();
     void setZoomMode(ZoomMode mode);
     ZoomMode getZoomMode();
     int getPageCount();
     void getPage(int num);
+    void setMouseMode(MouseMode mode);
     
 signals:
     void loadedPage(int num, QString msg);
