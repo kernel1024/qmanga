@@ -44,7 +44,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     fsWatcher = new QFileSystemWatcher(this);
     newlyAddedFiles.clear();
     dirWatchList.clear();
-    connect(fsWatcher,SIGNAL(directoryChanged(QString)),this,SLOT(directoryChanged(QString)));
+    connect(fsWatcher,&QFileSystemWatcher::directoryChanged,this,&ZGlobal::directoryChanged);
 
     threadDB = new QThread();
     db = new ZDB();

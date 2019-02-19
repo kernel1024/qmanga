@@ -60,72 +60,73 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
-    connect(ui->actionOpen,SIGNAL(triggered()),this,SLOT(openAux()));
-    connect(ui->actionOpenClipboard,SIGNAL(triggered()),this,SLOT(openClipboard()));
-    connect(ui->actionClose,SIGNAL(triggered()),this,SLOT(closeManga()));
-    connect(ui->actionSettings,SIGNAL(triggered()),zg,SLOT(settingsDlg()));
-    connect(ui->actionAddBookmark,SIGNAL(triggered()),this,SLOT(createBookmark()));
-    connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(helpAbout()));
-    connect(ui->actionFullscreen,SIGNAL(triggered()),this,SLOT(switchFullscreen()));
-    connect(ui->actionMinimize,SIGNAL(triggered()),this,SLOT(showMinimized()));
-    connect(ui->actionSaveSettings,SIGNAL(triggered()),zg,SLOT(saveSettings()));
-    connect(ui->actionShowOCR,SIGNAL(triggered()),zg->ocrEditor,SLOT(show()));
+    connect(ui->actionExit,&QAction::triggered,this,&MainWindow::close);
+    connect(ui->actionOpen,&QAction::triggered,this,&MainWindow::openAux);
+    connect(ui->actionOpenClipboard,&QAction::triggered,this,&MainWindow::openClipboard);
+    connect(ui->actionClose,&QAction::triggered,this,&MainWindow::closeManga);
+    connect(ui->actionSettings,&QAction::triggered,zg,&ZGlobal::settingsDlg);
+    connect(ui->actionAddBookmark,&QAction::triggered,this,&MainWindow::createBookmark);
+    connect(ui->actionAbout,&QAction::triggered,this,&MainWindow::helpAbout);
+    connect(ui->actionFullscreen,&QAction::triggered,this,&MainWindow::switchFullscreen);
+    connect(ui->actionMinimize,&QAction::triggered,this,&MainWindow::showMinimized);
+    connect(ui->actionSaveSettings,&QAction::triggered,zg,&ZGlobal::saveSettings);
+    connect(ui->actionShowOCR,&QAction::triggered,zg->ocrEditor,&ZOCREditor::show);
 
-    connect(ui->btnOpen,SIGNAL(clicked()),this,SLOT(openAux()));
-    connect(ui->mangaView,SIGNAL(loadedPage(int,QString)),this,SLOT(dispPage(int,QString)));
-    connect(ui->scrollArea,SIGNAL(sizeChanged(QSize)),ui->mangaView,SLOT(ownerResized(QSize)));
-    connect(ui->comboZoom,SIGNAL(currentIndexChanged(QString)),ui->mangaView,SLOT(setZoomAny(QString)));
-    connect(ui->mangaView,SIGNAL(doubleClicked()),this,SLOT(switchFullscreen()));
-    connect(ui->mangaView,SIGNAL(keyPressed(int)),this,SLOT(viewerKeyPressed(int)));
-    connect(ui->mangaView,SIGNAL(minimizeRequested()),this,SLOT(showMinimized()));
-    connect(ui->mangaView,SIGNAL(closeFileRequested()),this,SLOT(closeManga()));
-    connect(searchTab,SIGNAL(mangaDblClick(QString)),this,SLOT(openFromIndex(QString)));
-    connect(searchTab,SIGNAL(statusBarMsg(QString)),this,SLOT(auxMessage(QString)));
-    connect(ui->mangaView,SIGNAL(auxMessage(QString)),this,SLOT(auxMessage(QString)));
-    connect(ui->mangaView,SIGNAL(averageSizes(QSize,qint64)),this,SLOT(msgFromMangaView(QSize,qint64)));
-    connect(ui->spinPosition,SIGNAL(editingFinished()),this,SLOT(pageNumEdited()));
-    connect(ui->btnRotateCCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCCW()));
-    connect(ui->btnRotateCW,SIGNAL(clicked()),ui->mangaView,SLOT(viewRotateCW()));
-    connect(ui->mangaView,SIGNAL(rotationUpdated(int)),this,SLOT(rotationUpdated(int)));
+    connect(ui->btnOpen,&QPushButton::clicked,this,&MainWindow::openAux);
+    connect(ui->mangaView,&ZMangaView::loadedPage,this,&MainWindow::dispPage);
+    connect(ui->scrollArea,&ZScrollArea::sizeChanged,ui->mangaView,&ZMangaView::ownerResized);
+    connect(ui->comboZoom,qOverload<const QString &>(&QComboBox::currentIndexChanged),
+            ui->mangaView,&ZMangaView::setZoomAny);
+    connect(ui->mangaView,&ZMangaView::doubleClicked,this,&MainWindow::switchFullscreen);
+    connect(ui->mangaView,&ZMangaView::keyPressed,this,&MainWindow::viewerKeyPressed);
+    connect(ui->mangaView,&ZMangaView::minimizeRequested,this,&MainWindow::showMinimized);
+    connect(ui->mangaView,&ZMangaView::closeFileRequested,this,&MainWindow::closeManga);
+    connect(searchTab,&ZSearchTab::mangaDblClick,this,&MainWindow::openFromIndex);
+    connect(searchTab,&ZSearchTab::statusBarMsg,this,&MainWindow::auxMessage);
+    connect(ui->mangaView,&ZMangaView::auxMessage,this,&MainWindow::auxMessage);
+    connect(ui->mangaView,&ZMangaView::averageSizes,this,&MainWindow::msgFromMangaView);
+    connect(ui->spinPosition,&QSpinBox::editingFinished,this,&MainWindow::pageNumEdited);
+    connect(ui->btnRotateCCW,&QPushButton::clicked,ui->mangaView,&ZMangaView::viewRotateCCW);
+    connect(ui->btnRotateCW,&QPushButton::clicked,ui->mangaView,&ZMangaView::viewRotateCW);
+    connect(ui->mangaView,&ZMangaView::rotationUpdated,this,&MainWindow::rotationUpdated);
     connect(ui->mangaView,&ZMangaView::cropUpdated,this,&MainWindow::cropUpdated);
 
-    connect(ui->btnNavFirst,SIGNAL(clicked()),ui->mangaView,SLOT(navFirst()));
-    connect(ui->btnNavPrev,SIGNAL(clicked()),ui->mangaView,SLOT(navPrev()));
-    connect(ui->btnNavNext,SIGNAL(clicked()),ui->mangaView,SLOT(navNext()));
-    connect(ui->btnNavLast,SIGNAL(clicked()),ui->mangaView,SLOT(navLast()));
+    connect(ui->btnNavFirst,&QPushButton::clicked,ui->mangaView,&ZMangaView::navFirst);
+    connect(ui->btnNavPrev,&QPushButton::clicked,ui->mangaView,&ZMangaView::navPrev);
+    connect(ui->btnNavNext,&QPushButton::clicked,ui->mangaView,&ZMangaView::navNext);
+    connect(ui->btnNavLast,&QPushButton::clicked,ui->mangaView,&ZMangaView::navLast);
 
-    connect(ui->btnZoomFit,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomFit()));
-    connect(ui->btnZoomHeight,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomHeight()));
-    connect(ui->btnZoomWidth,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomWidth()));
-    connect(ui->btnZoomOriginal,SIGNAL(clicked()),ui->mangaView,SLOT(setZoomOriginal()));
-    connect(ui->btnZoomDynamic,SIGNAL(toggled(bool)),ui->mangaView,SLOT(setZoomDynamic(bool)));
+    connect(ui->btnZoomFit,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomFit);
+    connect(ui->btnZoomHeight,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomHeight);
+    connect(ui->btnZoomWidth,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomWidth);
+    connect(ui->btnZoomOriginal,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomOriginal);
+    connect(ui->btnZoomDynamic,&QPushButton::toggled,ui->mangaView,&ZMangaView::setZoomDynamic);
 
-    connect(ui->btnSearchTab,SIGNAL(clicked()),this,SLOT(openSearchTab()));
-    connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(tabChanged(int)));
+    connect(ui->btnSearchTab,&QPushButton::clicked,this,&MainWindow::openSearchTab);
+    connect(ui->tabWidget,&QTabWidget::currentChanged,this,&MainWindow::tabChanged);
 
-    connect(ui->fastScrollSlider,SIGNAL(valueChanged(int)),this,SLOT(fastScroll(int)));
-    connect(ui->fastScrollPanel,SIGNAL(showWidget()),this,SLOT(updateFastScrollPosition()));
+    connect(ui->fastScrollSlider,&QSlider::valueChanged,this,&MainWindow::fastScroll);
+    connect(ui->fastScrollPanel,&ZPopupFrame::showWidget,this,&MainWindow::updateFastScrollPosition);
 
     connect(ui->mouseModeOCR,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
     connect(ui->mouseModePan,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
     connect(ui->mouseModeCrop,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
 
-    connect(ui->fsResults,SIGNAL(customContextMenuRequested(QPoint)),
-            this,SLOT(fsResultsMenuCtx(QPoint)));
-    connect(ui->btnFSAdd,SIGNAL(clicked()),this,SLOT(fsAddFiles()));
-    connect(ui->btnFSCheck,SIGNAL(clicked()),this,SLOT(fsCheckAvailability()));
-    connect(ui->btnFSDelete,SIGNAL(clicked()),this,SLOT(fsDelFiles()));
-    connect(ui->btnFSFind,SIGNAL(clicked()),this,SLOT(fsFindNewFiles()));
-    connect(zg->db,SIGNAL(foundNewFiles(QStringList)),
-            this,SLOT(fsFoundNewFiles(QStringList)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbAddIgnoredFiles(QStringList)),
-            zg->db,SLOT(sqlAddIgnoredFiles(QStringList)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbFindNewFiles()),
-            zg->db,SLOT(sqlSearchMissingManga()),Qt::QueuedConnection);
-    connect(zg,SIGNAL(fsFilesAdded()),this,SLOT(fsNewFilesAdded()));
-    connect(this,SIGNAL(dbAddFiles(QStringList,QString)),
-            zg->db,SLOT(sqlAddFiles(QStringList,QString)),Qt::QueuedConnection);
+    connect(ui->fsResults,&QTableWidget::customContextMenuRequested,
+            this,&MainWindow::fsResultsMenuCtx);
+    connect(ui->btnFSAdd,&QPushButton::clicked,this,&MainWindow::fsAddFiles);
+    connect(ui->btnFSCheck,&QPushButton::clicked,this,&MainWindow::fsCheckAvailability);
+    connect(ui->btnFSDelete,&QPushButton::clicked,this,&MainWindow::fsDelFiles);
+    connect(ui->btnFSFind,&QPushButton::clicked,this,&MainWindow::fsFindNewFiles);
+    connect(zg->db,&ZDB::foundNewFiles,
+            this,&MainWindow::fsFoundNewFiles,Qt::QueuedConnection);
+    connect(this,&MainWindow::dbAddIgnoredFiles,
+            zg->db,&ZDB::sqlAddIgnoredFiles,Qt::QueuedConnection);
+    connect(this,&MainWindow::dbFindNewFiles,
+            zg->db,&ZDB::sqlSearchMissingManga,Qt::QueuedConnection);
+    connect(zg,&ZGlobal::fsFilesAdded,this,&MainWindow::fsNewFilesAdded);
+    connect(this,&MainWindow::dbAddFiles,
+            zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
 
     ui->mangaView->scroller = ui->scrollArea;
     zg->loadSettings();
@@ -392,7 +393,7 @@ void MainWindow::updateBookmarks()
     while (bookmarksMenu->actions().count()>2)
         bookmarksMenu->removeAction(bookmarksMenu->actions().last());
     foreach (const QString &t, zg->bookmarks.keys()) {
-        QAction* a = bookmarksMenu->addAction(t,this,SLOT(openBookmark()));
+        QAction* a = bookmarksMenu->addAction(t,this,&MainWindow::openBookmark);
         a->setData(zg->bookmarks.value(t));
         QString st = zg->bookmarks.value(t);
         if (st.split('\n').count()>0)
@@ -578,7 +579,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
     int cnt=0;
     if (!ui->fsResults->selectedItems().isEmpty()) {
         ac = new QAction(QIcon(":/16/dialog-cancel"),tr("Ignore these file(s)"),this);
-        connect(ac,SIGNAL(triggered()),this,SLOT(fsAddIgnoredFiles()));
+        connect(ac,&QAction::triggered,this,&MainWindow::fsAddIgnoredFiles);
         cm.addAction(ac);
         cm.addSeparator();
         cnt++;
@@ -586,7 +587,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
     for (int i=0;i<albums.count();i++) {
         if (albums.at(i).startsWith("#")) continue;
         ac = new QAction(albums.at(i),nullptr);
-        connect(ac,SIGNAL(triggered()),this,SLOT(fsResultsCtxApplyAlbum()));
+        connect(ac,&QAction::triggered,this,&MainWindow::fsResultsCtxApplyAlbum);
         ac->setData(albums.at(i));
         cm.addAction(ac);
         cnt++;
@@ -620,7 +621,7 @@ void MainWindow::fsFindNewFiles()
 {
     fsScannedFiles.clear();
     fsUpdateFileList();
-    searchTab->dbShowProgressDialog(true,tr("Scanning filesystem"));
+    searchTab->dbShowProgressDialogEx(true,tr("Scanning filesystem"));
     searchTab->dbShowProgressState(25,tr("Scanning filesystem..."));
     emit dbFindNewFiles();
 }

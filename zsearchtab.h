@@ -77,7 +77,8 @@ public slots:
     void ctxFileCopy();
     void ctxFileCopyClipboard();
 
-    void dbShowProgressDialog(const bool visible, const QString &title = QString());
+    void dbShowProgressDialog(const bool visible);
+    void dbShowProgressDialogEx(const bool visible, const QString &title);
     void dbShowProgressState(const int value, const QString& msg);
     void dbAlbumsListUpdated();
     void dbAlbumsListReady(const QStringList& albums);

@@ -201,7 +201,7 @@ void QxtToolTipPrivate::hideLater()
 {
     currentRect = QRect();
     if (isVisible())
-        QTimer::singleShot(0, this, SLOT(hide()));
+        QTimer::singleShot(0, this, &QxtToolTipPrivate::hide);
 }
 
 QPoint QxtToolTipPrivate::calculatePos(int scr, const QPoint& eventPos) const

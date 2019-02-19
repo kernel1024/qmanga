@@ -66,19 +66,20 @@ HEADERS  += mainwindow.h \
     multiinputdialog.h \
     zdjvureader.h
 
-FORMS    += mainwindow.ui \
+FORMS    += \
     settingsdialog.ui \
     bookmarkdlg.ui \
     zsearchtab.ui \
     albumselectordlg.ui \
     ocreditor.ui \
     zexportdialog.ui \
-    multiinputdialog.ui
+    multiinputdialog.ui \
+    mainwindow.ui
 
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig c++11
+CONFIG += warn_on link_pkgconfig c++14
 
 !win32 {
     exists( /usr/include/magic.h ) {

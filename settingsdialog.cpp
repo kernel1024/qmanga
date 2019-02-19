@@ -380,7 +380,7 @@ void SettingsDialog::dynAdd()
                         "from FROM clause to the end of query.\n"
                         "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
 
-    connect(zg->db,SIGNAL(gotTablesDescription(QString)),dlg,SLOT(setAuxText(QString)),Qt::QueuedConnection);
+    connect(zg->db,&ZDB::gotTablesDescription,dlg,&QTwoEditDlg::setAuxText,Qt::QueuedConnection);
     QMetaObject::invokeMethod(zg->db,"sqlGetTablesDescription",Qt::QueuedConnection);
 
     if (dlg->exec()) {

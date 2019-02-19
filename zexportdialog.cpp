@@ -12,8 +12,8 @@ ZExportDialog::ZExportDialog(QWidget *parent) :
 
     ui->exportDir->setText(QDir::currentPath());
 
-    connect(ui->exportDirBtn,SIGNAL(clicked()),this,SLOT(dirSelectBtn()));
-    connect(ui->pageCount,SIGNAL(valueChanged(int)),this,SLOT(updateRange(int)));
+    connect(ui->exportDirBtn,&QPushButton::clicked,this,&ZExportDialog::dirSelectBtn);
+    connect(ui->pageCount,qOverload<int>(&QSpinBox::valueChanged),this,&ZExportDialog::updateRange);
 }
 
 ZExportDialog::~ZExportDialog()

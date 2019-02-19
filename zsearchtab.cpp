@@ -55,60 +55,44 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcModeList->setChecked(ui->srcStack->currentIndex()==STACK_TABLE);
     ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->srcAlbums,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(albumClicked(QListWidgetItem*)));
-    connect(ui->srcAlbums,SIGNAL(customContextMenuRequested(QPoint)),
-            this,SLOT(ctxAlbumMenu(QPoint)));
-    connect(ui->srcList,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
-    connect(ui->srcList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
-    connect(ui->srcTable,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(mangaOpen(QModelIndex)));
-    connect(ui->srcTable,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ctxMenu(QPoint)));
-    connect(ui->srcAddBtn,SIGNAL(clicked()),this,SLOT(mangaAdd()));
-    connect(ui->srcAddDirBtn,SIGNAL(clicked()),this,SLOT(mangaAddDir()));
-    connect(ui->srcAddImgDirBtn,SIGNAL(clicked()),this,SLOT(imagesAddDir()));
-    connect(ui->srcDelBtn,SIGNAL(clicked()),this,SLOT(mangaDel()));
-    connect(ui->srcModeIcon,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
-    connect(ui->srcModeList,SIGNAL(toggled(bool)),this,SLOT(listModeChanged(bool)));
-    connect(ui->srcIconSize,SIGNAL(valueChanged(int)),this,SLOT(iconSizeChanged(int)));
-    connect(ui->srcEdit,SIGNAL(returnPressed()),ui->srcEditBtn,SLOT(click()));
-    connect(ui->srcEditBtn,SIGNAL(clicked()),this,SLOT(mangaSearch()));
+    connect(ui->srcAlbums,&QListWidget::itemClicked,this,&ZSearchTab::albumClicked);
+    connect(ui->srcAlbums,&QListWidget::customContextMenuRequested,
+            this,&ZSearchTab::ctxAlbumMenu);
+    connect(ui->srcList,&QListView::doubleClicked,this,&ZSearchTab::mangaOpen);
+    connect(ui->srcList,&QListView::customContextMenuRequested,this,&ZSearchTab::ctxMenu);
+    connect(ui->srcTable,&QTableView::doubleClicked,this,&ZSearchTab::mangaOpen);
+    connect(ui->srcTable,&QTableView::customContextMenuRequested,this,&ZSearchTab::ctxMenu);
+    connect(ui->srcAddBtn,&QPushButton::clicked,this,&ZSearchTab::mangaAdd);
+    connect(ui->srcAddDirBtn,&QPushButton::clicked,this,&ZSearchTab::mangaAddDir);
+    connect(ui->srcAddImgDirBtn,&QPushButton::clicked,this,&ZSearchTab::imagesAddDir);
+    connect(ui->srcDelBtn,&QPushButton::clicked,this,&ZSearchTab::mangaDel);
+    connect(ui->srcModeIcon,&QRadioButton::toggled,this,&ZSearchTab::listModeChanged);
+    connect(ui->srcModeList,&QRadioButton::toggled,this,&ZSearchTab::listModeChanged);
+    connect(ui->srcIconSize,&QSlider::valueChanged,this,&ZSearchTab::iconSizeChanged);
+    connect(ui->srcEdit,&QLineEdit::returnPressed,ui->srcEditBtn,&QPushButton::click);
+    connect(ui->srcEditBtn,&QPushButton::clicked,this,&ZSearchTab::mangaSearch);
 
-    connect(zg->db,SIGNAL(albumsListUpdated()),
-            this,SLOT(dbAlbumsListUpdated()),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(gotAlbums(QStringList)),
-            this,SLOT(dbAlbumsListReady(QStringList)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbRenameAlbum(QString,QString)),
-            zg->db,SLOT(sqlRenameAlbum(QString,QString)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(filesAdded(int,int,int)),
-            this,SLOT(dbFilesAdded(int,int,int)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(filesLoaded(int,int)),
-            this,SLOT(dbFilesLoaded(int,int)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(errorMsg(QString)),
-            this,SLOT(dbErrorMsg(QString)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(needTableCreation()),
-            this,SLOT(dbNeedTableCreation()),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(showProgressDialog(bool)),
-            this,SLOT(dbShowProgressDialog(bool)),Qt::QueuedConnection);
-    connect(zg->db,SIGNAL(showProgressState(int,QString)),
-            this,SLOT(dbShowProgressState(int,QString)),Qt::QueuedConnection);
+    connect(zg->db,&ZDB::albumsListUpdated,this,&ZSearchTab::dbAlbumsListUpdated,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::gotAlbums,this,&ZSearchTab::dbAlbumsListReady,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbRenameAlbum,zg->db,&ZDB::sqlRenameAlbum,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::filesAdded,this,&ZSearchTab::dbFilesAdded,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::filesLoaded,this,&ZSearchTab::dbFilesLoaded,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::needTableCreation,this,&ZSearchTab::dbNeedTableCreation,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::showProgressDialog,this,&ZSearchTab::dbShowProgressDialog,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::showProgressState,this,&ZSearchTab::dbShowProgressState,Qt::QueuedConnection);
 
-    connect(this,SIGNAL(dbAddFiles(QStringList,QString)),
-            zg->db,SLOT(sqlAddFiles(QStringList,QString)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbDelFiles(QIntList,bool)),
-            zg->db,SLOT(sqlDelFiles(QIntList,bool)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbGetAlbums()),
-            zg->db,SLOT(sqlGetAlbums()),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbGetFiles(QString,QString,Z::Ordering,bool)),
-            zg->db,SLOT(sqlGetFiles(QString,QString,Z::Ordering,bool)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbRenameAlbum(QString,QString)),
-            zg->db,SLOT(sqlRenameAlbum(QString,QString)),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbCreateTables()),
-            zg->db,SLOT(sqlCreateTables()),Qt::QueuedConnection);
-    connect(this,SIGNAL(dbDeleteAlbum(QString)),
-            zg->db,SLOT(sqlDelAlbum(QString)),Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbAddFiles,zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbDelFiles,zg->db,&ZDB::sqlDelFiles,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbGetAlbums,zg->db,&ZDB::sqlGetAlbums,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbGetFiles,zg->db,&ZDB::sqlGetFiles,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbRenameAlbum,zg->db,&ZDB::sqlRenameAlbum,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbCreateTables,zg->db,&ZDB::sqlCreateTables,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbDeleteAlbum,zg->db,&ZDB::sqlDelAlbum,Qt::QueuedConnection);
 
     QState* sLoaded = new QState(); QState* sLoading = new QState();
-    sLoading->addTransition(zg->db,SIGNAL(filesLoaded(int,int)),sLoaded);
-    sLoaded->addTransition(this,SIGNAL(dbGetFiles(QString,QString,Z::Ordering,bool)),sLoading);
+    sLoading->addTransition(zg->db,&ZDB::filesLoaded,sLoaded);
+    sLoaded->addTransition(this,&ZSearchTab::dbGetFiles,sLoading);
     sLoading->assignProperty(ui->srcAddBtn,"enabled",false);
     sLoading->assignProperty(ui->srcAddDirBtn,"enabled",false);
     sLoading->assignProperty(ui->srcDelBtn,"enabled",false);
@@ -135,19 +119,18 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     iconModel->setSourceModel(aModel);
     ui->srcList->setModel(iconModel);
     ui->srcTable->setModel(tableModel);
-    connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,[this](int logicalIndex, Qt::SortOrder order){
+    connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,
+            [this](int logicalIndex, Qt::SortOrder order){
         iconModel->sort(logicalIndex,order);
     });
 
-    connect(ui->srcList->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
-    connect(ui->srcTable->selectionModel(),SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-            this,SLOT(mangaSelectionChanged(QModelIndex,QModelIndex)));
+    connect(ui->srcList->selectionModel(),&QItemSelectionModel::currentChanged,
+            this,&ZSearchTab::mangaSelectionChanged);
+    connect(ui->srcTable->selectionModel(),&QItemSelectionModel::currentChanged,
+            this,&ZSearchTab::mangaSelectionChanged);
 
-    connect(zg->db,SIGNAL(gotFile(SQLMangaEntry,Z::Ordering,bool)),
-            aModel,SLOT(addItem(SQLMangaEntry,Z::Ordering,bool)));
-    connect(zg->db,SIGNAL(deleteItemsFromModel(QIntList)),
-            aModel,SLOT(deleteItems(QIntList)),Qt::QueuedConnection);
+    connect(zg->db,&ZDB::gotFile,aModel,&ZMangaModel::addItem,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::deleteItemsFromModel,aModel,&ZMangaModel::deleteItems,Qt::QueuedConnection);
     model = aModel;
 
     ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -177,7 +160,7 @@ void ZSearchTab::ctxMenu(QPoint pos)
 
     QAction* acm;
     acm = cm.addAction(QIcon(":/16/edit-select-all"),tr("Select All"));
-    connect(acm,SIGNAL(triggered()),view,SLOT(selectAll()));
+    connect(acm,&QAction::triggered,view,&QAbstractItemView::selectAll);
 
     cm.addSeparator();
 
@@ -189,29 +172,29 @@ void ZSearchTab::ctxMenu(QPoint pos)
     }
     QMenu* dmenu = cm.addMenu(QIcon(":/16/edit-delete"),
                               tr("Delete selected %1 files").arg(cnt));
-    acm = dmenu->addAction(tr("Delete only from database"),this,SLOT(mangaDel()));
+    acm = dmenu->addAction(tr("Delete only from database"),this,&ZSearchTab::mangaDel);
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
     acm->setData(1);
-    acm = dmenu->addAction(tr("Delete from database and filesystem"),this,SLOT(mangaDel()));
+    acm = dmenu->addAction(tr("Delete from database and filesystem"),this,&ZSearchTab::mangaDel);
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
     acm->setData(2);
 
     acm = cm.addAction(QIcon(":/16/document-open-folder"),
-                       tr("Open containing directory"),this,SLOT(ctxOpenDir()));
+                       tr("Open containing directory"),this,&ZSearchTab::ctxOpenDir);
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
 
     cm.addAction(QIcon(":/16/fork"),
-                 tr("Open with default DE action"),this,SLOT(ctxXdgOpen()));
+                 tr("Open with default DE action"),this,&ZSearchTab::ctxXdgOpen);
 
     cm.addSeparator();
 
 #ifndef Q_OS_WIN
     cm.addAction(QIcon(":/16/edit-copy"),
-                 tr("Copy files"),this,SLOT(ctxFileCopyClipboard()));
+                 tr("Copy files"),this,&ZSearchTab::ctxFileCopyClipboard);
 #endif
 
     cm.addAction(QIcon(":/16/edit-copy"),
-                 tr("Copy files to directory..."),this,SLOT(ctxFileCopy()));
+                 tr("Copy files to directory..."),this,&ZSearchTab::ctxFileCopy);
 
     if (li.count()==1) {
         SQLMangaEntry m = model->getItem(li.first().row());
@@ -223,17 +206,17 @@ void ZSearchTab::ctxMenu(QPoint pos)
             acm->setCheckable(true);
             acm->setChecked(m.rendering==Z::PDFRendering::Autodetect);
             acm->setData(static_cast<int>(Z::PDFRendering::Autodetect));
-            connect(acm,SIGNAL(triggered()),this,SLOT(ctxChangeRenderer()));
+            connect(acm,&QAction::triggered,this,&ZSearchTab::ctxChangeRenderer);
             acm = dmenu->addAction(tr("Force rendering mode"));
             acm->setCheckable(true);
             acm->setChecked(m.rendering==Z::PDFRendering::PageRenderer);
             acm->setData(static_cast<int>(Z::PDFRendering::PageRenderer));
-            connect(acm,SIGNAL(triggered()),this,SLOT(ctxChangeRenderer()));
+            connect(acm,&QAction::triggered,this,&ZSearchTab::ctxChangeRenderer);
             acm = dmenu->addAction(tr("Force catalog mode"));
             acm->setCheckable(true);
             acm->setChecked(m.rendering==Z::PDFRendering::ImageCatalog);
             acm->setData(static_cast<int>(Z::PDFRendering::ImageCatalog));
-            connect(acm,SIGNAL(triggered()),this,SLOT(ctxChangeRenderer()));
+            connect(acm,&QAction::triggered,this,&ZSearchTab::ctxChangeRenderer);
         }
     }
 
@@ -269,10 +252,10 @@ void ZSearchTab::ctxAlbumMenu(QPoint pos)
     QMenu cm(ui->srcAlbums);
     QAction* acm;
     acm = cm.addAction(QIcon(":/16/edit-rename"),tr("Rename album"),
-                       this,SLOT(ctxRenameAlbum()));
+                       this,&ZSearchTab::ctxRenameAlbum);
     acm->setData(itm->text());
     acm = cm.addAction(QIcon(":/16/edit-delete"),tr("Delete album"),
-                       this,SLOT(ctxDeleteAlbum()));
+                       this,&ZSearchTab::ctxDeleteAlbum);
     acm->setData(itm->text());
 
     cm.exec(ui->srcAlbums->mapToGlobal(pos));
@@ -756,13 +739,18 @@ void ZSearchTab::dbNeedTableCreation()
         emit dbCreateTables();
 }
 
-void ZSearchTab::dbShowProgressDialog(const bool visible, const QString& title)
+void ZSearchTab::dbShowProgressDialog(const bool visible)
+{
+    dbShowProgressDialogEx(visible, QString());
+}
+
+void ZSearchTab::dbShowProgressDialogEx(const bool visible, const QString& title)
 {
     if (visible) {
         if (progressDlg==nullptr) {
             progressDlg = new QProgressDialog(tr("Adding files"),tr("Cancel"),0,100,this);
-            connect(progressDlg,SIGNAL(canceled()),
-                    zg->db,SLOT(sqlCancelAdding()),Qt::QueuedConnection);
+            connect(progressDlg,&QProgressDialog::canceled,
+                    zg->db,&ZDB::sqlCancelAdding,Qt::QueuedConnection);
         }
         progressDlg->setWindowModality(Qt::WindowModal);
         if (title.isEmpty())
