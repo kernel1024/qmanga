@@ -60,10 +60,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
     setPalette(p);
 
-    connect(this,SIGNAL(changeMangaCover(QString,int)),
-            zg->db,SLOT(sqlChangeFilePreview(QString,int)),Qt::QueuedConnection);
-    connect(this,SIGNAL(updateFileStats(QString)),
-            zg->db,SLOT(sqlUpdateFileStats(QString)),Qt::QueuedConnection);
+    connect(this,&ZMangaView::changeMangaCover,zg->db,&ZDB::sqlChangeFilePreview,Qt::QueuedConnection);
+    connect(this,&ZMangaView::updateFileStats,zg->db,&ZDB::sqlUpdateFileStats,Qt::QueuedConnection);
 
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
@@ -71,24 +69,20 @@ ZMangaView::ZMangaView(QWidget *parent) :
         QThread* th = new QThread();
         ZMangaLoader* ld = new ZMangaLoader();
 
-        connect(ld,SIGNAL(gotPage(QByteArray,int,QString,QUuid)),
-                this,SLOT(cacheGotPage(QByteArray,int,QString,QUuid)),Qt::QueuedConnection);
-        connect(ld,SIGNAL(gotError(QString)),
-                this,SLOT(cacheGotError(QString)),Qt::QueuedConnection);
-        connect(ld,SIGNAL(closeFileRequest()),
-                this,SLOT(closeFile()));
-        connect(ld,SIGNAL(auxMessage(QString)),
-                this,SLOT(loaderMsg(QString)),Qt::QueuedConnection);
+        connect(ld,&ZMangaLoader::gotPage,this,&ZMangaView::cacheGotPage,Qt::QueuedConnection);
+        connect(ld,&ZMangaLoader::gotError,this,&ZMangaView::cacheGotError,Qt::QueuedConnection);
+        connect(ld,&ZMangaLoader::closeFileRequest,this,&ZMangaView::closeFile,Qt::QueuedConnection);
+        connect(ld,&ZMangaLoader::auxMessage,this,&ZMangaView::loaderMsg,Qt::QueuedConnection);
 
-        connect(this,SIGNAL(cacheOpenFile(QString,int)),ld,SLOT(openFile(QString,int)),Qt::QueuedConnection);
-        connect(this,SIGNAL(cacheCloseFile()),ld,SLOT(closeFile()),Qt::QueuedConnection);
+        connect(this,&ZMangaView::cacheOpenFile,ld,&ZMangaLoader::openFile,Qt::QueuedConnection);
+        connect(this,&ZMangaView::cacheCloseFile,ld,&ZMangaLoader::closeFile,Qt::QueuedConnection);
 
         connect(th,&QThread::finished,ld,&QObject::deleteLater);
         connect(th,&QThread::finished,th,&QObject::deleteLater);
 
         if (i==0) {
-            connect(ld,SIGNAL(gotPageCount(int,int)),
-                    this,SLOT(cacheGotPageCount(int, int)),Qt::QueuedConnection);
+            connect(ld,&ZMangaLoader::gotPageCount,this,
+                    &ZMangaView::cacheGotPageCount,Qt::QueuedConnection);
         }
         ZLoaderHelper h = ZLoaderHelper(th,ld);
         ld->threadID = h.id;
@@ -351,11 +345,13 @@ void ZMangaView::paintEvent(QPaintEvent *)
 
         }
     } else {
-        if ((iCacheData.contains(currentPage) || iCachePixmaps.contains(currentPage)) && curUmPixmap.isNull()) {
+        if ((iCacheData.contains(currentPage) || iCachePixmaps.contains(currentPage))
+                && curUmPixmap.isNull()) {
             QPixmap p(":/32/edit-delete");
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
             w.setPen(QPen(zg->foregroundColor()));
-            w.drawText(0,(height()-p.height())/2+p.height()+5,width(),w.fontMetrics().height(),Qt::AlignCenter,
+            w.drawText(0,(height()-p.height())/2+p.height()+5,
+                       width(),w.fontMetrics().height(),Qt::AlignCenter,
                        tr("Error loading page %1").arg(currentPage+1));
         }
     }
@@ -546,26 +542,26 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu cm(this);
     QAction* nt = new QAction(QIcon(":/16/zoom-fit-best"),tr("Zoom fit"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomFit()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomFit);
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/zoom-fit-width"),tr("Zoom width"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomWidth()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomWidth);
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/zoom-fit-height"),tr("Zoom height"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomHeight()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomHeight);
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/zoom-original"),tr("Zoom original"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(setZoomOriginal()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomOriginal);
     cm.addAction(nt);
     cm.addSeparator();
-    nt = new QAction(QIcon(":/16/zoom-draw.png"),tr("Zoom dynamic"),nullptr);
+    nt = new QAction(QIcon(":/16/zoom-draw"),tr("Zoom dynamic"),nullptr);
     nt->setCheckable(true);
     nt->setChecked(zoomDynamic);
-    connect(nt,SIGNAL(triggered(bool)),this,SLOT(setZoomDynamic(bool)));
+    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomDynamic);
     cm.addAction(nt);
     cm.addSeparator();
     nt = new QAction(QIcon(":/16/view-refresh"),tr("Redraw page"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(redrawPage()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::redrawPage);
     cm.addAction(nt);
     if (!cropRect.isNull()) {
         nt = new QAction(QIcon(":/16/transform-crop"),tr("Remove page crop"),nullptr);
@@ -578,17 +574,17 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     }
     cm.addSeparator();
     nt = new QAction(QIcon(":/16/document-close"),tr("Close manga"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(closeFileCtx()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::closeFileCtx);
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/view-preview"),tr("Set page as cover"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(changeMangaCoverCtx()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::changeMangaCoverCtx);
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/folder-tar"),tr("Export pages to directory"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(exportPagesCtx()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::exportPagesCtx);
     cm.addAction(nt);
     cm.addSeparator();
     nt = new QAction(QIcon(":/16/go-down"),tr("Minimize window"),nullptr);
-    connect(nt,SIGNAL(triggered()),this,SLOT(minimizeWindowCtx()));
+    connect(nt,&QAction::triggered,this,&ZMangaView::minimizeWindowCtx);
     cm.addAction(nt);
     cm.exec(event->globalPos());
     event->accept();
@@ -705,7 +701,8 @@ void ZMangaView::changeMangaCoverCtx()
     emit changeMangaCover(openedFile,currentPage);
 }
 
-int exportMangaPage(ZMangaView* view, const QDir& dir, int fnlen, const QString& fmt, int quality, int idx)
+int exportMangaPage(ZMangaView* view, const QDir& dir, int fnlen, const QString& fmt,
+                    int quality, int idx)
 {
     if (view->exportFileError) return -1;
     QString fname = dir.filePath(QString("%1.%2").arg(idx+1,fnlen,10,QChar('0')).arg(fmt.toLower()));
@@ -713,8 +710,9 @@ int exportMangaPage(ZMangaView* view, const QDir& dir, int fnlen, const QString&
     view->connect(zl,&ZMangaLoader::gotError,[view](const QString&){
         view->exportFileError = true;
     });
-    view->connect(zl,&ZMangaLoader::gotPage,[idx,fname,fmt,quality,view](const QByteArray& page, const int&,
-            const QString&, const QUuid&){
+    view->connect(zl,&ZMangaLoader::gotPage,
+                  [fname,fmt,quality,view](const QByteArray& page,
+                  const int&, const QString&, const QUuid&){
         if (view->exportFileError) return;
         if (page.isEmpty()) return;
 
