@@ -28,13 +28,13 @@ public:
     void updateAlbumsList();
     void updateFocus();
     QStringList getAlbums();
-    void setListViewOptions(const QListView::ViewMode mode, const int iconSize);
+    void setListViewOptions(const QListView::ViewMode mode, int iconSize);
     int getIconSize() const;
     QListView::ViewMode getListViewMode() const;
 
     void loadSearchItems(QSettings &settings);
     void saveSearchItems(QSettings &settings);
-    void applySortOrder(const Z::Ordering order);
+    void applySortOrder(Z::Ordering order);
 private:
     Ui::ZSearchTab *ui;
     QStateMachine loadingState;
@@ -47,10 +47,10 @@ private:
     ZMangaIconModel* iconModel;
 
     QSize gridSize(int ref);
-    QString getAlbumNameToAdd(QString suggest,int toAddCount);
-    QFileInfoList getSelectedMangaEntries(bool includeDirs = true);
-    QAbstractItemView* activeView();
-    QModelIndexList getSelectedIndexes();
+    QString getAlbumNameToAdd(const QString &suggest, int toAddCount);
+    QFileInfoList getSelectedMangaEntries(bool includeDirs = true) const;
+    QAbstractItemView* activeView() const;
+    QModelIndexList getSelectedIndexes() const;
     QModelIndex mapToSource(const QModelIndex &index);
 
 public slots:
@@ -68,8 +68,8 @@ public slots:
     void iconSizeChanged(int ref);
     void updateSplitters();
 
-    void ctxMenu(QPoint pos);
-    void ctxAlbumMenu(QPoint pos);
+    void ctxMenu(const QPoint &pos);
+    void ctxAlbumMenu(const QPoint &pos);
     void ctxRenameAlbum();
     void ctxDeleteAlbum();
     void ctxOpenDir();
@@ -89,13 +89,14 @@ public slots:
     void ctxChangeRenderer();
 
 signals:
-    void mangaDblClick(QString filename);
-    void statusBarMsg(QString msg);
+    void mangaDblClick(const QString &filename);
+    void statusBarMsg(const QString &msg);
     void dbRenameAlbum(const QString& oldName, const QString& newName);
     void dbGetAlbums();
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
-    void dbGetFiles(const QString& album, const QString& search, const Z::Ordering order, const bool reverseOrder);
+    void dbGetFiles(const QString& album, const QString& search, const Z::Ordering order,
+                    const bool reverseOrder);
     void dbDelFiles(const QIntList& dbids, const bool fullDelete);
     void dbDeleteAlbum(const QString& album);
 };

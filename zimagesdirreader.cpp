@@ -1,7 +1,7 @@
 #include <QDebug>
 #include "zimagesdirreader.h"
 
-ZImagesDirReader::ZImagesDirReader(QObject *parent, QString filename)
+ZImagesDirReader::ZImagesDirReader(QObject *parent, const QString &filename)
     : ZAbstractReader(parent,filename)
 {
 
@@ -52,8 +52,7 @@ QByteArray ZImagesDirReader::loadPage(int num)
     if (!d.isReadable()) return res;
     QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files);
     filterSupportedImgFiles(fl);
-    for (int i=0;i<fl.count();i++) {
-        QFileInfo fi(fl.at(i));
+    for (const auto &fi : fl) {
         if (idx==znum) {
             if (fi.size()>(150*1024*1024)) {
                 qDebug() << "Image file is too big (over 150Mb). Unable to load.";

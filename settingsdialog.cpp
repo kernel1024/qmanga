@@ -133,7 +133,7 @@ QStringList SettingsDialog::getIgnoredFiles()
 void SettingsDialog::setIgnoredFiles(const QStringList& files)
 {
     ui->listIgnoredFiles->clear();
-    foreach(const QString& fname, files) {
+    for(const QString& fname : files) {
         QFileInfo fi(fname);
         QListWidgetItem* li = new QListWidgetItem(fi.fileName());
         li->setData(Qt::UserRole,fname);
@@ -145,13 +145,12 @@ void SettingsDialog::setIgnoredFiles(const QStringList& files)
 void SettingsDialog::setSearchEngines(const ZStrMap &engines)
 {
     ui->listSearch->clear();
-    foreach (const QString &t, engines.keys()) {
+    for (auto it = engines.keyValueBegin(), end = engines.keyValueEnd(); it != end; ++it) {
         QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ] %3").
-                                                  arg(t,
-                                                  engines.value(t),
-                t==zg->defaultSearchEngine ? tr("(default)") : QString()));
-        li->setData(Qt::UserRole,t);
-        li->setData(Qt::UserRole+1,engines.value(t));
+                                                  arg((*it).first,(*it).second,
+                (*it).first==zg->defaultSearchEngine ? tr("(default)") : QString()));
+        li->setData(Qt::UserRole,(*it).first);
+        li->setData(Qt::UserRole+1,(*it).second);
         ui->listSearch->addItem(li);
     }
 }
@@ -192,7 +191,7 @@ void SettingsDialog::updateOCRLanguages()
     if (datapath.isReadable()) {
         int aidx = -1;
         QFileInfoList files = datapath.entryInfoList({"*.traineddata"});
-        foreach (const QFileInfo& fi, files) {
+        for (const QFileInfo& fi : files) {
             QString base = fi.baseName();
             ui->comboOCRLanguage->addItem(fi.fileName(),base);
             if (base==selectedLang)
@@ -215,7 +214,7 @@ void SettingsDialog::updateTranslatorLanguages()
     const QStringList sl = zg->getLanguageCodes();
     int idx1 = -1;
     int idx2 = -1;
-    foreach (const QString& bcp, sl) {
+    for (const QString& bcp : sl) {
         ui->comboLangSource->addItem(zg->getLanguageName(bcp),QVariant::fromValue(bcp));
         ui->comboLangDest->addItem(zg->getLanguageName(bcp),QVariant::fromValue(bcp));
         if (bcp==zg->tranSourceLang) idx1 = ui->comboLangSource->count()-1;
@@ -261,7 +260,7 @@ void SettingsDialog::addSearchEngine()
 void SettingsDialog::delSearchEngine()
 {
     QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
-    foreach (QListWidgetItem* i, dl) {
+    for (QListWidgetItem* i : dl) {
         ui->listBookmarks->removeItemWidget(i);
         delete i;
     }
@@ -300,13 +299,13 @@ void SettingsDialog::ocrDatapathDlg()
 
 void SettingsDialog::delListWidgetItem()
 {
-    QPushButton* btn = qobject_cast<QPushButton *>(sender());
+    auto btn = qobject_cast<QPushButton *>(sender());
     if (btn==nullptr || !delLookup.contains(btn)) return;
     QListWidget* list = delLookup.value(btn);
     if (list==nullptr) return;
 
     QList<QListWidgetItem *> dl = list->selectedItems();
-    foreach (QListWidgetItem* i, dl) {
+    for (QListWidgetItem* i : dl) {
         list->removeItemWidget(i);
         delete i;
     }
@@ -342,7 +341,7 @@ void SettingsDialog::frameColorDlg()
     updateFrameColor(c);
 }
 
-void SettingsDialog::updateBkColor(QColor c)
+void SettingsDialog::updateBkColor(const QColor &c)
 {
     bkColor = c;
     QPalette p = ui->frameBkColor->palette();
@@ -350,21 +349,21 @@ void SettingsDialog::updateBkColor(QColor c)
     ui->frameBkColor->setPalette(p);
 }
 
-void SettingsDialog::updateIdxFont(QFont f)
+void SettingsDialog::updateIdxFont(const QFont &f)
 {
     idxFont = f;
     ui->labelIdxFont->setFont(idxFont);
     ui->labelIdxFont->setText(QString("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
-void SettingsDialog::updateOCRFont(QFont f)
+void SettingsDialog::updateOCRFont(const QFont &f)
 {
     ocrFont = f;
     ui->labelOCRFont->setFont(ocrFont);
     ui->labelOCRFont->setText(QString("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
-void SettingsDialog::updateFrameColor(QColor c)
+void SettingsDialog::updateFrameColor(const QColor &c)
 {
     frameColor = c;
     QPalette p = ui->frameFrameColor->palette();
@@ -385,8 +384,8 @@ void SettingsDialog::dynAdd()
 
     if (dlg->exec()) {
         QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").
-                                                  arg(dlg->getDlgEdit1()).
-                                                  arg(dlg->getDlgEdit2()));
+                                                  arg(dlg->getDlgEdit1(),
+                                                  dlg->getDlgEdit2()));
         li->setData(Qt::UserRole,dlg->getDlgEdit1());
         li->setData(Qt::UserRole+1,dlg->getDlgEdit2());
         ui->listDynAlbums->addItem(li);
@@ -407,8 +406,8 @@ void SettingsDialog::dynEdit()
                         "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
     if (dlg->exec()) {
         ui->listDynAlbums->selectedItems().first()->setText(QString("%1 [ %2 ]").
-                                                            arg(dlg->getDlgEdit1()).
-                                                            arg(dlg->getDlgEdit2()));
+                                                            arg(dlg->getDlgEdit1(),
+                                                            dlg->getDlgEdit2()));
         ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole,dlg->getDlgEdit1());
         ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole+1,dlg->getDlgEdit2());
     }

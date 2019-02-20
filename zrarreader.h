@@ -10,7 +10,7 @@ protected:
     QString rarExec;
 
 public:
-    explicit ZRarReader(QObject *parent, QString filename);
+    explicit ZRarReader(QObject *parent, const QString &filename);
     bool openFile();
     void closeFile();
     QByteArray loadPage(int num);

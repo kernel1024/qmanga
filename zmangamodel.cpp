@@ -70,11 +70,17 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
             cp.drawLine(0,rp.height()-1,0,0);
         }
         return rp;
-    } else if (role == Qt::TextColorRole) {
+    }
+
+    if (role == Qt::TextColorRole) {
         return zg->foregroundColor();
-    } else if (role == Qt::FontRole) {
+    }
+
+    if (role == Qt::FontRole) {
         return zg->idxFont;
-    } else if (role == Qt::DisplayRole) {
+    }
+
+    if (role == Qt::DisplayRole) {
         SQLMangaEntry t = mList.at(idx);
         int col = index.column();
         QString tmp;
@@ -106,7 +112,9 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
             case 6: return t.fileMagic;
         }
         return QVariant();
-    } else if (role == ModelSortRole) {
+    }
+
+    if (role == ModelSortRole) {
         SQLMangaEntry t = mList.at(idx);
         int col = index.column();
         switch (col) {
@@ -119,10 +127,13 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
             case 6: return t.fileMagic;
         }
         return QVariant();
-    } else if (role == Qt::ToolTipRole ||
+    }
+
+    if (role == Qt::ToolTipRole ||
                role == Qt::StatusTipRole) {
         return mList.at(idx).name;
     }
+
     return QVariant();
 }
 
@@ -145,12 +156,13 @@ QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int r
     if (orientation == Qt::Horizontal &&
             role == Qt::DisplayRole &&
             section>=0 && section<Z::maxOrdering) {
-        Z::Ordering s = static_cast<Z::Ordering>(section);
+        auto s = static_cast<Z::Ordering>(section);
         if (Z::headerColumns.contains(s))
             return Z::headerColumns.value(s);
-        else
-            return QVariant();
+
+        return QVariant();
     }
+
     return QVariant();
 }
 
@@ -182,8 +194,8 @@ void ZMangaModel::deleteAllItems()
 
 void ZMangaModel::deleteItems(const QIntList &dbids)
 {
-    for (int i=0;i<dbids.count();i++) {
-        int idx = mList.indexOf(SQLMangaEntry(dbids.at(i)));
+    for (const auto &i : dbids) {
+        int idx = mList.indexOf(SQLMangaEntry(i));
         if (idx>=0) {
             beginRemoveRows(QModelIndex(),idx,idx);
             mList.removeAt(idx);
@@ -301,7 +313,7 @@ int ZMangaTableModel::columnCount(const QModelIndex &) const
 
 QVariant ZMangaTableModel::data(const QModelIndex &index, int role) const
 {
-    ZMangaModel* model = qobject_cast<ZMangaModel *>(sourceModel());
+    auto model = qobject_cast<ZMangaModel *>(sourceModel());
     return model->data(mapToSource(index),role,true);
 }
 

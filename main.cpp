@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QDir>
-#include <locale.h>
+#include <clocale>
 #include "mainwindow.h"
 #include "global.h"
 #include "zdjvureader.h"
@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QByteHash>("QByteHash");
     qRegisterMetaType<QUuid>("QUuid");
     qRegisterMetaType<Z::Ordering>("Z::Ordering");
+    qRegisterMetaType<ZExportWork>("ZExportWork");
     qRegisterMetaTypeStreamOperators<ZStrMap>("ZStrMap");
 #ifdef WITH_DJVU
     qRegisterMetaType<ZDjVuDocument>("ZDjVuDocument");

@@ -35,6 +35,11 @@ ZGlobal::ZGlobal(QObject *parent) :
     dpiX = 75.0;
     dpiY = 75.0;
     forceDPI = -1.0;
+    downscaleFilter = Blitz::ScaleFilterType::UndefinedFilter;
+    upscaleFilter = Blitz::ScaleFilterType::UndefinedFilter;
+    magnifySize = 100;
+    resizeBlur = 1.0;
+    preferredWidth = 0;
 
     initLanguagesList();
     tranSourceLang = QString("ja");
@@ -81,16 +86,17 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
     QStrHash problems = db->getConfigProblems();
     if (problems.isEmpty()) return;
 
-    MainWindow* mw = qobject_cast<MainWindow *>(parent);
+    auto mw = qobject_cast<MainWindow *>(parent);
     if (mw!=nullptr) {
-        mw->lblSearchStatus->setText(tr("%1 problems with MySQL").arg(problems.keys().count()));
+        mw->lblSearchStatus->setText(tr("%1 problems with MySQL").arg(problems.count()));
         return;
     }
     QString text;
-    foreach (const QString& msg, problems.keys()) {
-        text += msg+"\n-------------------------------\n";
-        text += problems.value(msg)+"\n\n";
+    for (auto it=problems.keyValueBegin(), end=problems.keyValueEnd(); it!=end; ++it) {
+        text.append(QString("%1\n-------------------------------\n%2\n\n")
+                    .arg((*it).first,(*it).second));
     }
+
     QMessageBox mbox;
     mbox.setIcon(QMessageBox::Warning);
     mbox.setText(tr("Some problems found with MySQL configuration."));
@@ -103,13 +109,15 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
 
 void ZGlobal::loadSettings()
 {
-    MainWindow* w = qobject_cast<MainWindow *>(parent());
+    auto w = qobject_cast<MainWindow *>(parent());
 
     QSettings settings("kernel1024", "qmanga");
     settings.beginGroup("MainWindow");
     cacheWidth = settings.value("cacheWidth",6).toInt();
-    downscaleFilter = static_cast<Blitz::ScaleFilterType>(settings.value("downscaleFilter",Blitz::LanczosFilter).toInt());
-    upscaleFilter = static_cast<Blitz::ScaleFilterType>(settings.value("upscaleFilter",Blitz::MitchellFilter).toInt());
+    downscaleFilter = static_cast<Blitz::ScaleFilterType>(
+                          settings.value("downscaleFilter",Blitz::LanczosFilter).toInt());
+    upscaleFilter = static_cast<Blitz::ScaleFilterType>(
+                        settings.value("upscaleFilter",Blitz::MitchellFilter).toInt());
     dbUser = settings.value("mysqlUser",QString()).toString();
     dbPass = settings.value("mysqlPassword",QString()).toString();
     dbBase = settings.value("mysqlBase",QString("qmanga")).toString();
@@ -225,7 +233,7 @@ void ZGlobal::saveSettings()
     settings.setValue("tranSourceLanguage",tranSourceLang);
     settings.setValue("tranDestLanguage",tranDestLang);
 
-    MainWindow* w = qobject_cast<MainWindow *>(parent());
+    auto w = qobject_cast<MainWindow *>(parent());
     if (w!=nullptr) {
         settings.setValue("maximized",w->isMaximized());
 
@@ -246,8 +254,8 @@ void ZGlobal::saveSettings()
 void ZGlobal::updateWatchDirList(const QStringList &watchDirs)
 {
     dirWatchList.clear();
-    for (int i=0;i<watchDirs.count();i++) {
-        QDir d(watchDirs.at(i));
+    for (const auto &i : watchDirs) {
+        QDir d(i);
         if (!d.isReadable()) continue;
         dirWatchList[d.absolutePath()] =
                 d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
@@ -263,11 +271,11 @@ void ZGlobal::directoryChanged(const QString &dir)
 
     QDir d(dir);
     if (!d.isReadable()) return;
-    QStringList nlist = d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
-    QStringList olist = dirWatchList[d.absolutePath()];
-    for (int i=0;i<nlist.count();i++) {
-        QString fname = d.absoluteFilePath(nlist.at(i));
-        if (!olist.contains(nlist.at(i)) && !newlyAddedFiles.contains(fname) &&
+    const QStringList nlist = d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
+    const QStringList olist = dirWatchList[d.absolutePath()];
+    for (const auto &i : nlist) {
+        QString fname = d.absoluteFilePath(i);
+        if (!olist.contains(i) && !newlyAddedFiles.contains(fname) &&
                 !ignoredFiles.contains(fname))
             newlyAddedFiles << fname;
     }
@@ -289,7 +297,7 @@ void ZGlobal::resetPreferredWidth()
 
 void ZGlobal::dbCheckComplete()
 {
-    MainWindow* w = qobject_cast<MainWindow *>(parent());
+    auto w = qobject_cast<MainWindow *>(parent());
     checkSQLProblems(w);
 }
 
@@ -300,8 +308,8 @@ QColor ZGlobal::foregroundColor()
     qreal br = r*0.2989+g*0.5870+b*0.1140;
     if (br>0.5)
         return QColor(Qt::black);
-    else
-        return QColor(Qt::white);
+
+    return QColor(Qt::white);
 }
 
 void ZGlobal::fsCheckFilesAvailability()
@@ -321,8 +329,8 @@ void ZGlobal::settingsDlg()
 {
     checkSQLProblems(nullptr);
 
-    MainWindow* w = qobject_cast<MainWindow *>(parent());
-    SettingsDialog* dlg = new SettingsDialog(w);
+    auto w = qobject_cast<MainWindow *>(parent());
+    auto dlg = new SettingsDialog(w);
 
     dlg->editMySqlLogin->setText(dbUser);
     dlg->editMySqlPassword->setText(dbPass);
@@ -362,21 +370,22 @@ void ZGlobal::settingsDlg()
     else
         dlg->spinForceDPI->setValue(forceDPI);
 
-    foreach (const QString &t, bookmarks.keys()) {
-        QString st = bookmarks.value(t);
+    for (auto bIt=bookmarks.keyValueBegin(), end=bookmarks.keyValueEnd(); bIt!=end; ++bIt) {
+        QString st = (*bIt).second;
         if (st.split('\n').count()>0)
             st = st.split('\n').at(0);
-        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg(t).arg(st));
-        li->setData(Qt::UserRole,t);
-        li->setData(Qt::UserRole+1,bookmarks.value(t));
+        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg((*bIt).first,
+                                                                           (*bIt).second));
+        li->setData(Qt::UserRole,(*bIt).first);
+        li->setData(Qt::UserRole+1,(*bIt).second);
         dlg->listBookmarks->addItem(li);
     }
     ZStrMap albums = db->getDynAlbums();
-    foreach (const QString &title, albums.keys()) {
-        QString query = albums.value(title);
-        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg(title).arg(query));
-        li->setData(Qt::UserRole,title);
-        li->setData(Qt::UserRole+1,query);
+    for (auto tIt = albums.keyValueBegin(), end = albums.keyValueEnd(); tIt!=end; ++tIt) {
+        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg((*tIt).first,
+                                                                           (*tIt).second));
+        li->setData(Qt::UserRole,(*tIt).first);
+        li->setData(Qt::UserRole+1,(*tIt).second);
         dlg->listDynAlbums->addItem(li);
     }
     dlg->setIgnoredFiles(db->sqlGetIgnoredFiles());
@@ -461,7 +470,7 @@ QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine)
     if (ctxSearchEngines.isEmpty())
         return QUrl();
 
-    QString url = ctxSearchEngines.values().first();
+    QString url = ctxSearchEngines.first();
     if (engine.isEmpty() && !defaultSearchEngine.isEmpty())
         url = ctxSearchEngines.value(defaultSearchEngine);
     if (!engine.isEmpty() && ctxSearchEngines.contains(engine))
@@ -523,17 +532,10 @@ ZFileEntry::ZFileEntry(const ZFileEntry &other)
     idx = other.idx;
 }
 
-ZFileEntry::ZFileEntry(QString aName, int aIdx)
+ZFileEntry::ZFileEntry(const QString &aName, int aIdx)
 {
     name = aName;
     idx = aIdx;
-}
-
-ZFileEntry &ZFileEntry::operator =(const ZFileEntry &other)
-{
-    name = other.name;
-    idx = other.idx;
-    return *this;
 }
 
 bool ZFileEntry::operator ==(const ZFileEntry &ref) const

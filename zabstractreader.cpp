@@ -1,6 +1,6 @@
 #include "zabstractreader.h"
 
-ZAbstractReader::ZAbstractReader(QObject *parent, QString filename) :
+ZAbstractReader::ZAbstractReader(QObject *parent, const QString &filename) :
     QObject(parent)
 {
     opened = false;
@@ -16,7 +16,7 @@ ZAbstractReader::~ZAbstractReader()
     sortList.clear();
 }
 
-bool ZAbstractReader::openFile(QString filename)
+bool ZAbstractReader::openFile(const QString &filename)
 {
     if (opened)
         closeFile();
@@ -43,15 +43,15 @@ void ZAbstractReader::closeFile()
 {
 }
 
-QByteHash ZAbstractReader::loadPages(QIntList nums)
+QByteHash ZAbstractReader::loadPages(const QIntList &nums)
 {
     QByteHash hash;
     hash.clear();
     if (!opened)
         return hash;
 
-    for (int i=0;i<nums.count();i++)
-        hash[nums.at(i)] = loadPage(nums.at(i));
+    for (const auto &i : nums)
+        hash[i] = loadPage(i);
 
     return hash;
 }

@@ -13,16 +13,16 @@ protected:
     QList<ZFileEntry> sortList;
 
 public:
-    explicit ZAbstractReader(QObject *parent, QString filename);
+    explicit ZAbstractReader(QObject *parent, const QString &filename);
     ~ZAbstractReader();
-    bool openFile(QString filename);
+    bool openFile(const QString &filename);
     bool isOpened();
     int getPageCount();
 
     virtual bool openFile() = 0;
     virtual void closeFile();
     virtual QByteArray loadPage(int num) = 0;
-    virtual QByteHash loadPages(QIntList nums);
+    virtual QByteHash loadPages(const QIntList &nums);
     virtual QString getMagic() = 0;
     virtual QString getInternalPath(int idx);
     

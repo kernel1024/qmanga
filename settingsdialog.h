@@ -79,10 +79,10 @@ public slots:
     void idxFontDlg();
     void ocrFontDlg();
     void frameColorDlg();
-    void updateBkColor(QColor c);
-    void updateIdxFont(QFont f);
-    void updateOCRFont(QFont f);
-    void updateFrameColor(QColor c);
+    void updateBkColor(const QColor &c);
+    void updateIdxFont(const QFont &f);
+    void updateOCRFont(const QFont &f);
+    void updateFrameColor(const QColor &c);
     void dynAdd();
     void dynEdit();
     void openRar(); 

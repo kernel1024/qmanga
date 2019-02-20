@@ -1,7 +1,7 @@
 #include <QBuffer>
 #include "zsingleimagereader.h"
 
-ZSingleImageReader::ZSingleImageReader(QObject *parent, QString filename) :
+ZSingleImageReader::ZSingleImageReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
     page = QImage();

@@ -40,11 +40,11 @@
 #include "zpdfimageoutdev.h"
 
 #include <poppler/poppler-config.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <ctype.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstddef>
+#include <cctype>
+#include <cmath>
 #include <poppler/goo/gmem.h>
 #include <poppler/Error.h>
 #include <poppler/GfxState.h>
@@ -139,19 +139,11 @@ ZPDFImg::ZPDFImg(const ZPDFImg &other)
     format = other.format;
 }
 
-ZPDFImg::ZPDFImg(Goffset a_pos, Goffset a_size, QString a_format)
+ZPDFImg::ZPDFImg(Goffset a_pos, Goffset a_size, const QString &a_format)
 {
     pos = a_pos;
     size = a_size;
     format = a_format;
-}
-
-ZPDFImg &ZPDFImg::operator=(const ZPDFImg &other)
-{
-    pos = other.pos;
-    size = other.size;
-    format = other.format;
-    return *this;
 }
 
 bool ZPDFImg::operator==(const ZPDFImg &ref) const

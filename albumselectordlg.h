@@ -15,7 +15,8 @@ class AlbumSelectorDlg : public QDialog
 public:
     QComboBox* listAlbums;
 
-    explicit AlbumSelectorDlg(QWidget *parent, QStringList albums, QString suggest, int toAddCount);
+    explicit AlbumSelectorDlg(QWidget *parent, const QStringList &albums,
+                              const QString &suggest, int toAddCount);
     ~AlbumSelectorDlg();
     
 private:

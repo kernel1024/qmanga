@@ -39,7 +39,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcDesc->clear();
     ui->srcLoading->hide();
 
-    QCompleter *completer = new QCompleter(this);
+    auto completer = new QCompleter(this);
     searchHistoryModel = new ZMangaSearchHistoryModel(completer);
     completer->setModel(searchHistoryModel);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
@@ -90,7 +90,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,&ZSearchTab::dbCreateTables,zg->db,&ZDB::sqlCreateTables,Qt::QueuedConnection);
     connect(this,&ZSearchTab::dbDeleteAlbum,zg->db,&ZDB::sqlDelAlbum,Qt::QueuedConnection);
 
-    QState* sLoaded = new QState(); QState* sLoading = new QState();
+    auto sLoaded = new QState();
+    auto sLoading = new QState();
     sLoading->addTransition(zg->db,&ZDB::filesLoaded,sLoaded);
     sLoaded->addTransition(this,&ZSearchTab::dbGetFiles,sLoading);
     sLoading->assignProperty(ui->srcAddBtn,"enabled",false);
@@ -112,7 +113,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     loadingState.setInitialState(sLoaded);
     loadingState.start();
 
-    ZMangaModel* aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
+    auto aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
     tableModel = new ZMangaTableModel(this,ui->srcTable);
     iconModel = new ZMangaIconModel(this,ui->srcList);
     tableModel->setSourceModel(aModel);
@@ -153,21 +154,20 @@ void ZSearchTab::updateSplitters()
     ui->splitter->setSizes(widths);
 }
 
-void ZSearchTab::ctxMenu(QPoint pos)
+void ZSearchTab::ctxMenu(const QPoint &pos)
 {
     QAbstractItemView *view = activeView();
     QMenu cm(view);
 
-    QAction* acm;
-    acm = cm.addAction(QIcon(":/16/edit-select-all"),tr("Select All"));
+    QAction *acm = cm.addAction(QIcon(":/16/edit-select-all"),tr("Select All"));
     connect(acm,&QAction::triggered,view,&QAbstractItemView::selectAll);
 
     cm.addSeparator();
 
-    QModelIndexList li = getSelectedIndexes();
+    const QModelIndexList li = getSelectedIndexes();
     int cnt = 0;
-    for (int i=0;i<li.count();i++) {
-        if (li.at(i).column()==0)
+    for (const auto &i : li) {
+        if (i.column()==0)
             cnt++;
     }
     QMenu* dmenu = cm.addMenu(QIcon(":/16/edit-delete"),
@@ -225,7 +225,7 @@ void ZSearchTab::ctxMenu(QPoint pos)
 
 void ZSearchTab::ctxChangeRenderer()
 {
-    QAction* am = qobject_cast<QAction *>(sender());
+    auto am = qobject_cast<QAction *>(sender());
     QModelIndexList li = getSelectedIndexes();
     if (am==nullptr || li.count()!=1) return;
 
@@ -244,14 +244,13 @@ void ZSearchTab::ctxChangeRenderer()
 
 }
 
-void ZSearchTab::ctxAlbumMenu(QPoint pos)
+void ZSearchTab::ctxAlbumMenu(const QPoint &pos)
 {
     QListWidgetItem* itm = ui->srcAlbums->itemAt(pos);
     if (itm==nullptr) return;
 
     QMenu cm(ui->srcAlbums);
-    QAction* acm;
-    acm = cm.addAction(QIcon(":/16/edit-rename"),tr("Rename album"),
+    QAction *acm = cm.addAction(QIcon(":/16/edit-rename"),tr("Rename album"),
                        this,&ZSearchTab::ctxRenameAlbum);
     acm->setData(itm->text());
     acm = cm.addAction(QIcon(":/16/edit-delete"),tr("Delete album"),
@@ -263,7 +262,7 @@ void ZSearchTab::ctxAlbumMenu(QPoint pos)
 
 void ZSearchTab::ctxRenameAlbum()
 {
-    QAction* nt = qobject_cast<QAction *>(sender());
+    auto nt = qobject_cast<QAction *>(sender());
     if (nt==nullptr) return;
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
@@ -278,7 +277,7 @@ void ZSearchTab::ctxRenameAlbum()
 
 void ZSearchTab::ctxDeleteAlbum()
 {
-    QAction* nt = qobject_cast<QAction *>(sender());
+    auto nt = qobject_cast<QAction *>(sender());
     if (nt==nullptr) return;
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
@@ -291,39 +290,39 @@ void ZSearchTab::ctxDeleteAlbum()
 
 void ZSearchTab::ctxOpenDir()
 {
-    QFileInfoList fl = getSelectedMangaEntries(true);
-    if (fl.isEmpty()) return;
-
-    for (int i=0;i<fl.count();i++)
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fl.at(i).path()));
-
-    if (fl.isEmpty())
+    const QFileInfoList fl = getSelectedMangaEntries(true);
+    if (fl.isEmpty()) {
         QMessageBox::warning(this,tr("QManga"),
                              tr("Error while searching file path for some files."));
+        return;
+    }
+
+    for (const auto &i : fl)
+        QDesktopServices::openUrl(QUrl::fromLocalFile(i.path()));
 }
 
 void ZSearchTab::ctxXdgOpen()
 {
-    QFileInfoList fl = getSelectedMangaEntries(true);
-    if (fl.isEmpty()) return;
-
-    for (int i=0;i<fl.count();i++)
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fl.at(i).filePath()));
-
-    if (fl.isEmpty())
+    const QFileInfoList fl = getSelectedMangaEntries(true);
+    if (fl.isEmpty()) {
         QMessageBox::warning(this,tr("QManga"),
                              tr("Error while searching file path for some files."));
+        return;
+    }
+
+    for (const auto &i : fl)
+        QDesktopServices::openUrl(QUrl::fromLocalFile(i.filePath()));
 }
 
 void ZSearchTab::ctxFileCopyClipboard()
 {
-    QFileInfoList fl = getSelectedMangaEntries(true);
+    const QFileInfoList fl = getSelectedMangaEntries(true);
     if (fl.isEmpty()) return;
 
     QByteArray uriList;
     QByteArray plainList;
 
-    foreach (const QFileInfo& fi, fl) {
+    for (const QFileInfo& fi : fl) {
         QByteArray ba = QUrl::fromLocalFile(fi.filePath()).toEncoded();
         if (!ba.isEmpty()) {
             uriList.append(ba); uriList.append('\x0D'); uriList.append('\x0A');
@@ -333,7 +332,7 @@ void ZSearchTab::ctxFileCopyClipboard()
 
     if (uriList.isEmpty()) return;
 
-    QMimeData *data = new QMimeData();
+    auto data = new QMimeData();
     data->setData("text/uri-list",uriList);
     data->setData("text/plain",plainList);
     data->setData("application/x-kde4-urilist",uriList);
@@ -353,12 +352,12 @@ void ZSearchTab::ctxFileCopy()
     if (dst.isEmpty()) return;
     zg->savedAuxSaveDir = dst;
 
-    QProgressDialog *dlg = new QProgressDialog(this);
+    auto dlg = new QProgressDialog(this);
     dlg->setWindowModality(Qt::WindowModal);
     dlg->setWindowTitle(tr("Copying manga files..."));
 
-    ZFileCopier *zfc = new ZFileCopier(fl,dlg,dst);
-    QThread *zfc_thread = new QThread();
+    auto zfc = new ZFileCopier(fl,dlg,dst);
+    auto zfc_thread = new QThread();
 
     connect(zfc,&ZFileCopier::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
     connect(dlg,&QProgressDialog::canceled,zfc,&ZFileCopier::abort,Qt::QueuedConnection);
@@ -388,7 +387,7 @@ QStringList ZSearchTab::getAlbums()
     return cachedAlbums;
 }
 
-void ZSearchTab::setListViewOptions(const QListView::ViewMode mode, const int iconSize)
+void ZSearchTab::setListViewOptions(const QListView::ViewMode mode, int iconSize)
 {
     ui->srcModeList->setChecked(mode==QListView::ListMode);
     ui->srcModeIcon->setChecked(mode==QListView::IconMode);
@@ -404,8 +403,8 @@ QListView::ViewMode ZSearchTab::getListViewMode() const
 {
     if (ui->srcStack->currentIndex()==STACK_ICONS)
         return QListView::IconMode;
-    else
-        return QListView::ListMode;
+
+    return QListView::ListMode;
 }
 
 void ZSearchTab::loadSearchItems(QSettings &settings)
@@ -425,7 +424,7 @@ void ZSearchTab::loadSearchItems(QSettings &settings)
         }
     } else {
         settings.endArray();
-        sl = settings.value("search_history",QStringList()).value<QStringList>();
+        sl = settings.value("search_history",QStringList()).toStringList();
     }
 
     searchHistoryModel->setHistoryItems(sl);
@@ -438,7 +437,7 @@ void ZSearchTab::saveSearchItems(QSettings &settings)
     settings.setValue("search_history",QVariant::fromValue(searchHistoryModel->getHistoryItems()));
 }
 
-void ZSearchTab::applySortOrder(const Z::Ordering order)
+void ZSearchTab::applySortOrder(Z::Ordering order)
 {
     int col = static_cast<int>(order);
     if (col>=0 && col<ui->srcTable->model()->columnCount())
@@ -451,9 +450,9 @@ QSize ZSearchTab::gridSize(int ref)
     return QSize(ref+25,ref*previewProps+fm.height()*4);
 }
 
-QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)
+QString ZSearchTab::getAlbumNameToAdd(const QString &suggest, int toAddCount)
 {
-    AlbumSelectorDlg* dlg = new AlbumSelectorDlg(this,cachedAlbums,suggest,toAddCount);
+    auto dlg = new AlbumSelectorDlg(this,cachedAlbums,suggest,toAddCount);
     QString ret = QString();
     if (dlg->exec()) {
         ret = dlg->listAlbums->lineEdit()->text();
@@ -463,21 +462,21 @@ QString ZSearchTab::getAlbumNameToAdd(QString suggest, int toAddCount)
     return ret;
 }
 
-QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs)
+QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs) const
 {
     QFileInfoList res;
-    QModelIndexList lii = getSelectedIndexes();
+    const QModelIndexList lii = getSelectedIndexes();
     if (lii.isEmpty()) return res;
 
     QModelIndexList li;
-    for (int i=0;i<lii.count();i++) {
-        if (lii.at(i).column()==0)
-            li << lii.at(i);
+    for (const auto &i : lii) {
+        if (i.column()==0)
+            li << i;
     }
 
-    for (int i=0;i<li.count();i++) {
-        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount()) {
-            QString fname = model->getItem(li.at(i).row()).filename;
+    for (const auto &i : li) {
+        if (i.row()>=0 && i.row()<model->getItemsCount()) {
+            QString fname = model->getItem(i.row()).filename;
             QFileInfo fi(fname);
             if (fi.exists() && ((fi.isDir() && includeDirs) || fi.isFile())) {
                 if (!res.contains(fi))
@@ -489,19 +488,19 @@ QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs)
     return res;
 }
 
-QAbstractItemView *ZSearchTab::activeView()
+QAbstractItemView *ZSearchTab::activeView() const
 {
     if (ui->srcStack->currentIndex()==STACK_TABLE)
         return ui->srcTable;
-    else
-        return ui->srcList;
+
+    return ui->srcList;
 }
 
-QModelIndexList ZSearchTab::getSelectedIndexes()
+QModelIndexList ZSearchTab::getSelectedIndexes() const
 {
     QModelIndexList res;
-    foreach (const QModelIndex& idx, activeView()->selectionModel()->selectedIndexes()) {
-        QAbstractProxyModel* proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
+    for (const QModelIndex& idx : activeView()->selectionModel()->selectedIndexes()) {
+        auto proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
         if (proxy!=nullptr)
             res.append(proxy->mapToSource(idx));
     }
@@ -510,7 +509,7 @@ QModelIndexList ZSearchTab::getSelectedIndexes()
 
 QModelIndex ZSearchTab::mapToSource(const QModelIndex& index)
 {
-    QAbstractProxyModel* proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
+    auto proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
     if (proxy!=nullptr)
         return proxy->mapToSource(index);
 
@@ -565,8 +564,8 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     QFileInfo fi(m.filename);
 
     QString msg = QString(descTemplate).
-            arg(m.name).arg(m.pagesCount).arg(formatSize(m.fileSize)).arg(m.album).arg(m.fileMagic).
-            arg(m.fileDT.toString("yyyy-MM-dd")).arg(m.addingDT.toString("yyyy-MM-dd")).arg(fi.path());
+            arg(m.name).arg(m.pagesCount).arg(formatSize(m.fileSize),m.album,m.fileMagic,
+            m.fileDT.toString("yyyy-MM-dd"),m.addingDT.toString("yyyy-MM-dd"),fi.path());
 
     ui->srcDesc->setHtml(msg);
 }
@@ -631,25 +630,25 @@ void ZSearchTab::mangaAddDir()
 void ZSearchTab::mangaDel()
 {
     if (!model) return;
-    QAction *ac = qobject_cast<QAction *>(sender());
+    auto ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
     bool delFiles = (ac->data().toInt() == 2);
 
     QIntList dl;
     int cnt = zg->db->getAlbumsCount();
     // remove other selected columns
-    QModelIndexList lii = getSelectedIndexes();
+    const QModelIndexList lii = getSelectedIndexes();
     QModelIndexList li;
-    for (int i=0;i<lii.count();i++) {
-        if (lii.at(i).column()==0)
-            li << lii.at(i);
+    for (const auto &i : lii) {
+        if (i.column()==0)
+            li << i;
     }
 
     ui->srcDesc->clear();
 
-    for (int i=0;i<li.count();i++) {
-        if (li.at(i).row()>=0 && li.at(i).row()<model->getItemsCount())
-            dl << model->getItem(li.at(i).row()).dbid;
+    for (const auto &i : li) {
+        if (i.row()>=0 && i.row()<model->getItemsCount())
+            dl << model->getItem(i.row()).dbid;
     }
 
     emit dbDelFiles(dl,delFiles);
@@ -669,8 +668,8 @@ void ZSearchTab::imagesAddDir()
     QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
     filterSupportedImgFiles(fl);
     QStringList files;
-    for (int i=0;i<fl.count();i++)
-        files << fl.at(i).absoluteFilePath();
+    for (const auto &i : fl)
+        files << i.absoluteFilePath();
 
     if (files.isEmpty()) {
         QMessageBox::warning(this,tr("QManga"),tr("Supported image files not found in specified directory."));

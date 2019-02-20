@@ -19,7 +19,7 @@
 
 static QMutex indexerMutex;
 
-ZPdfReader::ZPdfReader(QObject *parent, QString filename) :
+ZPdfReader::ZPdfReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
 #ifdef WITH_POPPLER
@@ -106,12 +106,10 @@ void ZPdfReader::closeFile()
     if (!opened)
         return;
 
-    if (doc!=nullptr)
-        delete doc;
+    delete doc;
     doc = nullptr;
 
-    if (outDev!=nullptr)
-        delete outDev;
+    delete outDev;
     outDev = nullptr;
 #endif
 
@@ -136,12 +134,12 @@ QByteArray ZPdfReader::loadPage(int num)
     if (useImageCatalog) {
         BaseStream *str = doc->getBaseStream();
         Goffset sz = outDev->getPage(idx).size;
-        res.fill('\0',sz);
+        res.fill('\0',static_cast<int>(sz));
         str->setPos(outDev->getPage(idx).pos);
 #ifdef JPDF_PRE073_API
-        str->doGetChars(sz,(Guchar *)res.data());
+        str->doGetChars(static_cast<int>(sz),reinterpret_cast<Guchar *>(res.data()));
 #else
-        str->doGetChars(sz,(unsigned char *)res.data());
+        str->doGetChars(static_cast<int>(sz),reinterpret_cast<uchar*>(res.data()));
 #endif
     } else {
         qreal xdpi = zg->dpiX;

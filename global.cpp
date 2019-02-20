@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QApplication>
 #include <QSettings>
+#include <iostream>
 #include <QDebug>
 
 #include "zmangaloader.h"
@@ -57,15 +58,15 @@ static const MagicSample magicList[] = {
 
 #endif
 
-ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
+ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
                                bool onlyArchives, bool createReader)
 {
     *mimeOk = true;
     if (filename.startsWith(":CLIP:") && !onlyArchives) {
         if (createReader)
             return new ZSingleImageReader(parent,filename);
-        else
-            return nullptr;
+
+        return nullptr;
     }
 
     if (filename.startsWith("#DYN#")) {
@@ -73,10 +74,10 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
         fname.remove(QRegExp("^#DYN#"));
         if (createReader)
             return new ZImagesDirReader(parent,fname);
-        else
-            return nullptr;
 
+        return nullptr;
     }
+
     QFileInfo fi(filename);
     if (!fi.exists()) return nullptr;
 
@@ -84,44 +85,32 @@ ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
     if (mime.contains("application/zip",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZZipReader(parent,filename);
-        else
-            return nullptr;
+
     } else if (mime.contains("application/x-rar",Qt::CaseInsensitive) ||
                mime.contains("application/rar",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZRarReader(parent,filename);
-        else
-            return nullptr;
+
 #ifdef WITH_POPPLER
     } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZPdfReader(parent,filename);
-        else
-            return nullptr;
+
 #endif
 #ifdef WITH_DJVU
     } else if (mime.contains("image/vnd.djvu",Qt::CaseInsensitive)) {
         if (createReader)
             return new ZDjVuReader(parent,filename);
-        else
-            return nullptr;
+
 #endif
     } else if (mime.contains("image/",Qt::CaseInsensitive) && !onlyArchives) {
         if (createReader)
             return new ZSingleImageReader(parent,filename);
-        else
-            return nullptr;
+
     } else {
         *mimeOk = false;
-        return nullptr;
     }
-}
-
-wchar_t *toUtf16(const QString &str)
-{
-    wchar_t* res = new wchar_t[str.length()];
-    str.toWCharArray(res);
-    return res;
+    return nullptr;
 }
 
 void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -169,7 +158,7 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
         WriteConsoleW(con,wmsg,fmsg.length(),&wr,NULL);
         delete[] wmsg;
 #endif
-        fprintf(stderr, "%s", fmsg.toLocal8Bit().constData());
+        std::cerr << fmsg.toLocal8Bit().constData() << std::endl;
     }
 
     loggerMutex.unlock();
@@ -178,12 +167,12 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
 QString formatSize(qint64 size)
 {
     if (size<1024) return QString("%1 bytes").arg(size);
-    else if (size<1024*1024) return QString("%1 Kb").arg(size/1024);
-    else if (size<1024*1024*1024) return QString("%1 Mb").arg(size/(1024*1024));
-    else return QString("%1 Gb").arg(size/(1024*1024*1024));
+    if (size<1024*1024) return QString("%1 Kb").arg(size/1024);
+    if (size<1024*1024*1024) return QString("%1 Mb").arg(size/(1024*1024));
+    return QString("%1 Gb").arg(size/(1024*1024*1024));
 }
 
-QString escapeParam(QString param)
+QString escapeParam(const QString &param)
 {
     QString res = param;
     res.replace("'","\\'");
@@ -199,8 +188,8 @@ int compareWithNumerics(QString ref1, QString ref2)
     QString sn,sc;
     for (int i=0;i<=ref1.length();i++) {
         if (!sn.isEmpty() &&
-            ((i==ref1.length()) ||
-             (!ref1[i].isDigit() && sn[sn.length()-1].isDigit()))) {
+                ((i==ref1.length()) ||
+                 (!ref1[i].isDigit() && sn[sn.length()-1].isDigit()))) {
             r1nums << sn;
             r1sep << sc;
             sn.clear();
@@ -221,8 +210,8 @@ int compareWithNumerics(QString ref1, QString ref2)
     sc.clear();
     for (int i=0;i<=ref2.length();i++) {
         if (!sn.isEmpty() &&
-            ((i==ref2.length()) ||
-             (!ref2[i].isDigit() && sn[sn.length()-1].isDigit()))) {
+                ((i==ref2.length()) ||
+                 (!ref2[i].isDigit() && sn[sn.length()-1].isDigit()))) {
             r2nums << sn;
             r2sep << sc;
             sn.clear();
@@ -238,8 +227,8 @@ int compareWithNumerics(QString ref1, QString ref2)
             sn.clear();
         }
     }
-//    QStringList r1nums = ref1.split(QRegExp("\\D+"),QString::SkipEmptyParts);
-//    QStringList r2nums = ref2.split(QRegExp("\\D+"),QString::SkipEmptyParts);
+    //    QStringList r1nums = ref1.split(QRegExp("\\D+"),QString::SkipEmptyParts);
+    //    QStringList r2nums = ref2.split(QRegExp("\\D+"),QString::SkipEmptyParts);
     int mlen = qMin(r1nums.count(),r2nums.count());
     for (int i=0;i<mlen;i++) {
         bool okconv;
@@ -249,9 +238,9 @@ int compareWithNumerics(QString ref1, QString ref2)
         if (!okconv) break;
 
         if (r1sep.at(i)<r2sep.at(i)) return -1;
-        else if (r1sep.at(i)>r2sep.at(i)) return 1;
-        else if (r1n<r2n) return -1;
-        else if (r1n>r2n) return 1;
+        if (r1sep.at(i)>r2sep.at(i)) return 1;
+        if (r1n<r2n) return -1;
+        if (r1n>r2n) return 1;
     }
     return QString::compare(ref1,ref2);
 }
@@ -339,12 +328,11 @@ QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
 
     if (rf==Blitz::UndefinedFilter)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
-    else if (rf==Blitz::Bilinear)
+    if (rf==Blitz::Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-    else {
-        return Blitz::smoothScaleFilter(src,targetSize,zg->resizeBlur,
-                                        rf,Qt::KeepAspectRatio,page,currentPage);
-    }
+
+    return Blitz::smoothScaleFilter(src,targetSize,zg->resizeBlur,
+                                    rf,Qt::KeepAspectRatio,page,currentPage);
 }
 
 SQLMangaEntry::SQLMangaEntry()
@@ -410,22 +398,6 @@ SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, con
     rendering = aRendering;
 }
 
-SQLMangaEntry &SQLMangaEntry::operator =(const SQLMangaEntry &other)
-{
-    name = other.name;
-    filename = other.filename;
-    album = other.album;
-    cover = other.cover;
-    pagesCount = other.pagesCount;
-    fileSize = other.fileSize;
-    fileMagic = other.fileMagic;
-    fileDT = other.fileDT;
-    addingDT = other.addingDT;
-    dbid = other.dbid;
-    rendering = other.rendering;
-    return *this;
-}
-
 bool SQLMangaEntry::operator ==(const SQLMangaEntry &ref) const
 {
     return (ref.dbid==dbid);
@@ -464,21 +436,12 @@ ZLoaderHelper::ZLoaderHelper(QThread *aThread, ZMangaLoader *aLoader)
     jobCount = 0;
 }
 
-ZLoaderHelper::ZLoaderHelper(QPointer<QThread> aThread, QPointer<ZMangaLoader> aLoader)
+ZLoaderHelper::ZLoaderHelper(const QPointer<QThread> &aThread, const QPointer<ZMangaLoader> &aLoader)
 {
     id = QUuid::createUuid();
     thread = aThread;
     loader = aLoader;
     jobCount = 0;
-}
-
-ZLoaderHelper &ZLoaderHelper::operator =(const ZLoaderHelper &other)
-{
-    id = other.id;
-    thread = other.thread;
-    loader = other.loader;
-    jobCount = other.jobCount;
-    return *this;
 }
 
 bool ZLoaderHelper::operator ==(const ZLoaderHelper &ref) const
@@ -513,72 +476,69 @@ QPageTimer::QPageTimer(QObject *parent, int interval, int pageNum)
 
 #ifdef WITH_OCR
 PIX* Image2PIX(QImage& qImage) {
-  PIX * pixs;
-  l_uint32 *lines;
+    PIX * pixs;
+    l_uint32 *lines;
 
-  qImage = qImage.rgbSwapped();
-  int width = qImage.width();
-  int height = qImage.height();
-  int depth = qImage.depth();
-  int wpl = qImage.bytesPerLine() / 4;
+    qImage = qImage.rgbSwapped();
+    int width = qImage.width();
+    int height = qImage.height();
+    int depth = qImage.depth();
+    int wpl = qImage.bytesPerLine() / 4;
 
-  pixs = pixCreate(width, height, depth);
-  pixSetWpl(pixs, wpl);
-  pixSetColormap(pixs, nullptr);
-  l_uint32 *datas = pixs->data;
+    pixs = pixCreate(width, height, depth);
+    pixSetWpl(pixs, wpl);
+    pixSetColormap(pixs, nullptr);
+    l_uint32 *datas = pixs->data;
 
-  for (int y = 0; y < height; y++) {
-    lines = datas + y * wpl;
-    QByteArray a((const char*)qImage.scanLine(y), qImage.bytesPerLine());
-    for (int j = 0; j < a.size(); j++) {
-      *((l_uint8 *)lines + j) = a[j];
+    for (int y = 0; y < height; y++) {
+        lines = datas + y * wpl;
+        memcpy(lines,qImage.scanLine(y),static_cast<uint>(qImage.bytesPerLine()));
     }
-  }
-  return pixEndianByteSwapNew(pixs);
+    return pixEndianByteSwapNew(pixs);
 }
 
 QImage PIX2QImage(PIX *pixImage) {
-  int width = pixGetWidth(pixImage);
-  int height = pixGetHeight(pixImage);
-  int depth = pixGetDepth(pixImage);
-  int bytesPerLine = pixGetWpl(pixImage) * 4;
-  l_uint32 * s_data = pixGetData(pixEndianByteSwapNew(pixImage));
+    int width = pixGetWidth(pixImage);
+    int height = pixGetHeight(pixImage);
+    int depth = pixGetDepth(pixImage);
+    int bytesPerLine = pixGetWpl(pixImage) * 4;
+    l_uint32 * s_data = pixGetData(pixEndianByteSwapNew(pixImage));
 
-  QImage::Format format;
-  if (depth == 1)
-    format = QImage::Format_Mono;
-  else if (depth == 8)
-    format = QImage::Format_Indexed8;
-  else
-    format = QImage::Format_RGB32;
+    QImage::Format format;
+    if (depth == 1)
+        format = QImage::Format_Mono;
+    else if (depth == 8)
+        format = QImage::Format_Indexed8;
+    else
+        format = QImage::Format_RGB32;
 
-  QImage result((uchar*)s_data, width, height, bytesPerLine, format);
+    QImage result(reinterpret_cast<uchar *>(s_data), width, height, bytesPerLine, format);
 
-  // Handle pallete
-  QVector<QRgb> _bwCT;
-  _bwCT.append(qRgb(255,255,255));
-  _bwCT.append(qRgb(0,0,0));
+    // Handle pallete
+    QVector<QRgb> _bwCT;
+    _bwCT.append(qRgb(255,255,255));
+    _bwCT.append(qRgb(0,0,0));
 
-  QVector<QRgb> _grayscaleCT(256);
-  for (int i = 0; i < 256; i++)  {
-    _grayscaleCT.append(qRgb(i, i, i));
-  }
-  if (depth == 1) {
-    result.setColorTable(_bwCT);
-  }  else if (depth == 8)  {
-    result.setColorTable(_grayscaleCT);
+    QVector<QRgb> _grayscaleCT(256);
+    for (int i = 0; i < 256; i++)  {
+        _grayscaleCT.append(qRgb(i, i, i));
+    }
+    if (depth == 1) {
+        result.setColorTable(_bwCT);
+    }  else if (depth == 8)  {
+        result.setColorTable(_grayscaleCT);
 
-  } else {
-    result.setColorTable(_grayscaleCT);
-  }
+    } else {
+        result.setColorTable(_grayscaleCT);
+    }
 
-  if (result.isNull()) {
-    static QImage none(0,0,QImage::Format_Invalid);
-    qDebug() << "***Invalid format!!!";
-    return none;
-  }
+    if (result.isNull()) {
+        static QImage none(0,0,QImage::Format_Invalid);
+        qDebug() << "***Invalid format!!!";
+        return none;
+    }
 
-  return result.rgbSwapped();
+    return result.rgbSwapped();
 }
 
 QString ocrGetActiveLanguage()
@@ -640,4 +600,39 @@ void filterSupportedImgFiles(QFileInfoList& entryList)
         else
             idx++;
     }
+}
+
+ZExportWork::ZExportWork()
+{
+    format.clear();
+    sourceFile.clear();
+    filenameLength = 0;
+    quality = 0;
+    idx = -1;
+}
+
+ZExportWork::ZExportWork(const ZExportWork &other)
+{
+    dir = other.dir;
+    format = other.format;
+    sourceFile = other.sourceFile;
+    filenameLength = other.filenameLength;
+    quality = other.quality;
+    idx = other.idx;
+}
+
+ZExportWork::ZExportWork(int aIdx, const QDir &aDir, const QString &aSourceFile,
+                         const QString &aFormat, int aFilenameLength, int aQuality)
+{
+    dir = aDir;
+    format = aFormat;
+    sourceFile = aSourceFile;
+    filenameLength = aFilenameLength;
+    quality = aQuality;
+    idx = aIdx;
+}
+
+bool ZExportWork::isValid() const
+{
+    return (idx>=0 && !sourceFile.isEmpty());
 }

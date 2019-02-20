@@ -20,7 +20,7 @@ class ZPdfReader : public ZAbstractReader
     int numPages;
 
 public:
-    explicit ZPdfReader(QObject *parent, QString filename);
+    explicit ZPdfReader(QObject *parent, const QString &filename);
     ~ZPdfReader();
     bool openFile();
     void closeFile();

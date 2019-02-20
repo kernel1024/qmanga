@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "zrarreader.h"
 
-ZRarReader::ZRarReader(QObject *parent, QString filename) :
+ZRarReader::ZRarReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
     rarExec = QString();
@@ -25,8 +25,8 @@ bool ZRarReader::openFile()
         if (QProcess::execute("rar",QStringList() << "-inul")<0) {
             if (QProcess::execute("unrar",QStringList() << "-inul")<0)
                 return false;
-            else
-                rarExec = QString("unrar");
+
+            rarExec = QString("unrar");
         } else
             rarExec = QString("rar");
 #else

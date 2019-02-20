@@ -35,8 +35,7 @@ ZDB::ZDB(QObject *parent) :
 }
 
 ZDB::~ZDB()
-{
-}
+= default;
 
 int ZDB::getAlbumsCount()
 {
@@ -94,7 +93,7 @@ bool ZDB::sqlCheckBasePriv(QSqlDatabase& db, bool silent)
     tables << "files" << "albums" << "ignored_files";
 
     int cnt=0;
-    foreach (const QString& s, db.tables(QSql::Tables)) {
+    for (const QString& s : db.tables(QSql::Tables)) {
         if (tables.contains(s,Qt::CaseInsensitive))
             cnt++;
     }
@@ -126,7 +125,7 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
 
     if (!cols.contains("preferredRendering",Qt::CaseInsensitive)) {
         if (!qr.exec("ALTER TABLE `files` ADD COLUMN `preferredRendering` INT(11) DEFAULT 0")) {
-            qDebug() << "Unable to add column for files table."
+            qDebug() << tr("Unable to add column for files table.")
                      << qr.lastError().databaseText() << qr.lastError().driverText();
 
             problems[tr("Adding column")] = tr("Unable to add column for qmanga files table.\n"
@@ -139,7 +138,7 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     // Add fulltext index for manga names
     if (!qr.exec("SELECT index_type FROM information_schema.statistics "
                  "WHERE table_schema=DATABASE() AND table_name='files' AND index_name='name_ft'")) {
-        qDebug() << "Unable to get indexes list."
+        qDebug() << tr("Unable to get indexes list.")
                  << qr.lastError().databaseText() << qr.lastError().driverText();
 
         problems[tr("Check for indexes")] = tr("Unable to check indexes for qmanga tables.\n"
@@ -152,7 +151,7 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
         idxn = qr.value(0).toString();
     if (idxn.isEmpty()) {
         if (!qr.exec("ALTER TABLE files ADD FULLTEXT INDEX name_ft(name)")) {
-            qDebug() << "Unable to add fulltext index for files table."
+            qDebug() << tr("Unable to add fulltext index for files table.")
                      << qr.lastError().databaseText() << qr.lastError().driverText();
 
             problems[tr("Creating indexes")] = tr("Unable to add FULLTEXT index for qmanga files table.\n"
@@ -177,7 +176,7 @@ void ZDB::checkConfigOpts(QSqlDatabase &db, bool silent)
 
     QSqlQuery qr(db);
     if (!qr.exec("SELECT @@ft_min_word_len")) {
-        qDebug() << "Unable to check MySQL config options";
+        qDebug() << tr("Unable to check MySQL config options");
 
         problems[tr("MySQL config")] = tr("Unable to check my.cnf options via global variables.\n"
                                           "SELECT query failed.\n"
@@ -299,7 +298,6 @@ void ZDB::sqlCreateTables()
                                            "Unknown DB engine.");
     }
     sqlCloseBase(db);
-    return;
 }
 
 QSqlDatabase ZDB::sqlOpenBase()
@@ -389,8 +387,9 @@ void ZDB::sqlGetAlbums()
 
     sqlCloseBase(db);
 
-    foreach (const QString& title, dynAlbums.keys())
-        result << QString("# %1").arg(title);
+    for (auto it = dynAlbums.keyBegin(), end = dynAlbums.keyEnd(); it != end; ++it)
+        result << QString("# %1").arg(*it);
+
     result << QString("% Deleted");
 
     emit gotAlbums(result);
@@ -415,9 +414,12 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
     bool searchBind = false;
 
     if (!album.isEmpty()) {
-        if (album.startsWith("# ") && dynAlbums.keys().contains(album.mid(2))) {
-            specQuery = true;
-            tqr += dynAlbums.value(album.mid(2));
+        if (album.startsWith("# ")) {
+            QString name = album.mid(2);
+            if (dynAlbums.contains(name)){
+                specQuery = true;
+                tqr += dynAlbums.value(name);
+            }
         } else if (album.startsWith("% Deleted")) {
             specQuery = true;
             checkFS = true;
@@ -491,7 +493,6 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
         qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
     sqlCloseBase(db);
     emit filesLoaded(idx,tmr.elapsed());
-    return;
 }
 
 void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
@@ -560,7 +561,6 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     delete za;
 
     sqlCloseBase(db);
-    return;
 }
 
 void ZDB::sqlRescanIndexedDirs()
@@ -589,7 +589,6 @@ void ZDB::sqlRescanIndexedDirs()
         emit updateWatchDirList(dirs);
     }
     emit albumsListUpdated();
-    return;
 }
 
 void ZDB::sqlUpdateFileStats(const QString &fileName)
@@ -646,7 +645,6 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
                     qr.lastError().databaseText() << qr.lastError().driverText();
 
     sqlCloseBase(db);
-    return;
 }
 
 void ZDB::sqlSearchMissingManga()
@@ -659,11 +657,11 @@ void ZDB::sqlSearchMissingManga()
 
     QStringList filenames;
 
-    foreach (const QString& d, indexedDirs) {
+    for (const QString& d : indexedDirs) {
         QDir dir(d);
-        QFileInfoList fl = dir.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
-        for (int i=0;i<fl.count();i++)
-            filenames << fl.at(i).absoluteFilePath();
+        const QFileInfoList fl = dir.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
+        for (const QFileInfo &fi : fl)
+            filenames << fi.absoluteFilePath();
     }
 
     QSqlQuery qr(db);
@@ -766,7 +764,7 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
         ignoredFiles.clear();
     }
 
-    foreach (const QString& file, files) {
+    for (const QString& file : files) {
         qr.prepare("INSERT INTO ignored_files (filename) VALUES (?)");
         qr.addBindValue(file);
         if (!qr.exec()) {
@@ -803,8 +801,8 @@ Z::PDFRendering ZDB::getPreferredRendering(const QString &filename) const
 {
     if (preferredRendering.contains(filename))
         return static_cast<Z::PDFRendering>(preferredRendering.value(filename));
-    else
-        return Z::PDFRendering::Autodetect;
+
+    return Z::PDFRendering::Autodetect;
 }
 
 bool ZDB::sqlSetPreferredRendering(const QString &filename, int mode)
@@ -1026,7 +1024,6 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     sqlRescanIndexedDirs();
     emit filesAdded(cnt,files.count(),tmr.elapsed());
     emit albumsListUpdated();
-    return;
 }
 
 QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
@@ -1070,8 +1067,8 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
     filterSupportedImgFiles(fl);
     QStringList files;
-    for (int i=0;i<fl.count();i++)
-        files << fl.at(i).absoluteFilePath();
+    for (const QFileInfo &fi : fl)
+        files << fi.absoluteFilePath();
 
     if (files.isEmpty()) {
         emit errorMsg("Could not find supported image files in specified directory");
@@ -1118,7 +1115,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
     // get album preview image
     QImage p;
-    foreach (const QString& fname, files) {
+    for (const QString& fname : files) {
         if (p.load(fname))
             break;
     }
@@ -1162,13 +1159,12 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
 QString ZDB::prepareSearchQuery(const QString &search)
 {
-    QStringList operators;
-    operators << " +" << " ~" << " -" << "* " << "\"";
+    const QStringList operators({" +", " ~", " -", "* ", "\""});
     QString msearch = search;
     if (search.contains(QRegExp("\\s"))) {
         bool haveops = false;
-        for (int i=0;i<operators.count();i++)
-            if (msearch.contains(operators.at(i))) {
+        for (const auto &i : operators)
+            if (msearch.contains(i)) {
                 haveops = true;
                 break;
             }
@@ -1177,7 +1173,8 @@ QString ZDB::prepareSearchQuery(const QString &search)
             msearch.prepend(QChar('+'));
             msearch.append(QChar('*'));
         }
-        return QString("WHERE MATCH(files.name) AGAINST('%1' IN BOOLEAN MODE) ").arg(escapeParam(msearch));
+        return QString("WHERE MATCH(files.name) AGAINST('%1' IN BOOLEAN MODE) ")
+                .arg(escapeParam(msearch));
     }
     return QString();
 }

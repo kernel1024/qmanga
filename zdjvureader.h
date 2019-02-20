@@ -18,7 +18,7 @@ private:
     int numPages;
 
 public:
-    explicit ZDjVuReader(QObject *parent, QString filename);
+    explicit ZDjVuReader(QObject *parent, const QString &filename);
     ~ZDjVuReader();
     bool openFile();
     void closeFile();
@@ -38,7 +38,7 @@ public:
     ZDjVuDocument(const ZDjVuDocument& other);
     ZDjVuDocument(const QString& aFilename);
     ZDjVuDocument(DDJVUAPI ddjvu_document_t * aDocument, const QString& aFilename,  int aPageNum);
-    ZDjVuDocument &operator=(const ZDjVuDocument& other);
+    ZDjVuDocument &operator=(const ZDjVuDocument& other) = default;
     bool operator==(const ZDjVuDocument& ref) const;
     bool operator!=(const ZDjVuDocument& ref) const;
 };

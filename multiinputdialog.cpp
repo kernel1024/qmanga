@@ -14,17 +14,17 @@ CMultiInputDialog::CMultiInputDialog(QWidget *parent, const QString& title,
     formLayout->setObjectName(QStringLiteral("formLayout"));
 
     int i = 0;
-    foreach (const QString &key, data.keys()) {
+    for (auto it = data.keyValueBegin(), end = data.keyValueEnd(); it != end; ++it) {
         QLabel *label = new QLabel(this);
         label->setObjectName(QString("label_%1").arg(i));
-        label->setText(key);
+        label->setText((*it).first);
         labels << label;
 
         formLayout->setWidget(i, QFormLayout::LabelRole, label);
 
-        QLineEdit *lineEdit = new QLineEdit(this);
+        auto lineEdit = new QLineEdit(this);
         lineEdit->setObjectName(QString("lineEdit_%1").arg(i));
-        lineEdit->setText(data.value(key));
+        lineEdit->setText((*it).second);
         edits << lineEdit;
 
         formLayout->setWidget(i, QFormLayout::FieldRole, lineEdit);

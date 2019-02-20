@@ -37,7 +37,7 @@ void ZFileCopier::start()
     emit progressShow();
     emit progressSetMaximum(m_srcList.count());
     QApplication::processEvents();
-    foreach (const QFileInfo& fi, m_srcList) {
+    for (const QFileInfo& fi : m_srcList) {
         emit progressSetLabelText(tr("Copying %1...").arg(fi.fileName()));
         emit progressSetValue(0);
         QApplication::processEvents();
@@ -56,10 +56,11 @@ void ZFileCopier::start()
             break;
     }
 
-    if (m_abort)
+    if (m_abort) {
         emit errorMsg(tr("Copying aborted, %1 files was copied.").arg(cnt));
-    else if (!errs.empty())
+    } else if (!errs.empty()) {
         emit errorMsg(tr("Failed to copy %1 entries:\n%2").arg(errs.count()).arg(errs.join("\n")));
+    }
 
     emit progressClose();
     QApplication::processEvents();

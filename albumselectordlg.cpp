@@ -3,7 +3,8 @@
 #include "albumselectordlg.h"
 #include "ui_albumselectordlg.h"
 
-AlbumSelectorDlg::AlbumSelectorDlg(QWidget *parent, QStringList albums, QString suggest, int toAddCount) :
+AlbumSelectorDlg::AlbumSelectorDlg(QWidget *parent, const QStringList &albums,
+                                   const QString &suggest, int toAddCount) :
     QDialog(parent),
     ui(new Ui::AlbumSelectorDlg)
 {

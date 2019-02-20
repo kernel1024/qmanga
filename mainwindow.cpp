@@ -10,7 +10,7 @@
 #include <QImage>
 #include <QBuffer>
 #include <QScreen>
-#include <math.h>
+#include <cmath>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -217,8 +217,9 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     if (obj==ui->fastScrollSlider && event->type()==QEvent::Wheel) {
         QCoreApplication::sendEvent(ui->mangaView,event);
         return true;
-    } else
-        return QMainWindow::eventFilter(obj,event);
+    }
+
+    return QMainWindow::eventFilter(obj,event);
 }
 
 void MainWindow::openAux()
@@ -249,7 +250,7 @@ void MainWindow::openClipboard()
     ui->mangaView->openFile(bs);
 }
 
-void MainWindow::openFromIndex(QString filename)
+void MainWindow::openFromIndex(const QString &filename)
 {
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(filename);
@@ -261,7 +262,7 @@ void MainWindow::closeManga()
     ui->spinPosition->hide();
 }
 
-void MainWindow::dispPage(int num, QString msg)
+void MainWindow::dispPage(int num, const QString &msg)
 {
     updateTitle();
     if (num<0 || !isMangaOpened()) {
@@ -392,10 +393,11 @@ void MainWindow::updateBookmarks()
 {
     while (bookmarksMenu->actions().count()>2)
         bookmarksMenu->removeAction(bookmarksMenu->actions().last());
-    foreach (const QString &t, zg->bookmarks.keys()) {
-        QAction* a = bookmarksMenu->addAction(t,this,&MainWindow::openBookmark);
-        a->setData(zg->bookmarks.value(t));
-        QString st = zg->bookmarks.value(t);
+    for (auto it = zg->bookmarks.keyValueBegin(), end = zg->bookmarks.keyValueEnd();
+         it != end; ++it) {
+        QAction* a = bookmarksMenu->addAction((*it).first,this,&MainWindow::openBookmark);
+        QString st = (*it).second;
+        a->setData(st);
         if (st.split('\n').count()>0)
             st = st.split('\n').at(0);
         a->setStatusTip(st);
@@ -436,7 +438,7 @@ void MainWindow::createBookmark()
 
 void MainWindow::openBookmark()
 {
-    QAction* a = qobject_cast<QAction *>(sender());
+    auto a = qobject_cast<QAction *>(sender());
     if (a==nullptr) return;
 
     QString f = a->data().toString();
@@ -473,7 +475,7 @@ void MainWindow::helpAbout()
 
 }
 
-void MainWindow::auxMessage(QString msg)
+void MainWindow::auxMessage(const QString &msg)
 {
     QString s = msg;
     bool showMsgBox = s.startsWith("MBOX#");
@@ -489,7 +491,7 @@ void MainWindow::auxMessage(QString msg)
     }
 }
 
-void MainWindow::msgFromMangaView(QSize sz, qint64 fsz)
+void MainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
 {
     lblAverageSizes->setText(tr("Avg: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
 }
@@ -498,15 +500,13 @@ void MainWindow::fsAddFiles()
 {
     QHash<QString,QStringList> fl;
     fl.clear();
-    for (int i=0;i<fsScannedFiles.count();i++) {
-        fl[fsScannedFiles.at(i).album].append(fsScannedFiles.at(i).fileName);
-        zg->newlyAddedFiles.removeAll(fsScannedFiles.at(i).fileName);
+    for (const auto &i : fsScannedFiles) {
+        fl[i.album].append(i.fileName);
+        zg->newlyAddedFiles.removeAll(i.fileName);
     }
 
-    for (int i=0;i<fl.keys().count();i++) {
-        QString k = fl.keys().at(i);
-        emit dbAddFiles(fl[k],k);
-    }
+    for (auto it = fl.keyValueBegin(), end = fl.keyValueEnd(); it != end; ++it)
+        emit dbAddFiles((*it).second,(*it).first);
 
     zg->fsCheckFilesAvailability();
 }
@@ -520,8 +520,8 @@ void MainWindow::fsDelFiles()
 {
     QList<int> rows;
     rows.clear();
-    for (int i=0;i<ui->fsResults->selectedItems().count();i++) {
-        int idx = ui->fsResults->selectedItems().at(i)->row();
+    for (const auto &i : ui->fsResults->selectedItems()) {
+        int idx = i->row();
         if (!rows.contains(idx))
             rows << idx;
     }
@@ -541,10 +541,10 @@ void MainWindow::fsNewFilesAdded()
     fsAddFilesMutex.lock();
     ui->fsResults->clear();
     fsScannedFiles.clear();
-    QStringList f = zg->newlyAddedFiles;
+    const QStringList f = zg->newlyAddedFiles;
 
-    for (int i=0;i<f.count();i++) {
-        QFileInfo fi(f.at(i));
+    for (const auto &i : f) {
+        QFileInfo fi(i);
         bool mimeOk;
         readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
         if (mimeOk)
@@ -584,11 +584,11 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
         cm.addSeparator();
         cnt++;
     }
-    for (int i=0;i<albums.count();i++) {
-        if (albums.at(i).startsWith("#")) continue;
-        ac = new QAction(albums.at(i),nullptr);
+    for (const auto &i : albums) {
+        if (i.startsWith("#")) continue;
+        ac = new QAction(i,nullptr);
         connect(ac,&QAction::triggered,this,&MainWindow::fsResultsCtxApplyAlbum);
-        ac->setData(albums.at(i));
+        ac->setData(i);
         cm.addAction(ac);
         cnt++;
     }
@@ -598,7 +598,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
 
 void MainWindow::fsResultsCtxApplyAlbum()
 {
-    QAction* ac = qobject_cast<QAction *>(sender());
+    auto ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
     QString s = ac->data().toString();
     if (s.isEmpty()) {
@@ -608,11 +608,11 @@ void MainWindow::fsResultsCtxApplyAlbum()
     QList<int> idxs;
     idxs.clear();
 
-    for (int i=0;i<ui->fsResults->selectedItems().count();i++)
-        idxs << ui->fsResults->selectedItems().at(i)->row();
+    for (const auto &i : ui->fsResults->selectedItems())
+        idxs << i->row();
 
-    for (int i=0;i<idxs.count();i++)
-        fsScannedFiles[idxs.at(i)].album = s;
+    for (const auto &i : idxs)
+        fsScannedFiles[i].album = s;
 
     fsUpdateFileList();
 }
@@ -628,7 +628,7 @@ void MainWindow::fsFindNewFiles()
 
 void MainWindow::fsFoundNewFiles(const QStringList &files)
 {
-    foreach (const QString& filename, files) {
+    for (const QString& filename : files) {
         QFileInfo fi(filename);
         bool mimeOk;
         readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
@@ -643,8 +643,8 @@ void MainWindow::fsAddIgnoredFiles()
 {
     QList<int> rows;
     rows.clear();
-    for (int i=0;i<ui->fsResults->selectedItems().count();i++) {
-        int idx = ui->fsResults->selectedItems().at(i)->row();
+    for (const auto &i : ui->fsResults->selectedItems()) {
+        int idx = i->row();
         if (!rows.contains(idx))
             rows << idx;
     }
@@ -686,21 +686,12 @@ ZFSFile::ZFSFile(const ZFSFile &other)
     album = other.album;
 }
 
-ZFSFile::ZFSFile(QString aName, QString aFileName, QString aAlbum)
+ZFSFile::ZFSFile(const QString &aName, const QString &aFileName, const QString &aAlbum)
 {
     name = aName;
     fileName = aFileName;
     album = aAlbum;
 }
-
-ZFSFile &ZFSFile::operator=(const ZFSFile &other)
-{
-    name = other.name;
-    fileName = other.fileName;
-    album = other.album;
-    return *this;
-}
-
 
 ZPopupFrame::ZPopupFrame(QWidget *parent) :
     QFrame(parent)
@@ -726,7 +717,7 @@ void ZPopupFrame::leaveEvent(QEvent *)
 
 void ZPopupFrame::hideChildren()
 {
-    foreach (QWidget* w, findChildren<QWidget *>())
+    for (QWidget* w : findChildren<QWidget *>())
         if (w!=nullptr) w->hide();
     emit hideWidget();
 }
@@ -736,7 +727,7 @@ void ZPopupFrame::showChildren()
     if (mwnd!=nullptr && !mwnd->isMangaOpened())
         hideChildren();
     else {
-        foreach (QWidget* w, findChildren<QWidget *>())
+        for (QWidget* w : findChildren<QWidget *>())
             if (w!=nullptr) w->show();
         emit showWidget();
     }

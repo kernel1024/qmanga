@@ -19,8 +19,8 @@ public:
     QString fileName;
     ZFSFile();
     ZFSFile(const ZFSFile& other);
-    ZFSFile(QString aName, QString aFileName, QString aAlbum);
-    ZFSFile &operator=(const ZFSFile& other);
+    ZFSFile(const QString &aName, const QString &aFileName, const QString &aAlbum);
+    ZFSFile &operator=(const ZFSFile& other) = default;
 };
 
 namespace Ui {
@@ -38,7 +38,7 @@ public:
     QLabel* lblAverageSizes;
     QLabel* lblRotation;
     QLabel* lblCrop;
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void centerWindow(bool moveWindow);
     bool isMangaOpened();
@@ -67,9 +67,9 @@ signals:
 public slots:
     void openAux();
     void openClipboard();
-    void openFromIndex(QString filename);
+    void openFromIndex(const QString &filename);
     void closeManga();
-    void dispPage(int num, QString msg);
+    void dispPage(int num, const QString &msg);
     void pageNumEdited();
     void switchFullscreen();
     void viewerKeyPressed(int key);
@@ -87,8 +87,8 @@ public slots:
     void openBookmark();
     void openSearchTab();
     void helpAbout();
-    void auxMessage(QString msg);
-    void msgFromMangaView(QSize sz, qint64 fsz);
+    void auxMessage(const QString &msg);
+    void msgFromMangaView(const QSize &sz, qint64 fsz);
 
     void fsAddFiles();
     void fsCheckAvailability();

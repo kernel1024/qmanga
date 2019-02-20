@@ -25,7 +25,7 @@ signals:
     void auxMessage(const QString& msg);
     
 public slots:
-    void openFile(QString filename, int preferred);
+    void openFile(const QString &filename, int preferred);
     void getPage(int num);
     void closeFile();
     

@@ -114,7 +114,7 @@ public:
                   const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
                   const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT,
                   int aDbid, Z::PDFRendering aRendering);
-    SQLMangaEntry &operator=(const SQLMangaEntry& other);
+    SQLMangaEntry &operator=(const SQLMangaEntry& other) = default;
     bool operator==(const SQLMangaEntry& ref) const;
     bool operator!=(const SQLMangaEntry& ref) const;
 };
@@ -130,12 +130,28 @@ public:
     ZLoaderHelper(const ZLoaderHelper& other);
     ZLoaderHelper(QUuid aThreadID);
     ZLoaderHelper(QThread* aThread, ZMangaLoader* aLoader);
-    ZLoaderHelper(QPointer<QThread> aThread, QPointer<ZMangaLoader> aLoader);
-    ZLoaderHelper &operator=(const ZLoaderHelper& other);
+    ZLoaderHelper(const QPointer<QThread> &aThread, const QPointer<ZMangaLoader> &aLoader);
+    ZLoaderHelper &operator=(const ZLoaderHelper& other) = default;
     bool operator==(const ZLoaderHelper& ref) const;
     bool operator!=(const ZLoaderHelper& ref) const;
     void addJob();
     void delJob();
+};
+
+class ZExportWork {
+public:
+    QDir dir;
+    QString format;
+    QString sourceFile;
+    int filenameLength;
+    int quality;
+    int idx;
+    ZExportWork();
+    ZExportWork(const ZExportWork& other);
+    ZExportWork(int aIdx, const QDir& aDir, const QString& aSourceFile, const QString& aFormat,
+                int aFilenameLength, int aQuality);
+    ZExportWork &operator=(const ZExportWork& other) = default;
+    bool isValid() const;
 };
 
 class QPageTimer : public QTimer {
@@ -148,16 +164,15 @@ public:
 typedef QList<SQLMangaEntry> SQLMangaList;
 
 
-extern ZAbstractReader *readerFactory(QObject* parent, QString filename, bool *mimeOk,
+extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
                                       bool onlyArchives, bool createReader = true);
 
 QStringList supportedImg();
 QString formatSize(qint64 size);
-QString escapeParam(QString param);
+QString escapeParam(const QString &param);
 int compareWithNumerics(QString ref1, QString ref2);
 void filterSupportedImgFiles(QFileInfoList& entryList);
 void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
-wchar_t* toUtf16(const QString &str);
 
 QString getOpenFileNameD ( QWidget * parent = 0,
                            const QString & caption = QString(),

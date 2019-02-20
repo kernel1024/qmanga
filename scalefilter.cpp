@@ -671,7 +671,7 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
 }
 
 QImage Blitz::smoothScaleFilter(const QImage &img, int w, int h,
-                                float blur, ScaleFilterType filter,
+                                double blur, ScaleFilterType filter,
                                 Qt::AspectRatioMode aspectRatio,
                                 int page, const int *currentPage)
 {
@@ -679,7 +679,7 @@ QImage Blitz::smoothScaleFilter(const QImage &img, int w, int h,
 }
 
 QImage Blitz::smoothScaleFilter(const QImage &img, const QSize &sz,
-                                float blur, ScaleFilterType filter,
+                                double blur, ScaleFilterType filter,
                                 Qt::AspectRatioMode aspectRatio,
                                 int page, const int *currentPage)
 {

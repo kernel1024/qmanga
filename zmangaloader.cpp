@@ -13,7 +13,7 @@ ZMangaLoader::~ZMangaLoader()
         closeFile();
 }
 
-void ZMangaLoader::openFile(QString filename, int preferred)
+void ZMangaLoader::openFile(const QString &filename, int preferred)
 {
     if (mReader!=nullptr)
         closeFile();
@@ -24,7 +24,8 @@ void ZMangaLoader::openFile(QString filename, int preferred)
         emit closeFileRequest();
         emit gotError(tr("File format not supported."));
         return;
-    } else if ((za == nullptr) && (mimeOk)) {
+    }
+    if ((za == nullptr) && (mimeOk)) {
         emit closeFileRequest();
         emit gotError(tr("File not found. Update database or restore file."));
         return;

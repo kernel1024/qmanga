@@ -65,8 +65,8 @@ ZOCREditor::~ZOCREditor()
 
 void ZOCREditor::addText(const QStringList &text)
 {
-    for (int i=0;i<text.count();i++)
-        ui->editor->appendPlainText(text.at(i));
+    for (const auto &i : text)
+        ui->editor->appendPlainText(i);
 }
 
 void ZOCREditor::setEditorFont(const QFont &font)
@@ -179,11 +179,11 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 
             QStringList searchNames = zg->ctxSearchEngines.keys();
             searchNames.sort(Qt::CaseInsensitive);
-            foreach (const QString& name, searchNames) {
+            for (const QString& name : searchNames) {
                 QUrl url = zg->createSearchUrl(sText,name);
                 if (!url.isEmpty() && url.isValid()) {
                     ac = new QAction(name,nullptr);
-                    connect(ac, &QAction::triggered, [url,this](){
+                    connect(ac, &QAction::triggered, [url](){
                         QDesktopServices::openUrl(url);
                     });
                     cm.addAction(ac);

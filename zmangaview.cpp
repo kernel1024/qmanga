@@ -13,8 +13,8 @@
 #include <QFutureWatcher>
 #include <QThreadPool>
 #include <functional>
-#include <limits.h>
-#include <math.h>
+#include <climits>
+#include <cmath>
 #include "zmangaloader.h"
 #include "zmangaview.h"
 #include "zglobal.h"
@@ -23,6 +23,7 @@
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
 {
+    scroller = nullptr;
     currentPage = 0;
     privPageCount = 0;
     rotation = 0;
@@ -57,7 +58,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
 
     setBackgroundRole(QPalette::Dark);
     QPalette p = palette();
-    p.setBrush(QPalette::Dark,QBrush(QColor("#000000")));
+    p.setBrush(QPalette::Dark,QBrush(QColor(Qt::black)));
     setPalette(p);
 
     connect(this,&ZMangaView::changeMangaCover,zg->db,&ZDB::sqlChangeFilePreview,Qt::QueuedConnection);
@@ -66,8 +67,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
     for (int i=0;i<cnt;i++) {
-        QThread* th = new QThread();
-        ZMangaLoader* ld = new ZMangaLoader();
+        auto th = new QThread();
+        auto ld = new ZMangaLoader();
 
         connect(ld,&ZMangaLoader::gotPage,this,&ZMangaView::cacheGotPage,Qt::QueuedConnection);
         connect(ld,&ZMangaLoader::gotError,this,&ZMangaView::cacheGotError,Qt::QueuedConnection);
@@ -98,8 +99,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
 
 ZMangaView::~ZMangaView()
 {
-    for (int i=0;i<cacheLoaders.count();i++)
-        cacheLoaders.at(i).thread->quit();
+    for (const auto &i : cacheLoaders)
+        i.thread->quit();
     cacheLoaders.clear();
 }
 
@@ -188,14 +189,14 @@ void ZMangaView::displayCurrentPage()
 
             if (lastFileSizes.count()>0 && lastSizes.count()>0) {
                 qint64 sum = 0;
-                for (int i=0;i<lastFileSizes.count();i++)
-                    sum += lastFileSizes.at(i);
+                for (const auto &i : lastFileSizes)
+                    sum += i;
                 sum = sum / lastFileSizes.count();
                 qint64 sumx = 0;
                 qint64 sumy = 0;
-                for (int i=0;i<lastSizes.count();i++) {
-                    sumx += lastSizes.at(i).width();
-                    sumy += lastSizes.at(i).height();
+                for (const auto &i : lastSizes) {
+                    sumx += i.width();
+                    sumy += i.height();
                 }
                 sumx = sumx / lastSizes.count();
                 sumy = sumy / lastSizes.count();
@@ -210,7 +211,7 @@ void ZMangaView::displayCurrentPage()
     }
 }
 
-void ZMangaView::openFile(QString filename, int page)
+void ZMangaView::openFile(const QString &filename, int page)
 {
     iCachePixmaps.clear();
     iCacheData.clear();
@@ -263,9 +264,10 @@ void ZMangaView::wheelEvent(QWheelEvent *event)
             scrollAccumulator = 0;
             event->ignore();
             return;
-        } else { // at the page border, attempting to flip the page
-            sf = zg->scrollFactor;
         }
+
+        // at the page border, attempting to flip the page
+        sf = zg->scrollFactor;
     }
 
     if (abs(dy)<zg->detectedDelta)
@@ -447,9 +449,9 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                 delete[] rtext;
                 QStringList sl = s.split('\n',QString::SkipEmptyParts);
                 int maxlen = 0;
-                for (int i=0;i<sl.count();i++)
-                    if (sl.at(i).length()>maxlen)
-                        maxlen = sl.at(i).length();
+                for (const auto &i : sl)
+                    if (i.length()>maxlen)
+                        maxlen = i.length();
                 if (maxlen<sl.count()) { // vertical kanji block, needs transpose
                     QStringList sl2;
                     sl2.clear();
@@ -621,22 +623,24 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
         QSize targetSize = curUmPixmap.size();
         curPixmap = curUmPixmap;
         if (!curUmPixmap.isNull() && curUmPixmap.height()>0) {
-            double pixAspect = (double)curUmPixmap.width()/(double)curUmPixmap.height();
-            double myAspect = (double)width()/(double)height();
+            double pixAspect = static_cast<double>(curUmPixmap.width()) /
+                               static_cast<double>(curUmPixmap.height());
+            double myAspect = static_cast<double>(width()) /
+                              static_cast<double>(height());
             if (zoomAny>0) {
-                targetSize = curUmPixmap.size()*((double)(zoomAny)/100.0);
+                targetSize = curUmPixmap.size()*(static_cast<double>(zoomAny)/100.0);
             } else if (zoomMode==zmFit) {
                 if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
                     targetSize = QSize(scrollerSize.width(),
-                                       round(((double)scrollerSize.width())/pixAspect));
+                                       qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
                 else
-                    targetSize = QSize(round(((double)scrollerSize.height())*pixAspect),
+                    targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
                                        scrollerSize.height());
             } else if (zoomMode==zmWidth) {
                 targetSize = QSize(scrollerSize.width(),
-                                   round(((double)scrollerSize.width())/pixAspect));
+                                   qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
             } else if (zoomMode==zmHeight) {
-                targetSize = QSize(round(((double)scrollerSize.height())*pixAspect),
+                targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
                                    scrollerSize.height());
             }
 
@@ -645,7 +649,8 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                     curPixmap = QPixmap::fromImage(scaled);
                 } else {
                     // fast inplace resampling
-                    curPixmap = curUmPixmap.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::FastTransformation);
+                    curPixmap = curUmPixmap.scaled(targetSize,Qt::IgnoreAspectRatio,
+                                                   Qt::FastTransformation);
 
                     if (zg->useFineRendering) {
                         Blitz::ScaleFilterType filter;
@@ -701,37 +706,43 @@ void ZMangaView::changeMangaCoverCtx()
     emit changeMangaCover(openedFile,currentPage);
 }
 
-int exportMangaPage(ZMangaView* view, const QDir& dir, int fnlen, const QString& fmt,
-                    int quality, int idx)
+static QAtomicInt exportFileError;
+
+ZExportWork ZMangaView::exportMangaPage(const ZExportWork& item)
 {
-    if (view->exportFileError) return -1;
-    QString fname = dir.filePath(QString("%1.%2").arg(idx+1,fnlen,10,QChar('0')).arg(fmt.toLower()));
-    ZMangaLoader *zl = new ZMangaLoader();
-    view->connect(zl,&ZMangaLoader::gotError,[view](const QString&){
-        view->exportFileError = true;
+    if (exportFileError>0 || !item.isValid()) return ZExportWork();
+
+    int quality = item.quality;
+    const QString format = item.format;
+    QString fname = item.dir.filePath(QString("%1.%2")
+                                         .arg(item.idx+1,item.filenameLength,10,QChar('0'))
+                                         .arg(format.toLower()));
+    auto zl = new ZMangaLoader();
+    connect(zl,&ZMangaLoader::gotError,[](const QString&){
+        exportFileError++;
     });
-    view->connect(zl,&ZMangaLoader::gotPage,
-                  [fname,fmt,quality,view](const QByteArray& page,
-                  const int&, const QString&, const QUuid&){
-        if (view->exportFileError) return;
+
+    connect(zl,&ZMangaLoader::gotPage,[fname,quality,format]
+            (const QByteArray& page, const int&, const QString&, const QUuid&){
+        if (exportFileError>0) return;
         if (page.isEmpty()) return;
 
         QPixmap p = QPixmap();
         if (!p.loadFromData(page))
             p = QPixmap();
         if (p.isNull()) return;
-        if (!p.save(fname,fmt.toLatin1(),quality)) {
-            view->exportFileError = true;
+        if (!p.save(fname,format.toLatin1(),quality)) {
+            exportFileError++;
             return;
         }
     });
 
-    zl->openFile(view->openedFile,0);
-    if (!view->exportFileError)
-        zl->getPage(idx);
+    zl->openFile(item.sourceFile,0);
+    if (!exportFileError)
+        zl->getPage(item.idx);
     zl->closeFile();
     delete zl;
-    return idx;
+    return ZExportWork();
 }
 
 void ZMangaView::exportPagesCtx()
@@ -744,30 +755,27 @@ void ZMangaView::exportPagesCtx()
     exportDialog.setExportDir(zg->savedAuxSaveDir);
     if (!exportDialog.exec()) return;
 
-    QString fmt = exportDialog.getImageFormat();
-    QDir dir(exportDialog.getExportDir());
     zg->savedAuxSaveDir = exportDialog.getExportDir();
 
     int cnt = exportDialog.getPagesCount();
-    int fnlen = QString::number(cnt).length();
-    int quality = exportDialog.getImageQuality();
 
     QProgressDialog *dlg = new QProgressDialog(this);
     dlg->setWindowModality(Qt::WindowModal);
     dlg->setAutoClose(false);
     dlg->setWindowTitle(tr("Exporting pages..."));
     dlg->show();
-    exportFileError = false;
+    exportFileError = 0;
 
-    QList<int> nums;
+    QList<ZExportWork> nums;
     for (int i=0;i<cnt;i++)
-        nums << (i+currentPage);
+        nums << ZExportWork(i+currentPage,QDir(exportDialog.getExportDir()),
+                            openedFile,exportDialog.getImageFormat(),
+                            QString::number(cnt).length(),
+                            exportDialog.getImageQuality());
 
-    using namespace std::placeholders; // QTBUG-33735 workaround
-    auto save_F = std::bind(exportMangaPage, this, dir, fnlen, fmt, quality, _1);
-    QFuture<int> saveMap = QtConcurrent::mapped(nums,save_F);
+    QFuture<ZExportWork> saveMap = QtConcurrent::mapped(nums,exportMangaPage);
 
-    QFutureWatcher<void> *mapWatcher = new QFutureWatcher<void>();
+    auto mapWatcher = new QFutureWatcher<void>();
 
     connect(mapWatcher,&QFutureWatcher<void>::progressValueChanged,
             dlg,&QProgressDialog::setValue,Qt::QueuedConnection);
@@ -778,7 +786,7 @@ void ZMangaView::exportPagesCtx()
             dlg,&QProgressDialog::setLabelText,Qt::QueuedConnection);
     connect(mapWatcher,&QFutureWatcher<void>::finished,[this,dlg,mapWatcher](){
         QString msg = tr("Pages export completed.");
-        if (exportFileError)
+        if (exportFileError>0)
             msg = tr("Error caught while saving image. Cannot create file. Check your permissions.");
         if (dlg->wasCanceled())
             msg = tr("Pages export aborted.");
@@ -838,7 +846,7 @@ void ZMangaView::setZoomDynamic(bool state)
     redrawPage();
 }
 
-void ZMangaView::setZoomAny(QString proc)
+void ZMangaView::setZoomAny(const QString &proc)
 {
     zoomAny = -1;
     QString s = proc;
@@ -931,13 +939,13 @@ void ZMangaView::cacheDropUnusable()
         cached = iCachePixmaps.keys();
     else
         cached = iCacheData.keys();
-    for (int i=0;i<cached.count();i++) {
-        if (!toCache.contains(cached.at(i))) {
+    for (const auto &i : cached) {
+        if (!toCache.contains(i)) {
             if (zg->cachePixmaps)
-                iCachePixmaps.remove(cached.at(i));
+                iCachePixmaps.remove(i);
             else
-                iCacheData.remove(cached.at(i));
-            pathCache.remove(cached.at(i));
+                iCacheData.remove(i);
+            pathCache.remove(i);
         }
     }
 }

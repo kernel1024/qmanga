@@ -48,7 +48,7 @@ public:
     Z::DBMS dbEngine;
     int cacheWidth;
     int magnifySize;
-    qreal resizeBlur;
+    double resizeBlur;
     QString savedAuxOpenDir, savedIndexOpenDir, savedAuxSaveDir;
     QColor backgroundColor, frameColor;
     QFont idxFont, ocrFont;
@@ -101,8 +101,8 @@ public:
     int idx;
     ZFileEntry();
     ZFileEntry(const ZFileEntry& other);
-    ZFileEntry(QString aName, int aIdx);
-    ZFileEntry &operator=(const ZFileEntry& other);
+    ZFileEntry(const QString &aName, int aIdx);
+    ZFileEntry &operator=(const ZFileEntry& other) = default;
     bool operator==(const ZFileEntry& ref) const;
     bool operator!=(const ZFileEntry& ref) const;
     bool operator<(const ZFileEntry& ref) const;

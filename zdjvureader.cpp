@@ -6,7 +6,7 @@
 
 static QMutex indexerMutex;
 
-ZDjVuReader::ZDjVuReader(QObject *parent, QString filename)
+ZDjVuReader::ZDjVuReader(QObject *parent, const QString &filename)
     : ZAbstractReader(parent, filename),
       numPages(0)
 {
@@ -28,7 +28,7 @@ bool ZDjVuReader::openFile()
     sortList.clear();
 
     if (!ZDjVuController::instance()->loadDjVu(fileName, numPages)) {
-        qWarning() << "Unable to load file " << fileName;
+        qWarning() << tr("Unable to load file ") << fileName;
         return false;
     }
 
@@ -103,10 +103,10 @@ QByteArray ZDjVuReader::loadPage(int num)
         xdpi = zg->forceDPI;
         ydpi = zg->forceDPI;
     }
-    w = (int) ( w * xdpi / resolution );
-    h = (int) ( h * ydpi / resolution );
+    w = static_cast<int>( w * xdpi / resolution );
+    h = static_cast<int>( h * ydpi / resolution );
 
-    int row_stride = w * 4; // !!!!!!!!!!
+    ulong row_stride = static_cast<uint>(w) * 4; // !!!!!!!!!!
 
     static uint masks[4] = { 0xff0000, 0xff00, 0xff, 0xff000000 };
     ddjvu_format_t* format = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 4, masks);
@@ -119,21 +119,23 @@ QByteArray ZDjVuReader::loadPage(int num)
 
     ddjvu_format_set_row_order(format, 1);
 
-    uchar* imageBuf = (uchar*)malloc(sizeof(uchar)* row_stride * h);
+    ulong bufSize = sizeof(uchar)* row_stride * static_cast<ulong>(h);
+    auto imageBuf = static_cast<uchar *>(malloc(bufSize));
 
-    QImage image(imageBuf, w, h, row_stride, QImage::Format_RGB32);
+    QImage image(imageBuf, w, h, static_cast<int>(row_stride), QImage::Format_RGB32);
 
     ddjvu_rect_t pageRect;
     pageRect.x = 0; pageRect.y = 0;
-    pageRect.w = w; pageRect.h = h;
+    pageRect.w = static_cast<uint>(w);
+    pageRect.h = static_cast<uint>(h);
     ddjvu_rect_t rendRect = pageRect;
 
     if (ddjvu_page_render(page, DDJVU_RENDER_COLOR,
                           &pageRect,
                           &rendRect,
                           format,
-                          row_stride,
-                          ( char* ) imageBuf ) )
+                          static_cast<uint>(row_stride),
+                          reinterpret_cast<char *>(imageBuf)))
     {
         QBuffer buf(&res);
         buf.open(QIODevice::WriteOnly);
@@ -327,15 +329,6 @@ ZDjVuDocument::ZDjVuDocument(ddjvu_document_t *aDocument, const QString &aFilena
     filename = aFilename;
     pageNum = aPageNum;
     ref = 1;
-}
-
-ZDjVuDocument &ZDjVuDocument::operator=(const ZDjVuDocument &other)
-{
-    document = other.document;
-    filename = other.filename;
-    pageNum = other.pageNum;
-    ref = other.ref;
-    return *this;
 }
 
 bool ZDjVuDocument::operator==(const ZDjVuDocument &ref) const

@@ -64,7 +64,8 @@ private:
     void cacheFillNearest();
     QIntList cacheGetActivePages();
     void displayCurrentPage();
-    void cacheGetPage(int num);
+    void cacheGetPage(int num);   
+    static ZExportWork exportMangaPage(const ZExportWork &item);
 
 public:
     int currentPage;
@@ -72,7 +73,6 @@ public:
     bool zoomDynamic;
     QString openedFile;
     int zoomAny;
-    bool exportFileError;
 
     explicit ZMangaView(QWidget *parent = nullptr);
     ~ZMangaView();
@@ -83,10 +83,10 @@ public:
     void setMouseMode(MouseMode mode);
     
 signals:
-    void loadedPage(int num, QString msg);
+    void loadedPage(int num, const QString &msg);
     void doubleClicked();
     void keyPressed(int key);
-    void averageSizes(QSize sz, qint64 fsz);
+    void averageSizes(const QSize &sz, qint64 fsz);
     void minimizeRequested();
     void closeFileRequested();
     void rotationUpdated(int degree);
@@ -94,7 +94,7 @@ signals:
     void cropUpdated(const QRect& crop);
 
     // cache signals
-    void cacheOpenFile(QString filename, int preferred);
+    void cacheOpenFile(const QString &filename, int preferred);
     void cacheCloseFile();
 
     // DB signals
@@ -102,7 +102,7 @@ signals:
     void updateFileStats(const QString& fileName);
 
 public slots:
-    void openFile(QString filename, int page = 0);
+    void openFile(const QString &filename, int page = 0);
     void closeFile();
     void setPage(int page);
     void redrawPage();
@@ -123,7 +123,7 @@ public slots:
     void setZoomHeight();
     void setZoomOriginal();
     void setZoomDynamic(bool state);
-    void setZoomAny(QString proc);
+    void setZoomAny(const QString &proc);
 
     void viewRotateCCW();
     void viewRotateCW();

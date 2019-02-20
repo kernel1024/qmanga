@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "zzipreader.h"
 
-ZZipReader::ZZipReader(QObject *parent, QString filename) :
+ZZipReader::ZZipReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
     mainZFile = nullptr;

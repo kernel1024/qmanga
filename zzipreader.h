@@ -11,7 +11,7 @@ protected:
     ZZIP_DIR* mainZFile;
 
 public:
-    explicit ZZipReader(QObject *parent, QString filename);
+    explicit ZZipReader(QObject *parent, const QString &filename);
     bool openFile();
     void closeFile();
     QByteArray loadPage(int num);

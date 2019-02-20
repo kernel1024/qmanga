@@ -7,7 +7,7 @@
 class ZImagesDirReader : public ZAbstractReader
 {
 public:
-    explicit ZImagesDirReader(QObject *parent, QString filename);
+    explicit ZImagesDirReader(QObject *parent, const QString &filename);
     bool openFile();
     void closeFile();
     QByteArray loadPage(int num);

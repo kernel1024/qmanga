@@ -55,8 +55,8 @@ public:
     QString format;
     ZPDFImg();
     ZPDFImg(const ZPDFImg& other);
-    ZPDFImg(Goffset a_pos, Goffset a_size, QString a_format);
-    ZPDFImg &operator=(const ZPDFImg& other);
+    ZPDFImg(Goffset a_pos, Goffset a_size, const QString &a_format);
+    ZPDFImg &operator=(const ZPDFImg& other) = default;
     bool operator==(const ZPDFImg& ref) const;
     bool operator!=(const ZPDFImg& ref) const;
 };
