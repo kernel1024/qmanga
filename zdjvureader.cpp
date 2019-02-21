@@ -104,8 +104,6 @@ QByteArray ZDjVuReader::loadPage(int num)
     w = static_cast<int>( w * xdpi / resolution );
     h = static_cast<int>( h * ydpi / resolution );
 
-    ulong row_stride = static_cast<uint>(w) * 4; // !!!!!!!!!!
-
     static uint masks[4] = { 0xff0000, 0xff00, 0xff, 0xff000000 };
     ddjvu_format_t* format = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 4, masks);
     if (!format)
@@ -117,10 +115,9 @@ QByteArray ZDjVuReader::loadPage(int num)
 
     ddjvu_format_set_row_order(format, 1);
 
-    ulong bufSize = sizeof(uchar)* row_stride * static_cast<ulong>(h);
-    auto imageBuf = static_cast<uchar *>(malloc(bufSize));
+    int row_stride = w * 4; // !!!!!!!!!!
 
-    QImage image(imageBuf, w, h, static_cast<int>(row_stride), QImage::Format_RGB32);
+    QImage image(w, h, QImage::Format_RGB32);
 
     ddjvu_rect_t pageRect;
     pageRect.x = 0; pageRect.y = 0;
@@ -133,17 +130,15 @@ QByteArray ZDjVuReader::loadPage(int num)
                           &rendRect,
                           format,
                           static_cast<uint>(row_stride),
-                          reinterpret_cast<char *>(imageBuf)))
+                          reinterpret_cast<char *>(image.bits())))
     {
         QBuffer buf(&res);
         buf.open(QIODevice::WriteOnly);
         image.save(&buf,"BMP");
-        buf.close();
     } else
         qWarning() << "Unable to render page " << idx;
 
     image = QImage();
-    free(imageBuf);
     ddjvu_format_release(format);
     ddjvu_page_release(page);
 

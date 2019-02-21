@@ -295,7 +295,7 @@ QString detectMIME(const QByteArray &buf)
 #ifdef WITH_LIBMAGIC
     magic_t myt = magic_open(MAGIC_ERROR|MAGIC_MIME_TYPE);
     magic_load(myt,nullptr);
-    const char* mg = magic_buffer(myt,buf.data(),buf.length());
+    const char* mg = magic_buffer(myt,buf.data(),static_cast<size_t>(buf.length()));
     if (mg==nullptr) {
         qDebug() << "libmagic error: " << magic_errno(myt) << QString::fromUtf8(magic_error(myt));
         return QString("text/plain");
@@ -604,8 +604,6 @@ QFileInfoList filterSupportedImgFiles(const QFileInfoList& entryList)
 
 ZExportWork::ZExportWork()
 {
-    format.clear();
-    sourceFile.clear();
     filenameLength = 0;
     quality = 0;
     idx = -1;

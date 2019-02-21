@@ -634,24 +634,45 @@
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">
                  <item>
-                  <widget class="QRadioButton" name="mouseModeOCR">
-                   <property name="text">
-                    <string>&amp;OCR</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="mouseModePan">
-                   <property name="text">
-                    <string>&amp;Pan</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="mouseModeCrop">
-                   <property name="text">
-                    <string>&amp;Crop</string>
-                   </property>
+                  <widget class="QFrame" name="mouseModeFrame">
+                   <layout class="QHBoxLayout" name="horizontalLayout_5">
+                    <property name="spacing">
+                     <number>1</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>2</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>2</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>2</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>2</number>
+                    </property>
+                    <item>
+                     <widget class="QRadioButton" name="mouseModeOCR">
+                      <property name="text">
+                       <string>&amp;OCR</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="mouseModePan">
+                      <property name="text">
+                       <string>&amp;Pan</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="mouseModeCrop">
+                      <property name="text">
+                       <string>&amp;Crop</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </widget>
                  </item>
                  <item>

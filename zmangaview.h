@@ -92,6 +92,7 @@ signals:
     void rotationUpdated(int degree);
     void auxMessage(const QString& msg);
     void cropUpdated(const QRect& crop);
+    void backgroundUpdated(const QColor& color);
 
     // cache signals
     void cacheOpenFile(const QString &filename, int preferred);

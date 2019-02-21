@@ -118,7 +118,6 @@ void ZPdfReader::closeFile()
 QByteArray ZPdfReader::loadPage(int num)
 {
     QByteArray res;
-    res.clear();
 #ifdef WITH_POPPLER
     if (!opened || doc==nullptr || globalParams==nullptr)
         return res;
@@ -130,7 +129,7 @@ QByteArray ZPdfReader::loadPage(int num)
     if (useImageCatalog) {
         BaseStream *str = doc->getBaseStream();
         Goffset sz = outDev->getPage(idx).size;
-        res.fill('\0',static_cast<int>(sz));
+        res.resize(static_cast<int>(sz));
         str->setPos(outDev->getPage(idx).pos);
 #ifdef JPDF_PRE073_API
         str->doGetChars(static_cast<int>(sz),reinterpret_cast<Guchar *>(res.data()));

@@ -55,6 +55,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->mouseModeOCR->hide();
     ui->mouseModePan->hide();
     ui->mouseModeCrop->hide();
+    ui->mouseModeFrame->hide();
+
+    ui->mouseModeFrame->setAttribute(Qt::WA_TranslucentBackground,true);
 
     ui->mouseModeOCR->setChecked(true);
 
@@ -90,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnRotateCW,&QPushButton::clicked,ui->mangaView,&ZMangaView::viewRotateCW);
     connect(ui->mangaView,&ZMangaView::rotationUpdated,this,&MainWindow::rotationUpdated);
     connect(ui->mangaView,&ZMangaView::cropUpdated,this,&MainWindow::cropUpdated);
+    connect(ui->mangaView,&ZMangaView::backgroundUpdated,this,&MainWindow::viewerBackgroundUpdated);
 
     connect(ui->btnNavFirst,&QPushButton::clicked,ui->mangaView,&ZMangaView::navFirst);
     connect(ui->btnNavPrev,&QPushButton::clicked,ui->mangaView,&ZMangaView::navPrev);
@@ -238,13 +242,11 @@ void MainWindow::openClipboard()
 
     QImage img = QApplication::clipboard()->image();
     QByteArray imgs;
-    imgs.clear();
     QBuffer buf(&imgs);
     buf.open(QIODevice::WriteOnly);
     img.save(&buf,"BMP");
     buf.close();
     QString bs = QString(":CLIP:")+QString::fromLatin1(imgs.toBase64());
-    imgs.clear();
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(bs);
@@ -387,6 +389,19 @@ void MainWindow::changeMouseMode(bool state)
         ui->mangaView->setMouseMode(ZMangaView::mmPan);
     else if (ui->mouseModeCrop->isChecked())
         ui->mangaView->setMouseMode(ZMangaView::mmCrop);
+}
+
+void MainWindow::viewerBackgroundUpdated(const QColor &color)
+{
+    Q_UNUSED(color)
+    static QColor oldColor(Qt::black);
+
+    QColor c = palette().window().color();
+    if (c != oldColor)
+        ui->mouseModeFrame->setStyleSheet(QString("background: rgba(%1,%2,%3,180)")
+                                          .arg(c.red()).arg(c.green()).arg(c.blue()));
+
+    oldColor = c;
 }
 
 void MainWindow::updateBookmarks()

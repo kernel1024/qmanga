@@ -72,137 +72,144 @@ ImageMagick Studio.
 #define MagickPI 3.14159265358979323846264338327950288419716939937510
 
 namespace BlitzScaleFilter{
-typedef struct{
-    float weight;
+
+using ContributionInfo = struct{
+    double weight;
     unsigned int pixel;
-} ContributionInfo;
+};
 
 const int checkEventsFreq = 25;
 
 bool horizontalFilter(const QImage *srcImg, QImage *destImg,
-                      float x_factor, float blur,
-                      ContributionInfo *contribution,
+                      double x_factor, double blur,
+                      std::vector<ContributionInfo> contribution,
                       Blitz::ScaleFilterType filter, int page,
                       const int *currentPage);
 bool verticalFilter(const QImage *srcImg, QImage *destImg,
-                    float y_factor, float blur,
-                    ContributionInfo *contribution,
+                    double y_factor, double blur,
+                    std::vector<ContributionInfo> contribution,
                     Blitz::ScaleFilterType filter, int page,
                     const int *currentPage);
 
 // These arrays were moved from their respective functions because they
 // are inline
-static const float
-J1Pone[] = {
-    0.581199354001606143928050809e+21f,
-    -0.6672106568924916298020941484e+20f,
-    0.2316433580634002297931815435e+19f,
-    -0.3588817569910106050743641413e+17f,
-    0.2908795263834775409737601689e+15f,
-    -0.1322983480332126453125473247e+13f,
-    0.3413234182301700539091292655e+10f,
-    -0.4695753530642995859767162166e+7f,
-    0.270112271089232341485679099e+4f
-},
-J1Qone[] = {
-    0.11623987080032122878585294e+22f,
-    0.1185770712190320999837113348e+20f,
-    0.6092061398917521746105196863e+17f,
-    0.2081661221307607351240184229e+15f,
-    0.5243710262167649715406728642e+12f,
-    0.1013863514358673989967045588e+10f,
-    0.1501793594998585505921097578e+7f,
-    0.1606931573481487801970916749e+4f,
+static const std::array<double,9> J1Pone = {
+    0.581199354001606143928050809e+21,
+    -0.6672106568924916298020941484e+20,
+    0.2316433580634002297931815435e+19,
+    -0.3588817569910106050743641413e+17,
+    0.2908795263834775409737601689e+15,
+    -0.1322983480332126453125473247e+13,
+    0.3413234182301700539091292655e+10,
+    -0.4695753530642995859767162166e+7,
+    0.270112271089232341485679099e+4
+};
+
+static const std::array<double,9> J1Qone = {
+    0.11623987080032122878585294e+22,
+    0.1185770712190320999837113348e+20,
+    0.6092061398917521746105196863e+17,
+    0.2081661221307607351240184229e+15,
+    0.5243710262167649715406728642e+12,
+    0.1013863514358673989967045588e+10,
+    0.1501793594998585505921097578e+7,
+    0.1606931573481487801970916749e+4,
     0.1e+1
 };
 
-static const float
-P1Pone[] = {
-    0.352246649133679798341724373e+5f,
-    0.62758845247161281269005675e+5f,
-    0.313539631109159574238669888e+5f,
-    0.49854832060594338434500455e+4f,
-    0.2111529182853962382105718e+3f,
-    0.12571716929145341558495e+1f
-},
-P1Qone[] = {
-    0.352246649133679798068390431e+5f,
-    0.626943469593560511888833731e+5f,
-    0.312404063819041039923015703e+5f,
-    0.4930396490181088979386097e+4f,
-    0.2030775189134759322293574e+3f,
-    0.1e+1f
+static const std::array<double,6> P1Pone = {
+    0.352246649133679798341724373e+5,
+    0.62758845247161281269005675e+5,
+    0.313539631109159574238669888e+5,
+    0.49854832060594338434500455e+4,
+    0.2111529182853962382105718e+3,
+    0.12571716929145341558495e+1
 };
 
-static const float
-Q1Pone[] = {
-    0.3511751914303552822533318e+3f,
-    0.7210391804904475039280863e+3f,
-    0.4259873011654442389886993e+3f,
-    0.831898957673850827325226e+2f,
-    0.45681716295512267064405e+1f,
-    0.3532840052740123642735e-1f
-},
-Q1Qone[] = {
-    0.74917374171809127714519505e+4f,
-    0.154141773392650970499848051e+5f,
-    0.91522317015169922705904727e+4f,
-    0.18111867005523513506724158e+4f,
-    0.1038187585462133728776636e+3f,
+static const std::array<double,6> P1Qone = {
+    0.352246649133679798068390431e+5,
+    0.626943469593560511888833731e+5,
+    0.312404063819041039923015703e+5,
+    0.4930396490181088979386097e+4,
+    0.2030775189134759322293574e+3,
     0.1e+1
 };
 
-static const float filterSupport[Blitz::SincFilter+1] = {
-    /*Undefined*/ 0.0f,
-    /*Point*/ 0.0f,
-    /*Box*/ 0.5f,
-    /*Triangle*/ 1.0f,
-    /*Hermite*/ 1.0f,
-    /*Hanning*/ 1.0f,
-    /*Hamming*/ 1.0f,
-    /*Blackman*/ 1.0f,
-    /*Gaussian*/ 1.25f,
-    /*Quadratic*/ 1.5f,
-    /*Cubic*/ 2.0f,
-    /*Catrom*/ 2.0f,
-    /*Mitchell*/ 2.0f,
-    /*Lanczos*/ 3.0f,
-    /*BlackmanBessel*/ 3.2383f,
-    /*BlackmanSinc*/ 4.0f
+static const std::array<double,6> Q1Pone = {
+    0.3511751914303552822533318e+3,
+    0.7210391804904475039280863e+3,
+    0.4259873011654442389886993e+3,
+    0.831898957673850827325226e+2,
+    0.45681716295512267064405e+1,
+    0.3532840052740123642735e-1
 };
 
-inline float J1(float x){
-    float p, q;
-    p=J1Pone[8]; q=J1Qone[8];
-    for(int i=7; i >= 0; i--){
-        p=p*x*x+J1Pone[i];
-        q=q*x*x+J1Qone[i];
+static const std::array<double,6> Q1Qone = {
+    0.74917374171809127714519505e+4,
+    0.154141773392650970499848051e+5,
+    0.91522317015169922705904727e+4,
+    0.18111867005523513506724158e+4,
+    0.1038187585462133728776636e+3,
+    0.1e+1
+};
+
+static const std::array<double,Blitz::SincFilter+1> filterSupport = {
+    /*Undefined*/ 0.0,
+    /*Point*/ 0.0,
+    /*Box*/ 0.5,
+    /*Triangle*/ 1.0,
+    /*Hermite*/ 1.0,
+    /*Hanning*/ 1.0,
+    /*Hamming*/ 1.0,
+    /*Blackman*/ 1.0,
+    /*Gaussian*/ 1.25,
+    /*Quadratic*/ 1.5,
+    /*Cubic*/ 2.0,
+    /*Catrom*/ 2.0,
+    /*Mitchell*/ 2.0,
+    /*Lanczos*/ 3.0,
+    /*BlackmanBessel*/ 3.2383,
+    /*BlackmanSinc*/ 4.0
+};
+
+inline double J1(double x){
+    double p, q;
+    auto ip = J1Pone.crbegin();
+    auto iq = J1Qone.crbegin();
+    p=*ip; q=*iq;
+    for(; ip!=J1Pone.crend(); ++ip, ++iq){
+        p=p*x*x+*ip;
+        q=q*x*x+*iq;
     }
     return(p/q);
 }
 
-inline float P1(float x){
-    float p, q;
-    p=P1Pone[5]; q=P1Qone[5];
-    for(int i=4; i >= 0; i--){
-        p=p*(8.0/x)*(8.0/x)+P1Pone[i];
-        q=q*(8.0/x)*(8.0/x)+P1Qone[i];
+inline double P1(double x){
+    double p, q;
+    auto ip = P1Pone.crbegin();
+    auto iq = P1Qone.crbegin();
+    p=*ip; q=*iq;
+    for(; ip!=P1Pone.crend(); ++ip, ++iq){
+        p=p*(8.0/x)*(8.0/x)+*ip;
+        q=q*(8.0/x)*(8.0/x)+*iq;
     }
     return(p/q);
 }
 
-inline float Q1(float x){
-    float p, q;
-    p=Q1Pone[5]; q=Q1Qone[5];
-    for(int i=4; i >= 0; i--){
-        p=p*(8.0/x)*(8.0/x)+Q1Pone[i];
-        q=q*(8.0/x)*(8.0/x)+Q1Qone[i];
+inline double Q1(double x){
+    double p, q;
+    auto ip = Q1Pone.crbegin();
+    auto iq = Q1Qone.crbegin();
+    p=*ip; q=*iq;
+    for(; ip!=Q1Pone.crend(); ++ip, ++iq){
+        p=p*(8.0/x)*(8.0/x)+*ip;
+        q=q*(8.0/x)*(8.0/x)+*iq;
     }
     return(p/q);
 }
 
-inline float BesselOrderOne(float x){
-    float p, q;
+inline double BesselOrderOne(double x){
+    double p, q;
     if(x == 0.0)
         return(0.0);
     p = x;
@@ -210,40 +217,39 @@ inline float BesselOrderOne(float x){
         x = (-x);
     if(x < 8.0)
         return(p*J1(x));
-    q = std::sqrt((float)
-                  (2.0/(MagickPI*x)))*(P1(x)*(1.0/std::sqrt(2.0)*(std::sin(x)-
-                                                                  std::cos(x)))-8.0/x*Q1(x)*(-1.0/std::sqrt(2.0)*(std::sin(x)+
-                                                                                                                  std::cos(x))));
+    q = std::sqrt(2.0/(MagickPI*x))*
+        (P1(x)*(1.0/std::sqrt(2.0)*(std::sin(x)-std::cos(x))) -
+         8.0/x*Q1(x)*(-1.0/std::sqrt(2.0)*(std::sin(x)+std::cos(x))));
     if (p < 0.0)
         q=(-q);
     return(q);
 }
 
-inline float Bessel(const float x, const float /*support*/){
+inline double Bessel(const double x, const double /*support*/){
     if(x == 0.0)
-        return((float)(MagickPI/4.0));
+        return(MagickPI/4.0);
     return(BesselOrderOne(MagickPI*x)/(2.0*x));
 }
 
-inline float Sinc(const float x, const float /*support*/){
+inline double Sinc(const double x, const double /*support*/){
     if(x == 0.0)
         return(1.0);
     return(std::sin(MagickPI*x)/(MagickPI*x));
 }
 
-inline float Blackman(const float x, const float /*support*/){
+inline double Blackman(const double x, const double /*support*/){
     return(0.42+0.5*std::cos(MagickPI*x)+0.08*std::cos(2*MagickPI*x));
 }
 
-inline float BlackmanBessel(const float x,const float support){
+inline double BlackmanBessel(const double x,const double support){
     return(Blackman(x/support,support)*Bessel(x,support));
 }
 
-inline float BlackmanSinc(const float x, const float support){
+inline double BlackmanSinc(const double x, const double support){
     return(Blackman(x/support,support)*Sinc(x,support));
 }
 
-inline float Box(const float x, const float /*support*/){
+inline double Box(const double x, const double /*support*/){
     if(x < -0.5)
         return(0.0);
     if(x < 0.5)
@@ -251,7 +257,7 @@ inline float Box(const float x, const float /*support*/){
     return(0.0);
 }
 
-inline float Catrom(const float x, const float /*support*/){
+inline double Catrom(const double x, const double /*support*/){
     if(x < -2.0)
         return(0.0);
     if(x < -1.0)
@@ -265,7 +271,7 @@ inline float Catrom(const float x, const float /*support*/){
     return(0.0);
 }
 
-inline float Cubic(const float x, const float /*support*/){
+inline double Cubic(const double x, const double /*support*/){
     if(x < -2.0)
         return(0.0);
     if(x < -1.0)
@@ -279,19 +285,19 @@ inline float Cubic(const float x, const float /*support*/){
     return(0.0);
 }
 
-inline float Gaussian(const float x, const float /*support*/){
-    return(std::exp((float)(-2.0*x*x))*std::sqrt(2.0/MagickPI));
+inline double Gaussian(const double x, const double /*support*/){
+    return(std::exp((-2.0*x*x))*std::sqrt(2.0/MagickPI));
 }
 
-inline float Hanning(const float x, const float /*support*/){
-    return(0.5+0.5*std::cos(MagickPI*(double) x));
+inline double Hanning(const double x, const double /*support*/){
+    return(0.5+0.5*std::cos(MagickPI*x));
 }
 
-inline float Hamming(const float x, const float /*support*/){
-    return(0.54+0.46*std::cos(MagickPI*(double) x));
+inline double Hamming(const double x, const double /*support*/){
+    return(0.54+0.46*std::cos(MagickPI*x));
 }
 
-inline float Hermite(const float x, const float /*support*/){
+inline double Hermite(const double x, const double /*support*/){
     if(x < -1.0)
         return(0.0);
     if(x < 0.0)
@@ -301,7 +307,7 @@ inline float Hermite(const float x, const float /*support*/){
     return(0.0);
 }
 
-inline float Lanczos(const float x, const float support){
+inline double Lanczos(const double x, const double support){
     if(x < -3.0)
         return(0.0);
     if(x < 0.0)
@@ -311,7 +317,7 @@ inline float Lanczos(const float x, const float support){
     return(0.0);
 }
 
-inline float Mitchell(const float x, const float /*support*/){
+inline double Mitchell(const double x, const double /*support*/){
 #define B (1.0/3.0)
 #define C (1.0/3.0)
 #define P0 (( 6.0- 2.0*B )/6.0)
@@ -334,7 +340,7 @@ inline float Mitchell(const float x, const float /*support*/){
     return(0.0);
 }
 
-inline float Quadratic(const float x, const float /*support*/){
+inline double Quadratic(const double x, const double /*support*/){
     if(x < -1.5)
         return(0.0);
     if(x < -0.5)
@@ -346,7 +352,7 @@ inline float Quadratic(const float x, const float /*support*/){
     return(0.0);
 }
 
-inline float Triangle(const float x, const float /*support*/){
+inline double Triangle(const double x, const double /*support*/){
     if(x < -1.0)
         return(0.0);
     if(x < 0.0)
@@ -366,32 +372,34 @@ using namespace BlitzScaleFilter;
 
 bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
                                         QImage *destImg,
-                                        float x_factor, float blur,
-                                        ContributionInfo *contribution,
+                                        double x_factor, double blur,
+                                        std::vector<ContributionInfo> contribution,
                                         Blitz::ScaleFilterType filter,
                                         int page, const int *currentPage)
 {
-    int n, start, stop, i, x, y;
-    float center, density, scale, support;
-    float r, g, b, a;
-    QRgb *srcData = (QRgb *)srcImg->bits();
-    QRgb *destData = (QRgb *)destImg->bits();
+    int x, y;
+    unsigned int n, i, start, stop;
+    double center, density, scale, support;
+    double r, g, b, a;
+    double fSupport = filterSupport.at(filter);
+    const QRgb *srcData = reinterpret_cast<const QRgb *>(srcImg->constBits());
+    QRgb *destData = reinterpret_cast<QRgb *>(destImg->bits());
     int sw = srcImg->width();
     int dw = destImg->width();
     QRgb pixel;
 
     scale = blur*qMax(1.0/x_factor, 1.0);
-    support = scale*filterSupport[filter];
+    support = scale*fSupport;
     if(support <= 0.5){
-        support = float(0.5+MagickEpsilon);
+        support = double(0.5+MagickEpsilon);
         scale = 1.0;
     }
     scale = 1.0/scale;
 
     for(x=0; x < destImg->width(); ++x){
-        center = (float) (x+0.5)/x_factor;
-        start = (int)qMax((double)center-support+0.5, (double)0.0);
-        stop = (int)qMin((double)center+support+0.5, (double)srcImg->width());
+        center = (x+0.5)/x_factor;
+        start = static_cast<uint>(qRound(qMax(center-support+0.5, 0.0)));
+        stop = static_cast<uint>(qRound(qMin(center+support+0.5, static_cast<double>(srcImg->width()))));
         density=0.0;
 
         for(n=0; n < (stop-start); ++n){
@@ -400,83 +408,67 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
                 case Blitz::UndefinedFilter:
                 default:
                     contribution[n].weight =
-                            Box(scale*((float)(start+n)-center+0.5),
-                                filterSupport[filter]);
+                            Box(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::PointFilter:
                     contribution[n].weight =
-                            Box(scale*((float)(start+n)-center+0.5),
-                                filterSupport[filter]);
+                            Box(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::BoxFilter:
                     contribution[n].weight =
-                            Box(scale*((float)(start+n)-center+0.5),
-                                filterSupport[filter]);
+                            Box(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::TriangleFilter:
                     contribution[n].weight =
-                            Triangle(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Triangle(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::HermiteFilter:
                     contribution[n].weight =
-                            Hermite(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Hermite(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::HanningFilter:
                     contribution[n].weight =
-                            Hanning(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Hanning(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::HammingFilter:
                     contribution[n].weight =
-                            Hamming(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Hamming(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::BlackmanFilter:
                     contribution[n].weight =
-                            Blackman(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Blackman(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::GaussianFilter:
                     contribution[n].weight =
-                            Gaussian(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Gaussian(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::QuadraticFilter:
                     contribution[n].weight =
-                            Quadratic(scale*((float)(start+n)-center+0.5),
-                                      filterSupport[filter]);
+                            Quadratic(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::CubicFilter:
                     contribution[n].weight =
-                            Cubic(scale*((float)(start+n)-center+0.5),
-                                  filterSupport[filter]);
+                            Cubic(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::CatromFilter:
                     contribution[n].weight =
-                            Catrom(scale*((float)(start+n)-center+0.5),
-                                   filterSupport[filter]);
+                            Catrom(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::MitchellFilter:
                     contribution[n].weight =
-                            Mitchell(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Mitchell(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::LanczosFilter:
                     contribution[n].weight =
-                            Lanczos(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Lanczos(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::BesselFilter:
                     contribution[n].weight =
-                            BlackmanBessel(scale*((float)(start+n)-center+0.5),
-                                           filterSupport[filter]);
+                            BlackmanBessel(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::SincFilter:
                     contribution[n].weight =
-                            BlackmanSinc(scale*((float)(start+n)-center+0.5),
-                                         filterSupport[filter]);
+                            BlackmanSinc(scale*(start+n-center+0.5),fSupport);
                     break;
             }
             density += contribution[n].weight;
@@ -502,10 +494,10 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
             g = g < 0 ? 0 : g > 255 ? 255 : g + 0.5;
             b = b < 0 ? 0 : b > 255 ? 255 : b + 0.5;
             a = a < 0 ? 0 : a > 255 ? 255 : a + 0.5;
-            *(destData+(y*dw)+x) = qRgba((unsigned char)r,
-                                         (unsigned char)g,
-                                         (unsigned char)b,
-                                         (unsigned char)a);
+            *(destData+(y*dw)+x) = qRgba(static_cast<int>(r),
+                                         static_cast<int>(g),
+                                         static_cast<int>(b),
+                                         static_cast<int>(a));
         }
         if (x%checkEventsFreq == 0) {
             qApp->processEvents();
@@ -519,32 +511,34 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
 
 bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
                                       QImage *destImg,
-                                      float y_factor, float blur,
-                                      ContributionInfo *contribution,
+                                      double y_factor, double blur,
+                                      std::vector<ContributionInfo> contribution,
                                       Blitz::ScaleFilterType filter, int page,
                                       const int *currentPage)
 {
-    int n, start, stop, i, x, y;
-    float center, density, scale, support;
-    float r, g, b, a;
-    const QRgb *srcData = (const QRgb *)srcImg->bits();
-    QRgb *destData = (QRgb *)destImg->bits();
+    int x, y;
+    unsigned int n, i, start, stop;
+    double center, density, scale, support;
+    double r, g, b, a;
+    double fSupport = filterSupport.at(filter);
+    const QRgb *srcData = reinterpret_cast<const QRgb *>(srcImg->constBits());
+    QRgb *destData = reinterpret_cast<QRgb *>(destImg->bits());
     int sw = srcImg->width();
     int dw = destImg->width();
     QRgb pixel;
 
     scale = blur*qMax(1.0/y_factor, 1.0);
-    support = scale*filterSupport[filter];
+    support = scale*fSupport;
     if(support <= 0.5){
-        support = float(0.5+MagickEpsilon);
+        support = double(0.5+MagickEpsilon);
         scale = 1.0;
     }
     scale = 1.0/scale;
 
     for(y=0; y < destImg->height(); ++y){
-        center = (float) (y+0.5)/y_factor;
-        start = (int)qMax((double)center-support+0.5, (double)0.0);
-        stop = (int)qMin((double)center+support+0.5, (double)srcImg->height());
+        center = (y+0.5)/y_factor;
+        start = static_cast<uint>(qRound(qMax(center-support+0.5, 0.0)));
+        stop = static_cast<uint>(qRound(qMin(center+support+0.5, static_cast<double>(srcImg->height()))));
         density=0.0;
 
         for(n=0; n < (stop-start); ++n){
@@ -553,84 +547,68 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
                 case Blitz::UndefinedFilter:
                 default:
                     contribution[n].weight =
-                            Box(scale*((float)(start+n)-center+0.5),
-                                filterSupport[filter]);
+                            Box(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::PointFilter:
                     contribution[n].weight =
-                            Box(scale*((float)(start+n)-center+0.5),
-                                filterSupport[filter]);
+                            Box(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::BoxFilter:
                     contribution[n].weight =
-                            Box(scale*((float)(start+n)-center+0.5),
-                                filterSupport[filter]);
+                            Box(scale*(start+n-center+0.5),fSupport);
                     break;
 
                 case Blitz::TriangleFilter:
                     contribution[n].weight =
-                            Triangle(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Triangle(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::HermiteFilter:
                     contribution[n].weight =
-                            Hermite(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Hermite(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::HanningFilter:
                     contribution[n].weight =
-                            Hanning(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Hanning(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::HammingFilter:
                     contribution[n].weight =
-                            Hamming(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Hamming(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::BlackmanFilter:
                     contribution[n].weight =
-                            Blackman(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Blackman(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::GaussianFilter:
                     contribution[n].weight =
-                            Gaussian(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Gaussian(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::QuadraticFilter:
                     contribution[n].weight =
-                            Quadratic(scale*((float)(start+n)-center+0.5),
-                                      filterSupport[filter]);
+                            Quadratic(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::CubicFilter:
                     contribution[n].weight =
-                            Cubic(scale*((float)(start+n)-center+0.5),
-                                  filterSupport[filter]);
+                            Cubic(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::CatromFilter:
                     contribution[n].weight =
-                            Catrom(scale*((float)(start+n)-center+0.5),
-                                   filterSupport[filter]);
+                            Catrom(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::MitchellFilter:
                     contribution[n].weight =
-                            Mitchell(scale*((float)(start+n)-center+0.5),
-                                     filterSupport[filter]);
+                            Mitchell(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::LanczosFilter:
                     contribution[n].weight =
-                            Lanczos(scale*((float)(start+n)-center+0.5),
-                                    filterSupport[filter]);
+                            Lanczos(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::BesselFilter:
                     contribution[n].weight =
-                            BlackmanBessel(scale*((float)(start+n)-center+0.5),
-                                           filterSupport[filter]);
+                            BlackmanBessel(scale*(start+n-center+0.5),fSupport);
                     break;
                 case Blitz::SincFilter:
                     contribution[n].weight =
-                            BlackmanSinc(scale*((float)(start+n)-center+0.5),
-                                         filterSupport[filter]);
+                            BlackmanSinc(scale*(start+n-center+0.5),fSupport);
                     break;
             }
             density += contribution[n].weight;
@@ -646,7 +624,7 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
         for(x=0; x < destImg->width(); ++x){
             r = g = b = a = 0;
             for(i=0; i < n; ++i){
-                pixel = *(srcData+(contribution[i].pixel*sw)+x);
+                pixel = *(srcData+(contribution[i].pixel*static_cast<uint>(sw))+x);
                 r += qRed(pixel)*contribution[i].weight;
                 g += qGreen(pixel)*contribution[i].weight;
                 b += qBlue(pixel)*contribution[i].weight;
@@ -656,10 +634,10 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
             g = g < 0 ? 0 : g > 255 ? 255 : g + 0.5;
             b = b < 0 ? 0 : b > 255 ? 255 : b + 0.5;
             a = a < 0 ? 0 : a > 255 ? 255 : a + 0.5;
-            *(destData+(y*dw)+x) = qRgba((unsigned char)r,
-                                         (unsigned char)g,
-                                         (unsigned char)b,
-                                         (unsigned char)a);
+            *(destData+(y*dw)+x) = qRgba(static_cast<int>(r),
+                                         static_cast<int>(g),
+                                         static_cast<int>(b),
+                                         static_cast<int>(a));
         }
         if (y%checkEventsFreq == 0) {
             qApp->processEvents();
@@ -702,30 +680,31 @@ QImage Blitz::smoothScaleFilter(const QImage &img, const QSize &sz,
     QImage buffer(destSize, imgc.hasAlphaChannel() ?
                       QImage::Format_ARGB32 : QImage::Format_RGB32);
 
-    ContributionInfo *contribution;
-    float support, x_factor, x_support, y_factor, y_support;
-    int i;
+    double support, x_factor, x_support, y_factor, y_support;
 
     //
     // Allocate filter contribution info.
     //
-    x_factor= (float)buffer.width()/imgc.width();
-    y_factor= (float)buffer.height()/imgc.height();
-    i = (int)LanczosFilter;
+    x_factor= static_cast<double>(buffer.width()) /
+              static_cast<double>(imgc.width());
+    y_factor= static_cast<double>(buffer.height()) /
+              static_cast<double>(imgc.height());
+    ScaleFilterType m_filter = LanczosFilter;
     if(filter != UndefinedFilter)
-        i = (int)filter;
+        m_filter = filter;
     else
         if((x_factor == 1.0) && (y_factor == 1.0))
-            i = (int)PointFilter;
+            m_filter = PointFilter;
         else
-            i = (int)MitchellFilter;
-    x_support = blur*qMax(1.0/x_factor, 1.0)*filterSupport[i];
-    y_support = blur*qMax(1.0/y_factor, 1.0)*filterSupport[i];
+            m_filter = MitchellFilter;
+    x_support = blur*qMax(1.0/x_factor, 1.0)*filterSupport.at(m_filter);
+    y_support = blur*qMax(1.0/y_factor, 1.0)*filterSupport.at(m_filter);
     support = qMax(x_support, y_support);
-    if(support < filterSupport[i])
-        support = filterSupport[i];
-    contribution =
-            new ContributionInfo[(int)(2.0*qMax((double)support, (double)0.5)+3)];
+    if(support < filterSupport.at(m_filter))
+        support = filterSupport.at(m_filter);
+
+    std::vector<ContributionInfo> contribution;
+    contribution.resize(static_cast<uint>(qRound(2.0*qMax(support, 0.5)+3)));
 
     //
     // Scale
@@ -744,6 +723,5 @@ QImage Blitz::smoothScaleFilter(const QImage &img, const QSize &sz,
             buffer = QImage();
     }
 
-    delete[] contribution;
     return(buffer);
 }

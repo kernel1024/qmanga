@@ -55,7 +55,6 @@ void ZZipReader::closeFile()
 QByteArray ZZipReader::loadPage(int num)
 {
     QByteArray res;
-    res.clear();
     if (!opened)
         return res;
 
@@ -82,11 +81,13 @@ QByteArray ZZipReader::loadPage(int num)
                 qDebug() << "Error while opening compressed image inside archive.";
                 return res;
             }
-            char* buf = new char[d->st_size];
-            zzip_ssize_t n = zzip_read(zf, buf, d->st_size);
-            res.append(QByteArray::fromRawData(buf,n));
-            delete[] buf;
-            zzip_close(zf);
+
+            res.resize(d->st_size);
+            zzip_ssize_t n = zzip_read(zf, res.data(), static_cast<zzip_size_t>(d->st_size));
+            if (n < d->st_size)
+                res.truncate(static_cast<int>(n));
+
+            zzip_file_close(zf);
             return res;
         }
         idx++;

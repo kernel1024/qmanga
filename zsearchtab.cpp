@@ -717,12 +717,14 @@ void ZSearchTab::dbAlbumsListReady(const QStringList &albums)
 
 void ZSearchTab::dbFilesAdded(const int count, const int total, const int elapsed)
 {
-    emit statusBarMsg(QString("MBOX#Added %1 out of %2 found files in %3s").arg(count).arg(total).arg((double)elapsed/1000.0,1,'f',2));
+    emit statusBarMsg(QString("MBOX#Added %1 out of %2 found files in %3s")
+                      .arg(count).arg(total).arg(static_cast<double>(elapsed)/1000.0,1,'f',2));
 }
 
 void ZSearchTab::dbFilesLoaded(const int count, const int elapsed)
 {
-    emit statusBarMsg(QString("Found %1 results in %2s").arg(count).arg((double)elapsed/1000.0,1,'f',2));
+    emit statusBarMsg(QString("Found %1 results in %2s")
+                      .arg(count).arg(static_cast<double>(elapsed)/1000.0,1,'f',2));
     ui->srcTable->resizeColumnsToContents();
 }
 

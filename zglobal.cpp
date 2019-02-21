@@ -66,6 +66,9 @@ ZGlobal::ZGlobal(QObject *parent) :
     connect(this,&ZGlobal::dbSetIgnoredFiles,
             db,&ZDB::sqlSetIgnoredFiles,Qt::QueuedConnection);
     db->moveToThread(threadDB);
+    connect(threadDB,&QThread::finished,db,&QObject::deleteLater,Qt::QueuedConnection);
+    connect(threadDB,&QThread::finished,threadDB,&QObject::deleteLater,Qt::QueuedConnection);
+
     threadDB->start();
 
     initPdfReader();
@@ -77,6 +80,7 @@ ZGlobal::ZGlobal(QObject *parent) :
 ZGlobal::~ZGlobal()
 {
     threadDB->quit();
+    qApp->processEvents();
     freePdfReader();
     ZDjVuController::instance()->freeDjVuReader();
 }
@@ -202,8 +206,8 @@ void ZGlobal::saveSettings()
     settings.beginGroup("MainWindow");
     settings.remove("");
     settings.setValue("cacheWidth",cacheWidth);
-    settings.setValue("downscaleFilter",(int)downscaleFilter);
-    settings.setValue("upscaleFilter",(int)downscaleFilter);
+    settings.setValue("downscaleFilter",static_cast<int>(downscaleFilter));
+    settings.setValue("upscaleFilter",static_cast<int>(upscaleFilter));
     settings.setValue("mysqlUser",dbUser);
     settings.setValue("mysqlPassword",dbPass);
     settings.setValue("mysqlBase",dbBase);

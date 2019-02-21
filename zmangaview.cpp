@@ -78,8 +78,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
         connect(this,&ZMangaView::cacheOpenFile,ld,&ZMangaLoader::openFile,Qt::QueuedConnection);
         connect(this,&ZMangaView::cacheCloseFile,ld,&ZMangaLoader::closeFile,Qt::QueuedConnection);
 
-        connect(th,&QThread::finished,ld,&QObject::deleteLater);
-        connect(th,&QThread::finished,th,&QObject::deleteLater);
+        connect(th,&QThread::finished,ld,&QObject::deleteLater,Qt::QueuedConnection);
+        connect(th,&QThread::finished,th,&QObject::deleteLater,Qt::QueuedConnection);
 
         if (i==0) {
             connect(ld,&ZMangaLoader::gotPageCount,this,
@@ -603,6 +603,7 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
     QPalette p = palette();
     p.setBrush(QPalette::Dark,QBrush(zg->backgroundColor));
     setPalette(p);
+    emit backgroundUpdated(zg->backgroundColor);
 
     if (openedFile.isEmpty()) return;
     if (page<0 || page>=privPageCount) return;

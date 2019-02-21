@@ -80,6 +80,7 @@ public slots:
     void updateFastScrollPosition();
     void tabChanged(int idx);
     void changeMouseMode(bool state);
+    void viewerBackgroundUpdated(const QColor& color);
 
     void updateBookmarks();
     void updateTitle();
