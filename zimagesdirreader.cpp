@@ -16,8 +16,7 @@ bool ZImagesDirReader::openFile()
 
     QDir d(fileName);
     if (!d.isReadable()) return false;
-    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files);
-    filterSupportedImgFiles(fl);
+    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files));
     for (int i=0;i<fl.count();i++)
         sortList << ZFileEntry(fl.at(i).absoluteFilePath(),i);
 
@@ -50,8 +49,7 @@ QByteArray ZImagesDirReader::loadPage(int num)
 
     QDir d(fileName);
     if (!d.isReadable()) return res;
-    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files);
-    filterSupportedImgFiles(fl);
+    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files));
     for (const auto &fi : fl) {
         if (idx==znum) {
             if (fi.size()>(150*1024*1024)) {

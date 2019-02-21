@@ -2,6 +2,7 @@
 #define ZDJVUREADER_H
 
 #include <QObject>
+#include <QMutex>
 
 #ifdef WITH_DJVU
 #include <libdjvu/ddjvuapi.h>
@@ -50,6 +51,7 @@ class ZDjVuController : public QObject
 
 private:
     static ZDjVuController* m_instance;
+    QMutex docMutex;
 #ifdef WITH_DJVU
     DDJVUAPI ddjvu_context_t  * djvuContext;
     QList<ZDjVuDocument> documents;

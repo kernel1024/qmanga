@@ -80,7 +80,7 @@ class ZMangaSearchHistoryModel : public QAbstractListModel {
 private:
     QStringList historyItems;
 public:
-    ZMangaSearchHistoryModel(QObject *parent = 0);
+    ZMangaSearchHistoryModel(QObject *parent = nullptr);
     int rowCount(const QModelIndex &parent) const;
     QVariant data(const QModelIndex &index, int role) const;
     Qt::ItemFlags flags(const QModelIndex &index) const;

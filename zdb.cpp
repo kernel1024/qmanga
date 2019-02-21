@@ -34,9 +34,6 @@ ZDB::ZDB(QObject *parent) :
     preferredRendering.clear();
 }
 
-ZDB::~ZDB()
-= default;
-
 int ZDB::getAlbumsCount()
 {
     QSqlDatabase db = sqlOpenBase();
@@ -93,7 +90,8 @@ bool ZDB::sqlCheckBasePriv(QSqlDatabase& db, bool silent)
     tables << "files" << "albums" << "ignored_files";
 
     int cnt=0;
-    for (const QString& s : db.tables(QSql::Tables)) {
+    const QStringList list = db.tables(QSql::Tables);
+    for (const QString& s : list) {
         if (tables.contains(s,Qt::CaseInsensitive))
             cnt++;
     }
@@ -657,7 +655,7 @@ void ZDB::sqlSearchMissingManga()
 
     QStringList filenames;
 
-    for (const QString& d : indexedDirs) {
+    for (const QString& d : qAsConst(indexedDirs)) {
         QDir dir(d);
         const QFileInfoList fl = dir.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
         for (const QFileInfo &fi : fl)
@@ -1064,8 +1062,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     }
 
     QDir d(dir);
-    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
-    filterSupportedImgFiles(fl);
+    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable));
     QStringList files;
     for (const QFileInfo &fi : fl)
         files << fi.absoluteFilePath();
@@ -1115,7 +1112,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
     // get album preview image
     QImage p;
-    for (const QString& fname : files) {
+    for (const QString& fname : qAsConst(files)) {
         if (p.load(fname))
             break;
     }

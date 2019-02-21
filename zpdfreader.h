@@ -5,6 +5,7 @@
 #include <poppler/PDFDoc.h>
 #endif
 
+#include <QMutex>
 #include "zabstractreader.h"
 #include "zpdfimageoutdev.h"
 
@@ -18,6 +19,7 @@ class ZPdfReader : public ZAbstractReader
 #endif
     bool useImageCatalog;
     int numPages;
+    QMutex indexerMutex;
 
 public:
     explicit ZPdfReader(QObject *parent, const QString &filename);

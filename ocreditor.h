@@ -20,7 +20,7 @@ class ZOCREditor : public QDialog
     Q_OBJECT
     
 public:
-    explicit ZOCREditor(QWidget *parent = 0);
+    explicit ZOCREditor(QWidget *parent = nullptr);
     ~ZOCREditor();
     void addText(const QStringList& text);
     void setEditorFont(const QFont& font);

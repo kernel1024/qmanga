@@ -120,7 +120,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     iconModel->setSourceModel(aModel);
     ui->srcList->setModel(iconModel);
     ui->srcTable->setModel(tableModel);
-    connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,
+    connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,this,
             [this](int logicalIndex, Qt::SortOrder order){
         iconModel->sort(logicalIndex,order);
     });
@@ -474,7 +474,7 @@ QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs) const
             li << i;
     }
 
-    for (const auto &i : li) {
+    for (const auto &i : qAsConst(li)) {
         if (i.row()>=0 && i.row()<model->getItemsCount()) {
             QString fname = model->getItem(i.row()).filename;
             QFileInfo fi(fname);
@@ -499,7 +499,8 @@ QAbstractItemView *ZSearchTab::activeView() const
 QModelIndexList ZSearchTab::getSelectedIndexes() const
 {
     QModelIndexList res;
-    for (const QModelIndex& idx : activeView()->selectionModel()->selectedIndexes()) {
+    const QModelIndexList list = activeView()->selectionModel()->selectedIndexes();
+    for (const QModelIndex& idx : list) {
         auto proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
         if (proxy!=nullptr)
             res.append(proxy->mapToSource(idx));
@@ -646,7 +647,7 @@ void ZSearchTab::mangaDel()
 
     ui->srcDesc->clear();
 
-    for (const auto &i : li) {
+    for (const auto &i : qAsConst(li)) {
         if (i.row()>=0 && i.row()<model->getItemsCount())
             dl << model->getItem(i.row()).dbid;
     }
@@ -665,8 +666,7 @@ void ZSearchTab::imagesAddDir()
     zg->savedIndexOpenDir = fi;
 
     QDir d(fi);
-    QFileInfoList fl = d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
-    filterSupportedImgFiles(fl);
+    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable));
     QStringList files;
     for (const auto &i : fl)
         files << i.absoluteFilePath();

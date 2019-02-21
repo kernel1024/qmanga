@@ -105,7 +105,7 @@ public slots:
 class ZPopupFrame : public QFrame {
     Q_OBJECT
 public:
-    explicit ZPopupFrame(QWidget* parent = 0);
+    explicit ZPopupFrame(QWidget* parent = nullptr);
     void setMainWindow(MainWindow* wnd);
 protected:
     MainWindow* mwnd;

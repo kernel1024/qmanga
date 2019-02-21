@@ -182,7 +182,7 @@ QString escapeParam(const QString &param)
     return res;
 }
 
-int compareWithNumerics(QString ref1, QString ref2)
+int compareWithNumerics(const QString &ref1, const QString &ref2)
 {
     QStringList r1nums,r1sep;
     QString sn,sc;
@@ -422,7 +422,7 @@ ZLoaderHelper::ZLoaderHelper(const ZLoaderHelper &other)
     jobCount = other.jobCount;
 }
 
-ZLoaderHelper::ZLoaderHelper(QUuid aThreadID)
+ZLoaderHelper::ZLoaderHelper(const QUuid &aThreadID)
 {
     id = aThreadID;
     jobCount = 0;
@@ -475,15 +475,15 @@ QPageTimer::QPageTimer(QObject *parent, int interval, int pageNum)
 }
 
 #ifdef WITH_OCR
-PIX* Image2PIX(QImage& qImage) {
+PIX* Image2PIX(const QImage &qImage) {
     PIX * pixs;
     l_uint32 *lines;
 
-    qImage = qImage.rgbSwapped();
-    int width = qImage.width();
-    int height = qImage.height();
-    int depth = qImage.depth();
-    int wpl = qImage.bytesPerLine() / 4;
+    QImage img = qImage.rgbSwapped();
+    int width = img.width();
+    int height = img.height();
+    int depth = img.depth();
+    int wpl = img.bytesPerLine() / 4;
 
     pixs = pixCreate(width, height, depth);
     pixSetWpl(pixs, wpl);
@@ -492,7 +492,7 @@ PIX* Image2PIX(QImage& qImage) {
 
     for (int y = 0; y < height; y++) {
         lines = datas + y * wpl;
-        memcpy(lines,qImage.scanLine(y),static_cast<uint>(qImage.bytesPerLine()));
+        memcpy(lines,img.scanLine(y),static_cast<uint>(img.bytesPerLine()));
     }
     return pixEndianByteSwapNew(pixs);
 }
@@ -590,16 +590,16 @@ QStringList supportedImg()
     return res;
 }
 
-void filterSupportedImgFiles(QFileInfoList& entryList)
+QFileInfoList filterSupportedImgFiles(const QFileInfoList& entryList)
 {
-    int idx = 0;
+    QFileInfoList res;
     QStringList suffices = supportedImg();
-    while (idx<entryList.count()) {
-        if (!suffices.contains(entryList.at(idx).suffix(),Qt::CaseInsensitive))
-            entryList.removeAt(idx);
-        else
-            idx++;
+    for (const auto &fi : entryList) {
+        if (suffices.contains(fi.suffix(),Qt::CaseInsensitive))
+            res.append(fi);
     }
+
+    return res;
 }
 
 ZExportWork::ZExportWork()

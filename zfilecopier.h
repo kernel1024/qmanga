@@ -19,7 +19,7 @@ private:
 
 public:
     explicit ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
-                         const QString& dstDir, QObject *parent = 0);
+                         const QString& dstDir, QObject *parent = nullptr);
 
 signals:
     void progressSetMaximum(int max);

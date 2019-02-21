@@ -154,14 +154,14 @@ void ZOCREditor::contextMenu(const QPoint &pos)
         cm.addAction(dictSearch);
 
         ac = new QAction(QIcon(":/16/accessories-dictionary"),tr("Show qjrad window"),nullptr);
-        connect(ac,&QAction::triggered,[this,sText](){
+        connect(ac,&QAction::triggered,this,[this,sText](){
             if (dictionary->isValid())
                 dictionary->showDictionaryWindow(sText);
         });
         cm.addAction(ac);
 
         ac = new QAction(QIcon(":/16/jpreader"),tr("Search with jpreader"),nullptr);
-        connect(ac,&QAction::triggered,[this,sText](){
+        connect(ac,&QAction::triggered,this,[this,sText](){
             if (browser->isValid()) {
                 if (sText.trimmed().startsWith("http",Qt::CaseInsensitive)) {
                     QUrl u = QUrl::fromUserInput(sText);

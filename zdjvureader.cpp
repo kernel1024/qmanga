@@ -1,10 +1,8 @@
-#include <QMutex>
 #include <QBuffer>
+#include <QMutexLocker>
 #include <QDebug>
 
 #include "zdjvureader.h"
-
-static QMutex indexerMutex;
 
 ZDjVuReader::ZDjVuReader(QObject *parent, const QString &filename)
     : ZAbstractReader(parent, filename),
@@ -196,30 +194,26 @@ void ZDjVuController::freeDjVuReader()
 #endif
 }
 
-static QMutex docMutex;
-
 bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
 {
+    QMutexLocker locker(&docMutex);
+
 #ifdef WITH_DJVU
     if (djvuContext==nullptr) {
         qWarning() << "No context for " << filename;
         return false;
     }
 
-    docMutex.lock();
-
     int dIdx = documents.indexOf(ZDjVuDocument(filename));
     if (dIdx >= 0) {
         numPages = documents.at(dIdx).pageNum;
         documents[dIdx].ref++;
-        docMutex.unlock();
         return true;
     }
 
     QFileInfo fi(filename);
     if (!fi.isFile() || !fi.isReadable()) {
         qWarning() << "File is not readable " << filename;
-        docMutex.unlock();
         return false;
     }
 
@@ -228,7 +222,6 @@ bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
                                               djvuContext, filename.toUtf8().constData(), 0);
     if (!document) {
         qWarning() << "Unable to create document context for " << filename;
-        docMutex.unlock();
         return false;
     }
 
@@ -237,8 +230,6 @@ bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
     numPages = ddjvu_document_get_pagenum(document);
 
     documents.append(ZDjVuDocument(document, filename, numPages));
-
-    docMutex.unlock();
 
     return true;
 #else
@@ -250,8 +241,8 @@ bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
 
 void ZDjVuController::closeDjVu(const QString &filename)
 {
+    QMutexLocker locker(&docMutex);
 #ifdef WITH_DJVU
-    docMutex.lock();
     int dIdx = documents.indexOf(ZDjVuDocument(filename));
     if (dIdx >= 0) {
         documents[dIdx].ref--;
@@ -260,7 +251,6 @@ void ZDjVuController::closeDjVu(const QString &filename)
             ddjvu_document_release(doc.document);
         }
     }
-    docMutex.unlock();
 #else
     Q_UNUSED(filename)
 #endif
@@ -269,14 +259,14 @@ void ZDjVuController::closeDjVu(const QString &filename)
 #ifdef WITH_DJVU
 ddjvu_document_t *ZDjVuController::getDocument(const QString& filename)
 {
-    docMutex.lock();
+    QMutexLocker locker(&docMutex);
+
     ddjvu_document_t* res = nullptr;
     int dIdx = documents.indexOf(ZDjVuDocument(filename));
     if (dIdx >= 0)
         res = documents.at(dIdx).document;
     else
         qWarning() << "Unable to find opened document " << filename;
-    docMutex.unlock();
     return res;
 }
 

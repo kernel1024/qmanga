@@ -93,13 +93,11 @@ ZMangaView::ZMangaView(QWidget *parent) :
         ld->moveToThread(th);
         th->start();
     }
-
-    emit loadedPage(-1,QString());
 }
 
 ZMangaView::~ZMangaView()
 {
-    for (const auto &i : cacheLoaders)
+    for (const auto &i : qAsConst(cacheLoaders))
         i.thread->quit();
     cacheLoaders.clear();
 }
@@ -184,23 +182,24 @@ void ZMangaView::displayCurrentPage()
             if (lastSizes.count()>10)
                 lastSizes.removeFirst();
 
-            lastFileSizes << ffsz;
+            lastFileSizes << static_cast<int>(ffsz);
             lastSizes << p.size();
 
             if (lastFileSizes.count()>0 && lastSizes.count()>0) {
                 qint64 sum = 0;
-                for (const auto &i : lastFileSizes)
+                for (const auto &i : qAsConst(lastFileSizes))
                     sum += i;
                 sum = sum / lastFileSizes.count();
                 qint64 sumx = 0;
                 qint64 sumy = 0;
-                for (const auto &i : lastSizes) {
+                for (const auto &i : qAsConst(lastSizes)) {
                     sumx += i.width();
                     sumy += i.height();
                 }
                 sumx = sumx / lastSizes.count();
                 sumy = sumy / lastSizes.count();
-                emit averageSizes(QSize(sumx,sumy),sum);
+                emit averageSizes(QSize(static_cast<int>(sumx),
+                                        static_cast<int>(sumy)),sum);
             }
         }
 
@@ -567,7 +566,7 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     cm.addAction(nt);
     if (!cropRect.isNull()) {
         nt = new QAction(QIcon(":/16/transform-crop"),tr("Remove page crop"),nullptr);
-        connect(nt,&QAction::triggered,[this](){
+        connect(nt,&QAction::triggered,this,[this](){
             cropRect = QRect();
             displayCurrentPage();
             emit cropUpdated(cropRect);
@@ -784,7 +783,7 @@ void ZMangaView::exportPagesCtx()
     connect(dlg,&QProgressDialog::canceled,mapWatcher,&QFutureWatcher<void>::cancel);
     connect(mapWatcher,&QFutureWatcher<void>::progressTextChanged,
             dlg,&QProgressDialog::setLabelText,Qt::QueuedConnection);
-    connect(mapWatcher,&QFutureWatcher<void>::finished,[this,dlg,mapWatcher](){
+    connect(mapWatcher,&QFutureWatcher<void>::finished,this,[this,dlg,mapWatcher](){
         QString msg = tr("Pages export completed.");
         if (exportFileError>0)
             msg = tr("Error caught while saving image. Cannot create file. Check your permissions.");
@@ -939,7 +938,7 @@ void ZMangaView::cacheDropUnusable()
         cached = iCachePixmaps.keys();
     else
         cached = iCacheData.keys();
-    for (const auto &i : cached) {
+    for (const auto &i : qAsConst(cached)) {
         if (!toCache.contains(i)) {
             if (zg->cachePixmaps)
                 iCachePixmaps.remove(i);

@@ -14,7 +14,7 @@ class ZExportDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ZExportDialog(QWidget *parent = 0);
+    explicit ZExportDialog(QWidget *parent = nullptr);
     ~ZExportDialog();
     void setPages(const int currentPage, const int pagesMaximum);
     QString getExportDir();

@@ -9,7 +9,7 @@ class ZScrollArea : public QScrollArea
 {
     Q_OBJECT
 public:
-    explicit ZScrollArea(QWidget *parent = 0);
+    explicit ZScrollArea(QWidget *parent = nullptr);
     
 signals:
     void sizeChanged(const QSize& size);
@@ -23,7 +23,7 @@ class ZTabWidget : public QTabWidget
 {
     Q_OBJECT
 public:
-    ZTabWidget(QWidget *parent = 0);
+    ZTabWidget(QWidget *parent = nullptr);
     QTabBar *tabBar() const;
 };
 

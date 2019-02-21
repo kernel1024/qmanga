@@ -37,7 +37,7 @@ void ZMangaLoader::openFile(const QString &filename, int preferred)
         delete za;
         return;
     }
-    connect(za,&ZAbstractReader::auxMessage,[this](const QString& msg){
+    connect(za,&ZAbstractReader::auxMessage,this,[this](const QString& msg){
        emit auxMessage(msg);
     });
     mReader = za;

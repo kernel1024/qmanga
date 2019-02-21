@@ -37,7 +37,7 @@ void ZFileCopier::start()
     emit progressShow();
     emit progressSetMaximum(m_srcList.count());
     QApplication::processEvents();
-    for (const QFileInfo& fi : m_srcList) {
+    for (const QFileInfo& fi : qAsConst(m_srcList)) {
         emit progressSetLabelText(tr("Copying %1...").arg(fi.fileName()));
         emit progressSetValue(0);
         QApplication::processEvents();
@@ -87,8 +87,7 @@ bool ZFileCopier::copyDir(const QFileInfo &src)
     if (!sdir.isReadable())
         return false;
 
-    QFileInfoList fl = sdir.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files);
-    filterSupportedImgFiles(fl);
+    const QFileInfoList fl = filterSupportedImgFiles(sdir.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files));
 
     emit progressSetMaximum(fl.count());
     QApplication::processEvents();

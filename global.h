@@ -128,7 +128,7 @@ public:
 
     ZLoaderHelper();
     ZLoaderHelper(const ZLoaderHelper& other);
-    ZLoaderHelper(QUuid aThreadID);
+    ZLoaderHelper(const QUuid& aThreadID);
     ZLoaderHelper(QThread* aThread, ZMangaLoader* aLoader);
     ZLoaderHelper(const QPointer<QThread> &aThread, const QPointer<ZMangaLoader> &aLoader);
     ZLoaderHelper &operator=(const ZLoaderHelper& other) = default;
@@ -158,7 +158,7 @@ class QPageTimer : public QTimer {
     Q_OBJECT
 public:
     int savedPage;
-    QPageTimer(QObject * parent = 0, int interval = 1000, int pageNum = -1);
+    QPageTimer(QObject * parent = nullptr, int interval = 1000, int pageNum = -1);
 };
 
 typedef QList<SQLMangaEntry> SQLMangaList;
@@ -170,29 +170,29 @@ extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, 
 QStringList supportedImg();
 QString formatSize(qint64 size);
 QString escapeParam(const QString &param);
-int compareWithNumerics(QString ref1, QString ref2);
-void filterSupportedImgFiles(QFileInfoList& entryList);
+int compareWithNumerics(const QString &ref1, const QString &ref2);
+QFileInfoList filterSupportedImgFiles(const QFileInfoList &entryList);
 void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
-QString getOpenFileNameD ( QWidget * parent = 0,
+QString getOpenFileNameD ( QWidget * parent = nullptr,
                            const QString & caption = QString(),
                            const QString & dir = QString(),
                            const QString & filter = QString(),
-                           QString * selectedFilter = 0,
+                           QString * selectedFilter = nullptr,
                            QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-QStringList getOpenFileNamesD ( QWidget * parent = 0,
+QStringList getOpenFileNamesD ( QWidget * parent = nullptr,
                                 const QString & caption = QString(),
                                 const QString & dir = QString(),
                                 const QString & filter = QString(),
-                                QString * selectedFilter = 0,
+                                QString * selectedFilter = nullptr,
                                 QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-QString getSaveFileNameD ( QWidget * parent = 0,
+QString getSaveFileNameD ( QWidget * parent = nullptr,
                            const QString & caption = QString(),
                            const QString & dir = QString(),
                            const QString & filter = QString(),
-                           QString * selectedFilter = 0,
+                           QString * selectedFilter = nullptr,
                            QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-QString	getExistingDirectoryD ( QWidget * parent = 0,
+QString	getExistingDirectoryD ( QWidget * parent = nullptr,
                                 const QString & caption = QString(),
                                 const QString & dir = QString(),
                                 QFileDialog::Options options = QFileDialog::ShowDirsOnly |
@@ -209,7 +209,7 @@ extern tesseract::TessBaseAPI* ocr;
 QString ocrGetActiveLanguage();
 QString ocrGetDatapath();
 tesseract::TessBaseAPI *initializeOCR();
-PIX* Image2PIX(QImage& qImage);
+PIX* Image2PIX(const QImage& qImage);
 QImage PIX2QImage(PIX *pixImage);
 #endif
 

@@ -392,7 +392,7 @@ void MainWindow::changeMouseMode(bool state)
 void MainWindow::updateBookmarks()
 {
     while (bookmarksMenu->actions().count()>2)
-        bookmarksMenu->removeAction(bookmarksMenu->actions().last());
+        bookmarksMenu->removeAction(bookmarksMenu->actions().constLast());
     for (auto it = zg->bookmarks.keyValueBegin(), end = zg->bookmarks.keyValueEnd();
          it != end; ++it) {
         QAction* a = bookmarksMenu->addAction((*it).first,this,&MainWindow::openBookmark);
@@ -500,7 +500,7 @@ void MainWindow::fsAddFiles()
 {
     QHash<QString,QStringList> fl;
     fl.clear();
-    for (const auto &i : fsScannedFiles) {
+    for (const auto &i : qAsConst(fsScannedFiles)) {
         fl[i.album].append(i.fileName);
         zg->newlyAddedFiles.removeAll(i.fileName);
     }
@@ -520,7 +520,8 @@ void MainWindow::fsDelFiles()
 {
     QList<int> rows;
     rows.clear();
-    for (const auto &i : ui->fsResults->selectedItems()) {
+    const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
+    for (const auto &i : list) {
         int idx = i->row();
         if (!rows.contains(idx))
             rows << idx;
@@ -608,10 +609,11 @@ void MainWindow::fsResultsCtxApplyAlbum()
     QList<int> idxs;
     idxs.clear();
 
-    for (const auto &i : ui->fsResults->selectedItems())
+    const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
+    for (const auto &i : list)
         idxs << i->row();
 
-    for (const auto &i : idxs)
+    for (const auto &i : qAsConst(idxs))
         fsScannedFiles[i].album = s;
 
     fsUpdateFileList();
@@ -643,7 +645,8 @@ void MainWindow::fsAddIgnoredFiles()
 {
     QList<int> rows;
     rows.clear();
-    for (const auto &i : ui->fsResults->selectedItems()) {
+    const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
+    for (const auto &i : list) {
         int idx = i->row();
         if (!rows.contains(idx))
             rows << idx;
@@ -717,7 +720,8 @@ void ZPopupFrame::leaveEvent(QEvent *)
 
 void ZPopupFrame::hideChildren()
 {
-    for (QWidget* w : findChildren<QWidget *>())
+    const QList<QWidget *> list = findChildren<QWidget *>();
+    for (QWidget* w : list)
         if (w!=nullptr) w->hide();
     emit hideWidget();
 }
@@ -727,7 +731,8 @@ void ZPopupFrame::showChildren()
     if (mwnd!=nullptr && !mwnd->isMangaOpened())
         hideChildren();
     else {
-        for (QWidget* w : findChildren<QWidget *>())
+        const QList<QWidget *> list = findChildren<QWidget *>();
+        for (QWidget* w : list)
             if (w!=nullptr) w->show();
         emit showWidget();
     }

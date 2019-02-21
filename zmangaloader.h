@@ -11,7 +11,7 @@ protected:
     ZAbstractReader* mReader;
 
 public:
-    explicit ZMangaLoader(QObject *parent = 0);
+    explicit ZMangaLoader(QObject *parent = nullptr);
     ~ZMangaLoader();
     QUuid threadID;
     QByteArray getPageSync(int num);

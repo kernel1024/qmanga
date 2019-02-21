@@ -33,8 +33,8 @@ private:
     bool sqlHaveTables(QSqlDatabase &db);
 
 public:
-    explicit ZDB(QObject *parent = 0);
-    ~ZDB();
+    explicit ZDB(QObject *parent = nullptr);
+    ~ZDB() = default;
 
     int getAlbumsCount();
     ZStrMap getDynAlbums() const;
