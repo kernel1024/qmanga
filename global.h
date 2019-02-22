@@ -155,13 +155,6 @@ public:
     bool isValid() const;
 };
 
-class QPageTimer : public QTimer {
-    Q_OBJECT
-public:
-    int savedPage;
-    QPageTimer(QObject * parent = nullptr, int interval = 1000, int pageNum = -1);
-};
-
 typedef QList<SQLMangaEntry> SQLMangaList;
 
 

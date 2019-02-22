@@ -66,6 +66,7 @@ public slots:
 
     void listModeChanged(bool state);
     void iconSizeChanged(int ref);
+    void sortingChanged(int logicalIndex, Qt::SortOrder order);
     void updateSplitters();
 
     void ctxMenu(const QPoint &pos);

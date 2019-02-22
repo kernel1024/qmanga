@@ -466,14 +466,6 @@ void ZLoaderHelper::delJob()
 }
 
 
-QPageTimer::QPageTimer(QObject *parent, int interval, int pageNum)
-    : QTimer(parent)
-{
-    setSingleShot(true);
-    setInterval(interval);
-    savedPage = pageNum;
-}
-
 #ifdef WITH_OCR
 PIX* Image2PIX(const QImage &qImage) {
     PIX * pixs;

@@ -120,10 +120,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     iconModel->setSourceModel(aModel);
     ui->srcList->setModel(iconModel);
     ui->srcTable->setModel(tableModel);
-    connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,this,
-            [this](int logicalIndex, Qt::SortOrder order){
-        iconModel->sort(logicalIndex,order);
-    });
+    connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,
+            this,&ZSearchTab::sortingChanged);
 
     connect(ui->srcList->selectionModel(),&QItemSelectionModel::currentChanged,
             this,&ZSearchTab::mangaSelectionChanged);
@@ -442,6 +440,13 @@ void ZSearchTab::applySortOrder(Z::Ordering order)
     int col = static_cast<int>(order);
     if (col>=0 && col<ui->srcTable->model()->columnCount())
         ui->srcTable->sortByColumn(col,Qt::AscendingOrder);
+}
+
+void ZSearchTab::sortingChanged(int logicalIndex, Qt::SortOrder order)
+{
+    iconModel->sort(logicalIndex,order);
+    if (logicalIndex>=0 && logicalIndex<Z::maxOrdering)
+        zg->defaultOrdering = static_cast<Z::Ordering>(logicalIndex);
 }
 
 QSize ZSearchTab::gridSize(int ref)
