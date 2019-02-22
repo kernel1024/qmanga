@@ -2,6 +2,7 @@
 #define GLOBAL_H
 
 #include <QWidget>
+#include <QHash>
 #include <QPixmap>
 #include <QImage>
 #include <QFileDialog>
@@ -201,7 +202,8 @@ QString	getExistingDirectoryD ( QWidget * parent = nullptr,
 QString detectMIME(const QString &filename);
 QString detectMIME(const QByteArray &buf);
 QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
-                    Blitz::ScaleFilterType filter = Blitz::LanczosFilter, int page = -1, const int *currentPage = nullptr);
+                   Blitz::ScaleFilterType filter = Blitz::LanczosFilter, int page = -1,
+                   const int *currentPage = nullptr);
 
 #ifdef WITH_OCR
 extern tesseract::TessBaseAPI* ocr;

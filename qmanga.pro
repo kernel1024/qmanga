@@ -13,6 +13,11 @@ QT       += core gui widgets sql concurrent
 TARGET = qmanga
 TEMPLATE = app
 
+# warn on *any* usage of deprecated APIs
+DEFINES += QT_DEPRECATED_WARNINGS
+# ... and just fail to compile if APIs deprecated in Qt <= 5.10 are used
+DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x050A00
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     zmangaview.cpp \

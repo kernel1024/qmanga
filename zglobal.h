@@ -53,7 +53,6 @@ public:
     QColor backgroundColor, frameColor;
     QFont idxFont, ocrFont;
     QString rarCmd;
-    int preferredWidth;
     int scrollDelta;
     int detectedDelta;
     int scrollFactor;
@@ -80,7 +79,6 @@ public slots:
     void saveSettings();
     void updateWatchDirList(const QStringList & watchDirs);
     void directoryChanged(const QString & dir);
-    void resetPreferredWidth();
     void dbCheckComplete();
 
 signals:

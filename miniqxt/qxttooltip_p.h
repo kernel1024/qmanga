@@ -55,7 +55,7 @@ public:
     void setToolTip(QWidget* tooltip);
     bool eventFilter(QObject* parent, QEvent* event);
     void hideLater();
-    QPoint calculatePos(int scr, const QPoint& eventPos) const;
+    QPoint calculatePos(QScreen *scr, const QPoint& eventPos) const;
     QHash<WidgetPtr, WidgetArea> tooltips;
     QVBoxLayout* vbox;
 

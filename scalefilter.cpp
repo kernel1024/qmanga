@@ -58,6 +58,8 @@ ImageMagick Studio.
 #include <QImage>
 #include <QApplication>
 #include <cmath>
+#include <vector>
+#include <array>
 #include "scalefilter.h"
 /**
  * This is a port of the ImageMagick scaling functions from resize.c.
@@ -500,7 +502,7 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
                                          static_cast<int>(a));
         }
         if (x%checkEventsFreq == 0) {
-            qApp->processEvents();
+            QApplication::processEvents();
             if (currentPage!=nullptr && *currentPage!=page)
                 return(false);
         }
@@ -640,7 +642,7 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
                                          static_cast<int>(a));
         }
         if (y%checkEventsFreq == 0) {
-            qApp->processEvents();
+            QApplication::processEvents();
             if (currentPage!=nullptr && *currentPage!=page)
                 return(false);
         }

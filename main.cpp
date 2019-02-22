@@ -43,10 +43,10 @@ int main(int argc, char *argv[])
     MainWindow w;
 
 #ifdef Q_OS_WIN
-    QDir appDir(qApp->applicationDirPath());
-    qApp->addLibraryPath(appDir.absoluteFilePath("imageformats"));
+    QDir appDir(QApplication::applicationDirPath());
+    QApplication::addLibraryPath(appDir.absoluteFilePath("imageformats"));
 
-    if (qApp->arguments().contains("--debug"))
+    if (QApplication::arguments().contains("--debug"))
         AllocConsole();
 #endif
 

@@ -1,4 +1,3 @@
-#include <QDesktopWidget>
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QStatusBar>
@@ -10,6 +9,7 @@
 #include <QImage>
 #include <QBuffer>
 #include <QScreen>
+#include <QWindow>
 #include <cmath>
 
 #include "mainwindow.h"
@@ -155,18 +155,17 @@ MainWindow::~MainWindow()
 
 void MainWindow::centerWindow(bool moveWindow)
 {
-    int screen = 0;
-    QWidget *w = window();
-    QDesktopWidget *desktop = QApplication::desktop();
-    if (w) {
-        screen = desktop->screenNumber(w);
-    } else if (desktop->isVirtualDesktop()) {
-        screen = desktop->screenNumber(QCursor::pos());
-    } else {
-        screen = desktop->screenNumber(this);
-    }
+    QScreen *screen = nullptr;
 
-    QRect rect(desktop->availableGeometry(screen));
+    if (window() && window()->windowHandle()) {
+        screen = window()->windowHandle()->screen();
+    } else if (!QApplication::screens().isEmpty()) {
+        screen = QApplication::screenAt(QCursor::pos());
+    }
+    if (screen == nullptr)
+        screen = QApplication::primaryScreen();
+
+    QRect rect(screen->availableGeometry());
     int h = 80*rect.height()/100;
     QSize nw(135*h/100,h);
     if (nw.width()<1000) nw.setWidth(80*rect.width()/100);
@@ -178,8 +177,8 @@ void MainWindow::centerWindow(bool moveWindow)
         searchTab->updateSplitters();
     }
 
-    zg->dpiX = QApplication::screens().at(screen)->physicalDotsPerInchX();
-    zg->dpiY = QApplication::screens().at(screen)->physicalDotsPerInchY();
+    zg->dpiX = screen->physicalDotsPerInchX();
+    zg->dpiY = screen->physicalDotsPerInchY();
 #ifdef Q_OS_WIN
     if (abs(zg->dpiX-zg->dpiY)>20.0) {
         qreal dpi = qMax(zg->dpiX,zg->dpiY);
@@ -209,11 +208,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (zg!=nullptr)
         zg->saveSettings();
     event->accept();
-}
-
-void MainWindow::resizeEvent(QResizeEvent *)
-{
-    zg->resetPreferredWidth();
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)

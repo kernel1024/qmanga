@@ -56,7 +56,6 @@ private:
 
 protected:
     void closeEvent(QCloseEvent * event);
-    void resizeEvent(QResizeEvent * event);
     bool eventFilter(QObject * obj, QEvent * event);
 
 signals:

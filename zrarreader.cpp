@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <QProcess>
 #include <QDebug>
 #include "zrarreader.h"
@@ -47,7 +48,7 @@ bool ZRarReader::openFile()
         cnt++;
     }
 
-    qSort(sortList);
+    std::sort(sortList.begin(),sortList.end());
 
     opened = true;
     return true;

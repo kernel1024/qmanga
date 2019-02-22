@@ -9,6 +9,7 @@
 
 #endif
 
+#include <algorithm>
 #include <QBuffer>
 #include <QMutexLocker>
 #include <QDebug>
@@ -87,7 +88,7 @@ bool ZPdfReader::openFile()
         sortList << ZFileEntry(QString("%1").arg(i,6,10,QChar('0')),i);
     }
 
-    qSort(sortList);
+    std::sort(sortList.begin(),sortList.end());
 
     opened = true;
     return true;

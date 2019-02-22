@@ -564,7 +564,7 @@ tesseract::TessBaseAPI* initializeOCR()
     ocr = new tesseract::TessBaseAPI();
     const char* datapath = nullptr;
 #ifdef Q_OS_WIN
-    QDir appDir(qApp->applicationDirPath());
+    QDir appDir(QApplication::applicationDirPath());
     QByteArray tesspath = appDir.absoluteFilePath("tessdata").toUtf8();
     datapath = tesspath.constData();
 #else

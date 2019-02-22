@@ -337,7 +337,7 @@ void ZSearchTab::ctxFileCopyClipboard()
     data->setData("text/plain",plainList);
     data->setData("application/x-kde4-urilist",uriList);
 
-    QClipboard *cl = qApp->clipboard();
+    QClipboard *cl = QApplication::clipboard();
     cl->clear();
     cl->setMimeData(data);
 }

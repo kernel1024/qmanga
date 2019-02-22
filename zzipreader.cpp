@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <zzip/zzip.h>
 #include <QDebug>
 #include "zzipreader.h"
@@ -35,7 +36,7 @@ bool ZZipReader::openFile()
         cnt++;
     }
 
-    qSort(sortList);
+    std::sort(sortList.begin(),sortList.end());
 
     opened = true;
     return true;

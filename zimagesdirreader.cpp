@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <QDebug>
 #include "zimagesdirreader.h"
 
@@ -16,11 +17,13 @@ bool ZImagesDirReader::openFile()
 
     QDir d(fileName);
     if (!d.isReadable()) return false;
-    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files));
+    const QFileInfoList fl = filterSupportedImgFiles(
+                                 d.entryInfoList(QStringList("*"),
+                                                 QDir::Readable | QDir::Files));
     for (int i=0;i<fl.count();i++)
         sortList << ZFileEntry(fl.at(i).absoluteFilePath(),i);
 
-    qSort(sortList);
+    std::sort(sortList.begin(),sortList.end());
 
     opened = true;
     return true;

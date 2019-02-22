@@ -1,4 +1,5 @@
-#include <QDesktopWidget>
+#include <QWindow>
+#include <QScreen>
 #include <QListView>
 #include <QApplication>
 #include <QThread>
@@ -39,7 +40,6 @@ ZGlobal::ZGlobal(QObject *parent) :
     upscaleFilter = Blitz::ScaleFilterType::UndefinedFilter;
     magnifySize = 100;
     resizeBlur = 1.0;
-    preferredWidth = 0;
 
     initLanguagesList();
     tranSourceLang = QString("ja");
@@ -73,14 +73,12 @@ ZGlobal::ZGlobal(QObject *parent) :
 
     initPdfReader();
     ZDjVuController::instance()->initDjVuReader();
-
-    resetPreferredWidth();
 }
 
 ZGlobal::~ZGlobal()
 {
     threadDB->quit();
-    qApp->processEvents();
+    QApplication::processEvents();
     freePdfReader();
     ZDjVuController::instance()->freeDjVuReader();
 }
@@ -284,19 +282,6 @@ void ZGlobal::directoryChanged(const QString &dir)
             newlyAddedFiles << fname;
     }
     fsCheckFilesAvailability();
-}
-
-void ZGlobal::resetPreferredWidth()
-{
-    int screen = 0;
-    QDesktopWidget *desktop = QApplication::desktop();
-    if (desktop->isVirtualDesktop()) {
-        screen = desktop->screenNumber(QCursor::pos());
-    }
-
-    preferredWidth = 2*desktop->screen(screen)->width()/3;
-    if (preferredWidth<1000)
-        preferredWidth = 1000;
 }
 
 void ZGlobal::dbCheckComplete()

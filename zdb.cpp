@@ -631,7 +631,7 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     else
         qr.bindValue(1,fi.size());
     qr.bindValue(2,za->getMagic());
-    qr.bindValue(3,fi.created());
+    qr.bindValue(3,fi.birthTime());
     qr.bindValue(4,fname);
 
     za->closeFile();
@@ -994,7 +994,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         qr.bindValue(4,za->getPageCount());
         qr.bindValue(5,fi.size());
         qr.bindValue(6,za->getMagic());
-        qr.bindValue(7,fi.created());
+        qr.bindValue(7,fi.birthTime());
         qr.bindValue(8,QDateTime::currentDateTime());
         if (!qr.exec())
             qDebug() << files.at(i) << "unable to add" <<
@@ -1139,7 +1139,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     qr.bindValue(4,files.count());
     qr.bindValue(5,0);
     qr.bindValue(6,QString("DYN"));
-    qr.bindValue(7,fi.created());
+    qr.bindValue(7,fi.birthTime());
     qr.bindValue(8,QDateTime::currentDateTime());
     if (!qr.exec())
         qDebug() << "unable to add dynamic album" << dir <<

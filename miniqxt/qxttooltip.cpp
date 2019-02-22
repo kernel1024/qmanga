@@ -31,7 +31,8 @@
 
 #include "qxttooltip_p.h"
 #include <QStyleOptionFrame>
-#include <QDesktopWidget>
+#include <QWindow>
+#include <QScreen>
 #include <QStylePainter>
 #include <QApplication>
 #include <QVBoxLayout>
@@ -56,7 +57,7 @@ QxtToolTipPrivate* QxtToolTipPrivate::instance()
     return self;
 }
 
-QxtToolTipPrivate::QxtToolTipPrivate() : QWidget(qApp->desktop(), FLAGS)
+QxtToolTipPrivate::QxtToolTipPrivate() : QWidget(nullptr, FLAGS)
 {
     currentParent = nullptr;
     ignoreEnterEvent = false;
@@ -66,12 +67,12 @@ QxtToolTipPrivate::QxtToolTipPrivate() : QWidget(qApp->desktop(), FLAGS)
     setPalette(QToolTip::palette());
     setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, nullptr, this) / 255.0);
     layout()->setMargin(style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, nullptr, this));
-    qApp->installEventFilter(this);
+    QApplication::instance()->installEventFilter(this);
 }
 
 QxtToolTipPrivate::~QxtToolTipPrivate()
 {
-    qApp->removeEventFilter(this); // not really necessary but rather for completeness :)
+    QApplication::instance()->removeEventFilter(this); // not really necessary but rather for completeness :)
     self = nullptr;
 }
 
@@ -80,19 +81,26 @@ void QxtToolTipPrivate::show(const QPoint& pos, QWidget* tooltip, QWidget* paren
     //    Q_ASSERT(tooltip && parent);
     if (!isVisible())
     {
-        int scr = 0;
-        if (QApplication::desktop()->isVirtualDesktop())
-            scr = QApplication::desktop()->screenNumber(pos);
-        else
-            scr = QApplication::desktop()->screenNumber(this);
-        setParent(QApplication::desktop()->screen(scr));
+        QScreen *screen = nullptr;
+
+        if (!QApplication::screens().isEmpty()) {
+            screen = QApplication::screenAt(pos);
+        } else {
+            if (parent && parent->window() && parent->window()->windowHandle()) {
+                screen = parent->window()->windowHandle()->screen();
+            }
+        }
+        if (screen == nullptr)
+            screen = QApplication::primaryScreen();
+
+        setParent(nullptr);
         setWindowFlags(FLAGS);
         setToolTip(tooltip);
         currentParent = parent;
         currentRect = rect;
         ignoreEnterEvent = allowMouseEnter;
         allowCloseOnLeave = false;
-        move(calculatePos(scr, pos));
+        move(calculatePos(screen, pos));
         QWidget::show();
     }
 }
@@ -210,13 +218,9 @@ void QxtToolTipPrivate::hideLater()
         QTimer::singleShot(0, this, &QxtToolTipPrivate::hide);
 }
 
-QPoint QxtToolTipPrivate::calculatePos(int scr, const QPoint& eventPos) const
+QPoint QxtToolTipPrivate::calculatePos(QScreen *scr, const QPoint& eventPos) const
 {
-#ifdef Q_WS_MAC
-    QRect screen = QApplication::desktop()->availableGeometry(scr);
-#else
-    QRect screen = QApplication::desktop()->screenGeometry(scr);
-#endif
+    QRect screen = scr->availableGeometry();
 
     QPoint p = eventPos;
     p += QPoint(2,
