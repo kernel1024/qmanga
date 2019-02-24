@@ -17,8 +17,8 @@ public:
     QByteArray getPageSync(int num);
 
 signals:
-    void gotPage(const QByteArray& page, const int& num, const QString& internalPath,
-                 const QUuid& aThreadID);
+    void gotPage(const QByteArray& page, const QImage& pageImage, const int& num,
+                 const QString& internalPath, const QUuid& aThreadID);
     void gotPageCount(const int& num, const int& preferred);
     void gotError(const QString& msg);
     void closeFileRequest();
@@ -26,7 +26,7 @@ signals:
     
 public slots:
     void openFile(const QString &filename, int preferred);
-    void getPage(int num);
+    void getPage(int num, bool preferImage);
     void closeFile();
     
 };

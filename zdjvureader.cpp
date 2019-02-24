@@ -57,20 +57,18 @@ void ZDjVuReader::closeFile()
     sortList.clear();
 }
 
-QByteArray ZDjVuReader::loadPage(int num)
+QImage ZDjVuReader::loadPageImage(int num)
 {
-    QByteArray res;
-    res.clear();
 #ifdef WITH_DJVU
     ddjvu_document_t* document = ZDjVuController::instance()->getDocument(fileName);
     if (!opened || document==nullptr) {
         qWarning() << "Uninitialized context for page " << num;
-        return res;
+        return QImage();
     }
 
     if (num<0 || num>=sortList.count()) {
         qWarning() << "Incorrect page number " << num;
-        return res;
+        return QImage();
     }
 
     int idx = sortList.at(num).idx;
@@ -78,7 +76,7 @@ QByteArray ZDjVuReader::loadPage(int num)
     ddjvu_page_t* page = ddjvu_page_create_by_pageno(document,idx);
     if (!page) {
         qWarning() << "Unable to create page " << idx;
-        return res;
+        return QImage();
     }
 
     int resolution = ddjvu_page_get_resolution(page);
@@ -92,7 +90,7 @@ QByteArray ZDjVuReader::loadPage(int num)
     if (w < 1 || h < 1 ) {
         qWarning() << "Null-sized page " << idx;
         ddjvu_page_release(page);
-        return res;
+        return QImage();
     }
 
     //ddjvu_page_set_rotation ( page, DDJVU_ROTATE_0 ); // need?
@@ -111,7 +109,7 @@ QByteArray ZDjVuReader::loadPage(int num)
     {
         qWarning() << "Unable to create format for page " << idx;
         ddjvu_page_release(page);
-        return res;
+        return QImage();
     }
 
     ddjvu_format_set_row_order(format, 1);
@@ -126,26 +124,36 @@ QByteArray ZDjVuReader::loadPage(int num)
     pageRect.h = static_cast<uint>(h);
     ddjvu_rect_t rendRect = pageRect;
 
-    if (ddjvu_page_render(page, DDJVU_RENDER_COLOR,
+    if (!ddjvu_page_render(page, DDJVU_RENDER_COLOR,
                           &pageRect,
                           &rendRect,
                           format,
                           static_cast<uint>(row_stride),
                           reinterpret_cast<char *>(image.bits())))
-    {
-        QBuffer buf(&res);
-        buf.open(QIODevice::WriteOnly);
-        image.save(&buf,"BMP");
-    } else
         qWarning() << "Unable to render page " << idx;
 
-    image = QImage();
     ddjvu_format_release(format);
     ddjvu_page_release(page);
+
+    if (!image.isNull())
+        return image;
 
 #else
     Q_UNUSED(num)
 #endif
+    return QImage();
+}
+
+QByteArray ZDjVuReader::loadPage(int num)
+{
+    QByteArray res;
+
+    QImage img = loadPageImage(num);
+    if (img.isNull()) return res;
+
+    QBuffer buf(&res);
+    img.save(&buf,"BMP");
+
     return res;
 }
 

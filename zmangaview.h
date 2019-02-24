@@ -33,7 +33,7 @@ private:
     ZoomMode zoomMode;
     MouseMode mouseMode;
     int rotation;
-    QPixmap curPixmap, curUmPixmap;
+    QImage curPixmap, curUmPixmap;
     QPoint drawPos;
     QPoint zoomPos;
     QPoint dragPos;
@@ -46,7 +46,7 @@ private:
     QList<ZLoaderHelper> cacheLoaders;
     int privPageCount;
 
-    QHash<int,QPixmap> iCachePixmaps;
+    QHash<int,QImage> iCacheImages;
     QHash<int,QByteArray> iCacheData;
     QHash<int,QString> pathCache;
     QIntList processingPages;
@@ -133,8 +133,8 @@ public slots:
     void loaderMsg(const QString& msg);
 
     // cache slots
-    void cacheGotPage(const QByteArray& page, const int& num, const QString& internalPath,
-                      const QUuid& threadID);
+    void cacheGotPage(const QByteArray& page, const QImage &pageImage, const int& num,
+                      const QString& internalPath, const QUuid& threadID);
     void cacheGotPageCount(const int& num, const int& preferred);
     void cacheGotError(const QString& msg);
 

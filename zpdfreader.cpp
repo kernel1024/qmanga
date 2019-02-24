@@ -116,27 +116,36 @@ void ZPdfReader::closeFile()
     sortList.clear();
 }
 
-QByteArray ZPdfReader::loadPage(int num)
-{
-    QByteArray res;
 #ifdef WITH_POPPLER
-    if (!opened || doc==nullptr || globalParams==nullptr)
-        return res;
 
-    if (num<0 || num>=sortList.count()) return res;
+void popplerSplashCleanup(void *info)
+{
+    auto bitmap = reinterpret_cast<SplashBitmap *>(info);
+    delete bitmap;
+}
+
+void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage)
+{
+    if (!opened || doc==nullptr || globalParams==nullptr)
+        return;
+
+    if (num<0 || num>=sortList.count()) return;
 
     int idx = sortList.at(num).idx;
 
     if (useImageCatalog) {
         BaseStream *str = doc->getBaseStream();
         Goffset sz = outDev->getPage(idx).size;
-        res.resize(static_cast<int>(sz));
+        buf->resize(static_cast<int>(sz));
         str->setPos(outDev->getPage(idx).pos);
 #ifdef JPDF_PRE073_API
-        str->doGetChars(static_cast<int>(sz),reinterpret_cast<Guchar *>(res.data()));
+        str->doGetChars(static_cast<int>(sz),reinterpret_cast<Guchar *>(buf->data()));
 #else
-        str->doGetChars(static_cast<int>(sz),reinterpret_cast<uchar*>(res.data()));
+        str->doGetChars(static_cast<int>(sz),reinterpret_cast<uchar*>(buf->data()));
 #endif
+        if (preferImage)
+            img->loadFromData(*buf);
+
     } else {
         qreal xdpi = zg->dpiX;
         qreal ydpi = zg->dpiY;
@@ -159,24 +168,47 @@ QByteArray ZPdfReader::loadPage(int num)
                               false, true, false,
                               -1, -1, -1, -1);
 
-        SplashBitmap *bitmap = splashOutputDev.getBitmap();
-        const int bw = bitmap->getWidth();
-        const int bh = bitmap->getHeight();
+        SplashBitmap *bitmap = splashOutputDev.takeBitmap();
 
-        SplashColorPtr data_ptr = bitmap->getDataPtr();
+        int bw = bitmap->getWidth();
+        int bh = bitmap->getHeight();
+        QImage qimg(reinterpret_cast<uchar *>(bitmap->getDataPtr()), bw, bh, QImage::Format_ARGB32, popplerSplashCleanup, bitmap);
 
-        QImage qimg(reinterpret_cast<uchar *>(data_ptr), bw, bh, QImage::Format_ARGB32);
-
-        QBuffer buf(&res);
-        buf.open(QIODevice::WriteOnly);
-        qimg.save(&buf,"BMP");
-        qimg = QImage();
+        if (!preferImage) {
+            QBuffer b(buf);
+            if (b.open(QIODevice::WriteOnly))
+                qimg.save(&b,"BMP");
+            qimg = QImage();
+        } else
+            *img = qimg;
     }
+}
+#endif
 
+QByteArray ZPdfReader::loadPage(int num)
+{
+#ifdef WITH_POPPLER
+    QByteArray buf;
+    QImage img;
+    loadPagePrivate(num,&buf,&img,false);
+    return buf;
 #else
     Q_UNUSED(num)
+    return QByteArray();
 #endif
-    return res;
+}
+
+QImage ZPdfReader::loadPageImage(int num)
+{
+#ifdef WITH_POPPLER
+    QByteArray buf;
+    QImage img;
+    loadPagePrivate(num,&buf,&img,true);
+    return img;
+#else
+    Q_UNUSED(num)
+    return QImage();
+#endif
 }
 
 QString ZPdfReader::getMagic()

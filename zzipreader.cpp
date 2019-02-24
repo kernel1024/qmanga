@@ -96,6 +96,16 @@ QByteArray ZZipReader::loadPage(int num)
     return res;
 }
 
+QImage ZZipReader::loadPageImage(int num)
+{
+    const QByteArray buf = loadPage(num);
+    if (buf.isEmpty()) return QImage();
+
+    QImage img;
+    img.loadFromData(buf);
+    return img;
+}
+
 QString ZZipReader::getMagic()
 {
     return QString("ZIP");

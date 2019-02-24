@@ -57,6 +57,14 @@ QByteArray ZSingleImageReader::loadPage(int)
     return res;
 }
 
+QImage ZSingleImageReader::loadPageImage(int)
+{
+    if (!opened)
+        return QImage();
+
+    return page;
+}
+
 QString ZSingleImageReader::getMagic()
 {
     return QString("AUX");

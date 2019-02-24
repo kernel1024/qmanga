@@ -45,12 +45,14 @@ void ZMangaLoader::openFile(const QString &filename, int preferred)
     emit gotPageCount(pagecnt,preferred);
 }
 
-void ZMangaLoader::getPage(int num)
+void ZMangaLoader::getPage(int num, bool preferImage)
 {
     QString ipt = mReader->getInternalPath(num);
-    QByteArray img = mReader->loadPage(num);
-
-    emit gotPage(img,num,ipt,threadID);
+    if (preferImage) {
+        emit gotPage(QByteArray(),mReader->loadPageImage(num),num,ipt,threadID);
+    } else {
+        emit gotPage(mReader->loadPage(num),QImage(),num,ipt,threadID);
+    }
 }
 
 QByteArray ZMangaLoader::getPageSync(int num)

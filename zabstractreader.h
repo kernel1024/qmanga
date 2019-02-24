@@ -1,6 +1,8 @@
 #ifndef ZABSTRACTREADER_H
 #define ZABSTRACTREADER_H
 
+#include <QImage>
+#include <QByteArray>
 #include "zglobal.h"
 
 class ZAbstractReader : public QObject
@@ -22,6 +24,7 @@ public:
     virtual bool openFile() = 0;
     virtual void closeFile();
     virtual QByteArray loadPage(int num) = 0;
+    virtual QImage loadPageImage(int num) = 0;
     virtual QByteHash loadPages(const QIntList &nums);
     virtual QString getMagic() = 0;
     virtual QString getInternalPath(int idx);

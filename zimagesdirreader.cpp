@@ -73,6 +73,16 @@ QByteArray ZImagesDirReader::loadPage(int num)
     return res;
 }
 
+QImage ZImagesDirReader::loadPageImage(int num)
+{
+    const QByteArray buf = loadPage(num);
+    if (buf.isEmpty()) return QImage();
+
+    QImage img;
+    img.loadFromData(buf);
+    return img;
+}
+
 QString ZImagesDirReader::getMagic()
 {
     return QString("DYN");

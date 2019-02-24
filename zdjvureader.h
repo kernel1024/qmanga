@@ -24,6 +24,7 @@ public:
     bool openFile();
     void closeFile();
     QByteArray loadPage(int num);
+    QImage loadPageImage(int num);
     QString getMagic();
 
 };
