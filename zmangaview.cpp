@@ -122,11 +122,6 @@ void ZMangaView::setZoomMode(ZMangaView::ZoomMode mode)
     redrawPage();
 }
 
-ZMangaView::ZoomMode ZMangaView::getZoomMode()
-{
-    return zoomMode;
-}
-
 int ZMangaView::getPageCount()
 {
     return privPageCount;

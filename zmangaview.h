@@ -77,7 +77,6 @@ public:
     explicit ZMangaView(QWidget *parent = nullptr);
     ~ZMangaView();
     void setZoomMode(ZoomMode mode);
-    ZoomMode getZoomMode();
     int getPageCount();
     void getPage(int num);
     void setMouseMode(MouseMode mode);

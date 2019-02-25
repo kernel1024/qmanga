@@ -55,11 +55,6 @@ void ZMangaLoader::getPage(int num, bool preferImage)
     }
 }
 
-QByteArray ZMangaLoader::getPageSync(int num)
-{
-    return mReader->loadPage(num);
-}
-
 void ZMangaLoader::closeFile()
 {
     if (mReader!=nullptr) {

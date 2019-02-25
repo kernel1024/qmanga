@@ -34,7 +34,6 @@ public:
     int columnCount(const QModelIndex &parent) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
-    void setPixmapSize(QSlider *aPixmapSize);
     int getItemsCount() const;
     SQLMangaEntry getItem(int idx) const;
 

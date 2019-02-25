@@ -14,7 +14,6 @@ public:
     explicit ZMangaLoader(QObject *parent = nullptr);
     ~ZMangaLoader();
     QUuid threadID;
-    QByteArray getPageSync(int num);
 
 signals:
     void gotPage(const QByteArray& page, const QImage& pageImage, const int& num,

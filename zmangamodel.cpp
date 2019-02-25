@@ -52,16 +52,15 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         cp.fillRect(0,0,rp.width(),rp.height(),view->palette().base());
 
         SQLMangaEntry itm = mList.at(idx);
-        QPixmap p = QPixmap::fromImage(itm.cover);
+        QImage p = itm.cover;
         if (p.isNull())
-            p = QPixmap(":/32/edit-delete");
-        p.detach();
+            p = QImage(QString(":/32/edit-delete"));
 
         p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
         if (p.height()<rp.height())
-            cp.drawPixmap(0,(rp.height()-p.height())/2,p);
+            cp.drawImage(0,(rp.height()-p.height())/2,p);
         else
-            cp.drawPixmap((rp.width()-p.width())/2,0,p);
+            cp.drawImage((rp.width()-p.width())/2,0,p);
         if (zg->frameColor!=zg->backgroundColor) {
             cp.setPen(QPen(zg->frameColor));
             cp.drawLine(0,0,rp.width()-1,0);
@@ -164,11 +163,6 @@ QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int r
     }
 
     return QVariant();
-}
-
-void ZMangaModel::setPixmapSize(QSlider* aPixmapSize)
-{
-    pixmapSize = aPixmapSize;
 }
 
 int ZMangaModel::getItemsCount() const

@@ -181,12 +181,6 @@ QStringList getOpenFileNamesD ( QWidget * parent = nullptr,
                                 const QString & filter = QString(),
                                 QString * selectedFilter = nullptr,
                                 QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-QString getSaveFileNameD ( QWidget * parent = nullptr,
-                           const QString & caption = QString(),
-                           const QString & dir = QString(),
-                           const QString & filter = QString(),
-                           QString * selectedFilter = nullptr,
-                           QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
 QString	getExistingDirectoryD ( QWidget * parent = nullptr,
                                 const QString & caption = QString(),
                                 const QString & dir = QString(),
@@ -206,7 +200,6 @@ QString ocrGetActiveLanguage();
 QString ocrGetDatapath();
 tesseract::TessBaseAPI *initializeOCR();
 PIX* Image2PIX(const QImage& qImage);
-QImage PIX2QImage(PIX *pixImage);
 #endif
 
 #endif // GLOBAL_H

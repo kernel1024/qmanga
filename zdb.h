@@ -71,7 +71,8 @@ public slots:
     void sqlDelFiles(const QIntList& dbids, const bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
-    void sqlGetFiles(const QString& album, const QString& search, const Z::Ordering sortOrder, const bool reverseOrder);
+    void sqlGetFiles(const QString& album, const QString& search,
+                     const Z::Ordering sortOrder, const bool reverseOrder);
     void sqlChangeFilePreview(const QString& fileName, const int pageNum);
     void sqlRescanIndexedDirs();
     void sqlUpdateFileStats(const QString& fileName);

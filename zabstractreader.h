@@ -18,7 +18,6 @@ public:
     explicit ZAbstractReader(QObject *parent, const QString &filename);
     ~ZAbstractReader();
     bool openFile(const QString &filename);
-    bool isOpened();
     int getPageCount();
 
     virtual bool openFile() = 0;

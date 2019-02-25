@@ -26,11 +26,6 @@ bool ZAbstractReader::openFile(const QString &filename)
     return openFile();
 }
 
-bool ZAbstractReader::isOpened()
-{
-    return opened;
-}
-
 int ZAbstractReader::getPageCount()
 {
     if (!opened) return -1;

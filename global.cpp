@@ -232,11 +232,6 @@ QStringList getOpenFileNamesD ( QWidget * parent, const QString & caption, const
     return QFileDialog::getOpenFileNames(parent,caption,dir,filter,selectedFilter,options);
 }
 
-QString getSaveFileNameD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
-{
-    return QFileDialog::getSaveFileName(parent,caption,dir,filter,selectedFilter,options);
-}
-
 QString	getExistingDirectoryD ( QWidget * parent, const QString & caption, const QString & dir, QFileDialog::Options options )
 {
     return QFileDialog::getExistingDirectory(parent,caption,dir,options);
@@ -451,50 +446,6 @@ PIX* Image2PIX(const QImage &qImage) {
         memcpy(lines,img.scanLine(y),static_cast<uint>(img.bytesPerLine()));
     }
     return pixEndianByteSwapNew(pixs);
-}
-
-QImage PIX2QImage(PIX *pixImage) {
-    int width = pixGetWidth(pixImage);
-    int height = pixGetHeight(pixImage);
-    int depth = pixGetDepth(pixImage);
-    int bytesPerLine = pixGetWpl(pixImage) * 4;
-    l_uint32 * s_data = pixGetData(pixEndianByteSwapNew(pixImage));
-
-    QImage::Format format;
-    if (depth == 1)
-        format = QImage::Format_Mono;
-    else if (depth == 8)
-        format = QImage::Format_Indexed8;
-    else
-        format = QImage::Format_RGB32;
-
-    QImage result(reinterpret_cast<uchar *>(s_data), width, height, bytesPerLine, format);
-
-    // Handle pallete
-    QVector<QRgb> _bwCT;
-    _bwCT.append(qRgb(255,255,255));
-    _bwCT.append(qRgb(0,0,0));
-
-    QVector<QRgb> _grayscaleCT(256);
-    for (int i = 0; i < 256; i++)  {
-        _grayscaleCT.append(qRgb(i, i, i));
-    }
-    if (depth == 1) {
-        result.setColorTable(_bwCT);
-    }  else if (depth == 8)  {
-        result.setColorTable(_grayscaleCT);
-
-    } else {
-        result.setColorTable(_grayscaleCT);
-    }
-
-    if (result.isNull()) {
-        static QImage none(0,0,QImage::Format_Invalid);
-        qDebug() << "***Invalid format!!!";
-        return none;
-    }
-
-    return result.rgbSwapped();
 }
 
 QString ocrGetActiveLanguage()
