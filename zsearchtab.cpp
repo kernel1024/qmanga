@@ -35,8 +35,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     progressDlg = nullptr;
 
-    descTemplate = ui->srcDesc->toHtml();
-    ui->srcDesc->clear();
+    descTemplate = ui->srcDesc->text();
+    setDescText();
     ui->srcLoading->hide();
 
     auto completer = new QCompleter(this);
@@ -522,13 +522,19 @@ QModelIndex ZSearchTab::mapToSource(const QModelIndex& index)
     return QModelIndex();
 }
 
+void ZSearchTab::setDescText(const QString &text)
+{
+    ui->srcDesc->setVisible(!text.isEmpty());
+    ui->srcDesc->setText(text);
+}
+
 void ZSearchTab::albumClicked(QListWidgetItem *item)
 {
     if (item==nullptr) return;
 
     emit statusBarMsg(tr("Searching..."));
 
-    ui->srcDesc->clear();
+    setDescText();
 
     if (model)
         model->deleteAllItems();
@@ -539,7 +545,7 @@ void ZSearchTab::mangaSearch()
 {
     emit statusBarMsg(tr("Searching..."));
 
-    ui->srcDesc->clear();
+    setDescText();
 
     if (model)
         model->deleteAllItems();
@@ -553,7 +559,7 @@ void ZSearchTab::mangaSearch()
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)
 {
-    ui->srcDesc->clear();
+    setDescText();
     if (!current.isValid()) return;
     if (!model) return;
 
@@ -562,7 +568,7 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
 
     if (row>=maxl) return;
 
-    ui->srcDesc->clear();
+    setDescText();
 
     int idx = row;
     const SQLMangaEntry m = model->getItem(idx);
@@ -570,10 +576,10 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     QFileInfo fi(m.filename);
 
     QString msg = QString(descTemplate).
-            arg(m.name).arg(m.pagesCount).arg(formatSize(m.fileSize),m.album,m.fileMagic,
-            m.fileDT.toString("yyyy-MM-dd"),m.addingDT.toString("yyyy-MM-dd"),fi.path());
+            arg(elideString(m.name,80)).arg(m.pagesCount).arg(formatSize(m.fileSize),m.album,m.fileMagic,
+            m.fileDT.toString("yyyy-MM-dd"),m.addingDT.toString("yyyy-MM-dd"),elideString(fi.path(),80));
 
-    ui->srcDesc->setHtml(msg);
+    setDescText(msg);
 }
 
 void ZSearchTab::mangaOpen(const QModelIndex &index)
@@ -650,7 +656,7 @@ void ZSearchTab::mangaDel()
             li << i;
     }
 
-    ui->srcDesc->clear();
+    setDescText();
 
     for (const auto &i : qAsConst(li)) {
         if (i.row()>=0 && i.row()<model->getItemsCount())

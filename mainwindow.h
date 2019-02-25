@@ -104,18 +104,23 @@ public slots:
 
 class ZPopupFrame : public QFrame {
     Q_OBJECT
+private:
+    MainWindow* mwnd;
+
 public:
     explicit ZPopupFrame(QWidget* parent = nullptr);
     void setMainWindow(MainWindow* wnd);
+
 protected:
-    MainWindow* mwnd;
     void enterEvent(QEvent* event);
     void leaveEvent(QEvent* event);
     void hideChildren();
     void showChildren();
+
 signals:
     void showWidget();
     void hideWidget();
+
 };
 
 #endif // MAINWINDOW_H

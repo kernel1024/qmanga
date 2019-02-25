@@ -11,7 +11,7 @@
 class ZMangaModel;
 class ZDB;
 
-typedef QMap<QString, QString> ZStrMap;
+using ZStrMap = QMap<QString, QString>;
 
 class ZGlobal : public QObject
 {

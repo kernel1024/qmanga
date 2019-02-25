@@ -26,38 +26,6 @@
 #include <windows.h>
 #endif
 
-#ifdef WITH_LIBMAGIC
-#include <magic.h>
-
-#else
-// some magic here!
-
-struct MagicSample {
-    qint64 offset;
-    qint64 size;
-    const char* sample;
-    const char* mime;
-};
-
-static const MagicSample magicList[] = {
-    { 0, 4, "\x50\x4b\x03\x04", "application/zip" },
-    { 0, 4, "\x52\x61\x72\x21", "application/rar" },
-    { 0, 4, "\x25\x50\x44\x46", "application/pdf" },
-    { 0, 4, "\xFF\xD8\xFF\xDB", "image/jpeg" },
-    { 6, 4, "\x4A\x46\x49\x46", "image/jpeg" },
-    { 6, 4, "\x45\x78\x69\x66", "image/jpeg" },
-    { 0, 4, "\x89\x50\x4E\x47", "image/png" },
-    { 0, 6, "\x47\x49\x46\x38\x37\x61", "image/gif" },
-    { 0, 6, "\x47\x49\x46\x38\x39\x61", "image/gif" },
-    { 0, 4, "\x49\x49\x2A\x00", "image/tiff" },
-    { 0, 4, "\x4D\x4D\x00\x2A", "image/tiff" },
-    { 0, 2, "\x42\x4D", "image/bmp" },
-    { 12, 3,"\x44\x4A\x56", "image/vnd.djvu"},
-    { 0, 0, nullptr, nullptr }
-};
-
-#endif
-
 ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
                                bool onlyArchives, bool createReader)
 {
@@ -172,6 +140,14 @@ QString formatSize(qint64 size)
     return QString("%1 Gb").arg(size/(1024*1024*1024));
 }
 
+QString elideString(const QString& text, int maxlen)
+{
+    if (text.length()<maxlen)
+        return text;
+
+    return QString("%1...").arg(text.left(maxlen));
+}
+
 QString escapeParam(const QString &param)
 {
     QString res = param;
@@ -267,51 +243,38 @@ QString	getExistingDirectoryD ( QWidget * parent, const QString & caption, const
 
 QString detectMIME(const QString& filename)
 {
-#ifdef WITH_LIBMAGIC
-    magic_t myt = magic_open(MAGIC_ERROR|MAGIC_MIME_TYPE);
-    magic_load(myt,nullptr);
-    QByteArray bma = filename.toUtf8();
-    const char* bm = bma.data();
-    const char* mg = magic_file(myt,bm);
-    if (mg==nullptr) {
-        qDebug() << "libmagic error: " << magic_errno(myt) << QString::fromUtf8(magic_error(myt));
-        return QString("text/plain");
-    }
-    QString mag(mg);
-    magic_close(myt);
-    return mag;
-#else
     QFile f(filename);
     if (!f.open(QIODevice::ReadOnly))
         return QString("text/plain");
     QByteArray ba = f.read(1024);
     f.close();
     return detectMIME(ba);
-#endif
 }
 
 QString detectMIME(const QByteArray &buf)
 {
-#ifdef WITH_LIBMAGIC
-    magic_t myt = magic_open(MAGIC_ERROR|MAGIC_MIME_TYPE);
-    magic_load(myt,nullptr);
-    const char* mg = magic_buffer(myt,buf.data(),static_cast<size_t>(buf.length()));
-    if (mg==nullptr) {
-        qDebug() << "libmagic error: " << magic_errno(myt) << QString::fromUtf8(magic_error(myt));
-        return QString("text/plain");
-    }
-    QString mag(mg);
-    magic_close(myt);
-    return mag;
-#else
-    for (int idx=0;magicList[idx].sample!=nullptr;idx++) {
-        QByteArray test = buf.mid(magicList[idx].offset,magicList[idx].size);
-        QByteArray sample = QByteArray::fromRawData(magicList[idx].sample,magicList[idx].size);
-        if (test==sample)
-            return QString::fromLatin1(magicList[idx].mime);
+    static const QHash<QPair<int, QByteArray>, QString> magicList = {
+        { { 0, "\x50\x4b\x03\x04" }, "application/zip" },
+        { { 0, "\x52\x61\x72\x21" }, "application/rar" },
+        { { 0, "\x25\x50\x44\x46" }, "application/pdf" },
+        { { 0, "\xFF\xD8\xFF\xDB" }, "image/jpeg" },
+        { { 6, "\x4A\x46\x49\x46" }, "image/jpeg" },
+        { { 6, "\x45\x78\x69\x66" }, "image/jpeg" },
+        { { 0, "\x89\x50\x4E\x47" }, "image/png" },
+        { { 0, "\x47\x49\x46\x38\x37\x61" }, "image/gif" },
+        { { 0, "\x47\x49\x46\x38\x39\x61" }, "image/gif" },
+        { { 0, "\x49\x49\x2A\x00" }, "image/tiff" },
+        { { 0, "\x4D\x4D\x00\x2A" }, "image/tiff" },
+        { { 0, "\x42\x4D" }, "image/bmp" },
+        { { 12, "\x44\x4A\x56" }, "image/vnd.djvu"}
+    };
+
+    for (auto it = magicList.keyValueBegin(), end = magicList.keyValueEnd(); it != end; ++it) {
+        const QByteArray test = buf.mid((*it).first.first,(*it).first.second.size());
+        if (test==(*it).first.second)
+            return (*it).second;
     }
     return QString("text/plain");
-#endif
 }
 
 QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,

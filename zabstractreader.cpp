@@ -43,19 +43,6 @@ void ZAbstractReader::closeFile()
 {
 }
 
-QByteHash ZAbstractReader::loadPages(const QIntList &nums)
-{
-    QByteHash hash;
-    hash.clear();
-    if (!opened)
-        return hash;
-
-    for (const auto &i : nums)
-        hash[i] = loadPage(i);
-
-    return hash;
-}
-
 QString ZAbstractReader::getInternalPath(int)
 {
     return QString();

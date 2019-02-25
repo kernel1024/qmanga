@@ -12,6 +12,7 @@
 class ZPdfReader : public ZAbstractReader
 {
     Q_OBJECT
+private:
 
 #ifdef WITH_POPPLER
     PDFDoc* doc;
@@ -22,7 +23,6 @@ class ZPdfReader : public ZAbstractReader
     QMutex indexerMutex;
 
 #ifdef WITH_POPPLER
-private:
     void loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage);
 #endif
 

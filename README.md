@@ -5,12 +5,11 @@ Multithreaded manga viewer with fast bookshelf support. ZIP, RAR, PDF, DJVU pack
 
 ### Requirements:
 * Qt 5.10+ (gui, widgets, dbus (for linux), concurrent, sql) with C++14 support
-* libmagic (for linux build)
-* zziplib
+* libzip
 * MySQL client library and SQLite 3.x+ with Qt drivers for QtSQL
 
 ### Additional requirements (optional for linux build):
-* Poppler - PDF files support
+* Poppler 0.72+ - PDF files support
 * Tesseract (with japanese recognition data) - OCR functionality
 * Djvulibre - DJVU files support
 

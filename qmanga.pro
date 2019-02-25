@@ -87,17 +87,10 @@ RESOURCES += \
 CONFIG += warn_on link_pkgconfig c++14
 
 !win32 {
-    exists( /usr/include/magic.h ) {
-        LIBS += -lmagic
-        DEFINES += WITH_LIBMAGIC=1
+    packagesExist(libzip) {
+        PKGCONFIG += libzip
     } else {
-        error("Dependency error: libmagic not found.")
-    }
-
-    packagesExist(zziplib) {
-        PKGCONFIG += zziplib
-    } else {
-        error("Dependency error: zziplib not found.")
+        error("Dependency error: libzip not found.")
     }
 
     packagesExist(poppler) {
@@ -144,7 +137,7 @@ CONFIG += warn_on link_pkgconfig c++14
 }
 
 win32 {
-    PKGCONFIG += zziplib
+    PKGCONFIG += libzip
 
     DEFINES += WITH_POPPLER=1
     PKGCONFIG += poppler

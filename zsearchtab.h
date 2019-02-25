@@ -52,6 +52,7 @@ private:
     QAbstractItemView* activeView() const;
     QModelIndexList getSelectedIndexes() const;
     QModelIndex mapToSource(const QModelIndex &index);
+    void setDescText(const QString& text = QString());
 
 public slots:
     void albumClicked(QListWidgetItem * item);

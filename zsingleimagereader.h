@@ -8,7 +8,7 @@
 class ZSingleImageReader : public ZAbstractReader
 {
     Q_OBJECT
-protected:
+private:
     QImage page;
 public:
     explicit ZSingleImageReader(QObject *parent, const QString &filename);

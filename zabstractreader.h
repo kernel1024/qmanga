@@ -25,15 +25,12 @@ public:
     virtual void closeFile();
     virtual QByteArray loadPage(int num) = 0;
     virtual QImage loadPageImage(int num) = 0;
-    virtual QByteHash loadPages(const QIntList &nums);
     virtual QString getMagic() = 0;
     virtual QString getInternalPath(int idx);
     
 signals:
     void auxMessage(const QString& msg);
-    
-public slots:
-    
+        
 };
 
 #endif // ZABSTRACTREADER_H

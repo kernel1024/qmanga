@@ -26,10 +26,10 @@
 #define maxPreviewSize 500
 #define previewProps 364/257
 
-typedef QHash<int,QImage> QImageHash;
-typedef QHash<int,QByteArray> QByteHash;
-typedef QList<int> QIntList;
-typedef QHash<QString,QString> QStrHash;
+using QImageHash = QHash<int,QImage>;
+using QByteHash = QHash<int,QByteArray>;
+using QIntList = QList<int>;
+using QStrHash = QHash<QString,QString>;
 
 class ZAbstractReader;
 class ZMangaLoader;
@@ -155,7 +155,7 @@ public:
     bool isValid() const;
 };
 
-typedef QList<SQLMangaEntry> SQLMangaList;
+using SQLMangaList = QList<SQLMangaEntry>;
 
 
 extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
@@ -163,6 +163,7 @@ extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, 
 
 QStringList supportedImg();
 QString formatSize(qint64 size);
+QString elideString(const QString& text, int maxlen);
 QString escapeParam(const QString &param);
 int compareWithNumerics(const QString &ref1, const QString &ref2);
 QFileInfoList filterSupportedImgFiles(const QFileInfoList &entryList);
@@ -190,7 +191,7 @@ QString	getExistingDirectoryD ( QWidget * parent = nullptr,
                                 const QString & caption = QString(),
                                 const QString & dir = QString(),
                                 QFileDialog::Options options = QFileDialog::ShowDirsOnly |
-        QFileDialog::DontUseNativeDialog);
+                                                               QFileDialog::DontUseNativeDialog);
 
 QString detectMIME(const QString &filename);
 QString detectMIME(const QByteArray &buf);

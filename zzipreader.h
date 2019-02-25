@@ -1,14 +1,14 @@
 #ifndef ZZIPREADER_H
 #define ZZIPREADER_H
 
-#include <zzip/zzip.h>
-#include "zglobal.h"
+#include <zip.h>
 #include "zabstractreader.h"
 
 class ZZipReader : public ZAbstractReader
 {
-protected:
-    ZZIP_DIR* mainZFile;
+private:
+    zip_t* mainZFile;
+    QHash <int,int> m_sizes;
 
 public:
     explicit ZZipReader(QObject *parent, const QString &filename);
