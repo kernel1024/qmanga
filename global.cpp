@@ -121,7 +121,8 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
 
 #ifdef Q_OS_WIN
         HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
-        wchar_t* wmsg = toUtf16(fmsg);
+        wchar_t* wmsg = new wchar_t[fmsg.length()];
+        fmsg.toWCharArray(wmsg);
         DWORD wr = 0;
         WriteConsoleW(con,wmsg,fmsg.length(),&wr,NULL);
         delete[] wmsg;
@@ -254,19 +255,19 @@ QString detectMIME(const QString& filename)
 QString detectMIME(const QByteArray &buf)
 {
     static const QHash<QPair<int, QByteArray>, QString> magicList = {
-        { { 0, "\x50\x4b\x03\x04" }, "application/zip" },
-        { { 0, "\x52\x61\x72\x21" }, "application/rar" },
-        { { 0, "\x25\x50\x44\x46" }, "application/pdf" },
-        { { 0, "\xFF\xD8\xFF\xDB" }, "image/jpeg" },
-        { { 6, "\x4A\x46\x49\x46" }, "image/jpeg" },
-        { { 6, "\x45\x78\x69\x66" }, "image/jpeg" },
-        { { 0, "\x89\x50\x4E\x47" }, "image/png" },
-        { { 0, "\x47\x49\x46\x38\x37\x61" }, "image/gif" },
-        { { 0, "\x47\x49\x46\x38\x39\x61" }, "image/gif" },
-        { { 0, "\x49\x49\x2A\x00" }, "image/tiff" },
-        { { 0, "\x4D\x4D\x00\x2A" }, "image/tiff" },
-        { { 0, "\x42\x4D" }, "image/bmp" },
-        { { 12, "\x44\x4A\x56" }, "image/vnd.djvu"}
+        { { 0, QByteArrayLiteral("\x50\x4b\x03\x04") }, "application/zip" },
+        { { 0, QByteArrayLiteral("\x52\x61\x72\x21") }, "application/rar" },
+        { { 0, QByteArrayLiteral("\x25\x50\x44\x46") }, "application/pdf" },
+        { { 0, QByteArrayLiteral("\xFF\xD8\xFF\xDB") }, "image/jpeg" },
+        { { 6, QByteArrayLiteral("\x4A\x46\x49\x46") }, "image/jpeg" },
+        { { 6, QByteArrayLiteral("\x45\x78\x69\x66") }, "image/jpeg" },
+        { { 0, QByteArrayLiteral("\x89\x50\x4E\x47") }, "image/png" },
+        { { 0, QByteArrayLiteral("\x47\x49\x46\x38\x37\x61") }, "image/gif" },
+        { { 0, QByteArrayLiteral("\x47\x49\x46\x38\x39\x61") }, "image/gif" },
+        { { 0, QByteArrayLiteral("\x49\x49\x2A\x00") }, "image/tiff" },
+        { { 0, QByteArrayLiteral("\x4D\x4D\x00\x2A") }, "image/tiff" },
+        { { 0, QByteArrayLiteral("\x42\x4D") }, "image/bmp" },
+        { { 12, QByteArrayLiteral("\x44\x4A\x56") }, "image/vnd.djvu"}
     };
 
     for (auto it = magicList.keyValueBegin(), end = magicList.keyValueEnd(); it != end; ++it) {
