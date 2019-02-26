@@ -64,6 +64,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     connect(this,&ZMangaView::changeMangaCover,zg->db,&ZDB::sqlChangeFilePreview,Qt::QueuedConnection);
     connect(this,&ZMangaView::updateFileStats,zg->db,&ZDB::sqlUpdateFileStats,Qt::QueuedConnection);
 
+    connect(this,&ZMangaView::requestRedrawPageEx,this,&ZMangaView::redrawPageEx,Qt::QueuedConnection);
+
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
     for (int i=0;i<cnt;i++) {
@@ -113,7 +115,12 @@ void ZMangaView::cacheGetPage(int num)
 
     cacheLoaders[idx].addJob();
     bool preferImages = zg->cachePixmaps;
-    QMetaObject::invokeMethod(cacheLoaders.at(idx).loader,"getPage",Qt::QueuedConnection,Q_ARG(int,num),Q_ARG(bool,preferImages));
+
+    auto loader = cacheLoaders.at(idx).loader;
+    QMetaObject::invokeMethod(loader,[loader,num,preferImages]{
+        if (loader)
+            loader->getPage(num,preferImages);
+    },Qt::QueuedConnection);
 }
 
 void ZMangaView::setZoomMode(ZMangaView::ZoomMode mode)
@@ -206,7 +213,12 @@ void ZMangaView::displayCurrentPage()
     }
 }
 
-void ZMangaView::openFile(const QString &filename, int page)
+void ZMangaView::openFile(const QString &filename)
+{
+    openFileEx(filename,0);
+}
+
+void ZMangaView::openFileEx(const QString &filename, int page)
 {
     iCacheImages.clear();
     iCacheData.clear();
@@ -660,9 +672,7 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                                 QImage res = resizeImage(image,targetSize,true,filter,page,&currentPage);
 
                                 if (!res.isNull())
-                                    QMetaObject::invokeMethod(this,"redrawPageEx",Qt::QueuedConnection,
-                                                              Q_ARG(QImage, res),
-                                                              Q_ARG(int, page));
+                                    emit requestRedrawPageEx(res, page);
                             });
                         }
                     }
@@ -865,12 +875,6 @@ void ZMangaView::viewRotateCW()
     if (rotation>3) rotation = 0;
     displayCurrentPage();
     emit rotationUpdated(rotation*90);
-}
-
-void ZMangaView::asyncMsg(const QString &msg)
-{
-    if (msg.isEmpty()) return;
-    QMessageBox::warning(this,tr("QManga"),msg);
 }
 
 void ZMangaView::loaderMsg(const QString &msg)

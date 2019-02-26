@@ -380,7 +380,9 @@ void SettingsDialog::dynAdd()
                         "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
 
     connect(zg->db,&ZDB::gotTablesDescription,dlg,&QTwoEditDlg::setAuxText,Qt::QueuedConnection);
-    QMetaObject::invokeMethod(zg->db,"sqlGetTablesDescription",Qt::QueuedConnection);
+    connect(this,&SettingsDialog::getTablesDescription,
+            zg->db,&ZDB::sqlGetTablesDescription,Qt::QueuedConnection);
+    emit getTablesDescription();
 
     if (dlg->exec()) {
         QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").

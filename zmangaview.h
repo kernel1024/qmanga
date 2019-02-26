@@ -92,6 +92,7 @@ signals:
     void auxMessage(const QString& msg);
     void cropUpdated(const QRect& crop);
     void backgroundUpdated(const QColor& color);
+    void requestRedrawPageEx(const QImage &scaled, int page);
 
     // cache signals
     void cacheOpenFile(const QString &filename, int preferred);
@@ -102,11 +103,12 @@ signals:
     void updateFileStats(const QString& fileName);
 
 public slots:
-    void openFile(const QString &filename, int page = 0);
+    void openFile(const QString &filename);
+    void openFileEx(const QString &filename, int page);
     void closeFile();
     void setPage(int page);
     void redrawPage();
-    void redrawPageEx(const QImage &scaled = QImage(), int page = -1);
+    void redrawPageEx(const QImage &scaled, int page);
     void ownerResized(const QSize& size);
     void minimizeWindowCtx();
     void closeFileCtx();
@@ -128,7 +130,6 @@ public slots:
     void viewRotateCCW();
     void viewRotateCW();
 
-    void asyncMsg(const QString& msg);
     void loaderMsg(const QString& msg);
 
     // cache slots

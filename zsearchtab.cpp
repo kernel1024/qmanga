@@ -81,6 +81,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(zg->db,&ZDB::needTableCreation,this,&ZSearchTab::dbNeedTableCreation,Qt::QueuedConnection);
     connect(zg->db,&ZDB::showProgressDialog,this,&ZSearchTab::dbShowProgressDialog,Qt::QueuedConnection);
     connect(zg->db,&ZDB::showProgressState,this,&ZSearchTab::dbShowProgressState,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbSetPreferredRendering,zg->db,&ZDB::sqlSetPreferredRendering,
+            Qt::QueuedConnection);
 
     connect(this,&ZSearchTab::dbAddFiles,zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
     connect(this,&ZSearchTab::dbDelFiles,zg->db,&ZDB::sqlDelFiles,Qt::QueuedConnection);
@@ -232,8 +234,7 @@ void ZSearchTab::ctxChangeRenderer()
     bool ok;
     int mode = am->data().toInt(&ok);
     if (ok)
-        QMetaObject::invokeMethod(zg->db,"sqlSetPreferredRendering",Qt::QueuedConnection,
-                                  Q_ARG(QString,m.filename),Q_ARG(int,mode));
+        emit dbSetPreferredRendering(m.filename,mode);
     else
         QMessageBox::warning(this,tr("QManga"),
                              tr("Unable to update preferred rendering."));

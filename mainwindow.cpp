@@ -466,7 +466,7 @@ void MainWindow::openBookmark()
     }
 
     ui->tabWidget->setCurrentIndex(0);
-    ui->mangaView->openFile(f,page);
+    ui->mangaView->openFileEx(f,page);
 }
 
 void MainWindow::openSearchTab()

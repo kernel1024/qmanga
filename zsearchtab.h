@@ -101,6 +101,8 @@ signals:
                     const bool reverseOrder);
     void dbDelFiles(const QIntList& dbids, const bool fullDelete);
     void dbDeleteAlbum(const QString& album);
+    bool dbSetPreferredRendering(const QString& filename, int mode);
+
 };
 
 #endif // ZSEARCHTAB_H

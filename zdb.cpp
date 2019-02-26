@@ -899,7 +899,6 @@ void ZDB::sqlGetTablesDescription()
         s2 = types.at(i);
         res << "| "+s1.leftJustified(nl,' ')+" | "+s2.leftJustified(tl,' ')+" |";
     }
-    qDebug() << res.join('\n');
     emit gotTablesDescription(res.join('\n'));
 }
 

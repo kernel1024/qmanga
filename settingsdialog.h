@@ -73,6 +73,9 @@ private:
     void updateOCRLanguages();
     void updateTranslatorLanguages();
 
+signals:
+    void getTablesDescription();
+
 public slots:
     void delListWidgetItem();
     void bkColorDlg();
