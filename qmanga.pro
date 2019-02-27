@@ -39,7 +39,6 @@ SOURCES += main.cpp\
     zsingleimagereader.cpp \
     zexportdialog.cpp \
     zimagesdirreader.cpp \
-    zpdfimageoutdev.cpp \
     zfilecopier.cpp \
     scalefilter.cpp \
     multiinputdialog.cpp \
@@ -65,7 +64,6 @@ HEADERS  += mainwindow.h \
     zsingleimagereader.h \
     zexportdialog.h \
     zimagesdirreader.h \
-    zpdfimageoutdev.h \
     zfilecopier.h \
     scalefilter.h \
     multiinputdialog.h \
@@ -85,6 +83,8 @@ RESOURCES += \
     qmanga.qrc
 
 CONFIG += warn_on link_pkgconfig c++14
+
+LIBS += -lz
 
 !win32 {
     packagesExist(libzip) {

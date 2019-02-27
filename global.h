@@ -59,6 +59,12 @@ enum Ordering {
     Magic = 6
 };
 
+enum PDFImageFormat {
+    imgUndefined = -1,
+    imgFlate = 1,
+    imgDCT = 2
+};
+
 static const int maxOrdering = 7;
 
 static const QHash<Ordering,QString> headerColumns = {

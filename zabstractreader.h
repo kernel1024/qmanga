@@ -13,6 +13,7 @@ protected:
     int pageCount;
     QString fileName;
     QList<ZFileEntry> sortList;
+    void postMessage(const QString& msg);
 
 public:
     explicit ZAbstractReader(QObject *parent, const QString &filename);
@@ -26,10 +27,7 @@ public:
     virtual QImage loadPageImage(int num) = 0;
     virtual QString getMagic() = 0;
     virtual QString getInternalPath(int idx);
-    
-signals:
-    void auxMessage(const QString& msg);
-        
+
 };
 
 #endif // ZABSTRACTREADER_H

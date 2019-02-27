@@ -6,8 +6,18 @@
 #include <poppler/SplashOutputDev.h>
 #include <poppler/splash/SplashBitmap.h>
 #include <poppler/GlobalParams.h>
+#include <poppler/Object.h>
+#include <poppler/Dict.h>
+#include <poppler/Catalog.h>
+#include <poppler/Page.h>
+#include <poppler/PDFDoc.h>
+#include <poppler/Error.h>
 
 #endif
+
+extern "C" {
+#include <zlib.h>
+}
 
 #include <algorithm>
 #include <QBuffer>
@@ -16,22 +26,53 @@
 #include "zpdfreader.h"
 #include "global.h"
 #include "zdb.h"
-#include "zpdfimageoutdev.h"
 
 ZPdfReader::ZPdfReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
 #ifdef WITH_POPPLER
     doc = nullptr;
-    outDev = nullptr;
 #endif
     useImageCatalog = false;
     numPages = 0;
+    images.clear();
 }
 
 ZPdfReader::~ZPdfReader()
 {
     closeFile();
+}
+
+int ZPdfReader::zlibInflate(const char* src, int srcSize,
+                                     uchar *dst, int dstSize)
+{
+    z_stream strm;
+    int ret;
+
+    strm.zalloc = nullptr;
+    strm.zfree = nullptr;
+    strm.opaque = nullptr;
+    strm.avail_in = static_cast<uint>(srcSize);
+    strm.next_in = reinterpret_cast<uchar*>(const_cast<char*>(src));
+
+    ret = inflateInit(&strm);
+    if (ret != Z_OK)
+        return -1;
+
+    strm.avail_out = static_cast<uint>(dstSize);
+    strm.next_out = dst;
+    ret = inflate(&strm,Z_NO_FLUSH);
+    inflateEnd(&strm);
+
+    if ((ret != Z_OK) && (ret != Z_STREAM_END)) {
+        return -2;
+    }
+
+    if ((ret == Z_OK) && (strm.avail_out == 0)) {
+        return -3;
+    }
+
+    return (dstSize - static_cast<int>(strm.avail_out));
 }
 
 bool ZPdfReader::openFile()
@@ -40,6 +81,7 @@ bool ZPdfReader::openFile()
 
     useImageCatalog = false;
     numPages = 0;
+    images.clear();
 
 #ifdef WITH_POPPLER
     if (opened || globalParams==nullptr)
@@ -58,31 +100,59 @@ bool ZPdfReader::openFile()
     if (doc==nullptr || !doc->isOk())
         return false;
 
-    outDev = new ZPDFImageOutputDev();
-
     Z::PDFRendering mode = zg->db->getPreferredRendering(fileName);
     if (mode==Z::Autodetect)
         mode = zg->pdfRendering;
 
     if (mode==Z::Autodetect || mode==Z::ImageCatalog) {
-        outDev->imageCounting = true;
 
-        if (outDev->isOk())
-            doc->displayPages(outDev, 1, doc->getNumPages(), 72, 72, 0,
-                              true, false, false);
+        for (int pageNum=1;pageNum<=doc->getNumPages();pageNum++) {
+            Dict *dict = doc->getPage(pageNum)->getResourceDict();
+            if (dict->lookup("XObject").isDict()) {
+                Dict *xolist = dict->lookup("XObject").getDict();
+
+                for (int xo_idx=0;xo_idx<xolist->getLength();xo_idx++) {
+                    Object stype;
+                    Object xitem = xolist->getVal(xo_idx);
+                    if (!xitem.isStream()) continue;
+                    if (!xitem.streamGetDict()->lookup("Subtype").isName("Image")) continue;
+
+                    BaseStream* data = xitem.getStream()->getBaseStream();
+                    int pos = static_cast<int>(data->getStart());
+                    int size = static_cast<int>(data->getLength());
+
+                    StreamKind kind = xitem.getStream()->getKind();
+                    if (kind==StreamKind::strFlate && // zlib stream
+                            xitem.streamGetDict()->lookup("Width").isInt() &&
+                            xitem.streamGetDict()->lookup("Height").isInt() &&
+                            xitem.streamGetDict()->lookup("BitsPerComponent").isInt()) {
+                        int dwidth = xitem.streamGetDict()->lookup("Width").getInt();
+                        int dheight = xitem.streamGetDict()->lookup("Height").getInt();
+                        int dBPP = xitem.streamGetDict()->lookup("BitsPerComponent").getInt();
+
+                        if (dBPP == 8) {
+                            images << ZPDFImg(pos,size,dwidth,dheight,Z::imgFlate);
+                        }
+
+                    } else if (kind==StreamKind::strDCT) { // JPEG stream
+                        images << ZPDFImg(pos,size,0,0,Z::imgDCT);
+
+                    }
+                }
+            }
+        }
     }
-    if ((mode==Z::Autodetect && outDev->getPageCount()==doc->getNumPages()) ||
-            (mode==Z::ImageCatalog && outDev->getPageCount()>0)) {
+
+    if ((mode==Z::Autodetect && images.count()==doc->getNumPages()) ||
+            (mode==Z::ImageCatalog && images.count()>0)) {
         useImageCatalog = true;
-        numPages = outDev->getPageCount();
-        emit auxMessage(tr("PDF images catalog"));
+        numPages = images.count();
+        postMessage(tr("PDF images catalog"));
     } else {
         useImageCatalog = false;
         numPages = doc->getNumPages();
-        emit auxMessage(tr("PDF renderer"));
+        postMessage(tr("PDF renderer"));
     }
-
-    outDev->imageCounting = false;
 
     for (int i=0;i<numPages;i++) {
         sortList << ZFileEntry(QString("%1").arg(i,6,10,QChar('0')),i);
@@ -105,13 +175,11 @@ void ZPdfReader::closeFile()
 
     delete doc;
     doc = nullptr;
-
-    delete outDev;
-    outDev = nullptr;
 #endif
 
     opened = false;
     numPages = 0;
+    images.clear();
     useImageCatalog = false;
     sortList.clear();
 }
@@ -135,17 +203,42 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
 
     if (useImageCatalog) {
         BaseStream *str = doc->getBaseStream();
-        Goffset sz = outDev->getPage(idx).size;
+        const ZPDFImg p = images.at(idx);
+        Goffset sz = p.size;
         buf->resize(static_cast<int>(sz));
-        str->setPos(outDev->getPage(idx).pos);
+        str->setPos(p.pos);
 #ifdef JPDF_PRE073_API
         str->doGetChars(static_cast<int>(sz),reinterpret_cast<Guchar *>(buf->data()));
 #else
         str->doGetChars(static_cast<int>(sz),reinterpret_cast<uchar*>(buf->data()));
 #endif
-        if (preferImage)
-            img->loadFromData(*buf);
+        if (p.format == Z::imgDCT) {
+            if (preferImage) {
+                img->loadFromData(*buf);
+            } // else we already have jpeg in buf
 
+        } else if (p.format == Z::imgFlate) {
+            *img = QImage(p.width,p.height,QImage::Format_RGB888);
+            int sz = zlibInflate((*buf).constData(),(*buf).size(),
+                                  (*img).bits(),static_cast<int>((*img).sizeInBytes()));
+            (*buf).clear();
+
+            if (sz < 0) {
+                qDebug() << "Failed to uncompress page from pdf stream " << num << ". Error: " << sz;
+                return;
+            }
+
+            if (!preferImage) {
+                QBuffer b(buf);
+                b.open(QIODevice::WriteOnly);
+                (*img).save(&b,"BMP");
+                (*img) = QImage();
+            } // else we already have img
+        } else {
+            (*buf).clear();
+            qDebug() << "Unknown image format at page from pdf stream " << num;
+            return;
+        }
     } else {
         qreal xdpi = zg->dpiX;
         qreal ydpi = zg->dpiY;
@@ -215,6 +308,44 @@ QString ZPdfReader::getMagic()
 {
     return QString("PDF");
 }
+
+ZPDFImg::ZPDFImg()
+{
+    pos = 0;
+    size = 0;
+    width = 0;
+    height = 0;
+    format = Z::imgUndefined;
+}
+
+ZPDFImg::ZPDFImg(const ZPDFImg &other)
+{
+    pos = other.pos;
+    size = other.size;
+    width = other.width;
+    height = other.height;
+    format = other.format;
+}
+
+ZPDFImg::ZPDFImg(int a_pos, int a_size, int a_width, int a_height, Z::PDFImageFormat a_format)
+{
+    pos = a_pos;
+    size = a_size;
+    width = a_width;
+    height = a_height;
+    format = a_format;
+}
+
+bool ZPDFImg::operator==(const ZPDFImg &ref) const
+{
+    return (pos==ref.pos && size==ref.size && format==ref.format);
+}
+
+bool ZPDFImg::operator!=(const ZPDFImg &ref) const
+{
+    return (pos!=ref.pos || size!=ref.size || format!=ref.format);
+}
+
 
 #ifdef WITH_POPPLER
 

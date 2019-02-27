@@ -13,6 +13,11 @@ ZMangaLoader::~ZMangaLoader()
         closeFile();
 }
 
+void ZMangaLoader::postMessage(const QString &msg)
+{
+    emit auxMessage(msg);
+}
+
 void ZMangaLoader::openFile(const QString &filename, int preferred)
 {
     if (mReader!=nullptr)
@@ -37,9 +42,6 @@ void ZMangaLoader::openFile(const QString &filename, int preferred)
         delete za;
         return;
     }
-    connect(za,&ZAbstractReader::auxMessage,this,[this](const QString& msg){
-       emit auxMessage(msg);
-    });
     mReader = za;
     int pagecnt = mReader->getPageCount();
     emit gotPageCount(pagecnt,preferred);

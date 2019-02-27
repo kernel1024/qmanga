@@ -7,22 +7,34 @@
 
 #include <QMutex>
 #include "zabstractreader.h"
-#include "zpdfimageoutdev.h"
+
+class ZPDFImg {
+public:
+    int pos, size, width, height;
+    Z::PDFImageFormat format;
+
+    ZPDFImg();
+    ZPDFImg(const ZPDFImg& other);
+    ZPDFImg(int a_pos, int a_size, int a_width, int a_height,
+            Z::PDFImageFormat a_format);
+    ZPDFImg &operator=(const ZPDFImg& other) = default;
+    bool operator==(const ZPDFImg& ref) const;
+    bool operator!=(const ZPDFImg& ref) const;
+};
 
 class ZPdfReader : public ZAbstractReader
 {
     Q_OBJECT
 private:
 
-#ifdef WITH_POPPLER
-    PDFDoc* doc;
-    ZPDFImageOutputDev* outDev;
-#endif
     bool useImageCatalog;
     int numPages;
     QMutex indexerMutex;
+    QList<ZPDFImg> images;
+    int zlibInflate(const char *src, int srcSize, uchar *dst, int dstSize);
 
 #ifdef WITH_POPPLER
+    PDFDoc* doc;
     void loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage);
 #endif
 

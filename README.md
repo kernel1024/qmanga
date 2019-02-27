@@ -6,6 +6,7 @@ Multithreaded manga viewer with fast bookshelf support. ZIP, RAR, PDF, DJVU pack
 ### Requirements:
 * Qt 5.10+ (gui, widgets, dbus (for linux), concurrent, sql) with C++14 support
 * libzip
+* zlib
 * MySQL client library and SQLite 3.x+ with Qt drivers for QtSQL
 
 ### Additional requirements (optional for linux build):

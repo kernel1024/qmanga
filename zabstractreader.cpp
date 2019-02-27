@@ -1,4 +1,5 @@
 #include "zabstractreader.h"
+#include "zmangaloader.h"
 
 ZAbstractReader::ZAbstractReader(QObject *parent, const QString &filename) :
     QObject(parent)
@@ -41,4 +42,11 @@ void ZAbstractReader::closeFile()
 QString ZAbstractReader::getInternalPath(int)
 {
     return QString();
+}
+
+void ZAbstractReader::postMessage(const QString &msg)
+{
+    auto loader = qobject_cast<ZMangaLoader *>(parent());
+    if (loader)
+        loader->postMessage(msg);
 }
