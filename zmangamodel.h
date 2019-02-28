@@ -5,6 +5,7 @@
 #include <QListView>
 #include <QAbstractListModel>
 #include <QAbstractTableModel>
+#include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QHeaderView>
 #include <QTableView>

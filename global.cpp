@@ -265,7 +265,7 @@ QString detectMIME(const QByteArray &buf)
         { { 12, QByteArrayLiteral("\x44\x4A\x56") }, "image/vnd.djvu"}
     };
 
-    for (auto it = magicList.keyValueBegin(), end = magicList.keyValueEnd(); it != end; ++it) {
+    for (auto it = magicList.constKeyValueBegin(), end = magicList.constKeyValueEnd(); it != end; ++it) {
         const QByteArray test = buf.mid((*it).first.first,(*it).first.second.size());
         if (test==(*it).first.second)
             return (*it).second;

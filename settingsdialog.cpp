@@ -145,7 +145,7 @@ void SettingsDialog::setIgnoredFiles(const QStringList& files)
 void SettingsDialog::setSearchEngines(const ZStrMap &engines)
 {
     ui->listSearch->clear();
-    for (auto it = engines.keyValueBegin(), end = engines.keyValueEnd(); it != end; ++it) {
+    for (auto it = engines.constKeyValueBegin(), end = engines.constKeyValueEnd(); it != end; ++it) {
         QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ] %3").
                                                   arg((*it).first,(*it).second,
                 (*it).first==zg->defaultSearchEngine ? tr("(default)") : QString()));
@@ -261,7 +261,7 @@ void SettingsDialog::delSearchEngine()
 {
     QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
     for (QListWidgetItem* i : dl) {
-        ui->listBookmarks->removeItemWidget(i);
+        ui->listSearch->removeItemWidget(i);
         delete i;
     }
 }

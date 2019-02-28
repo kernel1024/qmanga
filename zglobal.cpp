@@ -94,7 +94,7 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
         return;
     }
     QString text;
-    for (auto it=problems.keyValueBegin(), end=problems.keyValueEnd(); it!=end; ++it) {
+    for (auto it=problems.constKeyValueBegin(), end=problems.constKeyValueEnd(); it!=end; ++it) {
         text.append(QString("%1\n-------------------------------\n%2\n\n")
                     .arg((*it).first,(*it).second));
     }
@@ -359,7 +359,7 @@ void ZGlobal::settingsDlg()
     else
         dlg->spinForceDPI->setValue(forceDPI);
 
-    for (auto bIt=bookmarks.keyValueBegin(), end=bookmarks.keyValueEnd(); bIt!=end; ++bIt) {
+    for (auto bIt=bookmarks.constKeyValueBegin(), end=bookmarks.constKeyValueEnd(); bIt!=end; ++bIt) {
         QString st = (*bIt).second;
         if (st.split('\n').count()>0)
             st = st.split('\n').at(0);
@@ -370,7 +370,7 @@ void ZGlobal::settingsDlg()
         dlg->listBookmarks->addItem(li);
     }
     ZStrMap albums = db->getDynAlbums();
-    for (auto tIt = albums.keyValueBegin(), end = albums.keyValueEnd(); tIt!=end; ++tIt) {
+    for (auto tIt = albums.constKeyValueBegin(), end = albums.constKeyValueEnd(); tIt!=end; ++tIt) {
         QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg((*tIt).first,
                                                                            (*tIt).second));
         li->setData(Qt::UserRole,(*tIt).first);

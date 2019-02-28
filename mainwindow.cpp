@@ -402,7 +402,7 @@ void MainWindow::updateBookmarks()
 {
     while (bookmarksMenu->actions().count()>2)
         bookmarksMenu->removeAction(bookmarksMenu->actions().constLast());
-    for (auto it = zg->bookmarks.keyValueBegin(), end = zg->bookmarks.keyValueEnd();
+    for (auto it = zg->bookmarks.constKeyValueBegin(), end = zg->bookmarks.constKeyValueEnd();
          it != end; ++it) {
         QAction* a = bookmarksMenu->addAction((*it).first,this,&MainWindow::openBookmark);
         QString st = (*it).second;
@@ -514,7 +514,7 @@ void MainWindow::fsAddFiles()
         zg->newlyAddedFiles.removeAll(i.fileName);
     }
 
-    for (auto it = fl.keyValueBegin(), end = fl.keyValueEnd(); it != end; ++it)
+    for (auto it = fl.constKeyValueBegin(), end = fl.constKeyValueEnd(); it != end; ++it)
         emit dbAddFiles((*it).second,(*it).first);
 
     zg->fsCheckFilesAvailability();
