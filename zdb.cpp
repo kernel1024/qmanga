@@ -385,8 +385,9 @@ void ZDB::sqlGetAlbums()
 
     sqlCloseBase(db);
 
-    for (auto it = dynAlbums.constBegin(), end = dynAlbums.constEnd(); it != end; ++it)
-        result << QString("# %1").arg(*it);
+    for (auto it = dynAlbums.constKeyValueBegin(), end = dynAlbums.constKeyValueEnd();
+         it != end; ++it)
+        result << QString("# %1").arg((*it).first);
 
     result << QString("% Deleted");
 
