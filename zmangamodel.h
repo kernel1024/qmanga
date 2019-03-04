@@ -22,7 +22,7 @@ private:
     QSlider *pixmapSize;
     QTableView *view;
 
-    SQLMangaList mList;
+    SQLMangaVector mList;
 
 public:
     explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView);
@@ -40,7 +40,7 @@ public:
 
 public slots:
     void deleteAllItems();
-    void deleteItems(const QIntList& dbids);
+    void deleteItems(const QIntVector& dbids);
     void addItem(const SQLMangaEntry& file, const Z::Ordering sortOrder, const bool reverseOrder);
 };
 

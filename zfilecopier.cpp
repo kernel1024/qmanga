@@ -59,7 +59,7 @@ void ZFileCopier::start()
     if (m_abort) {
         emit errorMsg(tr("Copying aborted, %1 files was copied.").arg(cnt));
     } else if (!errs.empty()) {
-        emit errorMsg(tr("Failed to copy %1 entries:\n%2").arg(errs.count()).arg(errs.join("\n")));
+        emit errorMsg(tr("Failed to copy %1 entries:\n%2").arg(errs.count()).arg(errs.join('\n')));
     }
 
     emit progressClose();
@@ -87,7 +87,9 @@ bool ZFileCopier::copyDir(const QFileInfo &src)
     if (!sdir.isReadable())
         return false;
 
-    const QFileInfoList fl = filterSupportedImgFiles(sdir.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files));
+    const QFileInfoList fl = filterSupportedImgFiles(
+                                 sdir.entryInfoList(QStringList(QStringLiteral("*")),
+                                                    QDir::Readable | QDir::Files));
 
     emit progressSetMaximum(fl.count());
     QApplication::processEvents();

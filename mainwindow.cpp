@@ -40,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     lblSearchStatus = new QLabel(tr("Ready"));
     lblAverageSizes = new QLabel();
-    lblRotation = new QLabel("Rotation: 0");
+    lblRotation = new QLabel(tr("Rotation: 0"));
     lblCrop = new QLabel();
 
     statusBar()->addPermanentWidget(lblAverageSizes);
@@ -143,7 +143,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QString fname;
     if (QApplication::arguments().count()>1)
         fname = QApplication::arguments().at(1);
-    if (!fname.isEmpty() && !fname.startsWith("--"))
+    if (!fname.isEmpty() && !fname.startsWith(QStringLiteral("--")))
         openAuxFile(fname);
 }
 
@@ -240,7 +240,7 @@ void MainWindow::openClipboard()
     buf.open(QIODevice::WriteOnly);
     img.save(&buf,"BMP");
     buf.close();
-    QString bs = QString(":CLIP:")+QString::fromLatin1(imgs.toBase64());
+    QString bs = QStringLiteral(":CLIP:")+QString::fromLatin1(imgs.toBase64());
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(bs);
@@ -392,7 +392,7 @@ void MainWindow::viewerBackgroundUpdated(const QColor &color)
 
     QColor c = palette().window().color();
     if (c != oldColor)
-        ui->mouseModeFrame->setStyleSheet(QString("background: rgba(%1,%2,%3,180)")
+        ui->mouseModeFrame->setStyleSheet(QStringLiteral("background: rgba(%1,%2,%3,180)")
                                           .arg(c.red()).arg(c.green()).arg(c.blue()));
 
     oldColor = c;
@@ -435,7 +435,7 @@ void MainWindow::createBookmark()
     if (dlg->exec()) {
         QString t = dlg->getDlgEdit1();
         if (!t.isEmpty() && !zg->bookmarks.contains(t)) {
-            zg->bookmarks[t]=QString("%1\n%2").arg(dlg->getDlgEdit2()).arg(ui->mangaView->currentPage);
+            zg->bookmarks[t]=QStringLiteral("%1\n%2").arg(dlg->getDlgEdit2()).arg(ui->mangaView->currentPage);
             updateBookmarks();
         } else
             QMessageBox::warning(this,tr("QManga"),
@@ -487,13 +487,13 @@ void MainWindow::helpAbout()
 void MainWindow::auxMessage(const QString &msg)
 {
     QString s = msg;
-    bool showMsgBox = s.startsWith("MBOX#");
+    bool showMsgBox = s.startsWith(QStringLiteral("MBOX#"));
     if (showMsgBox)
-        s.remove("MBOX#");
+        s.remove(QStringLiteral("MBOX#"));
     lblSearchStatus->setText(s);
     if (showMsgBox) {
         if (indexerMsgBox.isVisible())
-            indexerMsgBox.setText(indexerMsgBox.text()+"\n"+s);
+            indexerMsgBox.setText(indexerMsgBox.text()+QStringLiteral("\n")+s);
         else
             indexerMsgBox.setText(s);
         indexerMsgBox.exec();
@@ -527,17 +527,16 @@ void MainWindow::fsCheckAvailability()
 
 void MainWindow::fsDelFiles()
 {
-    QList<int> rows;
-    rows.clear();
+    QVector<int> rows;
     const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
+    rows.reserve(list.count());
     for (const auto &i : list) {
         int idx = i->row();
         if (!rows.contains(idx))
             rows << idx;
     }
     if (rows.isEmpty()) return;
-    QList<ZFSFile> nl;
-    nl.clear();
+    QVector<ZFSFile> nl;
     for (int i=0;i<fsScannedFiles.count();i++) {
         if (!rows.contains(i))
             nl << fsScannedFiles.at(i);
@@ -595,7 +594,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
         cnt++;
     }
     for (const auto &i : albums) {
-        if (i.startsWith("#")) continue;
+        if (i.startsWith(QStringLiteral("#"))) continue;
         ac = new QAction(i,nullptr);
         connect(ac,&QAction::triggered,this,&MainWindow::fsResultsCtxApplyAlbum);
         ac->setData(i);
@@ -615,10 +614,9 @@ void MainWindow::fsResultsCtxApplyAlbum()
         QMessageBox::warning(this,tr("QManga"),tr("Unable to apply album name"));
         return;
     }
-    QList<int> idxs;
-    idxs.clear();
-
+    QVector<int> idxs;
     const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
+    idxs.reserve(list.count());
     for (const auto &i : list)
         idxs << i->row();
 
@@ -653,18 +651,16 @@ void MainWindow::fsFoundNewFiles(const QStringList &files)
 void MainWindow::fsAddIgnoredFiles()
 {
     QList<int> rows;
-    rows.clear();
     const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
+    rows.reserve(list.count());
     for (const auto &i : list) {
         int idx = i->row();
         if (!rows.contains(idx))
             rows << idx;
     }
     if (rows.isEmpty()) return;
-    QList<ZFSFile> nl;
+    QVector<ZFSFile> nl;
     QStringList sl;
-    nl.clear();
-    sl.clear();
     for (int i=0;i<fsScannedFiles.count();i++) {
         if (!rows.contains(i))
             nl << fsScannedFiles.at(i);

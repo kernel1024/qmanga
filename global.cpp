@@ -30,16 +30,16 @@ ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *
                                bool onlyArchives, bool createReader)
 {
     *mimeOk = true;
-    if (filename.startsWith(":CLIP:") && !onlyArchives) {
+    if (filename.startsWith(QStringLiteral(":CLIP:")) && !onlyArchives) {
         if (createReader)
             return new ZSingleImageReader(parent,filename);
 
         return nullptr;
     }
 
-    if (filename.startsWith("#DYN#")) {
+    if (filename.startsWith(QStringLiteral("#DYN#"))) {
         QString fname(filename);
-        fname.remove(QRegExp("^#DYN#"));
+        fname.remove(QRegExp(QStringLiteral("^#DYN#")));
         if (createReader)
             return new ZImagesDirReader(parent,fname);
 
@@ -50,28 +50,28 @@ ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *
     if (!fi.exists()) return nullptr;
 
     QString mime = detectMIME(filename).toLower();
-    if (mime.contains("application/zip",Qt::CaseInsensitive)) {
+    if (mime.contains(QStringLiteral("application/zip"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZZipReader(parent,filename);
 
-    } else if (mime.contains("application/x-rar",Qt::CaseInsensitive) ||
-               mime.contains("application/rar",Qt::CaseInsensitive)) {
+    } else if (mime.contains(QStringLiteral("application/x-rar"),Qt::CaseInsensitive) ||
+               mime.contains(QStringLiteral("application/rar"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZRarReader(parent,filename);
 
 #ifdef WITH_POPPLER
-    } else if (mime.contains("application/pdf",Qt::CaseInsensitive)) {
+    } else if (mime.contains(QStringLiteral("application/pdf"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZPdfReader(parent,filename);
 
 #endif
 #ifdef WITH_DJVU
-    } else if (mime.contains("image/vnd.djvu",Qt::CaseInsensitive)) {
+    } else if (mime.contains(QStringLiteral("image/vnd.djvu"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZDjVuReader(parent,filename);
 
 #endif
-    } else if (mime.contains("image/",Qt::CaseInsensitive) && !onlyArchives) {
+    } else if (mime.contains(QStringLiteral("image/"),Qt::CaseInsensitive) && !onlyArchives) {
         if (createReader)
             return new ZSingleImageReader(parent,filename);
 
@@ -92,32 +92,33 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
     int line = context.line;
     QString file = QString(context.file);
     QString category = QString(context.category);
-    if (category==QString("default"))
+    if (category==QStringLiteral("default"))
         category.clear();
     else
         category.append(' ');
 
     switch (type) {
         case QtDebugMsg:
-            lmsg = QString("%1Debug: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            lmsg = QStringLiteral("%1Debug: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
             break;
         case QtWarningMsg:
-            lmsg = QString("%1Warning: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            lmsg = QStringLiteral("%1Warning: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
             break;
         case QtCriticalMsg:
-            lmsg = QString("%1Critical: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            lmsg = QStringLiteral("%1Critical: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
             break;
         case QtFatalMsg:
-            lmsg = QString("%1Fatal: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            lmsg = QStringLiteral("%1Fatal: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
             break;
         case QtInfoMsg:
-            lmsg = QString("%1Info: %2 (%3:%4)").arg(category, msg, file, QString("%1").arg(line));
+            lmsg = QStringLiteral("%1Info: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
             break;
     }
 
     if (!lmsg.isEmpty()) {
-        QString fmsg = QTime::currentTime().toString("h:mm:ss") + " "+lmsg;
-        fmsg.append("\r\n");
+        QString fmsg = QStringLiteral("%1 %2").arg(QTime::currentTime()
+                                                   .toString(QStringLiteral("h:mm:ss")),lmsg);
+        fmsg.append(QStringLiteral("\r\n"));
 
 #ifdef Q_OS_WIN
         HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
@@ -135,10 +136,10 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
 
 QString formatSize(qint64 size)
 {
-    if (size<1024) return QString("%1 bytes").arg(size);
-    if (size<1024*1024) return QString("%1 Kb").arg(size/1024);
-    if (size<1024*1024*1024) return QString("%1 Mb").arg(size/(1024*1024));
-    return QString("%1 Gb").arg(size/(1024*1024*1024));
+    if (size<1024) return QStringLiteral("%1 bytes").arg(size);
+    if (size<1024*1024) return QStringLiteral("%1 Kb").arg(size/1024);
+    if (size<1024*1024*1024) return QStringLiteral("%1 Mb").arg(size/(1024*1024));
+    return QStringLiteral("%1 Gb").arg(size/(1024*1024*1024));
 }
 
 QString elideString(const QString& text, int maxlen)
@@ -146,16 +147,16 @@ QString elideString(const QString& text, int maxlen)
     if (text.length()<maxlen)
         return text;
 
-    return QString("%1...").arg(text.left(maxlen));
+    return QStringLiteral("%1...").arg(text.left(maxlen));
 }
 
 QString escapeParam(const QString &param)
 {
     QString res = param;
-    res.replace("'","\\'");
-    res.replace("\"","\\\"");
-    res.replace(";","");
-    res.replace("%","");
+    res.replace('\'',QStringLiteral("\\'"));
+    res.replace('"',QStringLiteral("\\\""));
+    res.replace(';',QString());
+    res.replace('%',QString());
     return res;
 }
 
@@ -241,7 +242,7 @@ QString detectMIME(const QString& filename)
 {
     QFile f(filename);
     if (!f.open(QIODevice::ReadOnly))
-        return QString("text/plain");
+        return QStringLiteral("text/plain");
     QByteArray ba = f.read(1024);
     f.close();
     return detectMIME(ba);
@@ -270,7 +271,7 @@ QString detectMIME(const QByteArray &buf)
         if (test==(*it).first.second)
             return (*it).second;
     }
-    return QString("text/plain");
+    return QStringLiteral("text/plain");
 }
 
 QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
@@ -450,18 +451,19 @@ PIX* Image2PIX(const QImage &qImage) {
 
 QString ocrGetActiveLanguage()
 {
-    QSettings settings("kernel1024", "qmanga-ocr");
-    settings.beginGroup("Main");
-    QString res = settings.value("activeLanguage",QString()).toString();
+    QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
+    settings.beginGroup(QStringLiteral("Main"));
+    QString res = settings.value(QStringLiteral("activeLanguage"),QString()).toString();
     settings.endGroup();
     return res;
 }
 
 QString ocrGetDatapath()
 {
-    QSettings settings("kernel1024", "qmanga-ocr");
-    settings.beginGroup("Main");
-    QString res = settings.value("datapath",QString("/usr/share/tessdata/")).toString();
+    QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
+    settings.beginGroup(QStringLiteral("Main"));
+    QString res = settings.value(QStringLiteral("datapath"),
+                                 QStringLiteral("/usr/share/tessdata/")).toString();
     settings.endGroup();
     return res;
 }
@@ -472,7 +474,7 @@ tesseract::TessBaseAPI* initializeOCR()
     const char* datapath = nullptr;
 #ifdef Q_OS_WIN
     QDir appDir(QApplication::applicationDirPath());
-    QByteArray tesspath = appDir.absoluteFilePath("tessdata").toUtf8();
+    QByteArray tesspath = appDir.absoluteFilePath(QStringLiteral("tessdata")).toUtf8();
     datapath = tesspath.constData();
 #else
     QByteArray tesspath = ocrGetDatapath().toUtf8();
@@ -481,9 +483,9 @@ tesseract::TessBaseAPI* initializeOCR()
 
     QString lang = ocrGetActiveLanguage();
     if (lang.isEmpty() || ocr->Init(datapath,lang.toUtf8().constData())) {
-        QMessageBox::critical(nullptr,"QManga error",
-                              "Could not initialize Tesseract.\n"
-                              "Maybe language training data is not installed.");
+        QMessageBox::critical(nullptr,QStringLiteral("QManga error"),
+                              QStringLiteral("Could not initialize Tesseract.\n"
+                              "Maybe language training data is not installed."));
         return nullptr;
     }
     return ocr;
@@ -493,7 +495,7 @@ tesseract::TessBaseAPI* initializeOCR()
 
 QStringList supportedImg()
 {
-    QStringList res {"jpg", "jpeg", "jpe", "gif", "png", "tiff", "tif", "bmp"};
+    static const QStringList res {"jpg", "jpeg", "jpe", "gif", "png", "tiff", "tif", "bmp"};
     return res;
 }
 

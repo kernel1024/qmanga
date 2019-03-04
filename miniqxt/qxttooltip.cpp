@@ -306,7 +306,7 @@ QWidget* QxtToolTip::toolTip(QWidget* parent)
     Q_ASSERT(parent);
     QWidget* tooltip = nullptr;
     if (!QxtToolTipPrivate::instance()->tooltips.contains(parent))
-        qWarning() << QString("QxtToolTip::toolTip: Unknown parent");
+        qWarning() << QStringLiteral("QxtToolTip::toolTip: Unknown parent");
     else
         tooltip = QxtToolTipPrivate::instance()->tooltips.value(parent).first;
     return tooltip;
@@ -331,7 +331,7 @@ void QxtToolTip::setToolTip(QWidget* parent, QWidget* tooltip, const QRect& rect
     {
         // remove
         if (!QxtToolTipPrivate::instance()->tooltips.contains(parent))
-            qWarning() << QString("QxtToolTip::setToolTip: Unknown parent");
+            qWarning() << QStringLiteral("QxtToolTip::setToolTip: Unknown parent");
         else
             QxtToolTipPrivate::instance()->tooltips.remove(parent);
     }
@@ -347,7 +347,7 @@ QRect QxtToolTip::toolTipRect(QWidget* parent)
     Q_ASSERT(parent);
     QRect rect;
     if (!QxtToolTipPrivate::instance()->tooltips.contains(parent))
-        qWarning() << QString("QxtToolTip::toolTipRect: Unknown parent");
+        qWarning() << QStringLiteral("QxtToolTip::toolTipRect: Unknown parent");
     else
         rect = QxtToolTipPrivate::instance()->tooltips.value(parent).second;
     return rect;
@@ -362,7 +362,7 @@ void QxtToolTip::setToolTipRect(QWidget* parent, const QRect& rect)
 {
     Q_ASSERT(parent);
     if (!QxtToolTipPrivate::instance()->tooltips.contains(parent))
-        qWarning() << QString("QxtToolTip::setToolTipRect: Unknown parent");
+        qWarning() << QStringLiteral("QxtToolTip::setToolTipRect: Unknown parent");
     else
         QxtToolTipPrivate::instance()->tooltips[parent].second = rect;
 }

@@ -49,7 +49,7 @@ private:
     QHash<int,QImage> iCacheImages;
     QHash<int,QByteArray> iCacheData;
     QHash<int,QString> pathCache;
-    QIntList processingPages;
+    QIntVector processingPages;
 
     QList<QSize> lastSizes;
     QList<int> lastFileSizes;
@@ -62,7 +62,7 @@ private:
 
     void cacheDropUnusable();
     void cacheFillNearest();
-    QIntList cacheGetActivePages();
+    QIntVector cacheGetActivePages();
     void displayCurrentPage();
     void cacheGetPage(int num);   
     static ZExportWork exportMangaPage(const ZExportWork &item);

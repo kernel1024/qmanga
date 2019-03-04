@@ -28,7 +28,7 @@
 
 using QImageHash = QHash<int,QImage>;
 using QByteHash = QHash<int,QByteArray>;
-using QIntList = QList<int>;
+using QIntVector = QVector<int>;
 using QStrHash = QHash<QString,QString>;
 
 class ZAbstractReader;
@@ -161,7 +161,7 @@ public:
     bool isValid() const;
 };
 
-using SQLMangaList = QList<SQLMangaEntry>;
+using SQLMangaVector = QVector<SQLMangaEntry>;
 
 
 extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,

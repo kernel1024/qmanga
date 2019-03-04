@@ -42,8 +42,8 @@ ZGlobal::ZGlobal(QObject *parent) :
     resizeBlur = 1.0;
 
     initLanguagesList();
-    tranSourceLang = QString("ja");
-    tranDestLang = QString("en");
+    tranSourceLang = QStringLiteral("ja");
+    tranDestLang = QStringLiteral("en");
 
     filesystemWatcher = false;
     fsWatcher = new QFileSystemWatcher(this);
@@ -95,7 +95,7 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
     }
     QString text;
     for (auto it=problems.constKeyValueBegin(), end=problems.constKeyValueEnd(); it!=end; ++it) {
-        text.append(QString("%1\n-------------------------------\n%2\n\n")
+        text.append(QStringLiteral("%1\n-------------------------------\n%2\n\n")
                     .arg((*it).first,(*it).second));
     }
 
@@ -113,42 +113,47 @@ void ZGlobal::loadSettings()
 {
     auto w = qobject_cast<MainWindow *>(parent());
 
-    QSettings settings("kernel1024", "qmanga");
-    settings.beginGroup("MainWindow");
-    cacheWidth = settings.value("cacheWidth",6).toInt();
+    QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga"));
+    settings.beginGroup(QStringLiteral("MainWindow"));
+    cacheWidth = settings.value(QStringLiteral("cacheWidth"),6).toInt();
     downscaleFilter = static_cast<Blitz::ScaleFilterType>(
-                          settings.value("downscaleFilter",Blitz::LanczosFilter).toInt());
+                          settings.value(QStringLiteral("downscaleFilter"),Blitz::LanczosFilter).toInt());
     upscaleFilter = static_cast<Blitz::ScaleFilterType>(
-                        settings.value("upscaleFilter",Blitz::MitchellFilter).toInt());
-    dbUser = settings.value("mysqlUser",QString()).toString();
-    dbPass = settings.value("mysqlPassword",QString()).toString();
-    dbBase = settings.value("mysqlBase",QString("qmanga")).toString();
-    dbHost = settings.value("mysqlHost",QString("localhost")).toString();
-    rarCmd = settings.value("rarCmd",QString()).toString();
-    savedAuxOpenDir = settings.value("savedAuxOpenDir",QString()).toString();
-    savedIndexOpenDir = settings.value("savedIndexOpenDir",QString()).toString();
-    savedAuxSaveDir = settings.value("savedAuxSaveDir",QString()).toString();
-    magnifySize = settings.value("magnifySize",150).toInt();
-    resizeBlur = settings.value("resizingBlur",1.0).toDouble();
-    scrollDelta = settings.value("scrollDelta",120).toInt();
-    scrollFactor = settings.value("scrollFactor",5).toInt();
-    searchScrollFactor = settings.value("searchScrollFactor",0.1).toDouble();
-    pdfRendering = static_cast<Z::PDFRendering>(settings.value("pdfRendering",Z::Autodetect).toInt());
-    dbEngine = static_cast<Z::DBMS>(settings.value("dbEngine",Z::SQLite).toInt());
-    forceDPI = settings.value("forceDPI",-1.0).toDouble();
-    backgroundColor = QColor(settings.value("backgroundColor","#303030").toString());
-    frameColor = QColor(settings.value("frameColor",QColor(Qt::lightGray).name()).toString());
-    cachePixmaps = settings.value("cachePixmaps",false).toBool();
-    useFineRendering = settings.value("fineRendering",true).toBool();
-    filesystemWatcher = settings.value("filesystemWatcher",false).toBool();
-    defaultOrdering = static_cast<Z::Ordering>(settings.value("defaultOrdering",Z::Name).toInt());
-    defaultSearchEngine = settings.value("defaultSearchEngine",QString()).toString();
-    ctxSearchEngines = settings.value("ctxSearchEngines").value<ZStrMap>();
+                        settings.value(QStringLiteral("upscaleFilter"),Blitz::MitchellFilter).toInt());
+    dbUser = settings.value(QStringLiteral("mysqlUser"),QString()).toString();
+    dbPass = settings.value(QStringLiteral("mysqlPassword"),QString()).toString();
+    dbBase = settings.value(QStringLiteral("mysqlBase"),QStringLiteral("qmanga")).toString();
+    dbHost = settings.value(QStringLiteral("mysqlHost"),QStringLiteral("localhost")).toString();
+    rarCmd = settings.value(QStringLiteral("rarCmd"),QString()).toString();
+    savedAuxOpenDir = settings.value(QStringLiteral("savedAuxOpenDir"),QString()).toString();
+    savedIndexOpenDir = settings.value(QStringLiteral("savedIndexOpenDir"),QString()).toString();
+    savedAuxSaveDir = settings.value(QStringLiteral("savedAuxSaveDir"),QString()).toString();
+    magnifySize = settings.value(QStringLiteral("magnifySize"),150).toInt();
+    resizeBlur = settings.value(QStringLiteral("resizingBlur"),1.0).toDouble();
+    scrollDelta = settings.value(QStringLiteral("scrollDelta"),120).toInt();
+    scrollFactor = settings.value(QStringLiteral("scrollFactor"),5).toInt();
+    searchScrollFactor = settings.value(QStringLiteral("searchScrollFactor"),0.1).toDouble();
+    pdfRendering = static_cast<Z::PDFRendering>(
+                       settings.value(QStringLiteral("pdfRendering"),
+                                      Z::Autodetect).toInt());
+    dbEngine = static_cast<Z::DBMS>(settings.value(QStringLiteral("dbEngine"),Z::SQLite).toInt());
+    forceDPI = settings.value(QStringLiteral("forceDPI"),-1.0).toDouble();
+    backgroundColor = QColor(settings.value(QStringLiteral("backgroundColor"),
+                                            QStringLiteral("#303030")).toString());
+    frameColor = QColor(settings.value(QStringLiteral("frameColor"),
+                                       QColor(Qt::lightGray).name()).toString());
+    cachePixmaps = settings.value(QStringLiteral("cachePixmaps"),false).toBool();
+    useFineRendering = settings.value(QStringLiteral("fineRendering"),true).toBool();
+    filesystemWatcher = settings.value(QStringLiteral("filesystemWatcher"),false).toBool();
+    defaultOrdering = static_cast<Z::Ordering>(settings.value(QStringLiteral("defaultOrdering"),
+                                                              Z::Name).toInt());
+    defaultSearchEngine = settings.value(QStringLiteral("defaultSearchEngine"),QString()).toString();
+    ctxSearchEngines = settings.value(QStringLiteral("ctxSearchEngines")).value<ZStrMap>();
 
 
-    if (!idxFont.fromString(settings.value("idxFont",QString()).toString()))
+    if (!idxFont.fromString(settings.value(QStringLiteral("idxFont"),QString()).toString()))
         idxFont = QApplication::font("QListView");
-    if (!ocrFont.fromString(settings.value("ocrFont",QString()).toString()))
+    if (!ocrFont.fromString(settings.value(QStringLiteral("ocrFont"),QString()).toString()))
         ocrFont = QApplication::font("QPlainTextView");
     if (!backgroundColor.isValid())
         backgroundColor = QApplication::palette("QWidget").dark().color();
@@ -157,17 +162,17 @@ void ZGlobal::loadSettings()
 
     bool showMaximized = false;
     if (w!=nullptr)
-        showMaximized = settings.value("maximized",false).toBool();
+        showMaximized = settings.value(QStringLiteral("maximized"),false).toBool();
 
-    bookmarks = settings.value("bookmarks").value<ZStrMap>();
-    ZStrMap albums = settings.value("dynAlbums").value<ZStrMap>();
+    bookmarks = settings.value(QStringLiteral("bookmarks")).value<ZStrMap>();
+    ZStrMap albums = settings.value(QStringLiteral("dynAlbums")).value<ZStrMap>();
     emit dbSetDynAlbums(albums);
 
     if (w!=nullptr) {
         QListView::ViewMode m = QListView::IconMode;
-        if (settings.value("listMode",false).toBool())
+        if (settings.value(QStringLiteral("listMode"),false).toBool())
             m = QListView::ListMode;
-        w->searchTab->setListViewOptions(m, settings.value("iconSize",128).toInt());
+        w->searchTab->setListViewOptions(m, settings.value(QStringLiteral("iconSize"),128).toInt());
 
         w->searchTab->loadSearchItems(settings);
     }
@@ -200,53 +205,53 @@ void ZGlobal::loadSettings()
 
 void ZGlobal::saveSettings()
 {
-    QSettings settings("kernel1024", "qmanga");
-    settings.beginGroup("MainWindow");
-    settings.remove("");
-    settings.setValue("cacheWidth",cacheWidth);
-    settings.setValue("downscaleFilter",static_cast<int>(downscaleFilter));
-    settings.setValue("upscaleFilter",static_cast<int>(upscaleFilter));
-    settings.setValue("mysqlUser",dbUser);
-    settings.setValue("mysqlPassword",dbPass);
-    settings.setValue("mysqlBase",dbBase);
-    settings.setValue("mysqlHost",dbHost);
-    settings.setValue("rarCmd",rarCmd);
-    settings.setValue("savedAuxOpenDir",savedAuxOpenDir);
-    settings.setValue("savedAuxSaveDir",savedAuxSaveDir);
-    settings.setValue("savedIndexOpenDir",savedIndexOpenDir);
-    settings.setValue("magnifySize",magnifySize);
-    settings.setValue("resizingBlur",resizeBlur);
-    settings.setValue("scrollDelta",scrollDelta);
-    settings.setValue("scrollFactor",scrollFactor);
-    settings.setValue("searchScrollFactor",searchScrollFactor);
-    settings.setValue("pdfRendering",pdfRendering);
-    settings.setValue("dbEngine",dbEngine);
-    settings.setValue("forceDPI",forceDPI);
-    settings.setValue("backgroundColor",backgroundColor.name());
-    settings.setValue("frameColor",frameColor.name());
-    settings.setValue("cachePixmaps",cachePixmaps);
-    settings.setValue("fineRendering",useFineRendering);
-    settings.setValue("filesystemWatcher",filesystemWatcher);
-    settings.setValue("idxFont",idxFont.toString());
-    settings.setValue("ocrFont",ocrFont.toString());
-    settings.setValue("defaultOrdering",static_cast<int>(defaultOrdering));
-    settings.setValue("defaultSearchEngine",defaultSearchEngine);
-    settings.setValue("ctxSearchEngines",QVariant::fromValue(ctxSearchEngines));
-    settings.setValue("tranSourceLanguage",tranSourceLang);
-    settings.setValue("tranDestLanguage",tranDestLang);
+    QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga"));
+    settings.beginGroup(QStringLiteral("MainWindow"));
+    settings.remove(QString());
+    settings.setValue(QStringLiteral("cacheWidth"),cacheWidth);
+    settings.setValue(QStringLiteral("downscaleFilter"),static_cast<int>(downscaleFilter));
+    settings.setValue(QStringLiteral("upscaleFilter"),static_cast<int>(upscaleFilter));
+    settings.setValue(QStringLiteral("mysqlUser"),dbUser);
+    settings.setValue(QStringLiteral("mysqlPassword"),dbPass);
+    settings.setValue(QStringLiteral("mysqlBase"),dbBase);
+    settings.setValue(QStringLiteral("mysqlHost"),dbHost);
+    settings.setValue(QStringLiteral("rarCmd"),rarCmd);
+    settings.setValue(QStringLiteral("savedAuxOpenDir"),savedAuxOpenDir);
+    settings.setValue(QStringLiteral("savedAuxSaveDir"),savedAuxSaveDir);
+    settings.setValue(QStringLiteral("savedIndexOpenDir"),savedIndexOpenDir);
+    settings.setValue(QStringLiteral("magnifySize"),magnifySize);
+    settings.setValue(QStringLiteral("resizingBlur"),resizeBlur);
+    settings.setValue(QStringLiteral("scrollDelta"),scrollDelta);
+    settings.setValue(QStringLiteral("scrollFactor"),scrollFactor);
+    settings.setValue(QStringLiteral("searchScrollFactor"),searchScrollFactor);
+    settings.setValue(QStringLiteral("pdfRendering"),pdfRendering);
+    settings.setValue(QStringLiteral("dbEngine"),dbEngine);
+    settings.setValue(QStringLiteral("forceDPI"),forceDPI);
+    settings.setValue(QStringLiteral("backgroundColor"),backgroundColor.name());
+    settings.setValue(QStringLiteral("frameColor"),frameColor.name());
+    settings.setValue(QStringLiteral("cachePixmaps"),cachePixmaps);
+    settings.setValue(QStringLiteral("fineRendering"),useFineRendering);
+    settings.setValue(QStringLiteral("filesystemWatcher"),filesystemWatcher);
+    settings.setValue(QStringLiteral("idxFont"),idxFont.toString());
+    settings.setValue(QStringLiteral("ocrFont"),ocrFont.toString());
+    settings.setValue(QStringLiteral("defaultOrdering"),static_cast<int>(defaultOrdering));
+    settings.setValue(QStringLiteral("defaultSearchEngine"),defaultSearchEngine);
+    settings.setValue(QStringLiteral("ctxSearchEngines"),QVariant::fromValue(ctxSearchEngines));
+    settings.setValue(QStringLiteral("tranSourceLanguage"),tranSourceLang);
+    settings.setValue(QStringLiteral("tranDestLanguage"),tranDestLang);
 
     auto w = qobject_cast<MainWindow *>(parent());
     if (w!=nullptr) {
-        settings.setValue("maximized",w->isMaximized());
+        settings.setValue(QStringLiteral("maximized"),w->isMaximized());
 
-        settings.setValue("listMode",w->searchTab->getListViewMode()==QListView::ListMode);
-        settings.setValue("iconSize",w->searchTab->getIconSize());
+        settings.setValue(QStringLiteral("listMode"),w->searchTab->getListViewMode()==QListView::ListMode);
+        settings.setValue(QStringLiteral("iconSize"),w->searchTab->getIconSize());
 
         w->searchTab->saveSearchItems(settings);
     }
 
-    settings.setValue("bookmarks",QVariant::fromValue(bookmarks));
-    settings.setValue("dynAlbums",QVariant::fromValue(db->getDynAlbums()));
+    settings.setValue(QStringLiteral("bookmarks"),QVariant::fromValue(bookmarks));
+    settings.setValue(QStringLiteral("dynAlbums"),QVariant::fromValue(db->getDynAlbums()));
 
     settings.endGroup();
 
@@ -274,7 +279,7 @@ void ZGlobal::directoryChanged(const QString &dir)
     QDir d(dir);
     if (!d.isReadable()) return;
     const QStringList nlist = d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
-    const QStringList olist = dirWatchList[d.absolutePath()];
+    const QStringList olist = dirWatchList.value(d.absolutePath());
     for (const auto &i : nlist) {
         QString fname = d.absoluteFilePath(i);
         if (!olist.contains(i) && !newlyAddedFiles.contains(fname) &&
@@ -363,7 +368,7 @@ void ZGlobal::settingsDlg()
         QString st = (*bIt).second;
         if (st.split('\n').count()>0)
             st = st.split('\n').at(0);
-        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg((*bIt).first,
+        QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ]").arg((*bIt).first,
                                                                            (*bIt).second));
         li->setData(Qt::UserRole,(*bIt).first);
         li->setData(Qt::UserRole+1,(*bIt).second);
@@ -371,7 +376,7 @@ void ZGlobal::settingsDlg()
     }
     ZStrMap albums = db->getDynAlbums();
     for (auto tIt = albums.constKeyValueBegin(), end = albums.constKeyValueEnd(); tIt!=end; ++tIt) {
-        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").arg((*tIt).first,
+        QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ]").arg((*tIt).first,
                                                                            (*tIt).second));
         li->setData(Qt::UserRole,(*tIt).first);
         li->setData(Qt::UserRole+1,(*tIt).second);
@@ -443,10 +448,10 @@ void ZGlobal::settingsDlg()
             ocrEditor->setEditorFont(ocrFont);
 
 #ifdef WITH_OCR
-        QSettings settingsOCR("kernel1024", "qmanga-ocr");
-        settingsOCR.beginGroup("Main");
-        settingsOCR.setValue("activeLanguage", dlg->getOCRLanguage());
-        settingsOCR.setValue("datapath", dlg->editOCRDatapath->text());
+        QSettings settingsOCR(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
+        settingsOCR.beginGroup(QStringLiteral("Main"));
+        settingsOCR.setValue(QStringLiteral("activeLanguage"), dlg->getOCRLanguage());
+        settingsOCR.setValue(QStringLiteral("datapath"), dlg->editOCRDatapath->text());
         settingsOCR.endGroup();
 #endif
     }
@@ -459,14 +464,15 @@ QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine)
     if (ctxSearchEngines.isEmpty())
         return QUrl();
 
-    QString url = ctxSearchEngines.first();
+    auto it = ctxSearchEngines.constKeyValueBegin();
+    QString url = (*it).second;
     if (engine.isEmpty() && !defaultSearchEngine.isEmpty())
         url = ctxSearchEngines.value(defaultSearchEngine);
     if (!engine.isEmpty() && ctxSearchEngines.contains(engine))
         url = ctxSearchEngines.value(engine);
 
-    url.replace("%s",text);
-    url.replace("%ps",QUrl::toPercentEncoding(text));
+    url.replace(QStringLiteral("%s"),text);
+    url.replace(QStringLiteral("%ps"),QUrl::toPercentEncoding(text));
 
     return QUrl::fromUserInput(url);
 }
@@ -483,14 +489,14 @@ void ZGlobal::initLanguagesList()
 
     for(const QLocale &locale : allLocales) {
         QString bcp = locale.bcp47Name();
-        QString name = QString("%1 (%2)").arg(QLocale::languageToString(locale.language()),bcp);
+        QString name = QStringLiteral("%1 (%2)").arg(QLocale::languageToString(locale.language()),bcp);
 
         // filter out unsupported codes for dialects
-        if (bcp.contains('-') && !bcp.startsWith("zh")) continue;
+        if (bcp.contains('-') && !bcp.startsWith(QStringLiteral("zh"))) continue;
 
         // replace C locale with English
-        if (bcp == QString("en"))
-            name = QString("English (en)");
+        if (bcp == QStringLiteral("en"))
+            name = QStringLiteral("English (en)");
 
         if (!langNamesList.contains(bcp)) {
             langNamesList.insert(bcp,name);

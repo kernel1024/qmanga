@@ -32,7 +32,7 @@ bool ZDjVuReader::openFile()
     }
 
     for (int i=0;i<numPages;i++) {
-        sortList << ZFileEntry(QString("%1").arg(i,6,10,QChar('0')),i);
+        sortList << ZFileEntry(QStringLiteral("%1").arg(i,6,10,QChar('0')),i);
     }
 
     std::sort(sortList.begin(),sortList.end());
@@ -159,7 +159,7 @@ QByteArray ZDjVuReader::loadPage(int num)
 
 QString ZDjVuReader::getMagic()
 {
-    return QString("DJVU");
+    return QStringLiteral("DJVU");
 }
 
 ZDjVuController* ZDjVuController::m_instance = nullptr;

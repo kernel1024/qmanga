@@ -68,6 +68,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
 
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
+    cacheLoaders.reserve(cnt);
     for (int i=0;i<cnt;i++) {
         auto th = new QThread();
         auto ld = new ZMangaLoader();
@@ -231,8 +232,8 @@ void ZMangaView::openFileEx(const QString &filename, int page)
     emit loadedPage(-1,QString());
 
     emit cacheOpenFile(filename,page);
-    if (filename.startsWith(":CLIP:"))
-        openedFile = "Clipboard image";
+    if (filename.startsWith(QStringLiteral(":CLIP:")))
+        openedFile = QStringLiteral("Clipboard image");
     else
         openedFile = filename;
     processingPages.clear();
@@ -355,7 +356,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
     } else {
         if ((iCacheData.contains(currentPage) || iCacheImages.contains(currentPage))
                 && curUmPixmap.isNull()) {
-            QPixmap p(":/32/edit-delete");
+            QPixmap p(QStringLiteral(":/32/edit-delete"));
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
             w.setPen(QPen(zg->foregroundColor()));
             w.drawText(0,(height()-p.height())/2+p.height()+5,
@@ -460,7 +461,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                         maxlen = i.length();
                 if (maxlen<sl.count()) { // vertical kanji block, needs transpose
                     QStringList sl2;
-                    sl2.clear();
+                    sl2.reserve(maxlen);
                     for (int i=0;i<maxlen;i++)
                         sl2 << QString();
                     for (int i=0;i<sl.count();i++)
@@ -719,7 +720,7 @@ ZExportWork ZMangaView::exportMangaPage(const ZExportWork& item)
 
     int quality = item.quality;
     const QString format = item.format;
-    QString fname = item.dir.filePath(QString("%1.%2")
+    QString fname = item.dir.filePath(QStringLiteral("%1.%2")
                                          .arg(item.idx+1,item.filenameLength,10,QChar('0'))
                                          .arg(format.toLower()));
     auto zl = new ZMangaLoader();
@@ -767,7 +768,8 @@ void ZMangaView::exportPagesCtx()
     dlg->show();
     exportFileError = 0;
 
-    QList<ZExportWork> nums;
+    QVector<ZExportWork> nums;
+    nums.reserve(cnt);
     for (int i=0;i<cnt;i++)
         nums << ZExportWork(i+currentPage,QDir(exportDialog.getExportDir()),
                             openedFile,exportDialog.getImageFormat(),
@@ -924,8 +926,8 @@ void ZMangaView::cacheDropUnusable()
     else
         iCacheImages.clear();
 
-    QIntList toCache = cacheGetActivePages();
-    QIntList cached;
+    QIntVector toCache = cacheGetActivePages();
+    QList<int> cached;
     if (zg->cachePixmaps)
         cached = iCacheImages.keys();
     else
@@ -943,7 +945,7 @@ void ZMangaView::cacheDropUnusable()
 
 void ZMangaView::cacheFillNearest()
 {
-    QIntList toCache = cacheGetActivePages();
+    QIntVector toCache = cacheGetActivePages();
     int idx = 0;
     while (idx<toCache.count()) {
         bool contains = false;
@@ -964,9 +966,11 @@ void ZMangaView::cacheFillNearest()
         }
 }
 
-QIntList ZMangaView::cacheGetActivePages()
+QIntVector ZMangaView::cacheGetActivePages()
 {
-    QIntList l;
+    QIntVector l;
+    l.reserve(zg->cacheWidth*2+1);
+
     if (currentPage==-1) return l;
     if (privPageCount<=0) {
         l << currentPage;

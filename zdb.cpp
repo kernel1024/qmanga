@@ -23,8 +23,8 @@
 ZDB::ZDB(QObject *parent) :
     QObject(parent)
 {
-    dbHost = QString("localhost");
-    dbBase = QString("qmanga");
+    dbHost = QStringLiteral("localhost");
+    dbBase = QStringLiteral("qmanga");
     dbUser = QString();
     dbPass = QString();
     wasCanceled = false;
@@ -39,7 +39,7 @@ int ZDB::getAlbumsCount()
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return 0;
 
-    QSqlQuery qr("SELECT COUNT(name) FROM `albums` ORDER BY name ASC",db);
+    QSqlQuery qr(QStringLiteral("SELECT COUNT(name) FROM `albums` ORDER BY name ASC"),db);
     int cnt = 0;
     while (qr.next())
         cnt = qr.value(0).toInt();
@@ -86,8 +86,7 @@ void ZDB::sqlCheckBase()
 
 bool ZDB::sqlCheckBasePriv(QSqlDatabase& db, bool silent)
 {
-    QStringList tables;
-    tables << "files" << "albums" << "ignored_files";
+    static const QStringList tables { "files", "albums", "ignored_files" };
 
     int cnt=0;
     const QStringList list = db.tables(QSql::Tables);
@@ -116,13 +115,14 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     QSqlQuery qr(db);
 
     // Check for preferred rendering column
-    qr.exec("SHOW COLUMNS FROM files");
+    qr.exec(QStringLiteral("SHOW COLUMNS FROM files"));
     QStringList cols;
     while (qr.next())
         cols << qr.value(0).toString();
 
-    if (!cols.contains("preferredRendering",Qt::CaseInsensitive)) {
-        if (!qr.exec("ALTER TABLE `files` ADD COLUMN `preferredRendering` INT(11) DEFAULT 0")) {
+    if (!cols.contains(QStringLiteral("preferredRendering"),Qt::CaseInsensitive)) {
+        if (!qr.exec(QStringLiteral("ALTER TABLE `files` ADD COLUMN `preferredRendering` "
+                                    "INT(11) DEFAULT 0"))) {
             qDebug() << tr("Unable to add column for files table.")
                      << qr.lastError().databaseText() << qr.lastError().driverText();
 
@@ -134,8 +134,8 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     }
 
     // Add fulltext index for manga names
-    if (!qr.exec("SELECT index_type FROM information_schema.statistics "
-                 "WHERE table_schema=DATABASE() AND table_name='files' AND index_name='name_ft'")) {
+    if (!qr.exec(QStringLiteral("SELECT index_type FROM information_schema.statistics "
+                 "WHERE table_schema=DATABASE() AND table_name='files' AND index_name='name_ft'"))) {
         qDebug() << tr("Unable to get indexes list.")
                  << qr.lastError().databaseText() << qr.lastError().driverText();
 
@@ -148,7 +148,7 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     if (qr.next())
         idxn = qr.value(0).toString();
     if (idxn.isEmpty()) {
-        if (!qr.exec("ALTER TABLE files ADD FULLTEXT INDEX name_ft(name)")) {
+        if (!qr.exec(QStringLiteral("ALTER TABLE files ADD FULLTEXT INDEX name_ft(name)"))) {
             qDebug() << tr("Unable to add fulltext index for files table.")
                      << qr.lastError().databaseText() << qr.lastError().driverText();
 
@@ -173,7 +173,7 @@ void ZDB::checkConfigOpts(QSqlDatabase &db, bool silent)
     if (sqlDbEngine(db)!=Z::MySQL) return;
 
     QSqlQuery qr(db);
-    if (!qr.exec("SELECT @@ft_min_word_len")) {
+    if (!qr.exec(QStringLiteral("SELECT @@ft_min_word_len"))) {
         qDebug() << tr("Unable to check MySQL config options");
 
         problems[tr("MySQL config")] = tr("Unable to check my.cnf options via global variables.\n"
@@ -202,11 +202,11 @@ void ZDB::sqlCreateTables()
     QSqlQuery qr(db);
 
     if (sqlDbEngine(db)==Z::MySQL) {
-        if (!qr.exec("CREATE TABLE IF NOT EXISTS `albums` ("
+        if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `albums` ("
                      "`id` int(11) NOT NULL AUTO_INCREMENT,"
                      "`name` varchar(2048) NOT NULL,"
                      "PRIMARY KEY (`id`)"
-                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8")) {
+                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8"))) {
             emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
             problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
@@ -215,11 +215,11 @@ void ZDB::sqlCreateTables()
             return;
         }
 
-        if (!qr.exec("CREATE TABLE IF NOT EXISTS `ignored_files` ("
+        if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `ignored_files` ("
                      "`id` int(11) NOT NULL AUTO_INCREMENT,"
                      "`filename` varchar(16383) NOT NULL,"
                      "PRIMARY KEY (`id`)"
-                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8")) {
+                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8"))) {
             emit errorMsg(tr("Unable to create table `ignored_files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
             problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
@@ -227,7 +227,7 @@ void ZDB::sqlCreateTables()
             sqlCloseBase(db);
             return;
         }
-        if (!qr.exec("CREATE TABLE IF NOT EXISTS `files` ("
+        if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `files` ("
                      "`id` int(11) NOT NULL AUTO_INCREMENT,"
                      "`name` varchar(2048) NOT NULL,"
                      "`filename` varchar(16383) NOT NULL,"
@@ -241,7 +241,7 @@ void ZDB::sqlCreateTables()
                      "`preferredRendering` int(11) default 0,"
                      "PRIMARY KEY (`id`),"
                      "FULLTEXT KEY `name_ft` (`name`)"
-                     ") ENGINE=MyISAM  DEFAULT CHARSET=utf8")) {
+                     ") ENGINE=MyISAM  DEFAULT CHARSET=utf8"))) {
             emit errorMsg(tr("Unable to create table `files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
             problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
@@ -250,9 +250,9 @@ void ZDB::sqlCreateTables()
             return;
         }
     } else if (sqlDbEngine(db)==Z::SQLite){
-        if (!qr.exec("CREATE TABLE IF NOT EXISTS `albums` ("
+        if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `albums` ("
                      "`id` INTEGER PRIMARY KEY AUTOINCREMENT,"
-                     "`name` TEXT)")) {
+                     "`name` TEXT)"))) {
             emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
             problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
@@ -261,9 +261,9 @@ void ZDB::sqlCreateTables()
             return;
         }
 
-        if (!qr.exec("CREATE TABLE IF NOT EXISTS `ignored_files` ("
+        if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `ignored_files` ("
                      "`id` INTEGER PRIMARY KEY,"
-                     "`filename` TEXT)")) {
+                     "`filename` TEXT)"))) {
             emit errorMsg(tr("Unable to create table `ignored_files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
             problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
@@ -271,7 +271,7 @@ void ZDB::sqlCreateTables()
             sqlCloseBase(db);
             return;
         }
-        if (!qr.exec("CREATE TABLE IF NOT EXISTS `files` ("
+        if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `files` ("
                      "`id` INTEGER PRIMARY KEY,"
                      "`name` TEXT,"
                      "`filename` TEXT,"
@@ -282,7 +282,7 @@ void ZDB::sqlCreateTables()
                      "`fileMagic` TEXT,"
                      "`fileDT` TEXT,"
                      "`addingDT` TEXT,"
-                     "`preferredRendering` INTEGER DEFAULT 0)")) {
+                     "`preferredRendering` INTEGER DEFAULT 0)"))) {
             emit errorMsg(tr("Unable to create table `files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
             problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
@@ -305,7 +305,7 @@ QSqlDatabase ZDB::sqlOpenBase()
     if (zg==nullptr) return db;
 
     if (zg->dbEngine==Z::MySQL) {
-        db = QSqlDatabase::addDatabase("QMYSQL",QUuid::createUuid().toString());
+        db = QSqlDatabase::addDatabase(QStringLiteral("QMYSQL"),QUuid::createUuid().toString());
         if (!db.isValid()) {
             db = QSqlDatabase();
             emit errorMsg(tr("Unable to create MySQL driver instance."));
@@ -319,7 +319,7 @@ QSqlDatabase ZDB::sqlOpenBase()
         db.setPassword(dbPass);
 
     } else if (zg->dbEngine==Z::SQLite) {
-        db = QSqlDatabase::addDatabase("QSQLITE",QUuid::createUuid().toString());
+        db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),QUuid::createUuid().toString());
         if (!db.isValid()) {
             db = QSqlDatabase();
             emit errorMsg(tr("Unable to create SQLite driver instance."));
@@ -338,7 +338,7 @@ QSqlDatabase ZDB::sqlOpenBase()
                 return db;
             }
 
-        db.setDatabaseName(dbDir.filePath("qmanga.sqlite"));
+        db.setDatabaseName(dbDir.filePath(QStringLiteral("qmanga.sqlite")));
 
     } else
         return db;
@@ -363,7 +363,7 @@ void ZDB::sqlCloseBase(QSqlDatabase &db)
 void ZDB::sqlUpdateIgnoredFiles(QSqlDatabase &db)
 {
     QStringList sl;
-    QSqlQuery qr("SELECT filename FROM ignored_files",db);
+    QSqlQuery qr(QStringLiteral("SELECT filename FROM ignored_files"),db);
     while (qr.next())
         sl << qr.value(0).toString();
 
@@ -373,11 +373,10 @@ void ZDB::sqlUpdateIgnoredFiles(QSqlDatabase &db)
 void ZDB::sqlGetAlbums()
 {
     QStringList result;
-    result.clear();
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
 
-    QSqlQuery qr("SELECT name FROM `albums` ORDER BY name ASC",db);
+    QSqlQuery qr(QStringLiteral("SELECT name FROM `albums` ORDER BY name ASC"),db);
     while (qr.next())
         result << qr.value(0).toString();
 
@@ -387,9 +386,9 @@ void ZDB::sqlGetAlbums()
 
     for (auto it = dynAlbums.constKeyValueBegin(), end = dynAlbums.constKeyValueEnd();
          it != end; ++it)
-        result << QString("# %1").arg((*it).first);
+        result << QStringLiteral("# %1").arg((*it).first);
 
-    result << QString("% Deleted");
+    result << QStringLiteral("% Deleted");
 
     emit gotAlbums(result);
 }
@@ -403,9 +402,10 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
     QTime tmr;
     tmr.start();
 
-    QString tqr = QString("SELECT files.name, filename, cover, pagesCount, fileSize, fileMagic, fileDT, "
-                         "addingDT, files.id, albums.name, files.preferredRendering "
-                         "FROM files LEFT JOIN albums ON files.album=albums.id ");
+    QString tqr = QStringLiteral("SELECT files.name, filename, cover, pagesCount, fileSize, "
+                                 "fileMagic, fileDT, addingDT, files.id, albums.name, "
+                                 "files.preferredRendering "
+                                 "FROM files LEFT JOIN albums ON files.album=albums.id ");
     bool specQuery = false;
     bool checkFS = false;
 
@@ -413,17 +413,17 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
     bool searchBind = false;
 
     if (!album.isEmpty()) {
-        if (album.startsWith("# ")) {
+        if (album.startsWith(QStringLiteral("# "))) {
             QString name = album.mid(2);
             if (dynAlbums.contains(name)){
                 specQuery = true;
                 tqr += dynAlbums.value(name);
             }
-        } else if (album.startsWith("% Deleted")) {
+        } else if (album.startsWith(QStringLiteral("% Deleted"))) {
             specQuery = true;
             checkFS = true;
         } else {
-            tqr += QString("WHERE (album="
+            tqr += QStringLiteral("WHERE (album="
                            "  (SELECT id FROM albums WHERE (name = ?))"
                            ") ");
             albumBind = true;
@@ -433,17 +433,17 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
         if (sqlDbEngine(db)==Z::MySQL)
             sqr = prepareSearchQuery(search);
         if (sqr.isEmpty()) {
-            sqr = QString("WHERE (files.name LIKE ?) ");
+            sqr = QStringLiteral("WHERE (files.name LIKE ?) ");
             searchBind = true;
         }
         tqr += sqr;
     }
 
     if (!specQuery) {
-        tqr+="ORDER BY ";
+        tqr+=QStringLiteral("ORDER BY ");
         tqr+=Z::sqlColumns.value(sortOrder);
-        if (reverseOrder) tqr+=" DESC";
-        else tqr+=" ASC";
+        if (reverseOrder) tqr+=QStringLiteral(" DESC");
+        else tqr+=QStringLiteral(" ASC");
     }
 
     int idx = 0;
@@ -453,7 +453,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
     if (albumBind)
         qr.addBindValue(album);
     if (searchBind)
-        qr.addBindValue(QString("%%%1%%").arg(search));
+        qr.addBindValue(QStringLiteral("%%%1%%").arg(search));
 
     if (qr.exec()) {
         preferredRendering.clear();
@@ -500,12 +500,12 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     if (!db.isValid()) return;
 
     QString fname(fileName);
-    bool dynManga = fname.startsWith("#DYN#");
+    bool dynManga = fname.startsWith(QStringLiteral("#DYN#"));
     if (dynManga)
-        fname.remove(QRegExp("^#DYN#"));
+        fname.remove(QRegExp(QStringLiteral("^#DYN#")));
 
     QSqlQuery qr(db);
-    qr.prepare("SELECT name FROM files WHERE (filename=?)");
+    qr.prepare(QStringLiteral("SELECT name FROM files WHERE (filename=?)"));
     qr.addBindValue(fname);
     if (!qr.exec()) {
         qDebug() << "file search query failed";
@@ -513,7 +513,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
         return;
     }
     if (!qr.next()) {
-        emit errorMsg("Opened file not found in library.");
+        emit errorMsg(tr("Opened file not found in library."));
         sqlCloseBase(db);
         return;
     }
@@ -545,7 +545,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const int pageNum)
     }
 
     QByteArray pba = createMangaPreview(za,pageNum);
-    qr.prepare("UPDATE files SET cover=? WHERE (filename=?)");
+    qr.prepare(QStringLiteral("UPDATE files SET cover=? WHERE (filename=?)"));
     qr.bindValue(0,pba);
     qr.bindValue(1,fname);
     if (!qr.exec()) {
@@ -568,11 +568,10 @@ void ZDB::sqlRescanIndexedDirs()
     if (!db.isValid()) return;
 
     QStringList dirs;
-    dirs.clear();
 
-    QSqlQuery qr("SELECT filename "
+    QSqlQuery qr(QStringLiteral("SELECT filename "
                  "FROM files "
-                 "WHERE NOT(fileMagic='DYN')",db);
+                 "WHERE NOT(fileMagic='DYN')"),db);
     while (qr.next()) {
         QFileInfo fi(qr.value(0).toString());
         if (!fi.exists()) continue;
@@ -594,8 +593,8 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
 {
     bool dynManga = false;
     QString fname = fileName;
-    if (fname.startsWith("#DYN#")) {
-        fname.remove(QRegExp("^#DYN#"));
+    if (fname.startsWith(QStringLiteral("#DYN#"))) {
+        fname.remove(QRegExp(QStringLiteral("^#DYN#")));
         dynManga = true;
     }
 
@@ -623,8 +622,8 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     if (!db.isValid()) return;
 
     QSqlQuery qr(db);
-    qr.prepare("UPDATE files SET pagesCount=?, fileSize=?, fileMagic=?, fileDT=? "
-               "WHERE (filename=?)");
+    qr.prepare(QStringLiteral("UPDATE files SET pagesCount=?, fileSize=?, fileMagic=?, fileDT=? "
+               "WHERE (filename=?)"));
 
     qr.bindValue(0,za->getPageCount());
     if (dynManga)
@@ -649,7 +648,6 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
 void ZDB::sqlSearchMissingManga()
 {
     QStringList foundFiles;
-    foundFiles.clear();
 
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
@@ -658,14 +656,15 @@ void ZDB::sqlSearchMissingManga()
 
     for (const QString& d : qAsConst(indexedDirs)) {
         QDir dir(d);
-        const QFileInfoList fl = dir.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable);
+        const QFileInfoList fl = dir.entryInfoList(
+                                     QStringList(QStringLiteral("*")), QDir::Files | QDir::Readable);
         for (const QFileInfo &fi : fl)
             filenames << fi.absoluteFilePath();
     }
 
     QSqlQuery qr(db);
 
-    qr.prepare("DROP TABLE IF EXISTS `tmp_exfiles`");
+    qr.prepare(QStringLiteral("DROP TABLE IF EXISTS `tmp_exfiles`"));
     if (!qr.exec()) {
         emit errorMsg(tr("Unable to drop table `tmp_exfiles`\n\n%1\n%2")
                       .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
@@ -677,26 +676,30 @@ void ZDB::sqlSearchMissingManga()
 
     qr.clear();
     if (sqlDbEngine(db)==Z::MySQL)
-        qr.prepare("CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
+        qr.prepare(QStringLiteral("CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
                    "`filename` varchar(16383), INDEX ifilename (filename)"
-                   ") ENGINE=MyISAM DEFAULT CHARSET=utf8");
+                   ") ENGINE=MyISAM DEFAULT CHARSET=utf8"));
     else if (sqlDbEngine(db)==Z::SQLite)
-        qr.prepare("CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` (`filename` TEXT)");
+        qr.prepare(QStringLiteral("CREATE TEMPORARY TABLE IF NOT EXISTS "
+                                  "`tmp_exfiles` (`filename` TEXT)"));
     if (!qr.exec()) {
         emit errorMsg(tr("Unable to create temporary table `tmp_exfiles`\n\n%1\n%2")
                       .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-        problems[tr("Create tables - tmp_exfiles")] = tr("Unable to create temporary table `tmp_exfiles`.\n"
-                                                         "CREATE TABLE query failed.");
+        problems[tr("Create tables - tmp_exfiles")] =
+                tr("Unable to create temporary table `tmp_exfiles`.\n"
+                   "CREATE TABLE query failed.");
         sqlCloseBase(db);
         return;
     }
 
+    QVariantList sl;
     while (!filenames.isEmpty()) {
-        QVariantList sl;
+        sl.clear();
+        sl.reserve(64);
         while (sl.count()<64 && !filenames.isEmpty())
             sl << filenames.takeFirst();
         if (!sl.isEmpty()) {
-            qr.prepare("INSERT INTO `tmp_exfiles` VALUES (?)");
+            qr.prepare(QStringLiteral("INSERT INTO `tmp_exfiles` VALUES (?)"));
             qr.addBindValue(sl);
             if (!qr.execBatch()) {
                 emit errorMsg(tr("Unable to load data to table `tmp_exfiles`\n\n%1\n%2")
@@ -710,17 +713,17 @@ void ZDB::sqlSearchMissingManga()
         }
     }
 
-    qr.prepare("SELECT tmp_exfiles.filename FROM tmp_exfiles "
+    qr.prepare(QStringLiteral("SELECT tmp_exfiles.filename FROM tmp_exfiles "
                "LEFT JOIN files ON tmp_exfiles.filename=files.filename "
                "LEFT JOIN ignored_files ON tmp_exfiles.filename=ignored_files.filename "
-               "WHERE (files.filename IS NULL) AND (ignored_files.filename IS NULL)");
+               "WHERE (files.filename IS NULL) AND (ignored_files.filename IS NULL)"));
     if (qr.exec()) {
         while (qr.next())
             foundFiles << qr.value(0).toString();
     } else
         qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
 
-    qr.prepare("DROP TABLE `tmp_exfiles`");
+    qr.prepare(QStringLiteral("DROP TABLE `tmp_exfiles`"));
     if (!qr.exec())
         qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
 
@@ -751,12 +754,13 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
     QSqlQuery qr(db);
 
     if (cleanTable) {
-        qr.prepare("DELETE FROM `ignored_files`");
+        qr.prepare(QStringLiteral("DELETE FROM `ignored_files`"));
         if (!qr.exec()) {
             emit errorMsg(tr("Unable to delete from table `ignored_files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Delete from table - ignored_files")] = tr("Unable to delete from table `ignored_files`.\n"
-                                                                   "DELETE FROM query failed.");
+            problems[tr("Delete from table - ignored_files")] =
+                    tr("Unable to delete from table `ignored_files`.\n"
+                       "DELETE FROM query failed.");
             sqlCloseBase(db);
             return;
         }
@@ -764,7 +768,7 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
     }
 
     for (const QString& file : files) {
-        qr.prepare("INSERT INTO ignored_files (filename) VALUES (?)");
+        qr.prepare(QStringLiteral("INSERT INTO ignored_files (filename) VALUES (?)"));
         qr.addBindValue(file);
         if (!qr.exec()) {
             emit errorMsg(tr("Unable to add ignored file `%1`\n%2\n%3").
@@ -810,7 +814,7 @@ bool ZDB::sqlSetPreferredRendering(const QString &filename, int mode)
     if (!db.isValid()) return Z::PDFRendering::Autodetect;
 
     QSqlQuery qr(db);
-    qr.prepare("UPDATE files SET preferredRendering=? WHERE filename=?");
+    qr.prepare(QStringLiteral("UPDATE files SET preferredRendering=? WHERE filename=?"));
     qr.bindValue(0,mode);
     qr.bindValue(1,filename);
     bool res = true;
@@ -837,10 +841,11 @@ void ZDB::sqlGetTablesDescription()
         return;
     }
 
-    QSqlRecord rec = db.driver()->record("files");
+    QSqlRecord rec = db.driver()->record(QStringLiteral("files"));
     if (rec.isEmpty()) return;
 
     QStringList names, types;
+    names.reserve(rec.count());
     int nl = 0; int tl = 0;
     for (int i=0; i < rec.count(); i++)
     {
@@ -850,33 +855,33 @@ void ZDB::sqlGetTablesDescription()
             case QVariant::UInt:
             case QVariant::ULongLong:
             case QVariant::LongLong:
-                types << "NUMERIC";
+                types << QStringLiteral("NUMERIC");
                 break;
             case QVariant::String:
             case QVariant::StringList:
-                types << "STRING";
+                types << QStringLiteral("STRING");
                 break;
             case QVariant::Icon:
             case QVariant::Image:
             case QVariant::Bitmap:
             case QVariant::Pixmap:
             case QVariant::ByteArray:
-                types << "BLOB";
+                types << QStringLiteral("BLOB");
                 break;
             case QVariant::Date:
-                types << "DATE";
+                types << QStringLiteral("DATE");
                 break;
             case QVariant::DateTime:
-                types << "DATETIME";
+                types << QStringLiteral("DATETIME");
                 break;
             case QVariant::Time:
-                types << "TIME";
+                types << QStringLiteral("TIME");
                 break;
             case QVariant::Double:
-                types << "DOUBLE";
+                types << QStringLiteral("DOUBLE");
                 break;
             default:
-                types << "unknown";
+                types << QStringLiteral("unknown");
                 break;
         }
         if (names.last().length()>nl)
@@ -889,16 +894,18 @@ void ZDB::sqlGetTablesDescription()
     sqlCloseBase(db);
 
     QStringList res;
-    QString s1("Field");
-    QString s2("Type");
-    res << "Fields description:";
-    res << "| "+s1.leftJustified(nl,' ')+" | "+s2.leftJustified(tl,' ')+" |";
+    QString s1(QStringLiteral("Field"));
+    QString s2(QStringLiteral("Type"));
+    res << QStringLiteral("Fields description:");
+    res << QStringLiteral("| ")+s1.leftJustified(nl,' ')+QStringLiteral(" | ")
+           +s2.leftJustified(tl,' ')+QStringLiteral(" |");
     s1.fill('-',nl); s2.fill('-',tl);
-    res << "+-"+s1+"-+-"+s2+"-+";
+    res << QStringLiteral("+-")+s1+QStringLiteral("-+-")+s2+QStringLiteral("-+");
     for (int i=0;i<names.count();i++) {
         s1 = names.at(i);
         s2 = types.at(i);
-        res << "| "+s1.leftJustified(nl,' ')+" | "+s2.leftJustified(tl,' ')+" |";
+        res << QStringLiteral("| ")+s1.leftJustified(nl,' ')
+               +QStringLiteral(" | ")+s2.leftJustified(tl,' ')+QStringLiteral(" |");
     }
     emit gotTablesDescription(res.join('\n'));
 }
@@ -909,11 +916,11 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         emit errorMsg(tr("Album name cannot be empty"));
         return;
     }
-    if (album.startsWith("#") || album.startsWith("%")) {
+    if (album.startsWith('#') || album.startsWith('%')) {
         emit errorMsg(tr("Reserved character in album name"));
         return;
     }
-    if (aFiles.first().startsWith("###DYNAMIC###")) {
+    if (aFiles.first().startsWith(QStringLiteral("###DYNAMIC###"))) {
         fsAddImagesDir(aFiles.last(),album);
         return;
     }
@@ -932,7 +939,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
     QSqlQuery qr(db);
 
-    qr.prepare("SELECT id FROM albums WHERE (name=?)");
+    qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
     qr.addBindValue(album);
     if (qr.exec()) {
         if (qr.next())
@@ -940,7 +947,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     }
 
     if (ialbum==-1) {
-        qr.prepare("INSERT INTO albums (name) VALUES (?)");
+        qr.prepare(QStringLiteral("INSERT INTO albums (name) VALUES (?)"));
         qr.addBindValue(album);
         if (!qr.exec()) {
             emit errorMsg(tr("Unable to create album `%1`\n%2\n%3").
@@ -951,7 +958,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         bool ok;
         ialbum = qr.lastInsertId().toInt(&ok);
         if (!ok) {
-            qr.prepare("SELECT id FROM albums WHERE (name=?)");
+            qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
             qr.addBindValue(album);
             if (qr.exec()) {
                 if (qr.next())
@@ -985,8 +992,9 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         }
 
         QByteArray pba = createMangaPreview(za,0);
-        qr.prepare("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
-                   "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        qr.prepare(QStringLiteral("INSERT INTO files (name, filename, album, cover, "
+                                  "pagesCount, fileSize, fileMagic, fileDT, addingDT) "
+                                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"));
         qr.bindValue(0,fi.completeBaseName());
         qr.bindValue(1,files.at(i));
         qr.bindValue(2,ialbum);
@@ -1007,7 +1015,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         delete za;
 
         QString s = fi.fileName();
-        if (s.length()>60) s = s.left(60)+"...";
+        if (s.length()>60) s = s.left(60)+QStringLiteral("...");
         emit showProgressState(100*i/files.count(),s);
         QApplication::processEvents();
 
@@ -1057,18 +1065,20 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 {
     QFileInfo fi(dir);
     if (!fi.isReadable()) {
-        emit errorMsg(QString("Updating aborted for %1 as unreadable").arg(dir));
+        emit errorMsg(QStringLiteral("Updating aborted for %1 as unreadable").arg(dir));
         return;
     }
 
     QDir d(dir);
-    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList("*"), QDir::Files | QDir::Readable));
+    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList(QStringLiteral("*")),
+                                                                     QDir::Files | QDir::Readable));
     QStringList files;
+    files.reserve(fl.count());
     for (const QFileInfo &fi : fl)
         files << fi.absoluteFilePath();
 
     if (files.isEmpty()) {
-        emit errorMsg("Could not find supported image files in specified directory");
+        emit errorMsg(tr("Could not find supported image files in specified directory"));
         return;
     }
 
@@ -1079,7 +1089,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     int ialbum = -1;
 
     QSqlQuery qr(db);
-    qr.prepare("SELECT id FROM albums WHERE (name=?)");
+    qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
     qr.addBindValue(album);
     if (qr.exec()) {
         if (qr.next())
@@ -1087,7 +1097,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     }
 
     if (ialbum==-1) {
-        qr.prepare("INSERT INTO albums (name) VALUES (?)");
+        qr.prepare(QStringLiteral("INSERT INTO albums (name) VALUES (?)"));
         qr.addBindValue(album);
         if (!qr.exec()) {
             emit errorMsg(tr("Unable to create album `%1`\n%2\n%3").
@@ -1098,7 +1108,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
         bool ok;
         ialbum = qr.lastInsertId().toInt(&ok);
         if (!ok) {
-            qr.prepare("SELECT id FROM albums WHERE (name=?)");
+            qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
             qr.addBindValue(album);
             if (qr.exec()) {
                 if (qr.next())
@@ -1130,15 +1140,16 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
     // add dynamic album to base
     int cnt = 0;
-    qr.prepare("INSERT INTO files (name, filename, album, cover, pagesCount, fileSize, "
-               "fileMagic, fileDT, addingDT) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    qr.prepare(QStringLiteral("INSERT INTO files (name, filename, album, cover, pagesCount, "
+                              "fileSize, fileMagic, fileDT, addingDT) VALUES "
+                              "(?, ?, ?, ?, ?, ?, ?, ?, ?)"));
     qr.bindValue(0,d.dirName());
     qr.bindValue(1,d.absolutePath());
     qr.bindValue(2,ialbum);
     qr.bindValue(3,pba);
     qr.bindValue(4,files.count());
     qr.bindValue(5,0);
-    qr.bindValue(6,QString("DYN"));
+    qr.bindValue(6,QStringLiteral("DYN"));
     qr.bindValue(7,fi.birthTime());
     qr.bindValue(8,QDateTime::currentDateTime());
     if (!qr.exec())
@@ -1156,9 +1167,9 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
 QString ZDB::prepareSearchQuery(const QString &search)
 {
-    const QStringList operators({" +", " ~", " -", "* ", "\""});
+    static const QStringList operators({" +", " ~", " -", "* ", "\""});
     QString msearch = search;
-    if (search.contains(QRegExp("\\s"))) {
+    if (search.contains(QRegExp(QStringLiteral("\\s")))) {
         bool haveops = false;
         for (const auto &i : operators)
             if (msearch.contains(i)) {
@@ -1166,11 +1177,11 @@ QString ZDB::prepareSearchQuery(const QString &search)
                 break;
             }
         if (!haveops) {
-            msearch.replace(QRegExp("\\s+"),"* +");
+            msearch.replace(QRegExp(QStringLiteral("\\s+")),QStringLiteral("* +"));
             msearch.prepend(QChar('+'));
             msearch.append(QChar('*'));
         }
-        return QString("WHERE MATCH(files.name) AGAINST('%1' IN BOOLEAN MODE) ")
+        return QStringLiteral("WHERE MATCH(files.name) AGAINST('%1' IN BOOLEAN MODE) ")
                 .arg(escapeParam(msearch));
     }
     return QString();
@@ -1181,23 +1192,23 @@ void ZDB::sqlCancelAdding()
     wasCanceled = true;
 }
 
-void ZDB::sqlDelFiles(const QIntList &dbids, const bool fullDelete)
+void ZDB::sqlDelFiles(const QIntVector &dbids, const bool fullDelete)
 {
     if (dbids.count()==0) return;
 
-    QString delqr = QString("DELETE FROM files WHERE id IN (");
+    QString delqr = QStringLiteral("DELETE FROM files WHERE id IN (");
     for (int i=0;i<dbids.count();i++) {
-        if (i>0) delqr+=",";
-        delqr+=QString("%1").arg(dbids.at(i));
+        if (i>0) delqr+=QStringLiteral(",");
+        delqr+=QStringLiteral("%1").arg(dbids.at(i));
     }
-    delqr+=")";
+    delqr+=QStringLiteral(")");
 
-    QString fsqr = QString("SELECT filename,fileMagic FROM files WHERE id IN (");
+    QString fsqr = QStringLiteral("SELECT filename,fileMagic FROM files WHERE id IN (");
     for (int i=0;i<dbids.count();i++) {
-        if (i>0) fsqr+=",";
-        fsqr+=QString("%1").arg(dbids.at(i));
+        if (i>0) fsqr+=QStringLiteral(",");
+        fsqr+=QStringLiteral("%1").arg(dbids.at(i));
     }
-    fsqr+=")";
+    fsqr+=QStringLiteral(")");
 
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
@@ -1211,7 +1222,7 @@ void ZDB::sqlDelFiles(const QIntList &dbids, const bool fullDelete)
             while (qr.next()) {
                 QString fname = qr.value(0).toString();
                 QString magic = qr.value(1).toString();
-                if (magic!="DYN")
+                if (magic!=QStringLiteral("DYN"))
                     if (!QFile::remove(fname))
                         okdel = false;
             }
@@ -1246,7 +1257,8 @@ void ZDB::sqlDelEmptyAlbums()
     }
 
     QSqlQuery qr(db);
-    if (!qr.exec("DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album FROM files)"))
+    if (!qr.exec(QStringLiteral("DELETE FROM albums WHERE id NOT IN "
+                                "(SELECT DISTINCT album FROM files)")))
         qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
 
     sqlCloseBase(db);
@@ -1256,14 +1268,14 @@ void ZDB::sqlDelEmptyAlbums()
 void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
 {
     if (oldName==newName || oldName.isEmpty() || newName.isEmpty()) return;
-    if (newName.startsWith("#") || oldName.startsWith("#")) return;
-    if (newName.startsWith("%") || oldName.startsWith("%")) return;
+    if (newName.startsWith('#') || oldName.startsWith('#')) return;
+    if (newName.startsWith('%') || oldName.startsWith('%')) return;
 
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
 
     QSqlQuery qr(db);
-    qr.prepare("UPDATE albums SET name=? WHERE name=?");
+    qr.prepare(QStringLiteral("UPDATE albums SET name=? WHERE name=?"));
     qr.bindValue(0,newName);
     qr.bindValue(1,oldName);
     if (!qr.exec()) {
@@ -1282,7 +1294,7 @@ void ZDB::sqlDelAlbum(const QString &album)
     if (!db.isValid()) return;
 
     QSqlQuery qr(db);
-    qr.prepare("SELECT id FROM `albums` WHERE name=?");
+    qr.prepare(QStringLiteral("SELECT id FROM `albums` WHERE name=?"));
     qr.addBindValue(album);
     int id = -1;
 
@@ -1296,7 +1308,7 @@ void ZDB::sqlDelAlbum(const QString &album)
         return;
     }
 
-    qr.prepare("DELETE FROM files WHERE album=?");
+    qr.prepare(QStringLiteral("DELETE FROM files WHERE album=?"));
     qr.addBindValue(id);
     if (!qr.exec()) {
         QString msg = tr("Unable to delete manga\n%1\n%2").

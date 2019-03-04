@@ -155,7 +155,7 @@ bool ZPdfReader::openFile()
     }
 
     for (int i=0;i<numPages;i++) {
-        sortList << ZFileEntry(QString("%1").arg(i,6,10,QChar('0')),i);
+        sortList << ZFileEntry(QStringLiteral("%1").arg(i,6,10,QChar('0')),i);
     }
 
     std::sort(sortList.begin(),sortList.end());
@@ -306,7 +306,7 @@ QImage ZPdfReader::loadPageImage(int num)
 
 QString ZPdfReader::getMagic()
 {
-    return QString("PDF");
+    return QStringLiteral("PDF");
 }
 
 ZPDFImg::ZPDFImg()

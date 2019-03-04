@@ -99,7 +99,7 @@ signals:
     void dbAddFiles(const QStringList& aFiles, const QString& album);
     void dbGetFiles(const QString& album, const QString& search, const Z::Ordering order,
                     const bool reverseOrder);
-    void dbDelFiles(const QIntList& dbids, const bool fullDelete);
+    void dbDelFiles(const QIntVector& dbids, const bool fullDelete);
     void dbDeleteAlbum(const QString& album);
     bool dbSetPreferredRendering(const QString& filename, int mode);
 

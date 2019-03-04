@@ -12,15 +12,15 @@ bool ZSingleImageReader::openFile()
     if (opened)
         return false;
 
-    if (!fileName.startsWith(":CLIP:")) {
+    if (!fileName.startsWith(QStringLiteral(":CLIP:"))) {
         if (!page.load(fileName)) {
             page = QImage();
             return false;
         }
     } else {
-        fileName.remove(0,QString(":CLIP:").length());
+        fileName.remove(0,QStringLiteral(":CLIP:").length());
         QByteArray imgs = QByteArray::fromBase64(fileName.toLatin1());
-        fileName = "clipboard";
+        fileName = QStringLiteral("clipboard");
         QBuffer buf(&imgs);
         bool loaded = page.load(&buf,"BMP");
         buf.close();
@@ -67,7 +67,7 @@ QImage ZSingleImageReader::loadPageImage(int)
 
 QString ZSingleImageReader::getMagic()
 {
-    return QString("AUX");
+    return QStringLiteral("AUX");
 }
 
 QString ZSingleImageReader::getInternalPath(int)

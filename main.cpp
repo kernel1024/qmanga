@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 #endif
 
     qInstallMessageHandler(stdConsoleOutput);
-    qRegisterMetaType<QIntList>("QIntList");
+    qRegisterMetaType<QIntVector>("QIntVector");
     qRegisterMetaType<QImageHash>("QImageHash");
     qRegisterMetaType<SQLMangaEntry>("SQLMangaEntry");
     qRegisterMetaType<QByteHash>("QByteHash");

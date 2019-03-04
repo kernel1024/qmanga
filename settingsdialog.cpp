@@ -52,9 +52,9 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     editOCRDatapath = ui->editOCRDatapath;
 
 #ifdef Q_OS_WIN
-    ui->editRar->setPlaceholderText("rar.exe");
+    ui->editRar->setPlaceholderText(QStringLiteral("rar.exe"));
 #else
-    ui->editRar->setPlaceholderText("rar");
+    ui->editRar->setPlaceholderText(QStringLiteral("rar"));
 #endif
 
     connect(ui->btnDeleteBookmark,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
@@ -125,6 +125,7 @@ QColor SettingsDialog::getFrameColor()
 QStringList SettingsDialog::getIgnoredFiles()
 {
     QStringList res;
+    res.reserve(ui->listIgnoredFiles->count());
     for(int i=0;i<ui->listIgnoredFiles->count();i++)
         res << ui->listIgnoredFiles->item(i)->data(Qt::UserRole).toString();
     return res;
@@ -146,7 +147,7 @@ void SettingsDialog::setSearchEngines(const ZStrMap &engines)
 {
     ui->listSearch->clear();
     for (auto it = engines.constKeyValueBegin(), end = engines.constKeyValueEnd(); it != end; ++it) {
-        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ] %3").
+        QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ] %3").
                                                   arg((*it).first,(*it).second,
                 (*it).first==zg->defaultSearchEngine ? tr("(default)") : QString()));
         li->setData(Qt::UserRole,(*it).first);
@@ -230,8 +231,8 @@ void SettingsDialog::updateTranslatorLanguages()
 void SettingsDialog::addSearchEngine()
 {
     ZStrMap data;
-    data["Url template"]=QString();
-    data["Menu title"]=QString();
+    data[tr("Url template")]=QString();
+    data[tr("Menu title")]=QString();
 
     QString hlp = tr("In the url template you can use following substitutions\n"
                      "  %s - search text\n"
@@ -241,16 +242,16 @@ void SettingsDialog::addSearchEngine()
     if (dlg->exec()) {
         data = dlg->getInputData();
 
-        if (getSearchEngines().keys().contains(data["Menu title"]))
+        if (getSearchEngines().keys().contains(data[tr("Menu title")]))
             QMessageBox::warning(this,tr("QManga"),tr("Unable to add two or more engines with same names.\n"
                                                       "Use another name for new engine."));
         else {
-            QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ] %3").
-                                                      arg(data["Menu title"],
-                                                      data["Url template"],
-                    data["Menu title"]==zg->defaultSearchEngine ? tr("(default)") : QString()));
-            li->setData(Qt::UserRole,data["Menu title"]);
-            li->setData(Qt::UserRole+1,data["Url template"]);
+            QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ] %3").
+                                                      arg(data[tr("Menu title")],
+                                                      data[tr("Url template")],
+                    data[tr("Menu title")]==zg->defaultSearchEngine ? tr("(default)") : QString()));
+            li->setData(Qt::UserRole,data[tr("Menu title")]);
+            li->setData(Qt::UserRole+1,data[tr("Url template")]);
             ui->listSearch->addItem(li);
         }
     }
@@ -353,14 +354,14 @@ void SettingsDialog::updateIdxFont(const QFont &f)
 {
     idxFont = f;
     ui->labelIdxFont->setFont(idxFont);
-    ui->labelIdxFont->setText(QString("%1, %2").arg(f.family()).arg(f.pointSize()));
+    ui->labelIdxFont->setText(QStringLiteral("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
 void SettingsDialog::updateOCRFont(const QFont &f)
 {
     ocrFont = f;
     ui->labelOCRFont->setFont(ocrFont);
-    ui->labelOCRFont->setText(QString("%1, %2").arg(f.family()).arg(f.pointSize()));
+    ui->labelOCRFont->setText(QStringLiteral("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
 void SettingsDialog::updateFrameColor(const QColor &c)
@@ -385,7 +386,7 @@ void SettingsDialog::dynAdd()
     emit getTablesDescription();
 
     if (dlg->exec()) {
-        QListWidgetItem* li = new QListWidgetItem(QString("%1 [ %2 ]").
+        QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ]").
                                                   arg(dlg->getDlgEdit1(),
                                                   dlg->getDlgEdit2()));
         li->setData(Qt::UserRole,dlg->getDlgEdit1());
@@ -407,7 +408,7 @@ void SettingsDialog::dynEdit()
                         "from FROM clause to the end of query.\n"
                         "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
     if (dlg->exec()) {
-        ui->listDynAlbums->selectedItems().first()->setText(QString("%1 [ %2 ]").
+        ui->listDynAlbums->selectedItems().first()->setText(QStringLiteral("%1 [ %2 ]").
                                                             arg(dlg->getDlgEdit1(),
                                                             dlg->getDlgEdit2()));
         ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole,dlg->getDlgEdit1());
@@ -419,7 +420,7 @@ void SettingsDialog::dynEdit()
 
 void SettingsDialog::openRar()
 {
-    QString filter = QString("*");
+    QString filter = QStringLiteral("*");
 #ifdef Q_OS_WIN
     filter = tr("Executable files (*.exe)");
 #endif

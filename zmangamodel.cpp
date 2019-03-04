@@ -54,7 +54,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         SQLMangaEntry itm = mList.at(idx);
         QImage p = itm.cover;
         if (p.isNull())
-            p = QImage(QString(":/32/edit-delete"));
+            p = QImage(QStringLiteral(":/32/edit-delete"));
 
         p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
         if (p.height()<rp.height())
@@ -99,15 +99,15 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
                 maxLen = qRound(3.5 * pixmapSize->value() / fm.averageCharWidth());
                 if (!listMode && tmp.length()>maxLen) {
                     tmp.truncate(maxLen);
-                    tmp.append(QString("..."));
+                    tmp.append(QStringLiteral("..."));
                 }
                 // -----
                 return tmp;
             case 1: return t.album;
-            case 2: return QString("%1").arg(t.pagesCount);
+            case 2: return QStringLiteral("%1").arg(t.pagesCount);
             case 3: return formatSize(t.fileSize);
-            case 4: return t.addingDT.toString("yyyy-MM-dd");
-            case 5: return t.fileDT.toString("yyyy-MM-dd");
+            case 4: return t.addingDT.toString(QStringLiteral("yyyy-MM-dd"));
+            case 5: return t.fileDT.toString(QStringLiteral("yyyy-MM-dd"));
             case 6: return t.fileMagic;
         }
         return QVariant();
@@ -186,7 +186,7 @@ void ZMangaModel::deleteAllItems()
     endRemoveRows();
 }
 
-void ZMangaModel::deleteItems(const QIntList &dbids)
+void ZMangaModel::deleteItems(const QIntVector &dbids)
 {
     for (const auto &i : dbids) {
         int idx = mList.indexOf(SQLMangaEntry(i));

@@ -106,7 +106,7 @@ QImage ZZipReader::loadPageImage(int num)
 
 QString ZZipReader::getMagic()
 {
-    return QString("ZIP");
+    return QStringLiteral("ZIP");
 }
 
 QString ZZipReader::getInternalPath(int idx)

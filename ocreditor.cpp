@@ -16,20 +16,26 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     ui->setupUi(this);
 
 #ifdef QT_DBUS_LIB
-    translator = new OrgKernel1024JpreaderAuxtranslatorInterface("org.kernel1024.jpreader","/auxTranslator",
-                                                                 QDBusConnection::sessionBus(),this);
+    translator = new OrgKernel1024JpreaderAuxtranslatorInterface(
+                     QStringLiteral("org.kernel1024.jpreader"),
+                     QStringLiteral("/auxTranslator"),
+                     QDBusConnection::sessionBus(),this);
 
-    browser = new OrgKernel1024JpreaderBrowsercontrollerInterface("org.kernel1024.jpreader","/browserController",
-                                                                 QDBusConnection::sessionBus(),this);
+    browser = new OrgKernel1024JpreaderBrowsercontrollerInterface(
+                  QStringLiteral("org.kernel1024.jpreader"),
+                  QStringLiteral("/browserController"),
+                  QDBusConnection::sessionBus(),this);
 
-    dictionary = new OrgQjradDictionaryInterface("org.qjrad.dictionary","/",
+    dictionary = new OrgQjradDictionaryInterface(QStringLiteral("org.qjrad.dictionary"),
+                                                 QStringLiteral("/"),
                                                  QDBusConnection::sessionBus(),this);
 #endif
     ui->editor->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->editor,&QPlainTextEdit::customContextMenuRequested,
             this,&ZOCREditor::contextMenu);
 
-    dictSearch = new QAction(QIcon(":/16/document-preview"),tr("Dictionary search"),this);
+    dictSearch = new QAction(QIcon(QStringLiteral(":/16/document-preview")),
+                             tr("Dictionary search"),this);
     dictSearch->setCheckable(true);
     dictSearch->setChecked(false);
     connect(ui->editor,&QPlainTextEdit::selectionChanged,
@@ -127,19 +133,19 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 
     QAction *ac;
 
-    ac = new QAction(QIcon(":/16/edit-cut"),tr("Cut"),nullptr);
+    ac = new QAction(QIcon(QStringLiteral(":/16/edit-cut")),tr("Cut"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::cut);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/16/edit-copy"),tr("Copy"),nullptr);
+    ac = new QAction(QIcon(QStringLiteral(":/16/edit-copy")),tr("Copy"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::copy);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/16/edit-paste"),tr("Paste"),nullptr);
+    ac = new QAction(QIcon(QStringLiteral(":/16/edit-paste")),tr("Paste"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::paste);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(":/16/edit-clear"),tr("Clear"),nullptr);
+    ac = new QAction(QIcon(QStringLiteral(":/16/edit-clear")),tr("Clear"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::clear);
     cm.addAction(ac);
 
@@ -153,17 +159,19 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 #ifdef QT_DBUS_LIB
         cm.addAction(dictSearch);
 
-        ac = new QAction(QIcon(":/16/accessories-dictionary"),tr("Show qjrad window"),nullptr);
+        ac = new QAction(QIcon(QStringLiteral(":/16/accessories-dictionary")),
+                         tr("Show qjrad window"),nullptr);
         connect(ac,&QAction::triggered,this,[this,sText](){
             if (dictionary->isValid())
                 dictionary->showDictionaryWindow(sText);
         });
         cm.addAction(ac);
 
-        ac = new QAction(QIcon(":/16/jpreader"),tr("Search with jpreader"),nullptr);
+        ac = new QAction(QIcon(QStringLiteral(":/16/jpreader")),
+                         tr("Search with jpreader"),nullptr);
         connect(ac,&QAction::triggered,this,[this,sText](){
             if (browser->isValid()) {
-                if (sText.trimmed().startsWith("http",Qt::CaseInsensitive)) {
+                if (sText.trimmed().startsWith(QStringLiteral("http"),Qt::CaseInsensitive)) {
                     QUrl u = QUrl::fromUserInput(sText);
                     if (u.isValid())
                         browser->openUrl(u.toString());
@@ -222,7 +230,7 @@ void ZOCREditor::showDictToolTip(const QString &html)
     t->setOpenExternalLinks(false);
     t->setTextInteractionFlags(Qt::LinksAccessibleByMouse | Qt::TextSelectableByMouse);
     t->setMaximumSize(350,350);
-    t->setStyleSheet("QLabel { background: #fefdeb; }");
+    t->setStyleSheet(QStringLiteral("QLabel { background: #fefdeb; }"));
 
     connect(t,&QLabel::linkActivated,this,&ZOCREditor::showSuggestedTranslation);
 
@@ -233,7 +241,7 @@ void ZOCREditor::showSuggestedTranslation(const QString &link)
 {
     QUrl url(link);
     QUrlQuery requ(url);
-    QString word = requ.queryItemValue("word");
+    QString word = requ.queryItemValue(QStringLiteral("word"));
     if (word.startsWith('%')) {
         QByteArray bword = word.toLatin1();
         if (!bword.isNull() && !bword.isEmpty())

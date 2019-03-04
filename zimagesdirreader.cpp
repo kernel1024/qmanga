@@ -18,8 +18,9 @@ bool ZImagesDirReader::openFile()
     QDir d(fileName);
     if (!d.isReadable()) return false;
     const QFileInfoList fl = filterSupportedImgFiles(
-                                 d.entryInfoList(QStringList("*"),
-                                                 QDir::Readable | QDir::Files));
+                                 d.entryInfoList(
+                                     QStringList(QStringLiteral("*")),
+                                     QDir::Readable | QDir::Files));
     for (int i=0;i<fl.count();i++)
         sortList << ZFileEntry(fl.at(i).absoluteFilePath(),i);
 
@@ -52,7 +53,10 @@ QByteArray ZImagesDirReader::loadPage(int num)
 
     QDir d(fileName);
     if (!d.isReadable()) return res;
-    const QFileInfoList fl = filterSupportedImgFiles(d.entryInfoList(QStringList("*"), QDir::Readable | QDir::Files));
+    const QFileInfoList fl = filterSupportedImgFiles(
+                                 d.entryInfoList(
+                                     QStringList(QStringLiteral("*")),
+                                     QDir::Readable | QDir::Files));
     for (const auto &fi : fl) {
         if (idx==znum) {
             if (fi.size()>(150*1024*1024)) {
@@ -85,7 +89,7 @@ QImage ZImagesDirReader::loadPageImage(int num)
 
 QString ZImagesDirReader::getMagic()
 {
-    return QString("DYN");
+    return QStringLiteral("DYN");
 }
 
 QString ZImagesDirReader::getInternalPath(int idx)

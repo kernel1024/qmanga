@@ -53,7 +53,7 @@ signals:
     void gotAlbums(const QStringList& albums);
     void gotFile(const SQLMangaEntry& file, const Z::Ordering sortOrder, const bool reverseOrder);
     void filesLoaded(const int count, const int elapsed);
-    void deleteItemsFromModel(const QIntList& dbids);
+    void deleteItemsFromModel(const QIntVector& dbids);
     void updateWatchDirList(const QStringList& dirs);
     void foundNewFiles(const QStringList& files);
     void gotTablesDescription(const QString& text);
@@ -68,7 +68,7 @@ public slots:
     void sqlGetAlbums();
     void sqlRenameAlbum(const QString& oldName, const QString& newName);
     void sqlDelAlbum(const QString& album);
-    void sqlDelFiles(const QIntList& dbids, const bool fullDelete);
+    void sqlDelFiles(const QIntVector& dbids, const bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
     void sqlGetFiles(const QString& album, const QString& search,

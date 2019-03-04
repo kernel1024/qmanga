@@ -46,7 +46,7 @@ public:
 private:
     Ui::MainWindow *ui;
     bool fullScreen;
-    QList<ZFSFile> fsScannedFiles;
+    QVector<ZFSFile> fsScannedFiles;
     QMutex fsAddFilesMutex;
     bool savedMaximized;
     QPoint savedPos;
