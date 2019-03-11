@@ -277,6 +277,8 @@ QString detectMIME(const QByteArray &buf)
 QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
                    Blitz::ScaleFilterType filter, int page, const int *currentPage)
 {
+    if (!zg) return QImage();
+
     QSize dsize = src.size().scaled(targetSize,Qt::KeepAspectRatio);
 
     Blitz::ScaleFilterType rf = zg->downscaleFilter;

@@ -595,6 +595,15 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     nt = new QAction(QIcon(":/16/go-down"),tr("Minimize window"),nullptr);
     connect(nt,&QAction::triggered,this,&ZMangaView::minimizeWindowCtx);
     cm.addAction(nt);
+
+    auto mwnd = qobject_cast<MainWindow *>(window());
+    if (mwnd) {
+        nt = new QAction(QIcon(":/16/transform-move"),tr("Show fast scroller"),nullptr);
+        nt->setCheckable(true);
+        nt->setChecked(mwnd->fastScrollPanel->isVisible());
+        connect(nt,&QAction::toggled,mwnd->fastScrollPanel,&QFrame::setVisible);
+        cm.addAction(nt);
+    }
     cm.exec(event->globalPos());
     event->accept();
 }

@@ -14,7 +14,7 @@ bool ZRarReader::openFile()
     static const QStringList rarTestParam { "-inul" };
     static const QStringList rarListParam { "vb", "--" };
 
-    if (opened)
+    if (opened || !zg)
         return false;
     sortList.clear();
 

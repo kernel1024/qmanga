@@ -38,6 +38,7 @@ public:
     QLabel* lblAverageSizes;
     QLabel* lblRotation;
     QLabel* lblCrop;
+    QFrame* fastScrollPanel;
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void centerWindow(bool moveWindow);
@@ -56,7 +57,6 @@ private:
 
 protected:
     void closeEvent(QCloseEvent * event);
-    bool eventFilter(QObject * obj, QEvent * event);
 
 signals:
     void dbAddFiles(const QStringList& aFiles, const QString& album);
@@ -78,7 +78,7 @@ public slots:
     void fastScroll(int page);
     void updateFastScrollPosition();
     void tabChanged(int idx);
-    void changeMouseMode(bool state);
+    void changeMouseMode(int mode);
     void viewerBackgroundUpdated(const QColor& color);
 
     void updateBookmarks();
@@ -100,27 +100,6 @@ public slots:
     void fsFindNewFiles();
     void fsFoundNewFiles(const QStringList& files);
     void fsAddIgnoredFiles();
-};
-
-class ZPopupFrame : public QFrame {
-    Q_OBJECT
-private:
-    MainWindow* mwnd;
-
-public:
-    explicit ZPopupFrame(QWidget* parent = nullptr);
-    void setMainWindow(MainWindow* wnd);
-
-protected:
-    void enterEvent(QEvent* event);
-    void leaveEvent(QEvent* event);
-    void hideChildren();
-    void showChildren();
-
-signals:
-    void showWidget();
-    void hideWidget();
-
 };
 
 #endif // MAINWINDOW_H

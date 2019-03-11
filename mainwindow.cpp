@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bookmarksMenu = ui->menuBookmarks;
     searchTab = ui->searchTab;
     fullScreen = false;
+    fastScrollPanel = ui->fastScrollPanel;
 
     indexerMsgBox.setWindowTitle(tr("QManga"));
 
@@ -49,17 +50,10 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar()->addPermanentWidget(lblCrop);
 
     ui->spinPosition->hide();
-    ui->fastScrollPanel->setMainWindow(this);
-    ui->fastScrollSlider->hide();
-    ui->fastScrollSlider->installEventFilter(this);
-    ui->mouseModeOCR->hide();
-    ui->mouseModePan->hide();
-    ui->mouseModeCrop->hide();
-    ui->mouseModeFrame->hide();
+    ui->fastScrollPanel->hide();
+    ui->fastScrollSlider->setAutoFillBackground(true);
 
-    ui->mouseModeFrame->setAttribute(Qt::WA_TranslucentBackground,true);
-
-    ui->mouseModeOCR->setChecked(true);
+    ui->comboMouseMode->setCurrentIndex(0);
 
     ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -110,11 +104,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->tabWidget,&QTabWidget::currentChanged,this,&MainWindow::tabChanged);
 
     connect(ui->fastScrollSlider,&QSlider::valueChanged,this,&MainWindow::fastScroll);
-    connect(ui->fastScrollPanel,&ZPopupFrame::showWidget,this,&MainWindow::updateFastScrollPosition);
 
-    connect(ui->mouseModeOCR,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
-    connect(ui->mouseModePan,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
-    connect(ui->mouseModeCrop,&QRadioButton::toggled,this,&MainWindow::changeMouseMode);
+    connect(ui->comboMouseMode,qOverload<int>(&QComboBox::currentIndexChanged),
+            this,&MainWindow::changeMouseMode);
 
     connect(ui->fsResults,&QTableWidget::customContextMenuRequested,
             this,&MainWindow::fsResultsMenuCtx);
@@ -208,16 +200,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (zg!=nullptr)
         zg->saveSettings();
     event->accept();
-}
-
-bool MainWindow::eventFilter(QObject *obj, QEvent *event)
-{
-    if (obj==ui->fastScrollSlider && event->type()==QEvent::Wheel) {
-        QCoreApplication::sendEvent(ui->mangaView,event);
-        return true;
-    }
-
-    return QMainWindow::eventFilter(obj,event);
 }
 
 void MainWindow::openAux()
@@ -373,16 +355,16 @@ void MainWindow::tabChanged(int idx)
         searchTab->updateFocus();
 }
 
-void MainWindow::changeMouseMode(bool state)
+void MainWindow::changeMouseMode(int mode)
 {
-    Q_UNUSED(state)
-
-    if (ui->mouseModeOCR->isChecked())
-        ui->mangaView->setMouseMode(ZMangaView::mmOCR);
-    else if (ui->mouseModePan->isChecked())
-        ui->mangaView->setMouseMode(ZMangaView::mmPan);
-    else if (ui->mouseModeCrop->isChecked())
-        ui->mangaView->setMouseMode(ZMangaView::mmCrop);
+    switch (mode) {
+        case 0: ui->mangaView->setMouseMode(ZMangaView::mmOCR); break;
+        case 1: ui->mangaView->setMouseMode(ZMangaView::mmPan); break;
+        case 2: ui->mangaView->setMouseMode(ZMangaView::mmCrop); break;
+        default:
+            qWarning() << "Incorrect mouse mode selected";
+            break;
+    }
 }
 
 void MainWindow::viewerBackgroundUpdated(const QColor &color)
@@ -391,9 +373,11 @@ void MainWindow::viewerBackgroundUpdated(const QColor &color)
     static QColor oldColor(Qt::black);
 
     QColor c = palette().window().color();
-    if (c != oldColor)
-        ui->mouseModeFrame->setStyleSheet(QStringLiteral("background: rgba(%1,%2,%3,180)")
-                                          .arg(c.red()).arg(c.green()).arg(c.blue()));
+    if (c != oldColor) {
+        QPalette p = ui->fastScrollSlider->palette();
+        p.setBrush(QPalette::Window, QBrush(zg->backgroundColor));
+        ui->fastScrollSlider->setPalette(p);
+    }
 
     oldColor = c;
 }
@@ -699,46 +683,4 @@ ZFSFile::ZFSFile(const QString &aName, const QString &aFileName, const QString &
     name = aName;
     fileName = aFileName;
     album = aAlbum;
-}
-
-ZPopupFrame::ZPopupFrame(QWidget *parent) :
-    QFrame(parent)
-{
-    mwnd = nullptr;
-    hideChildren();
-}
-
-void ZPopupFrame::setMainWindow(MainWindow *wnd)
-{
-    mwnd = wnd;
-}
-
-void ZPopupFrame::enterEvent(QEvent *)
-{
-    showChildren();
-}
-
-void ZPopupFrame::leaveEvent(QEvent *)
-{
-    hideChildren();
-}
-
-void ZPopupFrame::hideChildren()
-{
-    const QList<QWidget *> list = findChildren<QWidget *>();
-    for (QWidget* w : list)
-        if (w!=nullptr) w->hide();
-    emit hideWidget();
-}
-
-void ZPopupFrame::showChildren()
-{
-    if (mwnd!=nullptr && !mwnd->isMangaOpened())
-        hideChildren();
-    else {
-        const QList<QWidget *> list = findChildren<QWidget *>();
-        for (QWidget* w : list)
-            if (w!=nullptr) w->show();
-        emit showWidget();
-    }
 }
