@@ -294,19 +294,12 @@ void ZMangaView::paintEvent(QPaintEvent *)
 {
     QPainter w(this);
     if (!curPixmap.isNull()) {
-        int scb = 6;
-        if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
-            scb = scroller->verticalScrollBar()->width();
-        } else if (scroller->horizontalScrollBar() && scroller->horizontalScrollBar()->isVisible()) {
-            scb = scroller->horizontalScrollBar()->height();
-        }
-
-        int x=scb/3;
-        int y=scb/3;
-        if (curPixmap.width()<scroller->size().width()-2*scb)
-            x=(scroller->size().width()-curPixmap.width()-2*scb)/2;
-        if (curPixmap.height()<scroller->size().height()-2*scb)
-            y=(scroller->size().height()-curPixmap.height()-2*scb)/2;
+        int x=0;
+        int y=0;
+        if (curPixmap.width() < scroller->viewport()->width())
+            x = (scroller->viewport()->width() - curPixmap.width()) / 2;
+        if (curPixmap.height() < scroller->viewport()->height())
+            y = (scroller->viewport()->height() - curPixmap.height()) / 2;
         w.drawImage(x,y,curPixmap);
         drawPos = QPoint(x,y);
 
@@ -625,19 +618,13 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
     if (openedFile.isEmpty()) return;
     if (page<0 || page>=privPageCount) return;
 
-    int scb = 6;
-    if (scroller->verticalScrollBar() && scroller->verticalScrollBar()->isVisible()) {
-        scb = scroller->verticalScrollBar()->width();
-    } else if (scroller->horizontalScrollBar() && scroller->horizontalScrollBar()->isVisible()) {
-        scb = scroller->horizontalScrollBar()->height();
-    }
-
     // Draw current page
     curPixmap = QImage();
 
     if (!curUmPixmap.isNull()) {
-        QSize scrollerSize(scroller->size().width()-scb*2,scroller->size().height()-scb*2);
+        QSize scrollerSize = scroller->viewport()->size() - QSize(4,4);
         QSize targetSize = curUmPixmap.size();
+
         curPixmap = curUmPixmap;
         if (!curUmPixmap.isNull() && curUmPixmap.height()>0) {
             double pixAspect = static_cast<double>(curUmPixmap.width()) /
