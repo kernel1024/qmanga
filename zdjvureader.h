@@ -32,14 +32,14 @@ public:
 #ifdef WITH_DJVU
 class ZDjVuDocument {
 public:
-    DDJVUAPI ddjvu_document_t * document;
+    ddjvu_document_t * document;
     QString filename;
     int pageNum;
     int ref;
     ZDjVuDocument();
     ZDjVuDocument(const ZDjVuDocument& other);
     ZDjVuDocument(const QString& aFilename);
-    ZDjVuDocument(DDJVUAPI ddjvu_document_t * aDocument, const QString& aFilename,  int aPageNum);
+    ZDjVuDocument(ddjvu_document_t * aDocument, const QString& aFilename,  int aPageNum);
     ZDjVuDocument &operator=(const ZDjVuDocument& other) = default;
     bool operator==(const ZDjVuDocument& ref) const;
     bool operator!=(const ZDjVuDocument& ref) const;
@@ -54,7 +54,7 @@ private:
     static ZDjVuController* m_instance;
     QMutex docMutex;
 #ifdef WITH_DJVU
-    DDJVUAPI ddjvu_context_t  * djvuContext;
+    ddjvu_context_t  * djvuContext;
     QList<ZDjVuDocument> documents;
 
     void handle_ddjvu_messages(ddjvu_context_t *ctx, int wait);
@@ -67,7 +67,7 @@ public:
     bool loadDjVu(const QString& filename, int &numPages);
     void closeDjVu(const QString& filename);
 #ifdef WITH_DJVU
-    DDJVUAPI ddjvu_document_t* getDocument(const QString &filename);
+    ddjvu_document_t* getDocument(const QString &filename);
 #endif
 
     friend class ZDjVuReader;

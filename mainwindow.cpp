@@ -10,6 +10,7 @@
 #include <QBuffer>
 #include <QScreen>
 #include <QWindow>
+#include <QDebug>
 #include <cmath>
 
 #include "mainwindow.h"
