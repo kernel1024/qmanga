@@ -202,7 +202,10 @@ QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter 
 #ifdef WITH_OCR
 extern tesseract::TessBaseAPI* ocr;
 
+#ifdef Q_OS_WIN
 QString getApplicationDirPath();
+#endif
+
 QString ocrGetActiveLanguage();
 QString ocrGetDatapath();
 tesseract::TessBaseAPI *initializeOCR();

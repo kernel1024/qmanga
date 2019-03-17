@@ -490,13 +490,13 @@ tesseract::TessBaseAPI* initializeOCR()
     return ocr;
 }
 
+#ifdef Q_OS_WIN
 QString getApplicationDirPath()
 {
     static QString res {};
     if (!res.isEmpty())
         return res;
 
-#ifdef Q_OS_WIN
     wchar_t path[MAX_PATH];
     size_t sz = GetModuleFileNameW(nullptr,path,MAX_PATH);
     if (sz>0) {
@@ -506,13 +506,10 @@ QString getApplicationDirPath()
     }
     if (res.isEmpty())
         qFatal("Unable to determine executable path.");
-#else
-    // TODO: remove qApp dependency here
-    res = QApplication::applicationDirPath();
-#endif
-
     return res;
 }
+#endif
+
 #endif
 
 
