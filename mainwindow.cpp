@@ -138,6 +138,12 @@ MainWindow::MainWindow(QWidget *parent) :
         fname = QApplication::arguments().at(1);
     if (!fname.isEmpty() && !fname.startsWith(QStringLiteral("--")))
         openAuxFile(fname);
+
+#ifdef WITH_OCR
+    if (!ocr)
+        QMessageBox::critical(nullptr,tr("QManga"),tr("Could not initialize Tesseract. \n"
+                                                      "Maybe language training data is not installed."));
+#endif
 }
 
 MainWindow::~MainWindow()

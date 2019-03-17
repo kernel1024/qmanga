@@ -386,6 +386,11 @@ void ZGlobal::settingsDlg()
     dlg->setSearchEngines(ctxSearchEngines);
     dlg->updateSQLFields(false);
 
+#ifdef WITH_OCR
+    dlg->editOCRDatapath->setText(ocrGetDatapath());
+    dlg->updateOCRLanguages();
+#endif
+
     if (dlg->exec()) {
         dbUser=dlg->editMySqlLogin->text();
         dbPass=dlg->editMySqlPassword->text();
@@ -448,11 +453,16 @@ void ZGlobal::settingsDlg()
             ocrEditor->setEditorFont(ocrFont);
 
 #ifdef WITH_OCR
+        bool needRestart = (dlg->editOCRDatapath->text() != ocrGetDatapath());
         QSettings settingsOCR(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
         settingsOCR.beginGroup(QStringLiteral("Main"));
         settingsOCR.setValue(QStringLiteral("activeLanguage"), dlg->getOCRLanguage());
         settingsOCR.setValue(QStringLiteral("datapath"), dlg->editOCRDatapath->text());
         settingsOCR.endGroup();
+
+        if (needRestart)
+            QMessageBox::information(nullptr,tr("QManga"),tr("OCR datapath changed.\n"
+                                                             "The application needs to be restarted to apply these settings."));
 #endif
     }
     dlg->setParent(nullptr);

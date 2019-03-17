@@ -455,7 +455,7 @@ QString ocrGetActiveLanguage()
 {
     QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
     settings.beginGroup(QStringLiteral("Main"));
-    QString res = settings.value(QStringLiteral("activeLanguage"),QString()).toString();
+    QString res = settings.value(QStringLiteral("activeLanguage"),QStringLiteral("jpn")).toString();
     settings.endGroup();
     return res;
 }
@@ -464,8 +464,14 @@ QString ocrGetDatapath()
 {
     QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
     settings.beginGroup(QStringLiteral("Main"));
+#ifdef Q_OS_WIN
+    QDir appDir(getApplicationDirPath());
+    QString res = settings.value(QStringLiteral("datapath"),
+                                 appDir.absoluteFilePath(QStringLiteral("tessdata"))).toString();
+#else
     QString res = settings.value(QStringLiteral("datapath"),
                                  QStringLiteral("/usr/share/tessdata/")).toString();
+#endif
     settings.endGroup();
     return res;
 }
@@ -473,24 +479,39 @@ QString ocrGetDatapath()
 tesseract::TessBaseAPI* initializeOCR()
 {
     ocr = new tesseract::TessBaseAPI();
-    const char* datapath = nullptr;
-#ifdef Q_OS_WIN
-    QDir appDir(QApplication::applicationDirPath());
-    QByteArray tesspath = appDir.absoluteFilePath(QStringLiteral("tessdata")).toUtf8();
-    datapath = tesspath.constData();
-#else
     QByteArray tesspath = ocrGetDatapath().toUtf8();
-    datapath = tesspath.constData();
-#endif
 
     QString lang = ocrGetActiveLanguage();
-    if (lang.isEmpty() || ocr->Init(datapath,lang.toUtf8().constData())) {
-        QMessageBox::critical(nullptr,QStringLiteral("QManga error"),
-                              QStringLiteral("Could not initialize Tesseract.\n"
-                              "Maybe language training data is not installed."));
+    if (lang.isEmpty() || ocr->Init(tesspath.constData(),lang.toUtf8().constData())) {
+        qCritical() << "Could not initialize Tesseract. "
+                       "Maybe language training data is not installed.";
         return nullptr;
     }
     return ocr;
+}
+
+QString getApplicationDirPath()
+{
+    static QString res {};
+    if (!res.isEmpty())
+        return res;
+
+#ifdef Q_OS_WIN
+    wchar_t path[MAX_PATH];
+    size_t sz = GetModuleFileNameW(nullptr,path,MAX_PATH);
+    if (sz>0) {
+        QFileInfo fi(QString::fromWCharArray(path,static_cast<int>(sz)));
+        if (fi.isFile())
+            res = fi.absolutePath();
+    }
+    if (res.isEmpty())
+        qFatal("Unable to determine executable path.");
+#else
+    // TODO: remove qApp dependency here
+    res = QApplication::applicationDirPath();
+#endif
+
+    return res;
 }
 #endif
 

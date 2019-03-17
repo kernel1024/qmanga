@@ -70,7 +70,6 @@ private:
     Ui::SettingsDialog *ui;
     QMap<QPushButton *, QListWidget *> delLookup;
 
-    void updateOCRLanguages();
     void updateTranslatorLanguages();
 
 signals:
@@ -94,6 +93,7 @@ public slots:
     void setDefaultSearch();
     void updateSQLFields(bool checked);
     void ocrDatapathDlg();
+    void updateOCRLanguages();
 };
 
 #endif // SETTINGSDIALOG_H
