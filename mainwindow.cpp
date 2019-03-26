@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     searchTab = ui->searchTab;
     fullScreen = false;
     fastScrollPanel = ui->fastScrollPanel;
+    bookmarksMenu->setStyleSheet(QStringLiteral("QMenu { menu-scrollable: 1; }"));
 
     indexerMsgBox.setWindowTitle(tr("QManga"));
 
@@ -575,6 +576,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
 {
     QStringList albums = searchTab->getAlbums();
     QMenu cm(this);
+    cm.setStyleSheet(QStringLiteral("QMenu { menu-scrollable: 1; }"));
     QAction* ac;
     int cnt=0;
     if (!ui->fsResults->selectedItems().isEmpty()) {
