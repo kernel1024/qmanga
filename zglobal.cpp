@@ -28,6 +28,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     useFineRendering = true;
     ocrEditor = nullptr;
     defaultOrdering = Z::Name;
+    defaultOrderingDirection = Qt::AscendingOrder;
     pdfRendering = Z::Autodetect;
     dbEngine = Z::SQLite;
     scrollDelta = 120;
@@ -147,6 +148,9 @@ void ZGlobal::loadSettings()
     filesystemWatcher = settings.value(QStringLiteral("filesystemWatcher"),false).toBool();
     defaultOrdering = static_cast<Z::Ordering>(settings.value(QStringLiteral("defaultOrdering"),
                                                               Z::Name).toInt());
+    defaultOrderingDirection = static_cast<Qt::SortOrder>(settings.value(
+                                                              QStringLiteral("defaultOrderingDirection"),
+                                                              Qt::AscendingOrder).toInt());
     defaultSearchEngine = settings.value(QStringLiteral("defaultSearchEngine"),QString()).toString();
     ctxSearchEngines = settings.value(QStringLiteral("ctxSearchEngines")).value<ZStrMap>();
 
@@ -190,7 +194,7 @@ void ZGlobal::loadSettings()
         w->searchTab->setEnabled(dbEngine!=Z::UndefinedDB);
         if (w->searchTab->isEnabled()) {
             w->searchTab->updateAlbumsList();
-            w->searchTab->applySortOrder(defaultOrdering);
+            w->searchTab->applySortOrder(defaultOrdering,defaultOrderingDirection);
         }
     }
     emit dbCheckBase();
@@ -235,6 +239,8 @@ void ZGlobal::saveSettings()
     settings.setValue(QStringLiteral("idxFont"),idxFont.toString());
     settings.setValue(QStringLiteral("ocrFont"),ocrFont.toString());
     settings.setValue(QStringLiteral("defaultOrdering"),static_cast<int>(defaultOrdering));
+    settings.setValue(QStringLiteral("defaultOrderingDirection"),
+                      static_cast<int>(defaultOrderingDirection));
     settings.setValue(QStringLiteral("defaultSearchEngine"),defaultSearchEngine);
     settings.setValue(QStringLiteral("ctxSearchEngines"),QVariant::fromValue(ctxSearchEngines));
     settings.setValue(QStringLiteral("tranSourceLanguage"),tranSourceLang);

@@ -53,6 +53,38 @@ ZStrMap ZDB::getDynAlbums() const
     return dynAlbums;
 }
 
+Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order) const
+{
+    if (!album.startsWith(QStringLiteral("# "))) return Z::UndefinedOrder;
+    const QString name = album.mid(2);
+
+    order = Qt::AscendingOrder;
+    const QString qr = dynAlbums.value(name,QString());
+    if (!qr.isEmpty()) {
+        QRegExp rx(QStringLiteral(R"(ORDER\sBY\s(\S+)\s(ASC|DESC)?)"),Qt::CaseInsensitive);
+        if (rx.indexIn(qr)>=0) {
+            QString col = rx.cap(1).trimmed();
+            QString ord = rx.cap(2).trimmed();
+
+            if (!ord.isEmpty() &&
+                    (ord.compare(QStringLiteral("DESC"),Qt::CaseInsensitive)==0))
+                order = Qt::DescendingOrder;
+
+            if (!col.isEmpty()) {
+                if (!col.at(0).isLetterOrNumber())
+                    col.remove(col.at(0));
+                for(auto it = Z::sqlColumns.constKeyValueBegin(),
+                    end = Z::sqlColumns.constKeyValueEnd(); it != end; ++it) {
+                    if (col.compare((*it).second,Qt::CaseInsensitive)==0) {
+                        return (*it).first;
+                    }
+                }
+            }
+        }
+    }
+    return Z::UndefinedOrder;
+}
+
 QStrHash ZDB::getConfigProblems() const
 {
     return problems;
@@ -393,8 +425,7 @@ void ZDB::sqlGetAlbums()
     emit gotAlbums(result);
 }
 
-void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Ordering sortOrder,
-                      const bool reverseOrder)
+void ZDB::sqlGetFiles(const QString &album, const QString &search)
 {
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
@@ -406,7 +437,6 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                                  "fileMagic, fileDT, addingDT, files.id, albums.name, "
                                  "files.preferredRendering "
                                  "FROM files LEFT JOIN albums ON files.album=albums.id ");
-    bool specQuery = false;
     bool checkFS = false;
 
     bool albumBind = false;
@@ -416,11 +446,9 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
         if (album.startsWith(QStringLiteral("# "))) {
             QString name = album.mid(2);
             if (dynAlbums.contains(name)){
-                specQuery = true;
                 tqr += dynAlbums.value(name);
             }
         } else if (album.startsWith(QStringLiteral("% Deleted"))) {
-            specQuery = true;
             checkFS = true;
         } else {
             tqr += QStringLiteral("WHERE (album="
@@ -437,13 +465,6 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
             searchBind = true;
         }
         tqr += sqr;
-    }
-
-    if (!specQuery) {
-        tqr+=QStringLiteral("ORDER BY ");
-        tqr+=Z::sqlColumns.value(sortOrder);
-        if (reverseOrder) tqr+=QStringLiteral(" DESC");
-        else tqr+=QStringLiteral(" ASC");
     }
 
     int idx = 0;
@@ -483,8 +504,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const Z::Orde
                                        qr.value(6).toDateTime(),
                                        qr.value(7).toDateTime(),
                                        qr.value(8).toInt(),
-                                       static_cast<Z::PDFRendering>(prefRendering)),
-                    sortOrder, reverseOrder);
+                                       static_cast<Z::PDFRendering>(prefRendering)));
             QApplication::processEvents();
             idx++;
         }

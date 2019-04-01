@@ -198,11 +198,8 @@ void ZMangaModel::deleteItems(const QIntVector &dbids)
     }
 }
 
-void ZMangaModel::addItem(const SQLMangaEntry &file, const Z::Ordering sortOrder, const bool reverseOrder)
+void ZMangaModel::addItem(const SQLMangaEntry &file)
 {
-    Q_UNUSED(sortOrder)
-    Q_UNUSED(reverseOrder)
-
     int posidx = mList.count();
     beginInsertRows(QModelIndex(),posidx,posidx);
     mList.append(file);

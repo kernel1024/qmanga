@@ -41,6 +41,7 @@ public:
     QStrHash getConfigProblems() const;
     QStringList sqlGetIgnoredFiles() const;
     Z::PDFRendering getPreferredRendering(const QString& filename) const;
+    Z::Ordering getDynAlbumOrdering(const QString &album, Qt::SortOrder &order) const;
 
 signals:
     void errorMsg(const QString& msg);
@@ -51,7 +52,7 @@ signals:
     void showProgressDialog(const bool visible);
     void showProgressState(const int value, const QString& msg);
     void gotAlbums(const QStringList& albums);
-    void gotFile(const SQLMangaEntry& file, const Z::Ordering sortOrder, const bool reverseOrder);
+    void gotFile(const SQLMangaEntry& file);
     void filesLoaded(const int count, const int elapsed);
     void deleteItemsFromModel(const QIntVector& dbids);
     void updateWatchDirList(const QStringList& dirs);
@@ -71,8 +72,7 @@ public slots:
     void sqlDelFiles(const QIntVector& dbids, const bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
-    void sqlGetFiles(const QString& album, const QString& search,
-                     const Z::Ordering sortOrder, const bool reverseOrder);
+    void sqlGetFiles(const QString& album, const QString& search);
     void sqlChangeFilePreview(const QString& fileName, const int pageNum);
     void sqlRescanIndexedDirs();
     void sqlUpdateFileStats(const QString& fileName);

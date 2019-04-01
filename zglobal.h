@@ -44,6 +44,7 @@ public:
 
     Blitz::ScaleFilterType downscaleFilter, upscaleFilter;
     Z::Ordering defaultOrdering;
+    Qt::SortOrder defaultOrderingDirection;
     Z::PDFRendering pdfRendering;
     Z::DBMS dbEngine;
     int cacheWidth;

@@ -34,7 +34,7 @@ public:
 
     void loadSearchItems(QSettings &settings);
     void saveSearchItems(QSettings &settings);
-    void applySortOrder(Z::Ordering order);
+    void applySortOrder(Z::Ordering order, Qt::SortOrder direction);
 private:
     Ui::ZSearchTab *ui;
     QStateMachine loadingState;
@@ -45,6 +45,8 @@ private:
     ZMangaSearchHistoryModel* searchHistoryModel;
     ZMangaTableModel* tableModel;
     ZMangaIconModel* iconModel;
+    Z::Ordering savedOrdering;
+    Qt::SortOrder savedOrderingDirection;
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(const QString &suggest, int toAddCount);
@@ -97,8 +99,7 @@ signals:
     void dbGetAlbums();
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
-    void dbGetFiles(const QString& album, const QString& search, const Z::Ordering order,
-                    const bool reverseOrder);
+    void dbGetFiles(const QString& album, const QString& search);
     void dbDelFiles(const QIntVector& dbids, const bool fullDelete);
     void dbDeleteAlbum(const QString& album);
     bool dbSetPreferredRendering(const QString& filename, int mode);

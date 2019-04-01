@@ -41,7 +41,7 @@ public:
 public slots:
     void deleteAllItems();
     void deleteItems(const QIntVector& dbids);
-    void addItem(const SQLMangaEntry& file, const Z::Ordering sortOrder, const bool reverseOrder);
+    void addItem(const SQLMangaEntry& file);
 };
 
 class ZMangaTableModel : public QSortFilterProxyModel {

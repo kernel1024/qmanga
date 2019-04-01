@@ -50,6 +50,7 @@ enum PDFRendering {
 };
 
 enum Ordering {
+    UndefinedOrder = -1,
     Name = 0,
     Album = 1,
     PagesCount = 2,

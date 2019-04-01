@@ -34,6 +34,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     cachedAlbums.clear();
 
     progressDlg = nullptr;
+    savedOrdering = Z::UndefinedOrder;
+    savedOrderingDirection = Qt::AscendingOrder;
 
     descTemplate = ui->srcDesc->text();
     setDescText();
@@ -438,18 +440,20 @@ void ZSearchTab::saveSearchItems(QSettings &settings)
                       QVariant::fromValue(searchHistoryModel->getHistoryItems()));
 }
 
-void ZSearchTab::applySortOrder(Z::Ordering order)
+void ZSearchTab::applySortOrder(Z::Ordering order, Qt::SortOrder direction)
 {
     int col = static_cast<int>(order);
     if (col>=0 && col<ui->srcTable->model()->columnCount())
-        ui->srcTable->sortByColumn(col,Qt::AscendingOrder);
+        ui->srcTable->sortByColumn(col,direction);
 }
 
 void ZSearchTab::sortingChanged(int logicalIndex, Qt::SortOrder order)
 {
     iconModel->sort(logicalIndex,order);
-    if (logicalIndex>=0 && logicalIndex<Z::maxOrdering)
+    if (logicalIndex>=0 && logicalIndex<Z::maxOrdering) {
         zg->defaultOrdering = static_cast<Z::Ordering>(logicalIndex);
+        zg->defaultOrderingDirection = order;
+    }
 }
 
 QSize ZSearchTab::gridSize(int ref)
@@ -541,7 +545,26 @@ void ZSearchTab::albumClicked(QListWidgetItem *item)
 
     if (model)
         model->deleteAllItems();
-    emit dbGetFiles(item->text(),QString(),Z::Name,false);
+
+    const QString album = item->text();
+
+    if (album.startsWith(QStringLiteral("# "))) {
+        if (savedOrdering==Z::UndefinedOrder) {
+            savedOrdering = zg->defaultOrdering;
+            savedOrderingDirection = zg->defaultOrderingDirection;
+        }
+        Qt::SortOrder dir;
+        Z::Ordering ord = zg->db->getDynAlbumOrdering(album,dir);
+        if (ord!=Z::UndefinedOrder)
+            applySortOrder(ord,dir);
+
+    } else if (!album.startsWith(QStringLiteral("% ")) &&
+               (savedOrdering!=Z::UndefinedOrder)) {
+        applySortOrder(savedOrdering,savedOrderingDirection);
+        savedOrdering = Z::UndefinedOrder;
+    }
+
+    emit dbGetFiles(album,QString());
 }
 
 void ZSearchTab::mangaSearch()
@@ -557,7 +580,7 @@ void ZSearchTab::mangaSearch()
 
     searchHistoryModel->appendHistoryItem(s);
 
-    emit dbGetFiles(QString(),s,Z::Name,false);
+    emit dbGetFiles(QString(),s);
 }
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)
