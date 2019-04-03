@@ -76,15 +76,12 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     connect(zg->db,&ZDB::albumsListUpdated,this,&ZSearchTab::dbAlbumsListUpdated,Qt::QueuedConnection);
     connect(zg->db,&ZDB::gotAlbums,this,&ZSearchTab::dbAlbumsListReady,Qt::QueuedConnection);
-    connect(this,&ZSearchTab::dbRenameAlbum,zg->db,&ZDB::sqlRenameAlbum,Qt::QueuedConnection);
     connect(zg->db,&ZDB::filesAdded,this,&ZSearchTab::dbFilesAdded,Qt::QueuedConnection);
     connect(zg->db,&ZDB::filesLoaded,this,&ZSearchTab::dbFilesLoaded,Qt::QueuedConnection);
     connect(zg->db,&ZDB::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
     connect(zg->db,&ZDB::needTableCreation,this,&ZSearchTab::dbNeedTableCreation,Qt::QueuedConnection);
     connect(zg->db,&ZDB::showProgressDialog,this,&ZSearchTab::dbShowProgressDialog,Qt::QueuedConnection);
     connect(zg->db,&ZDB::showProgressState,this,&ZSearchTab::dbShowProgressState,Qt::QueuedConnection);
-    connect(this,&ZSearchTab::dbSetPreferredRendering,zg->db,&ZDB::sqlSetPreferredRendering,
-            Qt::QueuedConnection);
 
     connect(this,&ZSearchTab::dbAddFiles,zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
     connect(this,&ZSearchTab::dbDelFiles,zg->db,&ZDB::sqlDelFiles,Qt::QueuedConnection);
@@ -95,6 +92,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,&ZSearchTab::dbDeleteAlbum,zg->db,&ZDB::sqlDelAlbum,Qt::QueuedConnection);
     connect(this,&ZSearchTab::dbAddAlbum,zg->db,&ZDB::sqlAddAlbum,Qt::QueuedConnection);
     connect(this,&ZSearchTab::dbReparentAlbum,zg->db,&ZDB::sqlReparentAlbum,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbSetPreferredRendering,zg->db,&ZDB::sqlSetPreferredRendering,
+            Qt::QueuedConnection);
 
     auto sLoaded = new QState();
     auto sLoading = new QState();
