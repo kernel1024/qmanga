@@ -86,7 +86,6 @@ signals:
     void dbSetCredentials(const QString& host, const QString& base,
                           const QString& user, const QString& password);
     void dbCheckBase();
-    void dbCheckEmptyAlbums();
     void dbRescanIndexedDirs();
     void fsFilesAdded();
     void dbSetDynAlbums(const ZStrMap& albums);

@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QIntVector>("QIntVector");
     qRegisterMetaType<QImageHash>("QImageHash");
     qRegisterMetaType<SQLMangaEntry>("SQLMangaEntry");
+    qRegisterMetaType<AlbumEntry>("AlbumEntry");
+    qRegisterMetaType<AlbumVector>("AlbumVector");
     qRegisterMetaType<QByteHash>("QByteHash");
     qRegisterMetaType<QUuid>("QUuid");
     qRegisterMetaType<Z::Ordering>("Z::Ordering");

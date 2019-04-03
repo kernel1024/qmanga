@@ -127,6 +127,20 @@ public:
     bool operator!=(const SQLMangaEntry& ref) const;
 };
 
+class AlbumEntry{
+public:
+    int id;
+    int parent;
+    QString name;
+    AlbumEntry() : id(-1), parent(-1) {}
+    AlbumEntry(int aId) : id(aId), parent(-1) {}
+    AlbumEntry(const AlbumEntry& other);
+    AlbumEntry(int aId, int aParent, const QString& aName);
+    AlbumEntry &operator=(const AlbumEntry& other) = default;
+    bool operator==(const AlbumEntry& ref) const;
+    bool operator!=(const AlbumEntry& ref) const;
+};
+
 class ZLoaderHelper {
 public:
     QUuid id;
@@ -163,6 +177,7 @@ public:
 };
 
 using SQLMangaVector = QVector<SQLMangaEntry>;
+using AlbumVector = QVector<AlbumEntry>;
 
 
 extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,

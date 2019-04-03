@@ -563,3 +563,27 @@ bool ZExportWork::isValid() const
 {
     return (idx>=0 && !sourceFile.isEmpty());
 }
+
+AlbumEntry::AlbumEntry(const AlbumEntry &other)
+{
+    id = other.id;
+    parent = other.parent;
+    name = other.name;
+}
+
+AlbumEntry::AlbumEntry(int aId, int aParent, const QString &aName)
+{
+    id = aId;
+    parent = aParent;
+    name = aName;
+}
+
+bool AlbumEntry::operator==(const AlbumEntry &ref) const
+{
+    return (id == ref.id);
+}
+
+bool AlbumEntry::operator!=(const AlbumEntry &ref) const
+{
+    return (id != ref.id);
+}

@@ -145,10 +145,28 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     if (sqlDbEngine(db)!=Z::MySQL) return true;
 
     QSqlQuery qr(db);
+    QStringList cols;
+
+    // Add parent column to albums
+    qr.exec(QStringLiteral("SHOW COLUMNS FROM albums"));
+    while (qr.next())
+        cols << qr.value(0).toString();
+
+    if (!cols.contains(QStringLiteral("parent"),Qt::CaseInsensitive)) {
+        if (!qr.exec(QStringLiteral("ALTER TABLE `albums` ADD COLUMN `parent` "
+                                    "INT(11) DEFAULT -1"))) {
+            qDebug() << tr("Unable to add column for albums table.")
+                     << qr.lastError().databaseText() << qr.lastError().driverText();
+
+            problems[tr("Adding column")] = tr("Unable to add column for qmanga albums table.\n"
+                                               "ALTER TABLE query failed.");
+
+            return false;
+        }
+    }
 
     // Check for preferred rendering column
     qr.exec(QStringLiteral("SHOW COLUMNS FROM files"));
-    QStringList cols;
     while (qr.next())
         cols << qr.value(0).toString();
 
@@ -237,6 +255,7 @@ void ZDB::sqlCreateTables()
         if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `albums` ("
                      "`id` int(11) NOT NULL AUTO_INCREMENT,"
                      "`name` varchar(2048) NOT NULL,"
+                     "`parent` int(11) default -1,"
                      "PRIMARY KEY (`id`)"
                      ") ENGINE=MyISAM DEFAULT CHARSET=utf8"))) {
             emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2")
@@ -284,7 +303,8 @@ void ZDB::sqlCreateTables()
     } else if (sqlDbEngine(db)==Z::SQLite){
         if (!qr.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS `albums` ("
                      "`id` INTEGER PRIMARY KEY AUTOINCREMENT,"
-                     "`name` TEXT)"))) {
+                     "`name` TEXT,"
+                     "`parent` INTEGER DEFAULT -1)"))) {
             emit errorMsg(tr("Unable to create table `albums`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
             problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
@@ -404,23 +424,30 @@ void ZDB::sqlUpdateIgnoredFiles(QSqlDatabase &db)
 
 void ZDB::sqlGetAlbums()
 {
-    QStringList result;
+    AlbumVector result;
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
 
-    QSqlQuery qr(QStringLiteral("SELECT name FROM `albums` ORDER BY name ASC"),db);
-    while (qr.next())
-        result << qr.value(0).toString();
+    QSqlQuery qr(QStringLiteral("SELECT id, parent, name FROM `albums` ORDER BY name ASC"),db);
+    while (qr.next()) {
+        bool ok1, ok2;
+        int id = qr.value(0).toInt(&ok1);
+        int parent = qr.value(1).toInt(&ok2);
+        if (ok1 && ok2)
+            result << AlbumEntry(id,parent,qr.value(2).toString());
+    }
 
     sqlUpdateIgnoredFiles(db);
 
     sqlCloseBase(db);
 
+    int id = -1;
+
     for (auto it = dynAlbums.constKeyValueBegin(), end = dynAlbums.constKeyValueEnd();
          it != end; ++it)
-        result << QStringLiteral("# %1").arg((*it).first);
+        result << AlbumEntry(id--,dynamicAlbumParent,QStringLiteral("# %1").arg((*it).first));
 
-    result << QStringLiteral("% Deleted");
+    result << AlbumEntry(id--,-1,QStringLiteral("% Deleted"));
 
     emit gotAlbums(result);
 }
@@ -815,6 +842,60 @@ bool ZDB::sqlHaveTables(QSqlDatabase &db)
     return sqlCheckBasePriv(db,true);
 }
 
+int ZDB::sqlFindAndAddAlbum(const QString &name, const QString &parent, bool createNew)
+{
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return -1;
+    QSqlQuery qr(db);
+
+    qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
+    qr.addBindValue(name);
+    if (qr.exec()) {
+        if (qr.next()) {
+            sqlCloseBase(db);
+            return qr.value(0).toInt();
+        }
+    }
+
+    if (!createNew)
+        return -1;
+
+    int idParent = -1;
+    if (!parent.isEmpty()) {
+        qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
+        qr.addBindValue(parent);
+        if (qr.exec()) {
+            if (qr.next())
+                idParent = qr.value(0).toInt();
+        }
+    }
+
+    qr.prepare(QStringLiteral("INSERT INTO albums (name,parent) VALUES (?,?)"));
+    qr.bindValue(0,name);
+    qr.bindValue(1,idParent);
+    if (!qr.exec()) {
+        emit errorMsg(tr("Unable to create album `%1`\n%2\n%3").
+                      arg(name,qr.lastError().databaseText(),qr.lastError().driverText()));
+        sqlCloseBase(db);
+        return -1;
+    }
+
+    bool ok;
+    int ialbum = qr.lastInsertId().toInt(&ok);
+    if (!ok) {
+        ialbum = -1;
+        qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
+        qr.addBindValue(name);
+        if (qr.exec()) {
+            if (qr.next())
+                ialbum = qr.value(0).toInt();
+        }
+    }
+
+    sqlCloseBase(db);
+    return ialbum;
+}
+
 QStringList ZDB::sqlGetIgnoredFiles() const
 {
     return ignoredFiles;
@@ -862,7 +943,10 @@ void ZDB::sqlGetTablesDescription()
     }
 
     QSqlRecord rec = db.driver()->record(QStringLiteral("files"));
-    if (rec.isEmpty()) return;
+    if (rec.isEmpty()) {
+        sqlCloseBase(db);
+        return;
+    }
 
     QStringList names, types;
     names.reserve(rec.count());
@@ -948,44 +1032,20 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     QStringList files = aFiles;
     files.removeDuplicates();
 
+    int ialbum = sqlFindAndAddAlbum(album);
+    if (ialbum<0) {
+        qDebug() << "Album '" << album << "' not found, unable to create album.";
+        return;
+    }
+
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
+    QSqlQuery qr(db);
 
-    int ialbum = -1;
     wasCanceled = false;
 
     QTime tmr;
     tmr.start();
-
-    QSqlQuery qr(db);
-
-    qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
-    qr.addBindValue(album);
-    if (qr.exec()) {
-        if (qr.next())
-            ialbum = qr.value(0).toInt();
-    }
-
-    if (ialbum==-1) {
-        qr.prepare(QStringLiteral("INSERT INTO albums (name) VALUES (?)"));
-        qr.addBindValue(album);
-        if (!qr.exec()) {
-            emit errorMsg(tr("Unable to create album `%1`\n%2\n%3").
-                          arg(album,qr.lastError().databaseText(),qr.lastError().driverText()));
-            sqlCloseBase(db);
-            return;
-        }
-        bool ok;
-        ialbum = qr.lastInsertId().toInt(&ok);
-        if (!ok) {
-            qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
-            qr.addBindValue(album);
-            if (qr.exec()) {
-                if (qr.next())
-                    ialbum = qr.value(0).toInt();
-            }
-        }
-    }
 
     emit showProgressDialog(true);
 
@@ -1102,40 +1162,16 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
         return;
     }
 
+    // get album number
+    int ialbum = sqlFindAndAddAlbum(album);
+    if (ialbum<0) {
+        qDebug() << "Album '" << album << "' not found, unable to create album.";
+        return;
+    }
+
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
-
-    // get album number
-    int ialbum = -1;
-
     QSqlQuery qr(db);
-    qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
-    qr.addBindValue(album);
-    if (qr.exec()) {
-        if (qr.next())
-            ialbum = qr.value(0).toInt();
-    }
-
-    if (ialbum==-1) {
-        qr.prepare(QStringLiteral("INSERT INTO albums (name) VALUES (?)"));
-        qr.addBindValue(album);
-        if (!qr.exec()) {
-            emit errorMsg(tr("Unable to create album `%1`\n%2\n%3").
-                          arg(album,qr.lastError().databaseText(),qr.lastError().driverText()));
-            sqlCloseBase(db);
-            return;
-        }
-        bool ok;
-        ialbum = qr.lastInsertId().toInt(&ok);
-        if (!ok) {
-            qr.prepare(QStringLiteral("SELECT id FROM albums WHERE (name=?)"));
-            qr.addBindValue(album);
-            if (qr.exec()) {
-                if (qr.next())
-                    ialbum = qr.value(0).toInt();
-            }
-        }
-    }
 
     QTime tmr;
     tmr.start();
@@ -1258,7 +1294,6 @@ void ZDB::sqlDelFiles(const QIntVector &dbids, const bool fullDelete)
     }
     sqlCloseBase(db);
     sqlRescanIndexedDirs();
-    sqlDelEmptyAlbums();
 
     emit deleteItemsFromModel(dbids);
 
@@ -1267,29 +1302,17 @@ void ZDB::sqlDelFiles(const QIntVector &dbids, const bool fullDelete)
                       arg(db.lastError().databaseText(), db.lastError().driverText()));
 }
 
-void ZDB::sqlDelEmptyAlbums()
-{
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
-    if (!sqlHaveTables(db)) {
-        sqlCloseBase(db);
-        return;
-    }
-
-    QSqlQuery qr(db);
-    if (!qr.exec(QStringLiteral("DELETE FROM albums WHERE id NOT IN "
-                                "(SELECT DISTINCT album FROM files)")))
-        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
-
-    sqlCloseBase(db);
-    emit albumsListUpdated();
-}
-
 void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
 {
     if (oldName==newName || oldName.isEmpty() || newName.isEmpty()) return;
     if (newName.startsWith('#') || oldName.startsWith('#')) return;
     if (newName.startsWith('%') || oldName.startsWith('%')) return;
+
+    if (sqlFindAndAddAlbum(newName,QString(),false)>=0) {
+        qDebug() << "Unable to rename album - name already exists.";
+        emit errorMsg(tr("Unable to rename album - name already exists."));
+        return;
+    }
 
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
@@ -1310,23 +1333,16 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
 
 void ZDB::sqlDelAlbum(const QString &album)
 {
+    int id = sqlFindAndAddAlbum(album,QString(),false);
+    if (id==-1) {
+        emit errorMsg(tr("Album '%1' not found").arg(album));
+        return;
+    }
+
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
 
     QSqlQuery qr(db);
-    qr.prepare(QStringLiteral("SELECT id FROM `albums` WHERE name=?"));
-    qr.addBindValue(album);
-    int id = -1;
-
-    if (qr.exec()) {
-        if (qr.next())
-            id = qr.value(0).toInt();
-    }
-    if (id==-1) {
-        emit errorMsg(tr("Album '%1' not found").arg(album));
-        sqlCloseBase(db);
-        return;
-    }
 
     qr.prepare(QStringLiteral("DELETE FROM files WHERE album=?"));
     qr.addBindValue(id);
@@ -1338,7 +1354,80 @@ void ZDB::sqlDelAlbum(const QString &album)
         sqlCloseBase(db);
         return;
     }
+
+    qr.prepare(QStringLiteral("UPDATE albums SET parent=-1 WHERE parent=?"));
+    qr.addBindValue(id);
+    if (!qr.exec()) {
+        QString msg = tr("Unable to unlink album as parent\n%1\n%2").
+                      arg(qr.lastError().databaseText(), qr.lastError().driverText());
+        emit errorMsg(msg);
+        qDebug() << msg;
+        sqlCloseBase(db);
+        return;
+    }
+
+    qr.prepare(QStringLiteral("DELETE FROM albums WHERE id=?"));
+    qr.addBindValue(id);
+    if (!qr.exec()) {
+        QString msg = tr("Unable to delete album\n%1\n%2").
+                      arg(qr.lastError().databaseText(), qr.lastError().driverText());
+        emit errorMsg(msg);
+        qDebug() << msg;
+        sqlCloseBase(db);
+        return;
+    }
+
     sqlCloseBase(db);
     sqlRescanIndexedDirs();
-    sqlDelEmptyAlbums();
+}
+
+void ZDB::sqlAddAlbum(const QString &album, const QString &parent)
+{
+    int id = sqlFindAndAddAlbum(album,parent);
+    if (id<0) {
+        QString msg = tr("Unable to create album %1").arg(album);
+        emit errorMsg(msg);
+        qDebug() << msg;
+    } else
+        emit albumsListUpdated();
+}
+
+void ZDB::sqlReparentAlbum(const QString &album, const QString &parent)
+{
+    int srcId = sqlFindAndAddAlbum(album,QString(),false);
+    if (srcId<0) {
+        QString msg = tr("Unable to find album %1").arg(album);
+        emit errorMsg(msg);
+        qDebug() << msg;
+        return;
+    }
+    int parentId = -1;
+    if (!parent.isEmpty()) {
+        parentId = sqlFindAndAddAlbum(parent,QString(),false);
+        if (parentId<0) {
+            QString msg = tr("Unable to find parent album %1").arg(parent);
+            emit errorMsg(msg);
+            qDebug() << msg;
+            return;
+        }
+    }
+
+    QSqlDatabase db = sqlOpenBase();
+    if (!db.isValid()) return;
+
+    QSqlQuery qr(db);
+
+    qr.prepare(QStringLiteral("UPDATE albums SET parent=? WHERE id=?"));
+    qr.bindValue(0,parentId);
+    qr.bindValue(1,srcId);
+    if (!qr.exec()) {
+        QString msg = tr("Unable to set album's parent\n%1\n%2").
+                      arg(qr.lastError().databaseText(), qr.lastError().driverText());
+        emit errorMsg(msg);
+        qDebug() << msg;
+        sqlCloseBase(db);
+        return;
+    }
+
+    emit albumsListUpdated();
 }

@@ -57,7 +57,6 @@ ZGlobal::ZGlobal(QObject *parent) :
     connect(this,&ZGlobal::dbSetCredentials,
             db,&ZDB::setCredentials,Qt::QueuedConnection);
     connect(this,&ZGlobal::dbCheckBase,db,&ZDB::sqlCheckBase,Qt::QueuedConnection);
-    connect(this,&ZGlobal::dbCheckEmptyAlbums,db,&ZDB::sqlDelEmptyAlbums,Qt::QueuedConnection);
     connect(this,&ZGlobal::dbRescanIndexedDirs,db,&ZDB::sqlRescanIndexedDirs,Qt::QueuedConnection);
     connect(db,&ZDB::updateWatchDirList,
             this,&ZGlobal::updateWatchDirList,Qt::QueuedConnection);
@@ -260,8 +259,6 @@ void ZGlobal::saveSettings()
     settings.setValue(QStringLiteral("dynAlbums"),QVariant::fromValue(db->getDynAlbums()));
 
     settings.endGroup();
-
-    emit dbCheckEmptyAlbums();
 }
 
 void ZGlobal::updateWatchDirList(const QStringList &watchDirs)

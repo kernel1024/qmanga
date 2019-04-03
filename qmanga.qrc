@@ -55,5 +55,7 @@
         <file alias="zoom-original">img/16x16/zoom-original.png</file>
         <file alias="jpreader">img/16x16/globe_16.png</file>
         <file alias="transform-move">img/16x16/transform-move.png</file>
+        <file alias="go-previous-view-page">img/16x16/go-previous-view-page.png</file>
+        <file alias="document-new">img/16x16/document-new.png</file>
     </qresource>
 </RCC>

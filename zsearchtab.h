@@ -5,11 +5,12 @@
 #include <QSlider>
 #include <QRadioButton>
 #include <QProgressDialog>
-#include <QListWidget>
-#include <QListWidgetItem>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 #include <QSettings>
 #include <QStateMachine>
 
+#include "global.h"
 #include "zglobal.h"
 #include "zmangamodel.h"
 
@@ -57,7 +58,7 @@ private:
     void setDescText(const QString& text = QString());
 
 public slots:
-    void albumClicked(QListWidgetItem * item);
+    void albumClicked(QTreeWidgetItem *item, int column);
 
     void mangaSearch();
     void mangaSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
@@ -76,6 +77,8 @@ public slots:
     void ctxAlbumMenu(const QPoint &pos);
     void ctxRenameAlbum();
     void ctxDeleteAlbum();
+    void ctxAddEmptyAlbum();
+    void ctxMoveAlbumToTopLevel();
     void ctxOpenDir();
     void ctxXdgOpen();
     void ctxFileCopy();
@@ -85,7 +88,7 @@ public slots:
     void dbShowProgressDialogEx(const bool visible, const QString &title);
     void dbShowProgressState(const int value, const QString& msg);
     void dbAlbumsListUpdated();
-    void dbAlbumsListReady(const QStringList& albums);
+    void dbAlbumsListReady(const AlbumVector &albums);
     void dbFilesAdded(const int count, const int total, const int elapsed);
     void dbFilesLoaded(const int count, const int elapsed);
     void dbErrorMsg(const QString& msg);
@@ -102,6 +105,8 @@ signals:
     void dbGetFiles(const QString& album, const QString& search);
     void dbDelFiles(const QIntVector& dbids, const bool fullDelete);
     void dbDeleteAlbum(const QString& album);
+    void dbAddAlbum(const QString& album, const QString& parent);
+    void dbReparentAlbum(const QString& album, const QString& parent);
     bool dbSetPreferredRendering(const QString& filename, int mode);
 
 };

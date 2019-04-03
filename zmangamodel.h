@@ -9,6 +9,7 @@
 #include <QStyledItemDelegate>
 #include <QHeaderView>
 #include <QTableView>
+#include <QTreeWidget>
 #include "global.h"
 #include "zglobal.h"
 #include "zdb.h"
@@ -88,6 +89,19 @@ public:
     void setHistoryItems(const QStringList& items);
     QStringList getHistoryItems() const;
     void appendHistoryItem(const QString& item);
+};
+
+class ZAlbumsTreeWidget : public QTreeWidget
+{
+    Q_OBJECT
+private:
+    QModelIndex m_draggingItem;
+public:
+    ZAlbumsTreeWidget(QWidget *parent = nullptr);
+    ~ZAlbumsTreeWidget() = default;
+protected:
+    virtual void dragEnterEvent(QDragEnterEvent *event);
+    virtual void dropEvent(QDropEvent* event);
 };
 
 #endif // ZMANGAMODEL_H

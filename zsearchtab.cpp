@@ -57,8 +57,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcModeList->setChecked(ui->srcStack->currentIndex()==STACK_TABLE);
     ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->srcAlbums,&QListWidget::itemClicked,this,&ZSearchTab::albumClicked);
-    connect(ui->srcAlbums,&QListWidget::customContextMenuRequested,
+    connect(ui->srcAlbums,&QTreeWidget::itemClicked,this,&ZSearchTab::albumClicked);
+    connect(ui->srcAlbums,&QTreeWidget::customContextMenuRequested,
             this,&ZSearchTab::ctxAlbumMenu);
     connect(ui->srcList,&QListView::doubleClicked,this,&ZSearchTab::mangaOpen);
     connect(ui->srcList,&QListView::customContextMenuRequested,this,&ZSearchTab::ctxMenu);
@@ -93,6 +93,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,&ZSearchTab::dbRenameAlbum,zg->db,&ZDB::sqlRenameAlbum,Qt::QueuedConnection);
     connect(this,&ZSearchTab::dbCreateTables,zg->db,&ZDB::sqlCreateTables,Qt::QueuedConnection);
     connect(this,&ZSearchTab::dbDeleteAlbum,zg->db,&ZDB::sqlDelAlbum,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbAddAlbum,zg->db,&ZDB::sqlAddAlbum,Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbReparentAlbum,zg->db,&ZDB::sqlReparentAlbum,Qt::QueuedConnection);
 
     auto sLoaded = new QState();
     auto sLoading = new QState();
@@ -151,7 +153,7 @@ void ZSearchTab::updateSplitters()
 {
     QList<int> widths;
     ui->splitter->setCollapsible(0,true);
-    widths << 65;
+    widths << 90;
     widths << width()-widths[0];
     ui->splitter->setSizes(widths);
 }
@@ -241,22 +243,38 @@ void ZSearchTab::ctxChangeRenderer()
         QMessageBox::warning(this,tr("QManga"),
                              tr("Unable to update preferred rendering."));
 
-    albumClicked(ui->srcAlbums->currentItem());
+    albumClicked(ui->srcAlbums->currentItem(),0);
 
 }
 
 void ZSearchTab::ctxAlbumMenu(const QPoint &pos)
 {
-    QListWidgetItem* itm = ui->srcAlbums->itemAt(pos);
-    if (itm==nullptr) return;
+    QTreeWidgetItem* itm = ui->srcAlbums->itemAt(pos);
 
     QMenu cm(ui->srcAlbums);
-    QAction *acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-rename")),tr("Rename album"),
-                       this,&ZSearchTab::ctxRenameAlbum);
-    acm->setData(itm->text());
-    acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-delete")),tr("Delete album"),
-                       this,&ZSearchTab::ctxDeleteAlbum);
-    acm->setData(itm->text());
+    QAction *acm;
+    if (itm) {
+        acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-rename")),tr("Rename album"),
+                           this,&ZSearchTab::ctxRenameAlbum);
+        acm->setData(itm->text(0));
+    }
+
+    acm = cm.addAction(QIcon(QStringLiteral(":/16/document-new")),tr("Add empty album"),
+                       this,&ZSearchTab::ctxAddEmptyAlbum);
+
+    if (itm) {
+        if (itm->parent()) {
+            acm = cm.addAction(QIcon(QStringLiteral(":/16/go-previous-view-page")),
+                               tr("Move to top level"),this,&ZSearchTab::ctxMoveAlbumToTopLevel);
+            acm->setData(itm->text(0));
+        }
+
+        cm.addSeparator();
+
+        acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-delete")),tr("Delete album"),
+                           this,&ZSearchTab::ctxDeleteAlbum);
+        acm->setData(itm->text(0));
+    }
 
     cm.exec(ui->srcAlbums->mapToGlobal(pos));
 }
@@ -284,9 +302,27 @@ void ZSearchTab::ctxDeleteAlbum()
     if (s.isEmpty()) return;
 
     if (QMessageBox::question(this,tr("Delete album"),
-                              tr("Are you sure to delete album '%1' and all it's contents from database?").arg(s),
+                              tr("Are you sure to delete album '%1' and all it's contents from database?\n"
+                                 "Sub-albums will be moved to top level.").arg(s),
                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No)==QMessageBox::Yes)
         emit dbDeleteAlbum(s);
+}
+
+void ZSearchTab::ctxAddEmptyAlbum()
+{
+    QString name = QInputDialog::getText(this,tr("Add empty album"),tr("Album name"));
+    if (!name.isEmpty())
+        emit dbAddAlbum(name,QString());
+}
+
+void ZSearchTab::ctxMoveAlbumToTopLevel()
+{
+    auto nt = qobject_cast<QAction *>(sender());
+    if (nt==nullptr) return;
+    const QString s = nt->data().toString();
+    if (s.isEmpty()) return;
+
+    emit dbReparentAlbum(s,QString());
 }
 
 void ZSearchTab::ctxOpenDir()
@@ -535,8 +571,10 @@ void ZSearchTab::setDescText(const QString &text)
     ui->srcDesc->setText(text);
 }
 
-void ZSearchTab::albumClicked(QListWidgetItem *item)
+void ZSearchTab::albumClicked(QTreeWidgetItem *item, int column)
 {
+    Q_UNUSED(column)
+
     if (item==nullptr) return;
 
     emit statusBarMsg(tr("Searching..."));
@@ -546,7 +584,7 @@ void ZSearchTab::albumClicked(QListWidgetItem *item)
     if (model)
         model->deleteAllItems();
 
-    const QString album = item->text();
+    const QString album = item->text(0);
 
     if (album.startsWith(QStringLiteral("# "))) {
         if (savedOrdering==Z::UndefinedOrder) {
@@ -747,12 +785,43 @@ void ZSearchTab::dbAlbumsListUpdated()
     updateAlbumsList();
 }
 
-void ZSearchTab::dbAlbumsListReady(const QStringList &albums)
+void ZSearchTab::dbAlbumsListReady(const AlbumVector &albums)
 {
     cachedAlbums.clear();
-    cachedAlbums.append(albums);
     ui->srcAlbums->clear();
-    ui->srcAlbums->addItems(albums);
+
+    QTreeWidgetItem* dynRoot = nullptr;
+
+    QHash<int,QTreeWidgetItem*> items;
+    for (const auto& album : albums) {
+        auto item = new QTreeWidgetItem();
+        item->setText(0,album.name);
+        item->setData(0,Qt::UserRole,album.id);
+        items[album.id] = item;
+        if (album.id>=0)
+            cachedAlbums.append(album.name);
+    }
+    for (const auto& album : albums) {
+        if (!items.contains(album.id)) continue;
+
+        if (album.parent>=0 && items.contains(album.parent)) {
+            items[album.parent]->addChild(items.value(album.id));
+
+        } else if (album.parent == dynamicAlbumParent) {
+            if (!dynRoot) {
+                dynRoot = new QTreeWidgetItem();
+                dynRoot->setText(0,tr("Dynamic albums"));
+                dynRoot->setData(0,Qt::UserRole,dynamicAlbumParent);
+            }
+            dynRoot->addChild(items.value(album.id));
+
+        } else {
+            ui->srcAlbums->addTopLevelItem(items.value(album.id));
+        }
+    }
+    if (dynRoot)
+        ui->srcAlbums->addTopLevelItem(dynRoot);
+
     if (model)
         model->deleteAllItems();
 }

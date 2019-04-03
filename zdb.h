@@ -7,6 +7,8 @@
 #include "zabstractreader.h"
 #include "global.h"
 
+const int dynamicAlbumParent = -2;
+
 class ZDB : public QObject
 {
     Q_OBJECT
@@ -31,6 +33,8 @@ private:
     void sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable);
     Z::DBMS sqlDbEngine(QSqlDatabase &db);
     bool sqlHaveTables(QSqlDatabase &db);
+    int sqlFindAndAddAlbum(const QString& name, const QString& parent = QString(),
+                           bool createNew = true);
 
 public:
     explicit ZDB(QObject *parent = nullptr);
@@ -51,7 +55,7 @@ signals:
     void albumsListUpdated();
     void showProgressDialog(const bool visible);
     void showProgressState(const int value, const QString& msg);
-    void gotAlbums(const QStringList& albums);
+    void gotAlbums(const AlbumVector& albums);
     void gotFile(const SQLMangaEntry& file);
     void filesLoaded(const int count, const int elapsed);
     void deleteItemsFromModel(const QIntVector& dbids);
@@ -65,10 +69,11 @@ public slots:
     void setDynAlbums(const ZStrMap &albums);
     void sqlCheckBase();
     void sqlCreateTables();
-    void sqlDelEmptyAlbums();
     void sqlGetAlbums();
     void sqlRenameAlbum(const QString& oldName, const QString& newName);
     void sqlDelAlbum(const QString& album);
+    void sqlAddAlbum(const QString& album, const QString& parent = QString());
+    void sqlReparentAlbum(const QString& album, const QString& parent);
     void sqlDelFiles(const QIntVector& dbids, const bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();

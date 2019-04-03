@@ -37,7 +37,22 @@
      <property name="childrenCollapsible">
       <bool>false</bool>
      </property>
-     <widget class="QListWidget" name="srcAlbums"/>
+     <widget class="ZAlbumsTreeWidget" name="srcAlbums">
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="uniformRowHeights">
+       <bool>true</bool>
+      </property>
+      <attribute name="headerVisible">
+       <bool>false</bool>
+      </attribute>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
+     </widget>
      <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
@@ -308,6 +323,11 @@ p, li { white-space: pre-wrap; }
   <customwidget>
    <class>ZMangaListView</class>
    <extends>QListView</extends>
+   <header location="global">zmangamodel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ZAlbumsTreeWidget</class>
+   <extends>QTreeWidget</extends>
    <header location="global">zmangamodel.h</header>
   </customwidget>
  </customwidgets>

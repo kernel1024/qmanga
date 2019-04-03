@@ -2,6 +2,7 @@
 #include <QPixmap>
 #include <QPen>
 #include <QScrollBar>
+#include <QDropEvent>
 #include <QAbstractItemModel>
 #include <QApplication>
 
@@ -325,4 +326,66 @@ int ZMangaIconModel::columnCount(const QModelIndex &) const
         }
     }
     return 1;
+}
+
+ZAlbumsTreeWidget::ZAlbumsTreeWidget(QWidget *parent)
+    : QTreeWidget (parent)
+{
+    setSelectionMode(QAbstractItemView::SingleSelection);
+    setDragEnabled(true);
+    viewport()->setAcceptDrops(true);
+    setDropIndicatorShown(true);
+    setDragDropMode(QAbstractItemView::InternalMove);
+}
+
+void ZAlbumsTreeWidget::dragEnterEvent(QDragEnterEvent *event)
+{
+    m_draggingItem = currentIndex();
+    if (!m_draggingItem.isValid()) {
+        event->ignore();
+    }
+    QTreeWidgetItem* src = itemFromIndex(m_draggingItem);
+    if (!src) {
+        event->ignore();
+        return;
+    }
+    int srcId = src->data(0,Qt::UserRole).toInt();
+    if (srcId<0) {
+        event->ignore();
+        return;
+    }
+
+    QTreeWidget::dragEnterEvent(event);
+}
+
+void ZAlbumsTreeWidget::dropEvent(QDropEvent *event)
+{
+    QModelIndex droppedIndex = indexAt(event->pos());
+    if( !droppedIndex.isValid() || !m_draggingItem.isValid()) {
+        event->ignore();
+        return;
+    }
+
+    QTreeWidgetItem* src = itemFromIndex(m_draggingItem);
+    QTreeWidgetItem* dst = itemFromIndex(droppedIndex);
+    if (!src || !dst) {
+        event->ignore();
+        return;
+    }
+
+    int srcId = src->data(0,Qt::UserRole).toInt();
+    int dstId = dst->data(0,Qt::UserRole).toInt();
+    if (srcId<0 || dstId<0) {  // no dragging between virtual albums
+        event->ignore();
+        return;
+    }
+
+    const QString srcName = src->text(0);
+    const QString dstName = dst->text(0);
+
+    QMetaObject::invokeMethod(zg->db,[srcName,dstName](){
+        if (zg->db)
+            zg->db->sqlReparentAlbum(srcName,dstName);
+    },Qt::QueuedConnection);
+    event->accept();
 }
