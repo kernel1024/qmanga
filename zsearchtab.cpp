@@ -160,9 +160,37 @@ void ZSearchTab::updateSplitters()
 void ZSearchTab::ctxMenu(const QPoint &pos)
 {
     QAbstractItemView *view = activeView();
+    QAction *acm;
     QMenu cm(view);
 
-    QAction *acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-select-all")),tr("Select All"));
+    if (savedOrdering == Z::UndefinedOrder) { // Disable sorting control for dynamic albums
+        QMenu* smenu = cm.addMenu(QIcon(":/16/view-sort-ascending"),tr("Sort"));
+
+        for (int i=0;i<Z::maxOrdering;i++) {
+            acm = new QAction(Z::sortMenu.value(static_cast<Z::Ordering>(i)),this);
+            acm->setCheckable(true);
+            acm->setChecked(static_cast<int>(zg->defaultOrdering) == i);
+            connect(acm,&QAction::triggered,this,[this,i](){
+                applySortOrder(static_cast<Z::Ordering>(i),zg->defaultOrderingDirection);
+            });
+            smenu->addAction(acm);
+        }
+        smenu->addSeparator();
+
+        acm = new QAction(tr("Reverse order"),this);
+        acm->setCheckable(true);
+        acm->setChecked(zg->defaultOrderingDirection == Qt::DescendingOrder);
+        connect(acm,&QAction::triggered,this,[this](){
+            Qt::SortOrder order = Qt::AscendingOrder;
+            if (zg->defaultOrderingDirection == Qt::AscendingOrder)
+                order = Qt::DescendingOrder; // reverse
+            applySortOrder(zg->defaultOrdering,order);
+        });
+        smenu->addAction(acm);
+        cm.addSeparator();
+    }
+
+    acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-select-all")),tr("Select All"));
     connect(acm,&QAction::triggered,view,&QAbstractItemView::selectAll);
 
     cm.addSeparator();
