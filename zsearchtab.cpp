@@ -47,6 +47,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     completer->setFilterMode(Qt::MatchContains);
     ui->srcEdit->setCompleter(completer);
+    ui->srcEdit->setContextMenuPolicy(Qt::CustomContextMenu);
 
     ui->srcIconSize->setMinimum(16);
     ui->srcIconSize->setMaximum(maxPreviewSize);
@@ -72,6 +73,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcModeList,&QRadioButton::toggled,this,&ZSearchTab::listModeChanged);
     connect(ui->srcIconSize,&QSlider::valueChanged,this,&ZSearchTab::iconSizeChanged);
     connect(ui->srcEdit,&QLineEdit::returnPressed,ui->srcEditBtn,&QPushButton::click);
+    connect(ui->srcEdit,&QLineEdit::customContextMenuRequested,
+            this,&ZSearchTab::ctxEditMenu);
     connect(ui->srcEditBtn,&QPushButton::clicked,this,&ZSearchTab::mangaSearch);
 
     connect(zg->db,&ZDB::albumsListUpdated,this,&ZSearchTab::dbAlbumsListUpdated,Qt::QueuedConnection);
@@ -80,7 +83,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(zg->db,&ZDB::filesLoaded,this,&ZSearchTab::dbFilesLoaded,Qt::QueuedConnection);
     connect(zg->db,&ZDB::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
     connect(zg->db,&ZDB::needTableCreation,this,&ZSearchTab::dbNeedTableCreation,Qt::QueuedConnection);
-    connect(zg->db,&ZDB::showProgressDialog,this,&ZSearchTab::dbShowProgressDialog,Qt::QueuedConnection);
+    connect(zg->db,&ZDB::showProgressDialog,
+            this,&ZSearchTab::dbShowProgressDialog,Qt::QueuedConnection);
     connect(zg->db,&ZDB::showProgressState,this,&ZSearchTab::dbShowProgressState,Qt::QueuedConnection);
 
     connect(this,&ZSearchTab::dbAddFiles,zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
@@ -304,6 +308,23 @@ void ZSearchTab::ctxAlbumMenu(const QPoint &pos)
     }
 
     cm.exec(ui->srcAlbums->mapToGlobal(pos));
+}
+
+void ZSearchTab::ctxEditMenu(const QPoint &pos)
+{
+    QMenu* menu = ui->srcEdit->createStandardContextMenu();
+    QAction* ac;
+
+    menu->insertSeparator(menu->actions().first());
+
+    ac = new QAction(QIcon::fromTheme("edit-clear"),tr("Clear"),menu);
+    connect(ac,&QAction::triggered,this,[this](){
+        ui->srcEdit->clear();
+    });
+    menu->insertAction(menu->actions().first(),ac);
+
+    menu->exec(ui->srcEdit->mapToGlobal(pos));
+    menu->deleteLater();
 }
 
 void ZSearchTab::ctxRenameAlbum()

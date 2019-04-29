@@ -75,6 +75,7 @@ public slots:
 
     void ctxMenu(const QPoint &pos);
     void ctxAlbumMenu(const QPoint &pos);
+    void ctxEditMenu(const QPoint &pos);
     void ctxRenameAlbum();
     void ctxDeleteAlbum();
     void ctxAddEmptyAlbum();
