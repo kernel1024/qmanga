@@ -38,6 +38,7 @@ public:
     QLabel* lblAverageSizes;
     QLabel* lblRotation;
     QLabel* lblCrop;
+    QLabel* lblAverageFineRender;
     QFrame* fastScrollPanel;
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();

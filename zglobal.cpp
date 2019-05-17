@@ -24,6 +24,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     bookmarks.clear();
     ctxSearchEngines.clear();
     defaultSearchEngine.clear();
+    avgFineRenderTime = 0;
     cachePixmaps = false;
     useFineRendering = true;
     ocrEditor = nullptr;
@@ -298,6 +299,22 @@ void ZGlobal::dbCheckComplete()
     checkSQLProblems(w);
 }
 
+void ZGlobal::addFineRenderTime(qint64 msec)
+{
+    fineRenderMutex.lock();
+
+    fineRenderTimes.append(msec);
+    if (fineRenderTimes.count()>100)
+        fineRenderTimes.removeFirst();
+
+    qint64 sum = 0;
+    for (const qint64 a : qAsConst(fineRenderTimes))
+        sum += a;
+    avgFineRenderTime = static_cast<int>(sum) / fineRenderTimes.count();
+
+    fineRenderMutex.unlock();
+}
+
 QColor ZGlobal::foregroundColor()
 {
     qreal r,g,b;
@@ -521,6 +538,11 @@ void ZGlobal::initLanguagesList()
 QString ZGlobal::getLanguageName(const QString& bcp47Name)
 {
     return langNamesList.value(bcp47Name);
+}
+
+qint64 ZGlobal::getAvgFineRenderTime()
+{
+    return avgFineRenderTime;
 }
 
 QStringList ZGlobal::getLanguageCodes() const

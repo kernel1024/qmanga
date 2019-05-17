@@ -5,6 +5,8 @@
 #include <QHash>
 #include <QMap>
 #include <QUrl>
+#include <QList>
+#include <QMutex>
 #include "global.h"
 #include "ocreditor.h"
 
@@ -22,6 +24,9 @@ private:
     QHash<QString,QStringList> dirWatchList;
     QMap<QString,QString> langSortedBCP47List;  // names -> bcp (for sorting)
     QHash<QString,QString> langNamesList;       // bcp -> names
+    QList<qint64> fineRenderTimes;
+    QMutex fineRenderMutex;
+    qint64 avgFineRenderTime;
 
     void checkSQLProblems(QWidget *parent);
     void initLanguagesList();
@@ -73,6 +78,7 @@ public:
 
     QStringList getLanguageCodes() const;
     QString getLanguageName(const QString &bcp47Name);
+    qint64 getAvgFineRenderTime();
 
 public slots:
     void settingsDlg();
@@ -81,6 +87,7 @@ public slots:
     void updateWatchDirList(const QStringList & watchDirs);
     void directoryChanged(const QString & dir);
     void dbCheckComplete();
+    void addFineRenderTime(qint64 msec);
 
 signals:
     void dbSetCredentials(const QString& host, const QString& base,

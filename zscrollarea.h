@@ -4,10 +4,15 @@
 #include <QScrollArea>
 #include <QTabWidget>
 #include <QTabBar>
+#include <QTimer>
 
 class ZScrollArea : public QScrollArea
 {
     Q_OBJECT
+private:
+    QTimer resizeTimer;
+    QSize savedSize;
+
 public:
     explicit ZScrollArea(QWidget *parent = nullptr);
     

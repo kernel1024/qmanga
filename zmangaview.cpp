@@ -673,10 +673,16 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                         if (filter!=Blitz::UndefinedFilter) {
                             QImage image = curUmPixmap;
                             QtConcurrent::run(&resamplersPool,[this,targetSize,filter,image,page](){
+                                QElapsedTimer timer;
+                                timer.start();
+
                                 QImage res = resizeImage(image,targetSize,true,filter,page,&currentPage);
 
-                                if (!res.isNull())
+                                if (!res.isNull()) {
+                                    qint64 elapsed = timer.elapsed();
                                     emit requestRedrawPageEx(res, page);
+                                    zg->addFineRenderTime(elapsed);
+                                }
                             });
                         }
                     }

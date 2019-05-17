@@ -47,7 +47,9 @@ MainWindow::MainWindow(QWidget *parent) :
     lblAverageSizes = new QLabel();
     lblRotation = new QLabel(tr("Rotation: 0"));
     lblCrop = new QLabel();
+    lblAverageFineRender = new QLabel();
 
+    statusBar()->addPermanentWidget(lblAverageFineRender);
     statusBar()->addPermanentWidget(lblAverageSizes);
     statusBar()->addPermanentWidget(lblSearchStatus);
     statusBar()->addPermanentWidget(lblRotation);
@@ -522,7 +524,13 @@ void MainWindow::auxMessage(const QString &msg)
 
 void MainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
 {
-    lblAverageSizes->setText(tr("Avg: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
+    if (zg->cachePixmaps)
+        lblAverageSizes->setText(tr("Avg size: %1x%2").arg(sz.width()).arg(sz.height()));
+    else
+        lblAverageSizes->setText(tr("Avg size: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
+
+    if (zg->getAvgFineRenderTime()>0)
+        lblAverageFineRender->setText(tr("Avg filter: %1 ms").arg(zg->getAvgFineRenderTime()));
 }
 
 void MainWindow::fsAddFiles()
