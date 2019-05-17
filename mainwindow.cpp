@@ -129,8 +129,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->mangaView->scroller = ui->scrollArea;
     zg->loadSettings();
     centerWindow(!isMaximized());
-    savedPos=pos();
-    savedSize=size();
+    savedGeometry=geometry();
     savedMaximized=isMaximized();
     dispPage(-1,QString());
 
@@ -287,8 +286,7 @@ void MainWindow::switchFullscreen()
 
     if (fullScreen) {
         savedMaximized=isMaximized();
-        savedPos=pos();
-        savedSize=size();
+        savedGeometry=geometry();
     }
 
     statusBar()->setVisible(!fullScreen);
@@ -308,12 +306,12 @@ void MainWindow::switchFullscreen()
     if (fullScreen)
         showFullScreen();
     else {
-        if (savedMaximized)
-            showMaximized();
-        else {
+        if (savedMaximized) {
             showNormal();
-            move(savedPos);
-            resize(savedSize);
+            showMaximized();
+        } else {
+            showNormal();
+            setGeometry(savedGeometry);
         }
     }
     ui->actionFullscreen->setChecked(fullScreen);

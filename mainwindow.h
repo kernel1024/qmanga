@@ -50,8 +50,7 @@ private:
     QVector<ZFSFile> fsScannedFiles;
     QMutex fsAddFilesMutex;
     bool savedMaximized;
-    QPoint savedPos;
-    QSize savedSize;
+    QRect savedGeometry;
     QMessageBox indexerMsgBox;
     void openAuxFile(const QString& filename);
 
