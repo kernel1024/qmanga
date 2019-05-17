@@ -596,6 +596,13 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
         nt->setChecked(mwnd->fastScrollPanel->isVisible());
         connect(nt,&QAction::toggled,mwnd->fastScrollPanel,&QFrame::setVisible);
         cm.addAction(nt);
+
+        nt = new QAction(QIcon(":/16/edit-rename"),tr("Show controls"),nullptr);
+        nt->setCheckable(true);
+        nt->setShortcut(QKeySequence(Qt::Key_Return));
+        nt->setChecked(mwnd->isFullScreenControlsVisible());
+        connect(nt,&QAction::toggled,mwnd,&MainWindow::switchFullscreenControls);
+        cm.addAction(nt);
     }
     cm.exec(event->globalPos());
     event->accept();

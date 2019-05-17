@@ -43,16 +43,19 @@ public:
     ~MainWindow();
     void centerWindow(bool moveWindow);
     bool isMangaOpened();
+    bool isFullScreenControlsVisible();
     
 private:
     Ui::MainWindow *ui;
     bool fullScreen;
+    bool fullScreenControls;
     QVector<ZFSFile> fsScannedFiles;
     QMutex fsAddFilesMutex;
     bool savedMaximized;
     QRect savedGeometry;
     QMessageBox indexerMsgBox;
     void openAuxFile(const QString& filename);
+    void updateControlsVisibility();
 
 protected:
     void closeEvent(QCloseEvent * event);
@@ -70,6 +73,7 @@ public slots:
     void dispPage(int num, const QString &msg);
     void pageNumEdited();
     void switchFullscreen();
+    void switchFullscreenControls();
     void viewerKeyPressed(int key);
     void updateViewer();
     void rotationUpdated(int degree);

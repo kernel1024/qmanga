@@ -10,6 +10,7 @@
 #include <QBuffer>
 #include <QScreen>
 #include <QWindow>
+#include <QKeySequence>
 #include <QDebug>
 #include <cmath>
 
@@ -36,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bookmarksMenu = ui->menuBookmarks;
     searchTab = ui->searchTab;
     fullScreen = false;
+    fullScreenControls = false;
     fastScrollPanel = ui->fastScrollPanel;
     bookmarksMenu->setStyleSheet(QStringLiteral("QMenu { menu-scrollable: 1; }"));
 
@@ -193,6 +195,11 @@ bool MainWindow::isMangaOpened()
     return (ui->mangaView->getPageCount()>0);
 }
 
+bool MainWindow::isFullScreenControlsVisible()
+{
+    return !fullScreen || fullScreenControls;
+}
+
 void MainWindow::openAuxFile(const QString &filename)
 {
     QFileInfo fi(filename);
@@ -283,19 +290,17 @@ void MainWindow::dispPage(int num, const QString &msg)
 void MainWindow::switchFullscreen()
 {
     fullScreen = !fullScreen;
+    fullScreenControls = false;
 
     if (fullScreen) {
-        savedMaximized=isMaximized();
-        savedGeometry=geometry();
+        savedMaximized = isMaximized();
+        savedGeometry = geometry();
     }
 
-    statusBar()->setVisible(!fullScreen);
-    menuBar()->setVisible(!fullScreen);
-    ui->tabWidget->tabBar()->setVisible(!fullScreen);
-    ui->toolbar->setVisible(!fullScreen);
+    updateControlsVisibility();
     int m = 2;
     if (fullScreen) m = 0;
-    if (ui->centralWidget!=nullptr) {
+    if (ui->centralWidget != nullptr) {
         ui->centralWidget->layout()->setMargin(m);
         ui->centralWidget->layout()->setContentsMargins(m,m,m,m);
     }
@@ -317,9 +322,34 @@ void MainWindow::switchFullscreen()
     ui->actionFullscreen->setChecked(fullScreen);
 }
 
+void MainWindow::switchFullscreenControls()
+{
+    if (!fullScreen) return;
+
+    fullScreenControls = !fullScreenControls;
+    updateControlsVisibility();
+}
+
+void MainWindow::updateControlsVisibility()
+{
+    bool state = isFullScreenControlsVisible();
+
+    statusBar()->setVisible(state);
+    menuBar()->setVisible(state);
+    ui->tabWidget->tabBar()->setVisible(state);
+    ui->toolbar->setVisible(state);
+}
+
 void MainWindow::viewerKeyPressed(int key)
 {
-    if (key==Qt::Key_Escape && fullScreen) switchFullscreen();
+    if (fullScreen) {
+        if (key==Qt::Key_Return) {
+            switchFullscreenControls();
+        }
+        if (QKeySequence(key)==ui->actionFullscreen->shortcut()) {
+            switchFullscreen();
+        }
+    }
 }
 
 void MainWindow::updateViewer()
