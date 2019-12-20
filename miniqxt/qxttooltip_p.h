@@ -45,31 +45,33 @@ class QxtToolTipPrivate : public QWidget
 {
     Q_OBJECT
 
+    friend class QxtToolTip;
+
 public:
-    QxtToolTipPrivate();
-    ~QxtToolTipPrivate();
+    explicit QxtToolTipPrivate(QWidget *parent = nullptr);
+    ~QxtToolTipPrivate() override;
 
     static QxtToolTipPrivate* instance();
-    void show(const QPoint& pos, QWidget* tooltip, QWidget* parent = nullptr,
-              const QRect& rect = QRect(), const bool allowMouseEnter = false);
+    void show(QPoint pos, QWidget* tooltip, QWidget* parent,
+              QRect rect, bool allowMouseEnter, bool forceReplace);
     void setToolTip(QWidget* tooltip);
-    bool eventFilter(QObject* parent, QEvent* event);
+    bool eventFilter(QObject* object, QEvent* event) override;
     void hideLater();
-    QPoint calculatePos(QScreen *scr, const QPoint& eventPos) const;
-    QHash<WidgetPtr, WidgetArea> tooltips;
-    QVBoxLayout* vbox;
+    QPoint calculatePos(QScreen *scr, QPoint eventPos) const;
 
 protected:
-    void enterEvent(QEvent* event);
-    void leaveEvent(QEvent* event);
-    void paintEvent(QPaintEvent* event);
+    void enterEvent(QEvent* event) override;
+    void leaveEvent(QEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
 
 private:
-    static QxtToolTipPrivate* self;
-    QWidget* currentParent;
     QRect currentRect;
-    bool ignoreEnterEvent;
-    bool allowCloseOnLeave;
+    QVBoxLayout* vbox;
+    bool ignoreEnterEvent { false };
+    bool allowCloseOnLeave { false };
+    void removeAllWidgets();
+
+    Q_DISABLE_COPY(QxtToolTipPrivate)
 };
 
 #endif // QXTTOOLTIP_P_H

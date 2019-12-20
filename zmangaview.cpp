@@ -124,9 +124,9 @@ void ZMangaView::cacheGetPage(int num)
     },Qt::QueuedConnection);
 }
 
-void ZMangaView::setZoomMode(ZMangaView::ZoomMode mode)
+void ZMangaView::setZoomMode(int mode)
 {
-    zoomMode = mode;
+    zoomMode = static_cast<ZMangaView::ZoomMode>(mode);
     redrawPage();
 }
 
@@ -542,18 +542,32 @@ void ZMangaView::keyPressEvent(QKeyEvent *event)
 
 void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
 {
+    auto mwnd = qobject_cast<MainWindow *>(window());
+    if (mwnd==nullptr) {
+        qCritical() << "MainWindow not found";
+        return;
+    }
+
     QMenu cm(this);
     QAction* nt = new QAction(QIcon(":/16/zoom-fit-best"),tr("Zoom fit"),nullptr);
-    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomFit);
+    connect(nt,&QAction::triggered,mwnd,[mwnd](){
+        mwnd->setZoomMode(zmFit);
+    });
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/zoom-fit-width"),tr("Zoom width"),nullptr);
-    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomWidth);
+    connect(nt,&QAction::triggered,mwnd,[mwnd](){
+        mwnd->setZoomMode(zmWidth);
+    });
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/zoom-fit-height"),tr("Zoom height"),nullptr);
-    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomHeight);
+    connect(nt,&QAction::triggered,mwnd,[mwnd](){
+        mwnd->setZoomMode(zmHeight);
+    });
     cm.addAction(nt);
     nt = new QAction(QIcon(":/16/zoom-original"),tr("Zoom original"),nullptr);
-    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomOriginal);
+    connect(nt,&QAction::triggered,mwnd,[mwnd](){
+        mwnd->setZoomMode(zmOriginal);
+    });
     cm.addAction(nt);
     cm.addSeparator();
     nt = new QAction(QIcon(":/16/zoom-draw"),tr("Zoom dynamic"),nullptr);
@@ -589,21 +603,19 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     connect(nt,&QAction::triggered,this,&ZMangaView::minimizeWindowCtx);
     cm.addAction(nt);
 
-    auto mwnd = qobject_cast<MainWindow *>(window());
-    if (mwnd) {
-        nt = new QAction(QIcon(":/16/transform-move"),tr("Show fast scroller"),nullptr);
-        nt->setCheckable(true);
-        nt->setChecked(mwnd->fastScrollPanel->isVisible());
-        connect(nt,&QAction::toggled,mwnd->fastScrollPanel,&QFrame::setVisible);
-        cm.addAction(nt);
+    nt = new QAction(QIcon(":/16/transform-move"),tr("Show fast scroller"),nullptr);
+    nt->setCheckable(true);
+    nt->setChecked(mwnd->fastScrollPanel->isVisible());
+    connect(nt,&QAction::toggled,mwnd->fastScrollPanel,&QFrame::setVisible);
+    cm.addAction(nt);
 
-        nt = new QAction(QIcon(":/16/edit-rename"),tr("Show controls"),nullptr);
-        nt->setCheckable(true);
-        nt->setShortcut(QKeySequence(Qt::Key_Return));
-        nt->setChecked(mwnd->isFullScreenControlsVisible());
-        connect(nt,&QAction::toggled,mwnd,&MainWindow::switchFullscreenControls);
-        cm.addAction(nt);
-    }
+    nt = new QAction(QIcon(":/16/edit-rename"),tr("Show controls"),nullptr);
+    nt->setCheckable(true);
+    nt->setShortcut(QKeySequence(Qt::Key_Return));
+    nt->setChecked(mwnd->isFullScreenControlsVisible());
+    connect(nt,&QAction::toggled,mwnd,&MainWindow::switchFullscreenControls);
+    cm.addAction(nt);
+
     cm.exec(event->globalPos());
     event->accept();
 }
@@ -638,21 +650,28 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                                static_cast<double>(curUmPixmap.height());
             double myAspect = static_cast<double>(width()) /
                               static_cast<double>(height());
-            if (zoomAny>0) {
-                targetSize = curUmPixmap.size()*(static_cast<double>(zoomAny)/100.0);
-            } else if (zoomMode==zmFit) {
-                if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
+
+            switch (zoomMode) {
+                case zmFit:
+                    if ( pixAspect > myAspect ) // the image is wider than widget -> resize by width
+                        targetSize = QSize(scrollerSize.width(),
+                                           qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
+                    else
+                        targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
+                                           scrollerSize.height());
+                    break;
+                case zmWidth:
                     targetSize = QSize(scrollerSize.width(),
                                        qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
-                else
+                    break;
+                case zmHeight:
                     targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
                                        scrollerSize.height());
-            } else if (zoomMode==zmWidth) {
-                targetSize = QSize(scrollerSize.width(),
-                                   qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
-            } else if (zoomMode==zmHeight) {
-                targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
-                                   scrollerSize.height());
+                    break;
+                case zmOriginal:
+                    if (zoomAny>0)
+                        targetSize = curUmPixmap.size()*(static_cast<double>(zoomAny)/100.0);
+                    break;
             }
 
             if (targetSize!=curUmPixmap.size()) {
@@ -832,26 +851,6 @@ void ZMangaView::navLast()
     setPage(privPageCount-1);
 }
 
-void ZMangaView::setZoomFit()
-{
-    setZoomMode(zmFit);
-}
-
-void ZMangaView::setZoomWidth()
-{
-    setZoomMode(zmWidth);
-}
-
-void ZMangaView::setZoomHeight()
-{
-    setZoomMode(zmHeight);
-}
-
-void ZMangaView::setZoomOriginal()
-{
-    setZoomMode(zmOriginal);
-}
-
 void ZMangaView::setZoomDynamic(bool state)
 {
     zoomDynamic = state;
@@ -860,7 +859,7 @@ void ZMangaView::setZoomDynamic(bool state)
 
 void ZMangaView::setZoomAny(const QString &proc)
 {
-    zoomAny = -1;
+    zoomAny = -1; // original zoom
     QString s = proc;
     s.remove(QRegExp("[^0123456789]"));
     bool okconv;

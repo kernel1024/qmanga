@@ -8,6 +8,7 @@
 #include <QList>
 #include <QMutex>
 #include <QMessageBox>
+#include <QButtonGroup>
 
 #include "zmangaview.h"
 #include "zsearchtab.h"
@@ -40,11 +41,13 @@ public:
     QLabel* lblCrop;
     QLabel* lblAverageFineRender;
     QFrame* fastScrollPanel;
+    QButtonGroup* zoomGroup;
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void centerWindow(bool moveWindow);
     bool isMangaOpened();
     bool isFullScreenControlsVisible();
+    void setZoomMode(int mode);
     
 private:
     Ui::MainWindow *ui;

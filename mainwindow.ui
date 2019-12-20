@@ -365,6 +365,9 @@
                <height>22</height>
               </size>
              </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
              <property name="flat">
               <bool>true</bool>
              </property>
@@ -387,6 +390,9 @@
                <width>22</width>
                <height>22</height>
               </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -411,6 +417,9 @@
                <height>22</height>
               </size>
              </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
              <property name="flat">
               <bool>true</bool>
              </property>
@@ -433,6 +442,9 @@
                <width>22</width>
                <height>22</height>
               </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
              </property>
              <property name="flat">
               <bool>true</bool>
@@ -485,7 +497,7 @@
            <item>
             <widget class="QComboBox" name="comboZoom">
              <property name="currentIndex">
-              <number>9</number>
+              <number>14</number>
              </property>
              <item>
               <property name="text">
@@ -499,7 +511,17 @@
              </item>
              <item>
               <property name="text">
+               <string>15%</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
                <string>25%</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>30%</string>
               </property>
              </item>
              <item>
@@ -509,7 +531,17 @@
              </item>
              <item>
               <property name="text">
+               <string>45%</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
                <string>50%</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>55%</string>
               </property>
              </item>
              <item>
@@ -520,6 +552,11 @@
              <item>
               <property name="text">
                <string>75%</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>85%</string>
               </property>
              </item>
              <item>

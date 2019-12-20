@@ -224,6 +224,7 @@ void ZOCREditor::selectionShow()
 
 void ZOCREditor::showDictToolTip(const QString &html)
 {
+    qDebug() << html;
     ui->status->setText(tr("Ready"));
 
     QLabel *t = new QLabel(html);
@@ -234,7 +235,7 @@ void ZOCREditor::showDictToolTip(const QString &html)
 
     connect(t,&QLabel::linkActivated,this,&ZOCREditor::showSuggestedTranslation);
 
-    QxtToolTip::show(QCursor::pos(),t,ui->editor,QRect(),true);
+    QxtToolTip::show(QCursor::pos(),t,ui->editor,QRect(),true,true);
 }
 
 void ZOCREditor::showSuggestedTranslation(const QString &link)

@@ -17,10 +17,10 @@ class ZMangaView : public QWidget
     Q_OBJECT
 public:
     enum ZoomMode {
-        zmFit,
-        zmWidth,
-        zmHeight,
-        zmOriginal
+        zmFit = 1,
+        zmWidth = 2,
+        zmHeight = 3,
+        zmOriginal = 4
     };
 
     enum MouseMode {
@@ -76,7 +76,6 @@ public:
 
     explicit ZMangaView(QWidget *parent = nullptr);
     ~ZMangaView();
-    void setZoomMode(ZoomMode mode);
     int getPageCount();
     void getPage(int num);
     void setMouseMode(MouseMode mode);
@@ -103,6 +102,7 @@ signals:
     void updateFileStats(const QString& fileName);
 
 public slots:
+    void setZoomMode(int mode);
     void openFile(const QString &filename);
     void openFileEx(const QString &filename, int page);
     void closeFile();
@@ -120,10 +120,6 @@ public slots:
     void navNext();
     void navLast();
 
-    void setZoomFit();
-    void setZoomWidth();
-    void setZoomHeight();
-    void setZoomOriginal();
     void setZoomDynamic(bool state);
     void setZoomAny(const QString &proc);
 

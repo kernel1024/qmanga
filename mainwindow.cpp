@@ -63,6 +63,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
 
+    zoomGroup = new QButtonGroup(this);
+    zoomGroup->addButton(ui->btnZoomFit, ZMangaView::zmFit);
+    zoomGroup->addButton(ui->btnZoomWidth, ZMangaView::zmWidth);
+    zoomGroup->addButton(ui->btnZoomHeight, ZMangaView::zmHeight);
+    zoomGroup->addButton(ui->btnZoomOriginal, ZMangaView::zmOriginal);
+    zoomGroup->setExclusive(true);
+
     connect(ui->actionExit,&QAction::triggered,this,&MainWindow::close);
     connect(ui->actionOpen,&QAction::triggered,this,&MainWindow::openAux);
     connect(ui->actionOpenClipboard,&QAction::triggered,this,&MainWindow::openClipboard);
@@ -100,10 +107,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnNavNext,&QPushButton::clicked,ui->mangaView,&ZMangaView::navNext);
     connect(ui->btnNavLast,&QPushButton::clicked,ui->mangaView,&ZMangaView::navLast);
 
-    connect(ui->btnZoomFit,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomFit);
-    connect(ui->btnZoomHeight,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomHeight);
-    connect(ui->btnZoomWidth,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomWidth);
-    connect(ui->btnZoomOriginal,&QPushButton::clicked,ui->mangaView,&ZMangaView::setZoomOriginal);
+    connect(zoomGroup,qOverload<int>(&QButtonGroup::buttonClicked),this,[this](int mode){
+        ui->comboZoom->setEnabled(mode==ZMangaView::zmOriginal);
+        ui->mangaView->setZoomMode(mode);
+    });
     connect(ui->btnZoomDynamic,&QPushButton::toggled,ui->mangaView,&ZMangaView::setZoomDynamic);
 
     connect(ui->btnSearchTab,&QPushButton::clicked,this,&MainWindow::openSearchTab);
@@ -142,6 +149,8 @@ MainWindow::MainWindow(QWidget *parent) :
         fname = QApplication::arguments().at(1);
     if (!fname.isEmpty() && !fname.startsWith(QStringLiteral("--")))
         openAuxFile(fname);
+
+    ui->btnZoomFit->click();
 
 #ifdef WITH_OCR
     if (!ocr)
@@ -200,6 +209,13 @@ bool MainWindow::isMangaOpened()
 bool MainWindow::isFullScreenControlsVisible()
 {
     return !fullScreen || fullScreenControls;
+}
+
+void MainWindow::setZoomMode(int mode)
+{
+    auto btn = zoomGroup->button(mode);
+    if (btn)
+        btn->click();
 }
 
 void MainWindow::openAuxFile(const QString &filename)

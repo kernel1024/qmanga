@@ -34,22 +34,15 @@
 #include <QRect>
 #include <QPointer>
 #include <QWidget>
-#include "qxtglobal.h"
 
 class QxtToolTip
 {
     QxtToolTip();
 
 public:
-    static void show(const QPoint& pos, QWidget* tooltip, QWidget* parent = nullptr,
-                     const QRect& rect = QRect(), const bool allowMouseEnter = false);
+    static void show(QPoint pos, QWidget* tooltip, QWidget* parent = nullptr,
+                     QRect rect = QRect(), bool allowMouseEnter = false, bool forceReplace = false);
     static void hide();
-
-    static QWidget* toolTip(QWidget* parent);
-    static void setToolTip(QWidget* parent, QWidget* tooltip, const QRect& rect = QRect());
-
-    static QRect toolTipRect(QWidget* parent);
-    static void setToolTipRect(QWidget* parent, const QRect& rect);
 
     static int margin();
     static void setMargin(int margin);
@@ -57,12 +50,5 @@ public:
     static qreal opacity();
     static void setOpacity(qreal level);
 };
-
-QT_BEGIN_NAMESPACE
-inline uint qHash(const QPointer<QWidget> key)
-{
-    return reinterpret_cast<quint64>(key ? (&*key) : 0);
-}
-QT_END_NAMESPACE
 
 #endif // QXTTOOLTIP_H
