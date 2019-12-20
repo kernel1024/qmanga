@@ -15,10 +15,10 @@
 #include "zglobal.h"
 
 namespace Ui {
-class SettingsDialog;
+class ZSettingsDialog;
 }
 
-class SettingsDialog : public QDialog
+class ZSettingsDialog : public QDialog
 {
     Q_OBJECT
     
@@ -49,8 +49,8 @@ public:
     QDoubleSpinBox* spinSearchScrollFactor;
     QLineEdit* editOCRDatapath;
 
-    explicit SettingsDialog(QWidget *parent = nullptr);
-    ~SettingsDialog();
+    explicit ZSettingsDialog(QWidget *parent = nullptr);
+    ~ZSettingsDialog();
     QColor getBkColor();
     QFont getIdxFont();
     QFont getOCRFont();
@@ -67,15 +67,15 @@ private:
     QColor bkColor, frameColor;
     QFont idxFont;
     QFont ocrFont;
-    Ui::SettingsDialog *ui;
+    Ui::ZSettingsDialog *ui;
     QMap<QPushButton *, QListWidget *> delLookup;
 
     void updateTranslatorLanguages();
 
-signals:
+Q_SIGNALS:
     void getTablesDescription();
 
-public slots:
+public Q_SLOTS:
     void delListWidgetItem();
     void bkColorDlg();
     void idxFontDlg();

@@ -21,7 +21,7 @@ public:
     explicit ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
                          const QString& dstDir, QObject *parent = nullptr);
 
-signals:
+Q_SIGNALS:
     void progressSetMaximum(int max);
     void progressSetValue(int val);
     void progressSetLabelText(const QString& str);
@@ -30,7 +30,7 @@ signals:
     void errorMsg(const QString& msg);
     void finished();
 
-public slots:
+public Q_SLOTS:
     void start();
     void abort();
 };

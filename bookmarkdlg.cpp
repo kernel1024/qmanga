@@ -1,11 +1,11 @@
 #include "bookmarkdlg.h"
 #include "ui_bookmarkdlg.h"
 
-QTwoEditDlg::QTwoEditDlg(QWidget *parent, const QString& windowTitle,
+ZTwoEditDlg::ZTwoEditDlg(QWidget *parent, const QString& windowTitle,
                          const QString &title1, const QString &title2,
                          const QString &value1, const QString &value2) :
     QDialog(parent),
-    ui(new Ui::QTwoEditDlg)
+    ui(new Ui::ZTwoEditDlg)
 {
     ui->setupUi(this);
     setWindowTitle(windowTitle);
@@ -17,27 +17,27 @@ QTwoEditDlg::QTwoEditDlg(QWidget *parent, const QString& windowTitle,
     ui->labelAux->clear();
 }
 
-QTwoEditDlg::~QTwoEditDlg()
+ZTwoEditDlg::~ZTwoEditDlg()
 {
     delete ui;
 }
 
-QString QTwoEditDlg::getDlgEdit1()
+QString ZTwoEditDlg::getDlgEdit1()
 {
     return ui->lineEdit1->text();
 }
 
-QString QTwoEditDlg::getDlgEdit2()
+QString ZTwoEditDlg::getDlgEdit2()
 {
     return ui->lineEdit2->text();
 }
 
-void QTwoEditDlg::setHelpText(const QString &helpText)
+void ZTwoEditDlg::setHelpText(const QString &helpText)
 {
     ui->labelHelp->setText(helpText);
 }
 
-void QTwoEditDlg::setAuxText(const QString &text)
+void ZTwoEditDlg::setAuxText(const QString &text)
 {
     ui->labelAux->setText(text);
 }

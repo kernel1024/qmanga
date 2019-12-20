@@ -4,31 +4,36 @@
 #include "global.h"
 #include "zabstractreader.h"
 
+class ZLoaderHelper;
+
 class ZMangaLoader : public QObject
 {
     Q_OBJECT
-protected:
-    ZAbstractReader* mReader;
-
 public:
-    QUuid threadID;
     explicit ZMangaLoader(QObject *parent = nullptr);
-    ~ZMangaLoader();
+    ~ZMangaLoader() override;
     void postMessage(const QString& msg);
 
-signals:
-    void gotPage(const QByteArray& page, const QImage& pageImage, const int& num,
+Q_SIGNALS:
+    void gotPage(const QByteArray& page, const QImage& pageImage, int num,
                  const QString& internalPath, const QUuid& aThreadID);
-    void gotPageCount(const int& num, const int& preferred);
+    void gotPageCount(int num, int preferred);
     void gotError(const QString& msg);
     void closeFileRequest();
     void auxMessage(const QString& msg);
     
-public slots:
+public Q_SLOTS:
     void openFile(const QString &filename, int preferred);
     void getPage(int num, bool preferImage);
     void closeFile();
-    
+
+private:
+    ZAbstractReader* m_reader { nullptr };
+    QUuid m_threadID;
+
+    Q_DISABLE_COPY(ZMangaLoader)
+
+    friend class ZLoaderHelper;
 };
 
 #endif // ZMANGACACHE_H

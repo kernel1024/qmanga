@@ -9,26 +9,28 @@
 #include "zglobal.h"
 
 namespace Ui {
-class CMultiInputDialog;
+class ZMultiInputDialog;
 }
 
-class CMultiInputDialog : public QDialog
+class ZMultiInputDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit CMultiInputDialog(QWidget *parent, const QString &title,
+    explicit ZMultiInputDialog(QWidget *parent, const QString &title,
                                const ZStrMap& data, const QString &helperText = QString());
-    ~CMultiInputDialog();
+    ~ZMultiInputDialog() override;
 
     ZStrMap getInputData() const;
 
 private:
-    Ui::CMultiInputDialog *ui;
+    Ui::ZMultiInputDialog *ui;
 
     QFormLayout *formLayout;
     QList<QLabel *> labels;
     QList<QLineEdit *> edits;
+
+    Q_DISABLE_COPY(ZMultiInputDialog)
 };
 
 #endif // MULTIINPUTDIALOG_H

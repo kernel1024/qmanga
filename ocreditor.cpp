@@ -17,24 +17,24 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
 
 #ifdef QT_DBUS_LIB
     translator = new OrgKernel1024JpreaderAuxtranslatorInterface(
-                     QStringLiteral("org.kernel1024.jpreader"),
-                     QStringLiteral("/auxTranslator"),
+                     QSL("org.kernel1024.jpreader"),
+                     QSL("/auxTranslator"),
                      QDBusConnection::sessionBus(),this);
 
     browser = new OrgKernel1024JpreaderBrowsercontrollerInterface(
-                  QStringLiteral("org.kernel1024.jpreader"),
-                  QStringLiteral("/browserController"),
+                  QSL("org.kernel1024.jpreader"),
+                  QSL("/browserController"),
                   QDBusConnection::sessionBus(),this);
 
-    dictionary = new OrgQjradDictionaryInterface(QStringLiteral("org.qjrad.dictionary"),
-                                                 QStringLiteral("/"),
+    dictionary = new OrgQjradDictionaryInterface(QSL("org.qjrad.dictionary"),
+                                                 QSL("/"),
                                                  QDBusConnection::sessionBus(),this);
 #endif
     ui->editor->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->editor,&QPlainTextEdit::customContextMenuRequested,
             this,&ZOCREditor::contextMenu);
 
-    dictSearch = new QAction(QIcon(QStringLiteral(":/16/document-preview")),
+    dictSearch = new QAction(QIcon(QSL(":/16/document-preview")),
                              tr("Dictionary search"),this);
     dictSearch->setCheckable(true);
     dictSearch->setChecked(false);
@@ -44,7 +44,7 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     ui->dictSearchButton->setDefaultAction(dictSearch);
 
     selectionTimer = new QTimer(this);
-    selectionTimer->setInterval(1000);
+    selectionTimer->setInterval(ZDefaults::oneSecondMS);
     selectionTimer->setSingleShot(true);
     connect(selectionTimer,&QTimer::timeout,this,&ZOCREditor::selectionShow);
     storedSelection.clear();
@@ -85,9 +85,9 @@ void ZOCREditor::findWordTranslation(const QString &text)
 {
     if (text.isEmpty()) return;
 #ifdef QT_DBUS_LIB
-    if (!dictionary->isValid())
+    if (!dictionary->isValid()) {
         ui->status->setText(tr("Dictionary not ready."));
-    else {
+    } else {
         dictionary->findWordTranslation(text);
         ui->status->setText(tr("Searching in dictionary..."));
     }
@@ -106,9 +106,9 @@ void ZOCREditor::translate()
     ui->status->clear();
 #ifdef QT_DBUS_LIB
     if (translator!=nullptr) {
-        if (!translator->isValid())
+        if (!translator->isValid()) {
             ui->status->setText(tr("Aux translator not ready."));
-        else {
+        } else {
             QString s = ui->editor->toPlainText();
             if (!ui->editor->textCursor().selectedText().isEmpty())
                 s = ui->editor->textCursor().selectedText();
@@ -133,19 +133,19 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 
     QAction *ac;
 
-    ac = new QAction(QIcon(QStringLiteral(":/16/edit-cut")),tr("Cut"),nullptr);
+    ac = new QAction(QIcon(QSL(":/16/edit-cut")),tr("Cut"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::cut);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(QStringLiteral(":/16/edit-copy")),tr("Copy"),nullptr);
+    ac = new QAction(QIcon(QSL(":/16/edit-copy")),tr("Copy"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::copy);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(QStringLiteral(":/16/edit-paste")),tr("Paste"),nullptr);
+    ac = new QAction(QIcon(QSL(":/16/edit-paste")),tr("Paste"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::paste);
     cm.addAction(ac);
 
-    ac = new QAction(QIcon(QStringLiteral(":/16/edit-clear")),tr("Clear"),nullptr);
+    ac = new QAction(QIcon(QSL(":/16/edit-clear")),tr("Clear"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::clear);
     cm.addAction(ac);
 
@@ -159,7 +159,7 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 #ifdef QT_DBUS_LIB
         cm.addAction(dictSearch);
 
-        ac = new QAction(QIcon(QStringLiteral(":/16/accessories-dictionary")),
+        ac = new QAction(QIcon(QSL(":/16/accessories-dictionary")),
                          tr("Show qjrad window"),nullptr);
         connect(ac,&QAction::triggered,this,[this,sText](){
             if (dictionary->isValid())
@@ -167,11 +167,11 @@ void ZOCREditor::contextMenu(const QPoint &pos)
         });
         cm.addAction(ac);
 
-        ac = new QAction(QIcon(QStringLiteral(":/16/jpreader")),
+        ac = new QAction(QIcon(QSL(":/16/jpreader")),
                          tr("Search with jpreader"),nullptr);
         connect(ac,&QAction::triggered,this,[this,sText](){
             if (browser->isValid()) {
-                if (sText.trimmed().startsWith(QStringLiteral("http"),Qt::CaseInsensitive)) {
+                if (sText.trimmed().startsWith(QSL("http"),Qt::CaseInsensitive)) {
                     QUrl u = QUrl::fromUserInput(sText);
                     if (u.isValid())
                         browser->openUrl(u.toString());
@@ -227,11 +227,11 @@ void ZOCREditor::showDictToolTip(const QString &html)
     qDebug() << html;
     ui->status->setText(tr("Ready"));
 
-    QLabel *t = new QLabel(html);
+    auto t = new QLabel(html);
     t->setOpenExternalLinks(false);
     t->setTextInteractionFlags(Qt::LinksAccessibleByMouse | Qt::TextSelectableByMouse);
-    t->setMaximumSize(350,350);
-    t->setStyleSheet(QStringLiteral("QLabel { background: #fefdeb; }"));
+    t->setMaximumSize(ZDefaults::maxDictTooltipSize);
+    t->setStyleSheet(QSL("QLabel { background: #fefdeb; }"));
 
     connect(t,&QLabel::linkActivated,this,&ZOCREditor::showSuggestedTranslation);
 
@@ -242,7 +242,7 @@ void ZOCREditor::showSuggestedTranslation(const QString &link)
 {
     QUrl url(link);
     QUrlQuery requ(url);
-    QString word = requ.queryItemValue(QStringLiteral("word"));
+    QString word = requ.queryItemValue(QSL("word"));
     if (word.startsWith('%')) {
         QByteArray bword = word.toLatin1();
         if (!bword.isNull() && !bword.isEmpty())

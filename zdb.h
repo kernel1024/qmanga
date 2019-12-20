@@ -47,23 +47,23 @@ public:
     Z::PDFRendering getPreferredRendering(const QString& filename) const;
     Z::Ordering getDynAlbumOrdering(const QString &album, Qt::SortOrder &order) const;
 
-signals:
+Q_SIGNALS:
     void errorMsg(const QString& msg);
     void needTableCreation();
     void baseCheckComplete();
-    void filesAdded(const int count, const int total, const int elapsed);
+    void filesAdded(int count, int total, int elapsed);
     void albumsListUpdated();
-    void showProgressDialog(const bool visible);
-    void showProgressState(const int value, const QString& msg);
+    void showProgressDialog(bool visible);
+    void showProgressState(int value, const QString& msg);
     void gotAlbums(const AlbumVector& albums);
     void gotFile(const SQLMangaEntry& file);
-    void filesLoaded(const int count, const int elapsed);
+    void filesLoaded(int count, int elapsed);
     void deleteItemsFromModel(const QIntVector& dbids);
     void updateWatchDirList(const QStringList& dirs);
     void foundNewFiles(const QStringList& files);
     void gotTablesDescription(const QString& text);
 
-public slots:
+public Q_SLOTS:
     void setCredentials(const QString &host, const QString& base,
                         const QString& user, const QString& password);
     void setDynAlbums(const ZStrMap &albums);
@@ -74,11 +74,11 @@ public slots:
     void sqlDelAlbum(const QString& album);
     void sqlAddAlbum(const QString& album, const QString& parent = QString());
     void sqlReparentAlbum(const QString& album, const QString& parent);
-    void sqlDelFiles(const QIntVector& dbids, const bool fullDelete);
+    void sqlDelFiles(const QIntVector& dbids, bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
     void sqlGetFiles(const QString& album, const QString& search);
-    void sqlChangeFilePreview(const QString& fileName, const int pageNum);
+    void sqlChangeFilePreview(const QString& fileName, int pageNum);
     void sqlRescanIndexedDirs();
     void sqlUpdateFileStats(const QString& fileName);
     void sqlSearchMissingManga();

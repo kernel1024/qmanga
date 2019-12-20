@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QTwoEditDlg</class>
- <widget class="QDialog" name="QTwoEditDlg">
+ <class>ZTwoEditDlg</class>
+ <widget class="QDialog" name="ZTwoEditDlg">
   <property name="windowModality">
    <enum>Qt::ApplicationModal</enum>
   </property>
@@ -140,7 +140,7 @@
   <connection>
    <sender>OKBtn</sender>
    <signal>clicked()</signal>
-   <receiver>QTwoEditDlg</receiver>
+   <receiver>ZTwoEditDlg</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -156,7 +156,7 @@
   <connection>
    <sender>CancelBtn</sender>
    <signal>clicked()</signal>
-   <receiver>QTwoEditDlg</receiver>
+   <receiver>ZTwoEditDlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

@@ -21,11 +21,13 @@ class ZOCREditor : public QDialog
     
 public:
     explicit ZOCREditor(QWidget *parent = nullptr);
-    ~ZOCREditor();
+    ~ZOCREditor() override;
     void addText(const QStringList& text);
     void setEditorFont(const QFont& font);
     
 private:
+    Q_DISABLE_COPY(ZOCREditor)
+
     Ui::ZOCREditor *ui;
 #ifdef QT_DBUS_LIB
     OrgKernel1024JpreaderAuxtranslatorInterface* translator;
@@ -37,7 +39,7 @@ private:
     QString storedSelection;
     void findWordTranslation(const QString& text);
 
-public slots:
+public Q_SLOTS:
     void showWnd();
     void translate();
     void gotTranslation(const QString& text);

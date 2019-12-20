@@ -8,23 +8,35 @@
 
 #include "zmangamodel.h"
 
+namespace ZDefaults {
 const int ModelSortRole = Qt::UserRole + 1;
+const double textWidthFactor = 3.5;
+const int columnName = 0;
+const int columnAlbum = 1;
+const int columnPagesCount = 2;
+const int columnFileSize = 3;
+const int columnAddDate = 4;
+const int columnFileDate = 5;
+const int columnMagic = 6;
+}
 
 ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView) :
     QAbstractTableModel(parent)
 {
-    pixmapSize = aPixmapSize;
-    view = aView;
-    mList.clear();
+    m_pixmapSize = aPixmapSize;
+    m_view = aView;
 }
 
 ZMangaModel::~ZMangaModel()
 {
-    mList.clear();
+    m_list.clear();
 }
 
-Qt::ItemFlags ZMangaModel::flags(const QModelIndex &) const
+Qt::ItemFlags ZMangaModel::flags(const QModelIndex &index) const
 {
+    if (!checkIndex(index,CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
+        return Qt::NoItemFlags;
+
     return (Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 }
 
@@ -35,33 +47,36 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
 
 QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) const
 {
-    if (!index.isValid() || zg==nullptr) return QVariant();
-    int idx = index.row();
+    const QChar zeroWidthSpace(0x200b);
 
-    int maxl = mList.count();
-    if (idx<0 || idx>=maxl)
+    if (zg==nullptr) return QVariant();
+    if (!checkIndex(index,CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
         return QVariant();
 
-    QFontMetrics fm(view->font());
+    int idx = index.row();
+
+    QFontMetrics fm(m_view->font());
     if (role == Qt::DecorationRole && index.column()==0) {
         QPixmap rp;
-        if (listMode)
+        if (listMode) {
             rp = QPixmap(fm.height()*2,fm.height()*2);
-        else
-            rp = QPixmap(pixmapSize->value(),pixmapSize->value()*previewProps); // B4 paper proportions
+        } else {
+            rp = QPixmap(m_pixmapSize->value(),qRound(m_pixmapSize->value()*ZDefaults::previewProps));
+        }
         QPainter cp(&rp);
-        cp.fillRect(0,0,rp.width(),rp.height(),view->palette().base());
+        cp.fillRect(0,0,rp.width(),rp.height(),m_view->palette().base());
 
-        SQLMangaEntry itm = mList.at(idx);
+        SQLMangaEntry itm = m_list.at(idx);
         QImage p = itm.cover;
         if (p.isNull())
-            p = QImage(QStringLiteral(":/32/edit-delete"));
+            p = QImage(QSL(":/32/edit-delete"));
 
         p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
-        if (p.height()<rp.height())
+        if (p.height()<rp.height()) {
             cp.drawImage(0,(rp.height()-p.height())/2,p);
-        else
+        } else {
             cp.drawImage((rp.width()-p.width())/2,0,p);
+        }
         if (zg->frameColor!=zg->backgroundColor) {
             cp.setPen(QPen(zg->frameColor));
             cp.drawLine(0,0,rp.width()-1,0);
@@ -81,57 +96,57 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
     }
 
     if (role == Qt::DisplayRole) {
-        SQLMangaEntry t = mList.at(idx);
+        SQLMangaEntry t = m_list.at(idx);
         int col = index.column();
         QString tmp;
         int i;
         int maxLen = 0;
         switch (col) {
-            case 0:
+            case ZDefaults::columnName:
                 // insert zero-width spaces for word-wrap
                 tmp = t.name;
                 i = tmp.length()-1;
                 while (i>=0) {
                     if (!tmp.at(i).isLetterOrNumber())
-                        tmp.insert(i,QChar(0x200b));
+                        tmp.insert(i,zeroWidthSpace);
                     i--;
                 }
                 // QTBUG-16134 changes workaround - elided text is too big
-                maxLen = qRound(3.5 * pixmapSize->value() / fm.averageCharWidth());
+                maxLen = qRound(ZDefaults::textWidthFactor * m_pixmapSize->value() / fm.averageCharWidth());
                 if (!listMode && tmp.length()>maxLen) {
                     tmp.truncate(maxLen);
-                    tmp.append(QStringLiteral("..."));
+                    tmp.append(QSL("..."));
                 }
                 // -----
                 return tmp;
-            case 1: return t.album;
-            case 2: return QStringLiteral("%1").arg(t.pagesCount);
-            case 3: return formatSize(t.fileSize);
-            case 4: return t.addingDT.toString(QStringLiteral("yyyy-MM-dd"));
-            case 5: return t.fileDT.toString(QStringLiteral("yyyy-MM-dd"));
-            case 6: return t.fileMagic;
+            case ZDefaults::columnAlbum: return t.album;
+            case ZDefaults::columnPagesCount: return QSL("%1").arg(t.pagesCount);
+            case ZDefaults::columnFileSize: return formatSize(t.fileSize);
+            case ZDefaults::columnAddDate: return t.addingDT.toString(QSL("yyyy-MM-dd"));
+            case ZDefaults::columnFileDate: return t.fileDT.toString(QSL("yyyy-MM-dd"));
+            case ZDefaults::columnMagic: return t.fileMagic;
+            default: return QVariant();
         }
-        return QVariant();
     }
 
-    if (role == ModelSortRole) {
-        SQLMangaEntry t = mList.at(idx);
+    if (role == ZDefaults::ModelSortRole) {
+        SQLMangaEntry t = m_list.at(idx);
         int col = index.column();
         switch (col) {
-            case 0: return t.name;
-            case 1: return t.album;
-            case 2: return t.pagesCount;
-            case 3: return t.fileSize;
-            case 4: return t.addingDT;
-            case 5: return t.fileDT;
-            case 6: return t.fileMagic;
+            case ZDefaults::columnName: return t.name;
+            case ZDefaults::columnAlbum: return t.album;
+            case ZDefaults::columnPagesCount: return t.pagesCount;
+            case ZDefaults::columnFileSize: return t.fileSize;
+            case ZDefaults::columnAddDate: return t.addingDT;
+            case ZDefaults::columnFileDate: return t.fileDT;
+            case ZDefaults::columnMagic: return t.fileMagic;
+            default: return QVariant();
         }
-        return QVariant();
     }
 
     if (role == Qt::ToolTipRole ||
                role == Qt::StatusTipRole) {
-        return mList.at(idx).name;
+        return m_list.at(idx).name;
     }
 
     return QVariant();
@@ -139,16 +154,23 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
 
 int ZMangaModel::rowCount(const QModelIndex &parent) const
 {
-    Q_UNUSED(parent)
+    if (!checkIndex(parent))
+        return 0;
+    if (parent.isValid())
+        return 0;
 
-    return mList.count();
+    return m_list.count();
 }
 
 int ZMangaModel::columnCount(const QModelIndex &parent) const
 {
-    Q_UNUSED(parent)
+    if (!checkIndex(parent))
+        return 0;
+    if (parent.isValid())
+        return 0;
 
-    return 7;
+    const int columnsCount = 7;
+    return columnsCount;
 }
 
 QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -168,32 +190,32 @@ QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int r
 
 int ZMangaModel::getItemsCount() const
 {
-    return mList.count();
+    return m_list.count();
 }
 
 SQLMangaEntry ZMangaModel::getItem(int idx) const
 {
-    if (idx<0 || idx>=mList.count())
+    if (idx<0 || idx>=m_list.count())
         return SQLMangaEntry();
 
-    return mList.at(idx);
+    return m_list.at(idx);
 }
 
 void ZMangaModel::deleteAllItems()
 {
-    if (mList.isEmpty()) return;
-    beginRemoveRows(QModelIndex(),0,mList.count()-1);
-    mList.clear();
+    if (m_list.isEmpty()) return;
+    beginRemoveRows(QModelIndex(),0,m_list.count()-1);
+    m_list.clear();
     endRemoveRows();
 }
 
 void ZMangaModel::deleteItems(const QIntVector &dbids)
 {
     for (const auto &i : dbids) {
-        int idx = mList.indexOf(SQLMangaEntry(i));
+        int idx = m_list.indexOf(SQLMangaEntry(i));
         if (idx>=0) {
             beginRemoveRows(QModelIndex(),idx,idx);
-            mList.removeAt(idx);
+            m_list.removeAt(idx);
             endRemoveRows();
         }
     }
@@ -201,9 +223,9 @@ void ZMangaModel::deleteItems(const QIntVector &dbids)
 
 void ZMangaModel::addItem(const SQLMangaEntry &file)
 {
-    int posidx = mList.count();
+    int posidx = m_list.count();
     beginInsertRows(QModelIndex(),posidx,posidx);
-    mList.append(file);
+    m_list.append(file);
     endInsertRows();
 }
 
@@ -215,35 +237,40 @@ ZMangaSearchHistoryModel::ZMangaSearchHistoryModel(QObject *parent)
 
 int ZMangaSearchHistoryModel::rowCount(const QModelIndex &parent) const
 {
-    Q_UNUSED(parent)
+    if (!checkIndex(parent))
+        return 0;
+    if (parent.isValid())
+        return 0;
 
-    return historyItems.count();
+    return m_historyItems.count();
 }
 
 QVariant ZMangaSearchHistoryModel::data(const QModelIndex &index, int role) const
 {
+    if (!checkIndex(index,CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
+        return QVariant();
+
     int idx = index.row();
 
-    if (idx<0 || idx>=historyItems.count()) return QVariant();
-
     if (role==Qt::DisplayRole || role==Qt::EditRole)
-        return historyItems.at(idx);
+        return m_historyItems.at(idx);
 
     return QVariant();
 }
 
 Qt::ItemFlags ZMangaSearchHistoryModel::flags(const QModelIndex &index) const
 {
-    Q_UNUSED(index)
+    if (!checkIndex(index,CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
+        return Qt::NoItemFlags;
 
     return (Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 }
 
 void ZMangaSearchHistoryModel::setHistoryItems(const QStringList &items)
 {
-    if (!historyItems.isEmpty()) {
-        beginRemoveRows(QModelIndex(),0,historyItems.count()-1);
-        historyItems.clear();
+    if (!m_historyItems.isEmpty()) {
+        beginRemoveRows(QModelIndex(),0,m_historyItems.count()-1);
+        m_historyItems.clear();
         endRemoveRows();
     }
 
@@ -251,22 +278,22 @@ void ZMangaSearchHistoryModel::setHistoryItems(const QStringList &items)
     sl.removeDuplicates();
     if (!sl.isEmpty()) {
         beginInsertRows(QModelIndex(),0,sl.count()-1);
-        historyItems.append(sl);
+        m_historyItems.append(sl);
         endInsertRows();
     }
 }
 
 QStringList ZMangaSearchHistoryModel::getHistoryItems() const
 {
-    return historyItems;
+    return m_historyItems;
 }
 
 void ZMangaSearchHistoryModel::appendHistoryItem(const QString &item)
 {
-    if (historyItems.contains(item)) return;
+    if (m_historyItems.contains(item)) return;
 
-    beginInsertRows(QModelIndex(),historyItems.count(),historyItems.count());
-    historyItems.append(item);
+    beginInsertRows(QModelIndex(),m_historyItems.count(),m_historyItems.count());
+    m_historyItems.append(item);
     endInsertRows();
 }
 
@@ -279,28 +306,35 @@ ZMangaListView::ZMangaListView(QWidget *parent)
 void ZMangaListView::updateGeometries()
 {
     QListView::updateGeometries();
-    if (verticalScrollBar()!=nullptr)
+    if (verticalScrollBar()!=nullptr) {
         verticalScrollBar()->setSingleStep(
                     static_cast<int>(static_cast<double>(gridSize().height())*zg->searchScrollFactor));
+    }
 }
 
 ZMangaTableModel::ZMangaTableModel(QObject *parent, QTableView *aView)
     : QSortFilterProxyModel(parent)
 {
-    view = aView;
-    setSortRole(ModelSortRole);
+    m_view = aView;
+    setSortRole(ZDefaults::ModelSortRole);
 }
 
-int ZMangaTableModel::columnCount(const QModelIndex &) const
+int ZMangaTableModel::columnCount(const QModelIndex &parent) const
 {
+    if (!checkIndex(parent))
+        return 0;
+    if (parent.isValid())
+        return 0;
+
     if (zg!=nullptr) {
-        if (view->palette().base().color()!=zg->backgroundColor) {
-            QPalette pl = view->palette();
+        if (m_view->palette().base().color()!=zg->backgroundColor) {
+            QPalette pl = m_view->palette();
             pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
-            view->setPalette(pl);
+            m_view->setPalette(pl);
         }
     }
-    return 7;
+    const int columnsCount = 7;
+    return columnsCount;
 }
 
 QVariant ZMangaTableModel::data(const QModelIndex &index, int role) const
@@ -312,20 +346,26 @@ QVariant ZMangaTableModel::data(const QModelIndex &index, int role) const
 ZMangaIconModel::ZMangaIconModel(QObject *parent, ZMangaListView *aView)
     : QSortFilterProxyModel(parent)
 {
-    view = aView;
-    setSortRole(ModelSortRole);
+    m_view = aView;
+    setSortRole(ZDefaults::ModelSortRole);
 }
 
-int ZMangaIconModel::columnCount(const QModelIndex &) const
+int ZMangaIconModel::columnCount(const QModelIndex &parent) const
 {
+    if (!checkIndex(parent))
+        return 0;
+    if (parent.isValid())
+        return 0;
+
     if (zg!=nullptr) {
-        if (view->palette().base().color()!=zg->backgroundColor) {
-            QPalette pl = view->palette();
+        if (m_view->palette().base().color()!=zg->backgroundColor) {
+            QPalette pl = m_view->palette();
             pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
-            view->setPalette(pl);
+            m_view->setPalette(pl);
         }
     }
-    return 1;
+    const int columnsCount = 1;
+    return columnsCount;
 }
 
 ZAlbumsTreeWidget::ZAlbumsTreeWidget(QWidget *parent)

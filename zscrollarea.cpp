@@ -5,12 +5,11 @@
 ZScrollArea::ZScrollArea(QWidget *parent) :
     QScrollArea(parent)
 {
-    resizeTimer.setInterval(500);
+    resizeTimer.setInterval(ZDefaults::resizeTimerInitialMS);
     resizeTimer.setSingleShot(true);
     connect(&resizeTimer,&QTimer::timeout,this,[this](){
         if (savedSize.isValid())
-            emit sizeChanged(savedSize);
-
+            Q_EMIT sizeChanged(savedSize);
     });
 }
 
@@ -20,7 +19,7 @@ void ZScrollArea::resizeEvent(QResizeEvent *event)
     savedSize = event->size();
 
     int preferredInterval = static_cast<int>(zg->getAvgFineRenderTime()) / 2;
-    if ((qAbs(preferredInterval - resizeTimer.interval()) > 200)
+    if ((qAbs(preferredInterval - resizeTimer.interval()) > ZDefaults::resizeTimerDiffMS)
             && (preferredInterval > 100))
         resizeTimer.setInterval(preferredInterval);
 

@@ -10,43 +10,48 @@
 
 class ZPDFImg {
 public:
-    int pos, size, width, height;
-    Z::PDFImageFormat format;
+    int pos { 0 };
+    int size { 0 };
+    int width { 0 };
+    int height { 0 };
+    Z::PDFImageFormat format { Z::imgUndefined };
 
-    ZPDFImg();
+    ZPDFImg() = default;
+    ~ZPDFImg() = default;
     ZPDFImg(const ZPDFImg& other);
     ZPDFImg(int a_pos, int a_size, int a_width, int a_height,
             Z::PDFImageFormat a_format);
     ZPDFImg &operator=(const ZPDFImg& other) = default;
     bool operator==(const ZPDFImg& ref) const;
     bool operator!=(const ZPDFImg& ref) const;
+
 };
 
 class ZPdfReader : public ZAbstractReader
 {
     Q_OBJECT
-private:
+public:
+    ZPdfReader(QObject *parent, const QString &filename);
+    ~ZPdfReader() override;
+    bool openFile() override;
+    void closeFile() override;
+    QByteArray loadPage(int num) override;
+    QImage loadPageImage(int num) override;
+    QString getMagic() override;
 
-    bool useImageCatalog;
-    int numPages;
-    QMutex indexerMutex;
-    QList<ZPDFImg> images;
+private:
+    bool m_useImageCatalog { false };
+    QMutex m_indexerMutex;
+    QList<ZPDFImg> m_images;
     int zlibInflate(const char *src, int srcSize, uchar *dst, int dstSize);
 
 #ifdef WITH_POPPLER
-    PDFDoc* doc;
+    PDFDoc* m_doc;
     void loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage);
 #endif
 
-public:
-    explicit ZPdfReader(QObject *parent, const QString &filename);
-    ~ZPdfReader();
-    bool openFile();
-    void closeFile();
-    QByteArray loadPage(int num);
-    QImage loadPageImage(int num);
-    QString getMagic();
-    
+    Q_DISABLE_COPY(ZPdfReader)
+
 };
 
 void initPdfReader();

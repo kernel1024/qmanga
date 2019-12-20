@@ -21,15 +21,14 @@ class ZSearchTab;
 class ZSearchTab : public QWidget
 {
     Q_OBJECT
-    
 public:
     explicit ZSearchTab(QWidget *parent = nullptr);
-    ~ZSearchTab();
+    ~ZSearchTab() override;
 
     void updateAlbumsList();
     void updateFocus();
     QStringList getAlbums();
-    void setListViewOptions(const QListView::ViewMode mode, int iconSize);
+    void setListViewOptions(QListView::ViewMode mode, int iconSize);
     int getIconSize() const;
     QListView::ViewMode getListViewMode() const;
 
@@ -37,17 +36,6 @@ public:
     void saveSearchItems(QSettings &settings);
     void applySortOrder(Z::Ordering order, Qt::SortOrder direction);
 private:
-    Ui::ZSearchTab *ui;
-    QStateMachine loadingState;
-    QString descTemplate;
-    QPointer<ZMangaModel> model;
-    QProgressDialog *progressDlg;
-    QStringList cachedAlbums;
-    ZMangaSearchHistoryModel* searchHistoryModel;
-    ZMangaTableModel* tableModel;
-    ZMangaIconModel* iconModel;
-    Z::Ordering savedOrdering;
-    Qt::SortOrder savedOrderingDirection;
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(const QString &suggest, int toAddCount);
@@ -57,7 +45,7 @@ private:
     QModelIndex mapToSource(const QModelIndex &index);
     void setDescText(const QString& text = QString());
 
-public slots:
+public Q_SLOTS:
     void albumClicked(QTreeWidgetItem *item, int column);
 
     void mangaSearch();
@@ -85,18 +73,18 @@ public slots:
     void ctxFileCopy();
     void ctxFileCopyClipboard();
 
-    void dbShowProgressDialog(const bool visible);
-    void dbShowProgressDialogEx(const bool visible, const QString &title);
-    void dbShowProgressState(const int value, const QString& msg);
+    void dbShowProgressDialog(bool visible);
+    void dbShowProgressDialogEx(bool visible, const QString &title);
+    void dbShowProgressState(int value, const QString& msg);
     void dbAlbumsListUpdated();
     void dbAlbumsListReady(const AlbumVector &albums);
-    void dbFilesAdded(const int count, const int total, const int elapsed);
-    void dbFilesLoaded(const int count, const int elapsed);
+    void dbFilesAdded(int count, int total, int elapsed);
+    void dbFilesLoaded(int count, int elapsed);
     void dbErrorMsg(const QString& msg);
     void dbNeedTableCreation();
     void ctxChangeRenderer();
 
-signals:
+Q_SIGNALS:
     void mangaDblClick(const QString &filename);
     void statusBarMsg(const QString &msg);
     void dbRenameAlbum(const QString& oldName, const QString& newName);
@@ -104,11 +92,27 @@ signals:
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
     void dbGetFiles(const QString& album, const QString& search);
-    void dbDelFiles(const QIntVector& dbids, const bool fullDelete);
+    void dbDelFiles(const QIntVector& dbids, bool fullDelete);
     void dbDeleteAlbum(const QString& album);
     void dbAddAlbum(const QString& album, const QString& parent);
     void dbReparentAlbum(const QString& album, const QString& parent);
     bool dbSetPreferredRendering(const QString& filename, int mode);
+
+private:
+    Ui::ZSearchTab *ui;
+
+    Z::Ordering m_savedOrdering { Z::UndefinedOrder };
+    Qt::SortOrder m_savedOrderingDirection { Qt::AscendingOrder };
+    QStateMachine m_loadingState;
+    QString m_descTemplate;
+    QStringList m_cachedAlbums;
+    QPointer<ZMangaModel> m_model;
+    QPointer<ZMangaSearchHistoryModel> m_searchHistoryModel;
+    QPointer<ZMangaTableModel> m_tableModel;
+    QPointer<ZMangaIconModel> m_iconModel;
+    QPointer<QProgressDialog> progressDlg;
+
+    Q_DISABLE_COPY(ZSearchTab)
 
 };
 

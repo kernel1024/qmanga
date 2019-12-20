@@ -30,41 +30,43 @@ ZFileCopier::ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
 
 void ZFileCopier::start()
 {
-    QStringList errs;
+    QStringList errors;
     m_abort = false;
     int cnt = 0;
 
-    emit progressShow();
-    emit progressSetMaximum(m_srcList.count());
+    Q_EMIT progressShow();
+    Q_EMIT progressSetMaximum(m_srcList.count());
     QApplication::processEvents();
     for (const QFileInfo& fi : qAsConst(m_srcList)) {
-        emit progressSetLabelText(tr("Copying %1...").arg(fi.fileName()));
-        emit progressSetValue(0);
+        Q_EMIT progressSetLabelText(tr("Copying %1...").arg(fi.fileName()));
+        Q_EMIT progressSetValue(0);
         QApplication::processEvents();
         bool res;
-        if (fi.isDir())
+        if (fi.isDir()) {
             res = copyDir(fi);
-        else
+        } else {
             res = copyFile(fi);
+        }
 
-        if (!res)
-            errs << fi.fileName();
-        else
+        if (!res) {
+            errors << fi.fileName();
+        } else {
             cnt++;
+        }
 
         if (m_abort)
             break;
     }
 
     if (m_abort) {
-        emit errorMsg(tr("Copying aborted, %1 files was copied.").arg(cnt));
-    } else if (!errs.empty()) {
-        emit errorMsg(tr("Failed to copy %1 entries:\n%2").arg(errs.count()).arg(errs.join('\n')));
+        Q_EMIT errorMsg(tr("Copying aborted, %1 files was copied.").arg(cnt));
+    } else if (!errors.empty()) {
+        Q_EMIT errorMsg(tr("Failed to copy %1 entries:\n%2").arg(errors.count()).arg(errors.join('\n')));
     }
 
-    emit progressClose();
+    Q_EMIT progressClose();
     QApplication::processEvents();
-    emit finished();
+    Q_EMIT finished();
 }
 
 void ZFileCopier::abort()
@@ -88,16 +90,16 @@ bool ZFileCopier::copyDir(const QFileInfo &src)
         return false;
 
     const QFileInfoList fl = filterSupportedImgFiles(
-                                 sdir.entryInfoList(QStringList(QStringLiteral("*")),
+                                 sdir.entryInfoList(QStringList(QSL("*")),
                                                     QDir::Readable | QDir::Files));
 
-    emit progressSetMaximum(fl.count());
+    Q_EMIT progressSetMaximum(fl.count());
     QApplication::processEvents();
     for (int i=0;i<fl.count();i++) {
         if (!copyFile(fl.at(i),ddir.absolutePath()))
             return false;
 
-        emit progressSetValue(i);
+        Q_EMIT progressSetValue(i);
         QApplication::processEvents();
     }
 
@@ -127,25 +129,25 @@ bool ZFileCopier::copyFile(const QFileInfo &src, const QString &dst)
         return false;
     }
 
-    emit progressSetMaximum(100);
+    Q_EMIT progressSetMaximum(100);
     QApplication::processEvents();
     qint64 sz = fsrc.size();
     qint64 pos = 0;
     QByteArray buf;
     qint64 written = 0;
     do {
-        buf = fsrc.read(2*1024*1024L);
+        buf = fsrc.read(ZDefaults::copyBlockSize);
         written = fdst.write(buf);
         if (written>=0 && ui) {
             pos += written;
-            emit progressSetValue(static_cast<int>(100*pos/sz));
+            Q_EMIT progressSetValue(static_cast<int>(100*pos/sz));
             QApplication::processEvents();
         }
     } while(!buf.isEmpty() && written>0 && !m_abort);
 
     fsrc.close();
     fdst.close();
-    emit progressSetValue(100);
+    Q_EMIT progressSetValue(100);
     QApplication::processEvents();
 
     if (written<0 || m_abort) { // write error

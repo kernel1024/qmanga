@@ -12,24 +12,25 @@ class ZExportDialog;
 class ZExportDialog : public QDialog
 {
     Q_OBJECT
-
 public:
     explicit ZExportDialog(QWidget *parent = nullptr);
-    ~ZExportDialog();
-    void setPages(const int currentPage, const int pagesMaximum);
+    ~ZExportDialog() override;
+    void setPages(int currentPage, int pagesMaximum);
     QString getExportDir();
     QString getImageFormat();
     int getPagesCount();
     int getImageQuality();
     void setExportDir(const QString& dir);
 
-public slots:
+public Q_SLOTS:
     void dirSelectBtn();
     void updateRange(int value);
 
 private:
     Ui::ZExportDialog *ui;
     int m_currentPage;
+
+    Q_DISABLE_COPY(ZExportDialog)
 };
 
 #endif // ZEXPORTDIALOG_H

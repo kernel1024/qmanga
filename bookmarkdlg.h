@@ -4,28 +4,30 @@
 #include <QDialog>
 
 namespace Ui {
-class QTwoEditDlg;
+class ZTwoEditDlg;
 }
 
-class QTwoEditDlg : public QDialog
+class ZTwoEditDlg : public QDialog
 {
     Q_OBJECT
     
 public:
-    explicit QTwoEditDlg(QWidget *parent,
+    explicit ZTwoEditDlg(QWidget *parent,
                          const QString &windowTitle,
                          const QString &title1, const QString &title2,
                          const QString &value1 = QString(), const QString &value2 = QString());
-    ~QTwoEditDlg();
+    ~ZTwoEditDlg() override;
     QString getDlgEdit1();
     QString getDlgEdit2();
     void setHelpText(const QString& helpText);
 
-public slots:
+public Q_SLOTS:
     void setAuxText(const QString& text);
     
 private:
-    Ui::QTwoEditDlg *ui;
+    Ui::ZTwoEditDlg *ui;
+
+    Q_DISABLE_COPY(ZTwoEditDlg)
 };
 
 #endif // BOOKMARKDLG_H

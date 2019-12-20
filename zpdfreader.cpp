@@ -19,7 +19,6 @@ extern "C" {
 #include <zlib.h>
 }
 
-#include <algorithm>
 #include <QBuffer>
 #include <QMutexLocker>
 #include <QDebug>
@@ -31,11 +30,8 @@ ZPdfReader::ZPdfReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
 #ifdef WITH_POPPLER
-    doc = nullptr;
+    m_doc = nullptr;
 #endif
-    useImageCatalog = false;
-    numPages = 0;
-    images.clear();
 }
 
 ZPdfReader::~ZPdfReader()
@@ -77,27 +73,25 @@ int ZPdfReader::zlibInflate(const char* src, int srcSize,
 
 bool ZPdfReader::openFile()
 {
-    QMutexLocker locker(&indexerMutex);
+    QMutexLocker locker(&m_indexerMutex);
 
-    useImageCatalog = false;
-    numPages = 0;
-    images.clear();
+    m_useImageCatalog = false;
+    m_images.clear();
 
 #ifdef WITH_POPPLER
-    if (opened || globalParams==nullptr)
+    if (isOpened() || globalParams==nullptr)
         return false;
 
-    sortList.clear();
-
+    QString fileName = getFileName();
     QFileInfo fi(fileName);
     if (!fi.isFile() || !fi.isReadable()) {
         return false;
     }
 
     GooString fname(fileName.toUtf8());
-    doc = PDFDocFactory().createPDFDoc(fname);
+    m_doc = PDFDocFactory().createPDFDoc(fname);
 
-    if (doc==nullptr || !doc->isOk())
+    if (m_doc==nullptr || !m_doc->isOk())
         return false;
 
     Z::PDFRendering mode = zg->db->getPreferredRendering(fileName);
@@ -106,8 +100,8 @@ bool ZPdfReader::openFile()
 
     if (mode==Z::Autodetect || mode==Z::ImageCatalog) {
 
-        for (int pageNum=1;pageNum<=doc->getNumPages();pageNum++) {
-            Dict *dict = doc->getPage(pageNum)->getResourceDict();
+        for (int pageNum=1;pageNum<=m_doc->getNumPages();pageNum++) {
+            Dict *dict = m_doc->getPage(pageNum)->getResourceDict();
             if (dict->lookup("XObject").isDict()) {
                 Dict *xolist = dict->lookup("XObject").getDict();
 
@@ -130,12 +124,13 @@ bool ZPdfReader::openFile()
                         int dheight = xitem.streamGetDict()->lookup("Height").getInt();
                         int dBPP = xitem.streamGetDict()->lookup("BitsPerComponent").getInt();
 
-                        if (dBPP == 8) {
-                            images << ZPDFImg(pos,size,dwidth,dheight,Z::imgFlate);
+                        const int oneBytePerComponent = 8;
+                        if (dBPP == oneBytePerComponent) {
+                            m_images << ZPDFImg(pos,size,dwidth,dheight,Z::imgFlate);
                         }
 
                     } else if (kind==StreamKind::strDCT) { // JPEG stream
-                        images << ZPDFImg(pos,size,0,0,Z::imgDCT);
+                        m_images << ZPDFImg(pos,size,0,0,Z::imgDCT);
 
                     }
                 }
@@ -143,24 +138,28 @@ bool ZPdfReader::openFile()
         }
     }
 
-    if ((mode==Z::Autodetect && images.count()==doc->getNumPages()) ||
-            (mode==Z::ImageCatalog && images.count()>0)) {
-        useImageCatalog = true;
-        numPages = images.count();
+    int numPages;
+    if ((mode==Z::Autodetect && m_images.count()==m_doc->getNumPages()) ||
+            (mode==Z::ImageCatalog && m_images.count()>0)) {
+        m_useImageCatalog = true;
+        numPages = m_images.count();
         postMessage(tr("PDF images catalog"));
     } else {
-        useImageCatalog = false;
-        numPages = doc->getNumPages();
+        m_useImageCatalog = false;
+        numPages = m_doc->getNumPages();
         postMessage(tr("PDF renderer"));
     }
 
+    const int pageCounterWidth = 6;
+    const int pageCounterBase = 10;
     for (int i=0;i<numPages;i++) {
-        sortList << ZFileEntry(QStringLiteral("%1").arg(i,6,10,QChar('0')),i);
+        addSortEntry(ZFileEntry(QSL("%1").arg(i,pageCounterWidth,
+                                                         pageCounterBase,QChar('0')),i));
     }
 
-    std::sort(sortList.begin(),sortList.end());
+    performListSort();
+    setOpenFileSuccess();
 
-    opened = true;
     return true;
 #else
     return false;
@@ -169,19 +168,17 @@ bool ZPdfReader::openFile()
 
 void ZPdfReader::closeFile()
 {
-#ifdef WITH_POPPLER
-    if (!opened)
+    if (!isOpened())
         return;
 
-    delete doc;
-    doc = nullptr;
+#ifdef WITH_POPPLER
+    delete m_doc;
+    m_doc = nullptr;
 #endif
 
-    opened = false;
-    numPages = 0;
-    images.clear();
-    useImageCatalog = false;
-    sortList.clear();
+    m_images.clear();
+    m_useImageCatalog = false;
+    ZAbstractReader::closeFile();
 }
 
 #ifdef WITH_POPPLER
@@ -194,16 +191,18 @@ void popplerSplashCleanup(void *info)
 
 void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage)
 {
-    if (!opened || doc==nullptr || globalParams==nullptr)
+    if (!isOpened() || m_doc==nullptr || globalParams==nullptr)
         return;
 
-    if (num<0 || num>=sortList.count()) return;
+    int idx = getSortEntryIdx(num);
+    if (idx<0) {
+        qCritical() << "Incorrect page number";
+        return;
+    }
 
-    int idx = sortList.at(num).idx;
-
-    if (useImageCatalog) {
-        BaseStream *str = doc->getBaseStream();
-        const ZPDFImg p = images.at(idx);
+    if (m_useImageCatalog) {
+        BaseStream *str = m_doc->getBaseStream();
+        const ZPDFImg p = m_images.at(idx);
         Goffset sz = p.size;
         buf->resize(static_cast<int>(sz));
         str->setPos(p.pos);
@@ -246,17 +245,17 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
             xdpi = zg->forceDPI;
             ydpi = zg->forceDPI;
         }
-        SplashColor bgColor;
-        unsigned int paper_color = 0x0ffffff;
-        bgColor[0] = paper_color & 0xff;
-        bgColor[1] = (paper_color >> 8) & 0xff;
-        bgColor[2] = (paper_color >> 16) & 0xff;
+        const quint8 cRed = 0xff;
+        const quint8 cGreen = 0xff;
+        const quint8 cBlue = 0xff;
+        const quint8 cAlpha = 0;
+        SplashColor bgColor { cRed, cGreen, cBlue, cAlpha };
         SplashOutputDev splashOutputDev(splashModeXBGR8, 4, false, bgColor, true);
         splashOutputDev.setFontAntialias(true);
         splashOutputDev.setVectorAntialias(true);
         splashOutputDev.setFreeTypeHinting(true, false);
-        splashOutputDev.startDoc(doc);
-        doc->displayPageSlice(&splashOutputDev, idx + 1,
+        splashOutputDev.startDoc(m_doc);
+        m_doc->displayPageSlice(&splashOutputDev, idx + 1,
                               xdpi, ydpi, 0,
                               false, true, false,
                               -1, -1, -1, -1);
@@ -306,16 +305,7 @@ QImage ZPdfReader::loadPageImage(int num)
 
 QString ZPdfReader::getMagic()
 {
-    return QStringLiteral("PDF");
-}
-
-ZPDFImg::ZPDFImg()
-{
-    pos = 0;
-    size = 0;
-    width = 0;
-    height = 0;
-    format = Z::imgUndefined;
+    return QSL("PDF");
 }
 
 ZPDFImg::ZPDFImg(const ZPDFImg &other)

@@ -89,7 +89,6 @@ ZMangaView::ZMangaView(QWidget *parent) :
                     &ZMangaView::cacheGotPageCount,Qt::QueuedConnection);
         }
         ZLoaderHelper h = ZLoaderHelper(th,ld);
-        ld->threadID = h.id;
 
         cacheLoaders << h;
 
@@ -202,13 +201,13 @@ void ZMangaView::displayCurrentPage()
                 }
                 sumx = sumx / lastSizes.count();
                 sumy = sumy / lastSizes.count();
-                emit averageSizes(QSize(static_cast<int>(sumx),
+                Q_EMIT averageSizes(QSize(static_cast<int>(sumx),
                                         static_cast<int>(sumy)),sum);
             }
         }
 
         curUmPixmap = p;
-        emit loadedPage(currentPage,pathCache.value(currentPage));
+        Q_EMIT loadedPage(currentPage,pathCache.value(currentPage));
         setFocus();
         redrawPage();
     }
@@ -229,27 +228,27 @@ void ZMangaView::openFileEx(const QString &filename, int page)
     privPageCount = 0;
     cropRect = QRect();
     redrawPage();
-    emit loadedPage(-1,QString());
+    Q_EMIT loadedPage(-1,QString());
 
-    emit cacheOpenFile(filename,page);
-    if (filename.startsWith(QStringLiteral(":CLIP:")))
-        openedFile = QStringLiteral("Clipboard image");
+    Q_EMIT cacheOpenFile(filename,page);
+    if (filename.startsWith(QSL(":CLIP:")))
+        openedFile = QSL("Clipboard image");
     else
         openedFile = filename;
     processingPages.clear();
-    emit updateFileStats(filename);
-    emit cropUpdated(cropRect);
+    Q_EMIT updateFileStats(filename);
+    Q_EMIT cropUpdated(cropRect);
 }
 
 void ZMangaView::closeFile()
 {
-    emit cacheCloseFile();
+    Q_EMIT cacheCloseFile();
     cropRect = QRect();
     curPixmap = QImage();
     openedFile = QString();
     privPageCount = 0;
     update();
-    emit loadedPage(-1,QString());
+    Q_EMIT loadedPage(-1,QString());
     processingPages.clear();
 }
 
@@ -349,7 +348,7 @@ void ZMangaView::paintEvent(QPaintEvent *)
     } else {
         if ((iCacheData.contains(currentPage) || iCacheImages.contains(currentPage))
                 && curUmPixmap.isNull()) {
-            QPixmap p(QStringLiteral(":/32/edit-delete"));
+            QPixmap p(QSL(":/32/edit-delete"));
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
             w.setPen(QPen(zg->foregroundColor()));
             w.drawText(0,(height()-p.height())/2+p.height()+5,
@@ -397,7 +396,7 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
 void ZMangaView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button()==Qt::MiddleButton) {
-        emit minimizeRequested();
+        Q_EMIT minimizeRequested();
         event->accept();
     } else if (event->button()==Qt::LeftButton) {
         if (mouseMode == mmOCR) {
@@ -423,7 +422,7 @@ void ZMangaView::mouseDoubleClickEvent(QMouseEvent *)
 {
     copyPos = QPoint();
     cropPos = QPoint();
-    emit doubleClicked();
+    Q_EMIT doubleClicked();
 }
 
 void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
@@ -484,7 +483,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 
             cropRect = cp;
             displayCurrentPage();
-            emit cropUpdated(cropRect);
+            Q_EMIT cropUpdated(cropRect);
         }
     }
 #else
@@ -531,10 +530,10 @@ void ZMangaView::keyPressEvent(QKeyEvent *event)
             navLast();
             break;
         case Qt::Key_Escape:
-            emit minimizeRequested();
+            Q_EMIT minimizeRequested();
             break;
         default:
-            emit keyPressed(event->key());
+            Q_EMIT keyPressed(event->key());
             break;
     }
     event->accept();
@@ -584,7 +583,7 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
         connect(nt,&QAction::triggered,this,[this](){
             cropRect = QRect();
             displayCurrentPage();
-            emit cropUpdated(cropRect);
+            Q_EMIT cropUpdated(cropRect);
         });
         cm.addAction(nt);
     }
@@ -632,7 +631,7 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
     QPalette p = palette();
     p.setBrush(QPalette::Dark,QBrush(zg->backgroundColor));
     setPalette(p);
-    emit backgroundUpdated(zg->backgroundColor);
+    Q_EMIT backgroundUpdated(zg->backgroundColor);
 
     if (openedFile.isEmpty()) return;
     if (page<0 || page>=privPageCount) return;
@@ -699,7 +698,7 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
 
                                 if (!res.isNull()) {
                                     qint64 elapsed = timer.elapsed();
-                                    emit requestRedrawPageEx(res, page);
+                                    Q_EMIT requestRedrawPageEx(res, page);
                                     zg->addFineRenderTime(elapsed);
                                 }
                             });
@@ -724,12 +723,12 @@ void ZMangaView::ownerResized(const QSize &)
 
 void ZMangaView::minimizeWindowCtx()
 {
-    emit minimizeRequested();
+    Q_EMIT minimizeRequested();
 }
 
 void ZMangaView::closeFileCtx()
 {
-    emit closeFileRequested();
+    Q_EMIT closeFileRequested();
 }
 
 void ZMangaView::changeMangaCoverCtx()
@@ -737,7 +736,7 @@ void ZMangaView::changeMangaCoverCtx()
     if (openedFile.isEmpty()) return;
     if (currentPage<0 || currentPage>=privPageCount) return;
 
-    emit changeMangaCover(openedFile,currentPage);
+    Q_EMIT changeMangaCover(openedFile,currentPage);
 }
 
 static QAtomicInt exportFileError;
@@ -748,7 +747,7 @@ ZExportWork ZMangaView::exportMangaPage(const ZExportWork& item)
 
     int quality = item.quality;
     const QString format = item.format;
-    QString fname = item.dir.filePath(QStringLiteral("%1.%2")
+    QString fname = item.dir.filePath(QSL("%1.%2")
                                          .arg(item.idx+1,item.filenameLength,10,QChar('0'))
                                          .arg(format.toLower()));
     auto zl = new ZMangaLoader();
@@ -876,7 +875,7 @@ void ZMangaView::viewRotateCCW()
     rotation--;
     if (rotation<0) rotation = 3;
     displayCurrentPage();
-    emit rotationUpdated(rotation*90);
+    Q_EMIT rotationUpdated(rotation*90);
 }
 
 void ZMangaView::viewRotateCW()
@@ -884,15 +883,15 @@ void ZMangaView::viewRotateCW()
     rotation++;
     if (rotation>3) rotation = 0;
     displayCurrentPage();
-    emit rotationUpdated(rotation*90);
+    Q_EMIT rotationUpdated(rotation*90);
 }
 
 void ZMangaView::loaderMsg(const QString &msg)
 {
-    emit auxMessage(msg);
+    Q_EMIT auxMessage(msg);
 }
 
-void ZMangaView::cacheGotPage(const QByteArray &page, const QImage &pageImage, const int &num,
+void ZMangaView::cacheGotPage(const QByteArray &page, const QImage &pageImage, int num,
                               const QString &internalPath, const QUuid &threadID)
 {
     if (cacheLoaders.contains(ZLoaderHelper(threadID))) {
@@ -914,7 +913,7 @@ void ZMangaView::cacheGotPage(const QByteArray &page, const QImage &pageImage, c
         displayCurrentPage();
 }
 
-void ZMangaView::cacheGotPageCount(const int &num, const int &preferred)
+void ZMangaView::cacheGotPageCount(int num, int preferred)
 {
     if (privPageCount<=0) {
         privPageCount = num;

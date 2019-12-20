@@ -13,9 +13,9 @@
 #include "global.h"
 #include "zdb.h"
 
-SettingsDialog::SettingsDialog(QWidget *parent) :
+ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::SettingsDialog)
+    ui(new Ui::ZSettingsDialog)
 {
     ui->setupUi(this);
 
@@ -54,29 +54,29 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 #ifdef Q_OS_WIN
     ui->editRar->setPlaceholderText(QStringLiteral("rar.exe"));
 #else
-    ui->editRar->setPlaceholderText(QStringLiteral("rar"));
+    ui->editRar->setPlaceholderText(QSL("rar"));
 #endif
 
-    connect(ui->btnDeleteBookmark,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
-    connect(ui->btnBkColor,&QPushButton::clicked,this,&SettingsDialog::bkColorDlg);
-    connect(ui->btnFontIndexer,&QPushButton::clicked,this,&SettingsDialog::idxFontDlg);
-    connect(ui->btnFontOCR,&QPushButton::clicked,this,&SettingsDialog::ocrFontDlg);
-    connect(ui->btnFrameColor,&QPushButton::clicked,this,&SettingsDialog::frameColorDlg);
-    connect(ui->btnRar,&QToolButton::clicked,this,&SettingsDialog::openRar);
+    connect(ui->btnDeleteBookmark,&QPushButton::clicked,this,&ZSettingsDialog::delListWidgetItem);
+    connect(ui->btnBkColor,&QPushButton::clicked,this,&ZSettingsDialog::bkColorDlg);
+    connect(ui->btnFontIndexer,&QPushButton::clicked,this,&ZSettingsDialog::idxFontDlg);
+    connect(ui->btnFontOCR,&QPushButton::clicked,this,&ZSettingsDialog::ocrFontDlg);
+    connect(ui->btnFrameColor,&QPushButton::clicked,this,&ZSettingsDialog::frameColorDlg);
+    connect(ui->btnRar,&QToolButton::clicked,this,&ZSettingsDialog::openRar);
 
-    connect(ui->btnDynAdd,&QPushButton::clicked,this,&SettingsDialog::dynAdd);
-    connect(ui->btnDynEdit,&QPushButton::clicked,this,&SettingsDialog::dynEdit);
-    connect(ui->btnDynDelete,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
-    connect(ui->btnDeleteIgnored,&QPushButton::clicked,this,&SettingsDialog::delListWidgetItem);
+    connect(ui->btnDynAdd,&QPushButton::clicked,this,&ZSettingsDialog::dynAdd);
+    connect(ui->btnDynEdit,&QPushButton::clicked,this,&ZSettingsDialog::dynEdit);
+    connect(ui->btnDynDelete,&QPushButton::clicked,this,&ZSettingsDialog::delListWidgetItem);
+    connect(ui->btnDeleteIgnored,&QPushButton::clicked,this,&ZSettingsDialog::delListWidgetItem);
 
-    connect(ui->btnAddSearch, &QPushButton::clicked, this, &SettingsDialog::addSearchEngine);
-    connect(ui->btnDelSearch, &QPushButton::clicked, this, &SettingsDialog::delSearchEngine);
-    connect(ui->btnDefaultSearch, &QPushButton::clicked, this, &SettingsDialog::setDefaultSearch);
+    connect(ui->btnAddSearch, &QPushButton::clicked, this, &ZSettingsDialog::addSearchEngine);
+    connect(ui->btnDelSearch, &QPushButton::clicked, this, &ZSettingsDialog::delSearchEngine);
+    connect(ui->btnDefaultSearch, &QPushButton::clicked, this, &ZSettingsDialog::setDefaultSearch);
 
-    connect(ui->rbMySQL, &QRadioButton::toggled, this, &SettingsDialog::updateSQLFields);
-    connect(ui->rbSQLite, &QRadioButton::toggled, this, &SettingsDialog::updateSQLFields);
+    connect(ui->rbMySQL, &QRadioButton::toggled, this, &ZSettingsDialog::updateSQLFields);
+    connect(ui->rbSQLite, &QRadioButton::toggled, this, &ZSettingsDialog::updateSQLFields);
 
-    connect(ui->btnOCRDatapath, &QPushButton::clicked, this, &SettingsDialog::ocrDatapathDlg);
+    connect(ui->btnOCRDatapath, &QPushButton::clicked, this, &ZSettingsDialog::ocrDatapathDlg);
 
     delLookup[ui->btnDeleteBookmark] = ui->listBookmarks;
     delLookup[ui->btnDynDelete] = ui->listDynAlbums;
@@ -97,32 +97,32 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     updateSQLFields(false);
 }
 
-SettingsDialog::~SettingsDialog()
+ZSettingsDialog::~ZSettingsDialog()
 {
     delete ui;
 }
 
-QColor SettingsDialog::getBkColor()
+QColor ZSettingsDialog::getBkColor()
 {
     return bkColor;
 }
 
-QFont SettingsDialog::getIdxFont()
+QFont ZSettingsDialog::getIdxFont()
 {
     return idxFont;
 }
 
-QFont SettingsDialog::getOCRFont()
+QFont ZSettingsDialog::getOCRFont()
 {
     return ocrFont;
 }
 
-QColor SettingsDialog::getFrameColor()
+QColor ZSettingsDialog::getFrameColor()
 {
     return frameColor;
 }
 
-QStringList SettingsDialog::getIgnoredFiles()
+QStringList ZSettingsDialog::getIgnoredFiles()
 {
     QStringList res;
     res.reserve(ui->listIgnoredFiles->count());
@@ -131,7 +131,7 @@ QStringList SettingsDialog::getIgnoredFiles()
     return res;
 }
 
-void SettingsDialog::setIgnoredFiles(const QStringList& files)
+void ZSettingsDialog::setIgnoredFiles(const QStringList& files)
 {
     ui->listIgnoredFiles->clear();
     for(const QString& fname : files) {
@@ -143,11 +143,11 @@ void SettingsDialog::setIgnoredFiles(const QStringList& files)
     }
 }
 
-void SettingsDialog::setSearchEngines(const ZStrMap &engines)
+void ZSettingsDialog::setSearchEngines(const ZStrMap &engines)
 {
     ui->listSearch->clear();
     for (auto it = engines.constKeyValueBegin(), end = engines.constKeyValueEnd(); it != end; ++it) {
-        QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ] %3").
+        QListWidgetItem* li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
                                                   arg((*it).first,(*it).second,
                 (*it).first==zg->defaultSearchEngine ? tr("(default)") : QString()));
         li->setData(Qt::UserRole,(*it).first);
@@ -156,7 +156,7 @@ void SettingsDialog::setSearchEngines(const ZStrMap &engines)
     }
 }
 
-ZStrMap SettingsDialog::getSearchEngines() const
+ZStrMap ZSettingsDialog::getSearchEngines() const
 {
     ZStrMap engines;
     engines.clear();
@@ -167,22 +167,22 @@ ZStrMap SettingsDialog::getSearchEngines() const
 
 }
 
-QString SettingsDialog::getOCRLanguage()
+QString ZSettingsDialog::getOCRLanguage()
 {
     return ui->comboOCRLanguage->currentData().toString();
 }
 
-QString SettingsDialog::getTranSourceLanguage()
+QString ZSettingsDialog::getTranSourceLanguage()
 {
     return ui->comboLangSource->currentData().toString();
 }
 
-QString SettingsDialog::getTranDestLanguage()
+QString ZSettingsDialog::getTranDestLanguage()
 {
     return ui->comboLangDest->currentData().toString();
 }
 
-void SettingsDialog::updateOCRLanguages()
+void ZSettingsDialog::updateOCRLanguages()
 {
 #ifdef WITH_OCR
     ui->comboOCRLanguage->clear();
@@ -207,7 +207,7 @@ void SettingsDialog::updateOCRLanguages()
 #endif
 }
 
-void SettingsDialog::updateTranslatorLanguages()
+void ZSettingsDialog::updateTranslatorLanguages()
 {
 #ifndef Q_OS_WIN
     ui->comboLangSource->clear();
@@ -228,7 +228,7 @@ void SettingsDialog::updateTranslatorLanguages()
 #endif
 }
 
-void SettingsDialog::addSearchEngine()
+void ZSettingsDialog::addSearchEngine()
 {
     ZStrMap data;
     data[tr("Url template")]=QString();
@@ -238,7 +238,7 @@ void SettingsDialog::addSearchEngine()
                      "  %s - search text\n"
                      "  %ps - percent-encoded search text");
 
-    CMultiInputDialog *dlg = new CMultiInputDialog(this,tr("Add new search engine"),data,hlp);
+    ZMultiInputDialog *dlg = new ZMultiInputDialog(this,tr("Add new search engine"),data,hlp);
     if (dlg->exec()) {
         data = dlg->getInputData();
 
@@ -246,7 +246,7 @@ void SettingsDialog::addSearchEngine()
             QMessageBox::warning(this,tr("QManga"),tr("Unable to add two or more engines with same names.\n"
                                                       "Use another name for new engine."));
         else {
-            QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ] %3").
+            QListWidgetItem* li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
                                                       arg(data[tr("Menu title")],
                                                       data[tr("Url template")],
                     data[tr("Menu title")]==zg->defaultSearchEngine ? tr("(default)") : QString()));
@@ -258,7 +258,7 @@ void SettingsDialog::addSearchEngine()
     dlg->deleteLater();
 }
 
-void SettingsDialog::delSearchEngine()
+void ZSettingsDialog::delSearchEngine()
 {
     QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
     for (QListWidgetItem* i : dl) {
@@ -267,7 +267,7 @@ void SettingsDialog::delSearchEngine()
     }
 }
 
-void SettingsDialog::setDefaultSearch()
+void ZSettingsDialog::setDefaultSearch()
 {
     QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
     if (dl.isEmpty()) return;
@@ -277,7 +277,7 @@ void SettingsDialog::setDefaultSearch()
     setSearchEngines(getSearchEngines());
 }
 
-void SettingsDialog::updateSQLFields(bool checked)
+void ZSettingsDialog::updateSQLFields(bool checked)
 {
     Q_UNUSED(checked)
 
@@ -288,7 +288,7 @@ void SettingsDialog::updateSQLFields(bool checked)
     ui->editMySqlPassword->setEnabled(useLogin);
 }
 
-void SettingsDialog::ocrDatapathDlg()
+void ZSettingsDialog::ocrDatapathDlg()
 {
 #ifdef WITH_OCR
     QString datapath = getExistingDirectoryD(this,tr("Tesseract datapath"),ui->editOCRDatapath->text());
@@ -298,7 +298,7 @@ void SettingsDialog::ocrDatapathDlg()
 #endif
 }
 
-void SettingsDialog::delListWidgetItem()
+void ZSettingsDialog::delListWidgetItem()
 {
     auto btn = qobject_cast<QPushButton *>(sender());
     if (btn==nullptr || !delLookup.contains(btn)) return;
@@ -312,14 +312,14 @@ void SettingsDialog::delListWidgetItem()
     }
 }
 
-void SettingsDialog::bkColorDlg()
+void ZSettingsDialog::bkColorDlg()
 {
     QColor c = QColorDialog::getColor(bkColor,this);
     if (!c.isValid()) return;
     updateBkColor(c);
 }
 
-void SettingsDialog::idxFontDlg()
+void ZSettingsDialog::idxFontDlg()
 {
     bool ok;
     QFont f = QFontDialog::getFont(&ok,idxFont,this);
@@ -327,7 +327,7 @@ void SettingsDialog::idxFontDlg()
     updateIdxFont(f);
 }
 
-void SettingsDialog::ocrFontDlg()
+void ZSettingsDialog::ocrFontDlg()
 {
     bool ok;
     QFont f = QFontDialog::getFont(&ok,ocrFont,this);
@@ -335,14 +335,14 @@ void SettingsDialog::ocrFontDlg()
     updateOCRFont(f);
 }
 
-void SettingsDialog::frameColorDlg()
+void ZSettingsDialog::frameColorDlg()
 {
     QColor c = QColorDialog::getColor(frameColor,this);
     if (!c.isValid()) return;
     updateFrameColor(c);
 }
 
-void SettingsDialog::updateBkColor(const QColor &c)
+void ZSettingsDialog::updateBkColor(const QColor &c)
 {
     bkColor = c;
     QPalette p = ui->frameBkColor->palette();
@@ -350,21 +350,21 @@ void SettingsDialog::updateBkColor(const QColor &c)
     ui->frameBkColor->setPalette(p);
 }
 
-void SettingsDialog::updateIdxFont(const QFont &f)
+void ZSettingsDialog::updateIdxFont(const QFont &f)
 {
     idxFont = f;
     ui->labelIdxFont->setFont(idxFont);
-    ui->labelIdxFont->setText(QStringLiteral("%1, %2").arg(f.family()).arg(f.pointSize()));
+    ui->labelIdxFont->setText(QSL("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
-void SettingsDialog::updateOCRFont(const QFont &f)
+void ZSettingsDialog::updateOCRFont(const QFont &f)
 {
     ocrFont = f;
     ui->labelOCRFont->setFont(ocrFont);
-    ui->labelOCRFont->setText(QStringLiteral("%1, %2").arg(f.family()).arg(f.pointSize()));
+    ui->labelOCRFont->setText(QSL("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
-void SettingsDialog::updateFrameColor(const QColor &c)
+void ZSettingsDialog::updateFrameColor(const QColor &c)
 {
     frameColor = c;
     QPalette p = ui->frameFrameColor->palette();
@@ -372,21 +372,21 @@ void SettingsDialog::updateFrameColor(const QColor &c)
     ui->frameFrameColor->setPalette(p);
 }
 
-void SettingsDialog::dynAdd()
+void ZSettingsDialog::dynAdd()
 {
-    QTwoEditDlg *dlg = new QTwoEditDlg(this,tr("Add dynamic list"),tr("List title"),
+    ZTwoEditDlg *dlg = new ZTwoEditDlg(this,tr("Add dynamic list"),tr("List title"),
                                        tr("Query part"));
     dlg->setHelpText(tr("Query part contains part of SELECT query on manga table "
                         "from FROM clause to the end of query.\n"
                         "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
 
-    connect(zg->db,&ZDB::gotTablesDescription,dlg,&QTwoEditDlg::setAuxText,Qt::QueuedConnection);
-    connect(this,&SettingsDialog::getTablesDescription,
+    connect(zg->db,&ZDB::gotTablesDescription,dlg,&ZTwoEditDlg::setAuxText,Qt::QueuedConnection);
+    connect(this,&ZSettingsDialog::getTablesDescription,
             zg->db,&ZDB::sqlGetTablesDescription,Qt::QueuedConnection);
-    emit getTablesDescription();
+    Q_EMIT getTablesDescription();
 
     if (dlg->exec()) {
-        QListWidgetItem* li = new QListWidgetItem(QStringLiteral("%1 [ %2 ]").
+        QListWidgetItem* li = new QListWidgetItem(QSL("%1 [ %2 ]").
                                                   arg(dlg->getDlgEdit1(),
                                                   dlg->getDlgEdit2()));
         li->setData(Qt::UserRole,dlg->getDlgEdit1());
@@ -397,10 +397,10 @@ void SettingsDialog::dynAdd()
     delete dlg;
 }
 
-void SettingsDialog::dynEdit()
+void ZSettingsDialog::dynEdit()
 {
     if (ui->listDynAlbums->selectedItems().isEmpty()) return;
-    QTwoEditDlg *dlg = new QTwoEditDlg(this,tr("Edit dynamic list"),tr("List title"),
+    ZTwoEditDlg *dlg = new ZTwoEditDlg(this,tr("Edit dynamic list"),tr("List title"),
                                        tr("Query part"),
                                        ui->listDynAlbums->selectedItems().first()->data(Qt::UserRole).toString(),
                                        ui->listDynAlbums->selectedItems().first()->data(Qt::UserRole+1).toString());
@@ -408,7 +408,7 @@ void SettingsDialog::dynEdit()
                         "from FROM clause to the end of query.\n"
                         "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
     if (dlg->exec()) {
-        ui->listDynAlbums->selectedItems().first()->setText(QStringLiteral("%1 [ %2 ]").
+        ui->listDynAlbums->selectedItems().first()->setText(QSL("%1 [ %2 ]").
                                                             arg(dlg->getDlgEdit1(),
                                                             dlg->getDlgEdit2()));
         ui->listDynAlbums->selectedItems().first()->setData(Qt::UserRole,dlg->getDlgEdit1());
@@ -418,9 +418,9 @@ void SettingsDialog::dynEdit()
     delete dlg;
 }
 
-void SettingsDialog::openRar()
+void ZSettingsDialog::openRar()
 {
-    QString filter = QStringLiteral("*");
+    QString filter = QSL("*");
 #ifdef Q_OS_WIN
     filter = tr("Executable files (*.exe)");
 #endif

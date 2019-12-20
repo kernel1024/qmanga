@@ -80,7 +80,7 @@ public:
     void getPage(int num);
     void setMouseMode(MouseMode mode);
     
-signals:
+Q_SIGNALS:
     void loadedPage(int num, const QString &msg);
     void doubleClicked();
     void keyPressed(int key);
@@ -98,10 +98,10 @@ signals:
     void cacheCloseFile();
 
     // DB signals
-    void changeMangaCover(const QString& fileName, const int pageNum);
+    void changeMangaCover(const QString& fileName, int pageNum);
     void updateFileStats(const QString& fileName);
 
-public slots:
+public Q_SLOTS:
     void setZoomMode(int mode);
     void openFile(const QString &filename);
     void openFileEx(const QString &filename, int page);
@@ -129,9 +129,9 @@ public slots:
     void loaderMsg(const QString& msg);
 
     // cache slots
-    void cacheGotPage(const QByteArray& page, const QImage &pageImage, const int& num,
+    void cacheGotPage(const QByteArray& page, const QImage &pageImage, int num,
                       const QString& internalPath, const QUuid& threadID);
-    void cacheGotPageCount(const int& num, const int& preferred);
+    void cacheGotPageCount(int num, int preferred);
     void cacheGotError(const QString& msg);
 
 protected:

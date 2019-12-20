@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     fullScreen = false;
     fullScreenControls = false;
     fastScrollPanel = ui->fastScrollPanel;
-    bookmarksMenu->setStyleSheet(QStringLiteral("QMenu { menu-scrollable: 1; }"));
+    bookmarksMenu->setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
 
     indexerMsgBox.setWindowTitle(tr("QManga"));
 
@@ -147,7 +147,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QString fname;
     if (QApplication::arguments().count()>1)
         fname = QApplication::arguments().at(1);
-    if (!fname.isEmpty() && !fname.startsWith(QStringLiteral("--")))
+    if (!fname.isEmpty() && !fname.startsWith(QSL("--")))
         openAuxFile(fname);
 
     ui->btnZoomFit->click();
@@ -254,7 +254,7 @@ void MainWindow::openClipboard()
     buf.open(QIODevice::WriteOnly);
     img.save(&buf,"BMP");
     buf.close();
-    QString bs = QStringLiteral(":CLIP:")+QString::fromLatin1(imgs.toBase64());
+    QString bs = QSL(":CLIP:")+QString::fromLatin1(imgs.toBase64());
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(bs);
@@ -468,12 +468,12 @@ void MainWindow::createBookmark()
 {
     if (ui->mangaView->openedFile.isEmpty()) return;
     QFileInfo fi(ui->mangaView->openedFile);
-    QTwoEditDlg *dlg = new QTwoEditDlg(this,tr("Add bookmark"),tr("Title"),tr("Filename"),
+    ZTwoEditDlg *dlg = new ZTwoEditDlg(this,tr("Add bookmark"),tr("Title"),tr("Filename"),
                                        fi.completeBaseName(),ui->mangaView->openedFile);
     if (dlg->exec()) {
         QString t = dlg->getDlgEdit1();
         if (!t.isEmpty() && !zg->bookmarks.contains(t)) {
-            zg->bookmarks[t]=QStringLiteral("%1\n%2").arg(dlg->getDlgEdit2()).arg(ui->mangaView->currentPage);
+            zg->bookmarks[t]=QSL("%1\n%2").arg(dlg->getDlgEdit2()).arg(ui->mangaView->currentPage);
             updateBookmarks();
         } else
             QMessageBox::warning(this,tr("QManga"),
@@ -525,13 +525,13 @@ void MainWindow::helpAbout()
 void MainWindow::auxMessage(const QString &msg)
 {
     QString s = msg;
-    bool showMsgBox = s.startsWith(QStringLiteral("MBOX#"));
+    bool showMsgBox = s.startsWith(QSL("MBOX#"));
     if (showMsgBox)
-        s.remove(QStringLiteral("MBOX#"));
+        s.remove(QSL("MBOX#"));
     lblSearchStatus->setText(s);
     if (showMsgBox) {
         if (indexerMsgBox.isVisible())
-            indexerMsgBox.setText(indexerMsgBox.text()+QStringLiteral("\n")+s);
+            indexerMsgBox.setText(indexerMsgBox.text()+QSL("\n")+s);
         else
             indexerMsgBox.setText(s);
         indexerMsgBox.exec();
@@ -559,7 +559,7 @@ void MainWindow::fsAddFiles()
     }
 
     for (auto it = fl.constKeyValueBegin(), end = fl.constKeyValueEnd(); it != end; ++it)
-        emit dbAddFiles((*it).second,(*it).first);
+        Q_EMIT dbAddFiles((*it).second,(*it).first);
 
     zg->fsCheckFilesAvailability();
 }
@@ -628,7 +628,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
 {
     QStringList albums = searchTab->getAlbums();
     QMenu cm(this);
-    cm.setStyleSheet(QStringLiteral("QMenu { menu-scrollable: 1; }"));
+    cm.setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
     QAction* ac;
     int cnt=0;
     if (!ui->fsResults->selectedItems().isEmpty()) {
@@ -639,7 +639,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
         cnt++;
     }
     for (const auto &i : albums) {
-        if (i.startsWith(QStringLiteral("#"))) continue;
+        if (i.startsWith(QSL("#"))) continue;
         ac = new QAction(i,nullptr);
         connect(ac,&QAction::triggered,this,&MainWindow::fsResultsCtxApplyAlbum);
         ac->setData(i);
@@ -677,7 +677,7 @@ void MainWindow::fsFindNewFiles()
     fsUpdateFileList();
     searchTab->dbShowProgressDialogEx(true,tr("Scanning filesystem"));
     searchTab->dbShowProgressState(25,tr("Scanning filesystem..."));
-    emit dbFindNewFiles();
+    Q_EMIT dbFindNewFiles();
 }
 
 void MainWindow::fsFoundNewFiles(const QStringList &files)
@@ -713,7 +713,7 @@ void MainWindow::fsAddIgnoredFiles()
             sl << fsScannedFiles.at(i).fileName;
 
     }
-    emit dbAddIgnoredFiles(sl);
+    Q_EMIT dbAddIgnoredFiles(sl);
     fsScannedFiles = nl;
     fsUpdateFileList();
 }

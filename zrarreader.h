@@ -6,17 +6,19 @@
 class ZRarReader : public ZAbstractReader
 {
     Q_OBJECT
-protected:
-    QString rarExec;
-
 public:
-    explicit ZRarReader(QObject *parent, const QString &filename);
-    bool openFile();
-    void closeFile();
-    QByteArray loadPage(int num);
-    QImage loadPageImage(int num);
-    QString getMagic();
-    QString getInternalPath(int idx);
+    ZRarReader(QObject *parent, const QString &filename);
+    ~ZRarReader() override = default;
+    bool openFile() override;
+    void closeFile() override;
+    QByteArray loadPage(int num) override;
+    QImage loadPageImage(int num) override;
+    QString getMagic() override;
+
+private:
+    QString m_rarExec;
+
+    Q_DISABLE_COPY(ZRarReader)
 
 };
 

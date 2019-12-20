@@ -4,73 +4,72 @@
 ZSingleImageReader::ZSingleImageReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
-    page = QImage();
 }
 
 bool ZSingleImageReader::openFile()
 {
-    if (opened)
+    if (isOpened())
         return false;
 
-    if (!fileName.startsWith(QStringLiteral(":CLIP:"))) {
-        if (!page.load(fileName)) {
-            page = QImage();
+    QString fileName = getFileName();
+    if (!fileName.startsWith(QSL(":CLIP:"))) {
+        if (!m_page.load(fileName)) {
+            m_page = QImage();
             return false;
         }
     } else {
-        fileName.remove(0,QStringLiteral(":CLIP:").length());
+        fileName.remove(0,QSL(":CLIP:").length());
         QByteArray imgs = QByteArray::fromBase64(fileName.toLatin1());
-        fileName = QStringLiteral("clipboard");
+        fileName = QSL("clipboard");
         QBuffer buf(&imgs);
-        bool loaded = page.load(&buf,"BMP");
+        bool loaded = m_page.load(&buf,"BMP");
         buf.close();
         imgs.clear();
-        if (page.isNull() || !loaded)
+        if (m_page.isNull() || !loaded)
             return false;
     }
-    sortList << ZFileEntry(fileName,0);
-    opened = true;
+
+    addSortEntry(ZFileEntry(fileName,0));
+    performListSort();
+    setOpenFileSuccess();
     return true;
 }
 
 void ZSingleImageReader::closeFile()
 {
-    if (!opened)
+    if (!isOpened())
         return;
 
-    page = QImage();
-    opened = false;
-    sortList.clear();
+    m_page = QImage();
+    ZAbstractReader::closeFile();
 }
 
-QByteArray ZSingleImageReader::loadPage(int)
+QByteArray ZSingleImageReader::loadPage(int num)
 {
+    Q_UNUSED(num)
+
     QByteArray res;
-    res.clear();
-    if (!opened)
+    if (!isOpened())
         return res;
 
     QBuffer buf(&res);
     buf.open(QIODevice::WriteOnly);
-    page.save(&buf,"BMP");
+    m_page.save(&buf,"BMP");
 
     return res;
 }
 
-QImage ZSingleImageReader::loadPageImage(int)
+QImage ZSingleImageReader::loadPageImage(int num)
 {
-    if (!opened)
+    Q_UNUSED(num)
+
+    if (!isOpened())
         return QImage();
 
-    return page;
+    return m_page;
 }
 
 QString ZSingleImageReader::getMagic()
 {
-    return QStringLiteral("AUX");
-}
-
-QString ZSingleImageReader::getInternalPath(int)
-{
-    return QString();
+    return QSL("AUX");
 }

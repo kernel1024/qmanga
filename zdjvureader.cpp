@@ -6,8 +6,7 @@
 #include "zdjvureader.h"
 
 ZDjVuReader::ZDjVuReader(QObject *parent, const QString &filename)
-    : ZAbstractReader(parent, filename),
-      numPages(0)
+    : ZAbstractReader(parent, filename)
 {
 }
 
@@ -18,26 +17,25 @@ ZDjVuReader::~ZDjVuReader()
 
 bool ZDjVuReader::openFile()
 {
-    numPages = 0;
-
 #ifdef WITH_DJVU
-    if (opened)
+    if (isOpened())
         return false;
 
-    sortList.clear();
-
-    if (!ZDjVuController::instance()->loadDjVu(fileName, numPages)) {
-        qWarning() << tr("Unable to load file ") << fileName;
+    int numPages;
+    if (!ZDjVuController::instance()->loadDjVu(getFileName(), numPages)) {
+        qWarning() << tr("Unable to load file ") << getFileName();
         return false;
     }
 
+    const int pageCounterWidth = 6;
+    const int pageCounterBase = 10;
     for (int i=0;i<numPages;i++) {
-        sortList << ZFileEntry(QStringLiteral("%1").arg(i,6,10,QChar('0')),i);
+        addSortEntry(ZFileEntry(QSL("%1")
+                                .arg(i,pageCounterWidth,pageCounterBase,QChar('0')),i));
     }
 
-    std::sort(sortList.begin(),sortList.end());
-
-    opened = true;
+    performListSort();
+    setOpenFileSuccess();
     return true;
 #else
     return false;
@@ -46,32 +44,29 @@ bool ZDjVuReader::openFile()
 
 void ZDjVuReader::closeFile()
 {
-    if (!opened)
+    if (!isOpened())
         return;
 #ifdef WITH_DJVU
-    ZDjVuController::instance()->closeDjVu(fileName);
+    ZDjVuController::instance()->closeDjVu(getFileName());
 #endif
 
-    opened = false;
-    numPages = 0;
-    sortList.clear();
+    ZAbstractReader::closeFile();
 }
 
 QImage ZDjVuReader::loadPageImage(int num)
 {
 #ifdef WITH_DJVU
-    ddjvu_document_t* document = ZDjVuController::instance()->getDocument(fileName);
-    if (!opened || document==nullptr) {
+    ddjvu_document_t* document = ZDjVuController::instance()->getDocument(getFileName());
+    if (!isOpened() || document==nullptr) {
         qWarning() << "Uninitialized context for page " << num;
         return QImage();
     }
 
-    if (num<0 || num>=sortList.count()) {
-        qWarning() << "Incorrect page number " << num;
+    int idx = getSortEntryIdx(num);
+    if (idx<0) {
+        qCritical() << "Incorrect page number " << num;
         return QImage();
     }
-
-    int idx = sortList.at(num).idx;
 
     ddjvu_page_t* page = ddjvu_page_create_by_pageno(document,idx);
     if (!page) {
@@ -103,7 +98,11 @@ QImage ZDjVuReader::loadPageImage(int num)
     w = static_cast<int>( w * xdpi / resolution );
     h = static_cast<int>( h * ydpi / resolution );
 
-    static uint masks[4] = { 0xff0000, 0xff00, 0xff, 0xff000000 };
+    const uint redMask = 0xff0000;
+    const uint greenMask = 0xff00;
+    const uint blueMask = 0xff;
+    const uint alphaMask = 0xff000000;
+    uint masks[4] = { redMask, greenMask, blueMask, alphaMask };
     ddjvu_format_t* format = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 4, masks);
     if (!format)
     {
@@ -124,12 +123,12 @@ QImage ZDjVuReader::loadPageImage(int num)
     pageRect.h = static_cast<uint>(h);
     ddjvu_rect_t rendRect = pageRect;
 
-    if (!ddjvu_page_render(page, DDJVU_RENDER_COLOR,
+    if (ddjvu_page_render(page, DDJVU_RENDER_COLOR,
                           &pageRect,
                           &rendRect,
                           format,
                           static_cast<uint>(row_stride),
-                          reinterpret_cast<char *>(image.bits())))
+                          reinterpret_cast<char *>(image.bits()))==0)
         qWarning() << "Unable to render page " << idx;
 
     ddjvu_format_release(format);
@@ -159,10 +158,21 @@ QByteArray ZDjVuReader::loadPage(int num)
 
 QString ZDjVuReader::getMagic()
 {
-    return QStringLiteral("DJVU");
+    return QSL("DJVU");
 }
 
 ZDjVuController* ZDjVuController::m_instance = nullptr;
+
+ZDjVuController::ZDjVuController(QObject *parent)
+    : QObject(parent)
+{
+
+}
+
+ZDjVuController::~ZDjVuController()
+{
+    freeDjVuReader();
+}
 
 ZDjVuController *ZDjVuController::instance()
 {
@@ -174,44 +184,44 @@ ZDjVuController *ZDjVuController::instance()
 void ZDjVuController::initDjVuReader()
 {
 #ifdef WITH_DJVU
-    djvuContext = ddjvu_context_create("qmanga");
-    if (!djvuContext) {
+    m_djvuContext = ddjvu_context_create("qmanga");
+    if (!m_djvuContext) {
         qCritical() << "Unable to create djvulibre context. DjVu support disabled.";
-        djvuContext = nullptr;
+        m_djvuContext = nullptr;
     }
-    documents.clear();
+    m_documents.clear();
 #endif
 }
 
 void ZDjVuController::freeDjVuReader()
 {
 #ifdef WITH_DJVU
-    while (!documents.isEmpty()) {
-        ZDjVuDocument doc = documents.takeFirst();
+    while (!m_documents.isEmpty()) {
+        ZDjVuDocument doc = m_documents.takeFirst();
         if (doc.document)
             ddjvu_document_release(doc.document);
     }
 
-    if (djvuContext)
-        ddjvu_context_release(djvuContext);
-    djvuContext = nullptr;
+    if (m_djvuContext)
+        ddjvu_context_release(m_djvuContext);
+    m_djvuContext = nullptr;
 #endif
 }
 
 bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
 {
-    QMutexLocker locker(&docMutex);
+    QMutexLocker locker(&m_docMutex);
 
 #ifdef WITH_DJVU
-    if (djvuContext==nullptr) {
+    if (m_djvuContext==nullptr) {
         qWarning() << "No context for " << filename;
         return false;
     }
 
-    int dIdx = documents.indexOf(ZDjVuDocument(filename));
+    int dIdx = m_documents.indexOf(ZDjVuDocument(filename));
     if (dIdx >= 0) {
-        numPages = documents.at(dIdx).pageNum;
-        documents[dIdx].ref++;
+        numPages = m_documents.at(dIdx).pageNum;
+        m_documents[dIdx].ref++;
         return true;
     }
 
@@ -223,17 +233,17 @@ bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
 
 
     ddjvu_document_t* document = ddjvu_document_create_by_filename_utf8(
-                                              djvuContext, filename.toUtf8().constData(), 0);
+                                              m_djvuContext, filename.toUtf8().constData(), 0);
     if (!document) {
         qWarning() << "Unable to create document context for " << filename;
         return false;
     }
 
-    handle_ddjvu_messages(djvuContext, true);
+    handle_ddjvu_messages(m_djvuContext, true);
 
     numPages = ddjvu_document_get_pagenum(document);
 
-    documents.append(ZDjVuDocument(document, filename, numPages));
+    m_documents.append(ZDjVuDocument(document, filename, numPages));
 
     return true;
 #else
@@ -245,13 +255,13 @@ bool ZDjVuController::loadDjVu(const QString &filename, int &numPages)
 
 void ZDjVuController::closeDjVu(const QString &filename)
 {
-    QMutexLocker locker(&docMutex);
+    QMutexLocker locker(&m_docMutex);
 #ifdef WITH_DJVU
-    int dIdx = documents.indexOf(ZDjVuDocument(filename));
+    int dIdx = m_documents.indexOf(ZDjVuDocument(filename));
     if (dIdx >= 0) {
-        documents[dIdx].ref--;
-        if (documents.at(dIdx).ref==0) {
-            ZDjVuDocument doc = documents.takeAt(dIdx);
+        m_documents[dIdx].ref--;
+        if (m_documents.at(dIdx).ref==0) {
+            ZDjVuDocument doc = m_documents.takeAt(dIdx);
             ddjvu_document_release(doc.document);
         }
     }
@@ -263,18 +273,19 @@ void ZDjVuController::closeDjVu(const QString &filename)
 #ifdef WITH_DJVU
 ddjvu_document_t *ZDjVuController::getDocument(const QString& filename)
 {
-    QMutexLocker locker(&docMutex);
+    QMutexLocker locker(&m_docMutex);
 
     ddjvu_document_t* res = nullptr;
-    int dIdx = documents.indexOf(ZDjVuDocument(filename));
-    if (dIdx >= 0)
-        res = documents.at(dIdx).document;
-    else
+    int dIdx = m_documents.indexOf(ZDjVuDocument(filename));
+    if (dIdx >= 0) {
+        res = m_documents.at(dIdx).document;
+    } else {
         qWarning() << "Unable to find opened document " << filename;
+    }
     return res;
 }
 
-void ZDjVuController::handle_ddjvu_messages ( ddjvu_context_t * ctx, int wait )
+void ZDjVuController::handle_ddjvu_messages ( ddjvu_context_t * ctx, bool wait )
 {
     const ddjvu_message_t *msg;
     if ( wait )
@@ -283,10 +294,8 @@ void ZDjVuController::handle_ddjvu_messages ( ddjvu_context_t * ctx, int wait )
     {
         switch ( msg->m_any.tag )
         {
-            case DDJVU_ERROR:      /*....*/ ; break;
-            case DDJVU_INFO:       /*....*/ ; break;
-            case DDJVU_NEWSTREAM:  /*....*/ ; break;
-                //   ....
+            case DDJVU_ERROR: qCritical() << "DJVU error: " << msg->m_error.message; break;
+            case DDJVU_INFO: qInfo() << "DJVU info: " << msg->m_info.message; break;
             default: break;
         }
         ddjvu_message_pop ( ctx );
@@ -294,9 +303,7 @@ void ZDjVuController::handle_ddjvu_messages ( ddjvu_context_t * ctx, int wait )
 }
 
 ZDjVuDocument::ZDjVuDocument()
-    : document(nullptr),
-      pageNum(0),
-      ref(0)
+    : document(nullptr)
 {
     filename.clear();
 }
@@ -310,9 +317,7 @@ ZDjVuDocument::ZDjVuDocument(const ZDjVuDocument &other)
 }
 
 ZDjVuDocument::ZDjVuDocument(const QString &aFilename)
-    : document(nullptr),
-      pageNum(0),
-      ref(0)
+    : document(nullptr)
 {
     filename = aFilename;
 }

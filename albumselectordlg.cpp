@@ -3,19 +3,18 @@
 #include "albumselectordlg.h"
 #include "ui_albumselectordlg.h"
 
-AlbumSelectorDlg::AlbumSelectorDlg(QWidget *parent, const QStringList &albums,
+ZAlbumSelectorDlg::ZAlbumSelectorDlg(QWidget *parent, const QStringList &albums,
                                    const QString &suggest, int toAddCount) :
     QDialog(parent),
-    ui(new Ui::AlbumSelectorDlg)
+    ui(new Ui::ZAlbumSelectorDlg)
 {
     ui->setupUi(this);
 
-    listAlbums = ui->listAlbums;
-
-    if (toAddCount<0)
+    if (toAddCount<0) {
         ui->label->setText(tr("Add manga to album"));
-    else
+    } else {
         ui->label->setText(tr("Add %1 files to album").arg(toAddCount));
+    }
 
     ui->listAlbums->clear();
     ui->listAlbums->addItems(albums);
@@ -25,7 +24,12 @@ AlbumSelectorDlg::AlbumSelectorDlg(QWidget *parent, const QStringList &albums,
         ui->listAlbums->setCurrentIndex(idx);
 }
 
-AlbumSelectorDlg::~AlbumSelectorDlg()
+ZAlbumSelectorDlg::~ZAlbumSelectorDlg()
 {
     delete ui;
+}
+
+QString ZAlbumSelectorDlg::getAlbumName()
+{
+    return ui->listAlbums->lineEdit()->text();
 }

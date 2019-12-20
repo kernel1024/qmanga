@@ -80,7 +80,7 @@ public:
     QString getLanguageName(const QString &bcp47Name);
     qint64 getAvgFineRenderTime();
 
-public slots:
+public Q_SLOTS:
     void settingsDlg();
     void loadSettings();
     void saveSettings();
@@ -89,7 +89,7 @@ public slots:
     void dbCheckComplete();
     void addFineRenderTime(qint64 msec);
 
-signals:
+Q_SIGNALS:
     void dbSetCredentials(const QString& host, const QString& base,
                           const QString& user, const QString& password);
     void dbCheckBase();

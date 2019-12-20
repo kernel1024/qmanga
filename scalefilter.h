@@ -87,7 +87,7 @@ public:
                                     Qt::AspectRatioMode aspectRatio =
             Qt::IgnoreAspectRatio, int page = -1, const int *currentPage = nullptr);
 
-    static QImage smoothScaleFilter(const QImage &img, int dwX, int dwY,
+    static QImage smoothScaleFilter(const QImage &img, int w, int h,
                                     double blur=1.0,
                                     ScaleFilterType filter=BlackmanFilter,
                                     Qt::AspectRatioMode aspectRatio =

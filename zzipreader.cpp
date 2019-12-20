@@ -1,35 +1,34 @@
-#include <algorithm>
 #include <QDebug>
 #include "zzipreader.h"
 
 ZZipReader::ZZipReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
-    mainZFile = nullptr;
+    m_zFile = nullptr;
 }
 
 bool ZZipReader::openFile()
 {
-    if (opened)
+    if (isOpened())
         return false;
 
-    sortList.clear();
     m_sizes.clear();
 
+    QString fileName = getFileName();
     QFileInfo fi(fileName);
     if (!fi.isFile() || !fi.isReadable()) {
         return false;
     }
 
-    mainZFile = zip_open(fileName.toUtf8().constData(),ZIP_RDONLY,nullptr);
-    if (!mainZFile) {
+    m_zFile = zip_open(fileName.toUtf8().constData(),ZIP_RDONLY,nullptr);
+    if (!m_zFile) {
         return false;
     }
 
-    qint64 count = zip_get_num_entries(mainZFile,0);
+    qint64 count = zip_get_num_entries(m_zFile,0);
     for (qint64 idx = 0; idx < count; idx++) {
         zip_stat_t stat;
-        if (zip_stat_index(mainZFile,static_cast<uint>(idx),
+        if (zip_stat_index(m_zFile,static_cast<uint>(idx),
                            ZIP_STAT_SIZE | ZIP_STAT_NAME,&stat)<0) {
             qDebug() << "Unable to get file stat for index " << idx;
             continue;
@@ -38,46 +37,47 @@ bool ZZipReader::openFile()
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         QFileInfo fi(fname);
         if (!supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
-        sortList << ZFileEntry(fname,static_cast<int>(idx));
+        addSortEntry(ZFileEntry(fname,static_cast<int>(idx)));
         m_sizes[static_cast<int>(idx)] = static_cast<int>(stat.size);
     }
 
-    std::sort(sortList.begin(),sortList.end());
+    performListSort();
 
-    opened = true;
+    setOpenFileSuccess();
     return true;
 }
 
 void ZZipReader::closeFile()
 {
-    if (!opened)
+    if (!isOpened())
         return;
 
-    if (mainZFile!=nullptr)
-        zip_close(mainZFile);
-    opened = false;
-    sortList.clear();
+    if (m_zFile!=nullptr)
+        zip_close(m_zFile);
     m_sizes.clear();
+    ZAbstractReader::closeFile();
 }
 
 QByteArray ZZipReader::loadPage(int num)
 {
     QByteArray res;
-    if (!opened)
+    if (!isOpened())
         return res;
 
-    int znum = -2;
-    if (num>=0 && num<sortList.count())
-        znum = sortList.at(num).idx;
+    int znum = getSortEntryIdx(num);
+    if (znum<0) {
+        qCritical() << "Incorrect page number";
+        return res;
+    }
 
     int size = m_sizes.value(znum);
-    if (size>(150*1024*1024)) {
+    if (size>ZDefaults::maxImageFileSize) {
         qDebug() << "Image file is too big (over 150Mb). Unable to load.";
         return res;
     }
 
     res.resize(size);
-    zip_file_t* file = zip_fopen_index(mainZFile,static_cast<uint>(znum),0);
+    zip_file_t* file = zip_fopen_index(m_zFile,static_cast<uint>(znum),0);
     if (file != nullptr) {
         qint64 sz = zip_fread(file,res.data(),static_cast<uint>(size));
         zip_fclose(file);
@@ -106,16 +106,5 @@ QImage ZZipReader::loadPageImage(int num)
 
 QString ZZipReader::getMagic()
 {
-    return QStringLiteral("ZIP");
-}
-
-QString ZZipReader::getInternalPath(int idx)
-{
-    if (!opened)
-        return QString();
-
-    if (idx>=0 && idx<sortList.count())
-        return sortList.at(idx).name;
-
-    return QString();
+    return QSL("ZIP");
 }

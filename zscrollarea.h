@@ -9,26 +9,28 @@
 class ZScrollArea : public QScrollArea
 {
     Q_OBJECT
+public:
+    explicit ZScrollArea(QWidget *parent = nullptr);
+    ~ZScrollArea() override = default;
+    
+Q_SIGNALS:
+    void sizeChanged(const QSize& size);
+
+protected:
+    void resizeEvent(QResizeEvent * event) override;
+
 private:
     QTimer resizeTimer;
     QSize savedSize;
 
-public:
-    explicit ZScrollArea(QWidget *parent = nullptr);
-    
-signals:
-    void sizeChanged(const QSize& size);
-
-protected:
-    void resizeEvent(QResizeEvent * event);
-    
+    Q_DISABLE_COPY(ZScrollArea)
 };
 
 class ZTabWidget : public QTabWidget
 {
     Q_OBJECT
 public:
-    ZTabWidget(QWidget *parent = nullptr);
+    explicit ZTabWidget(QWidget *parent = nullptr);
     QTabBar *tabBar() const;
 };
 

@@ -23,8 +23,25 @@
 
 #include <scalefilter.h>
 
-#define maxPreviewSize 500
-#define previewProps 364/257
+#define QSL QStringLiteral
+
+namespace ZDefaults {
+const int oneMinuteMS = 60000;
+const int oneSecondMS = 1000;
+const int resizeTimerInitialMS = 500;
+const int resizeTimerDiffMS = 200;
+const int maxImageFileSize = 150*1024*1024;
+const int minPreviewSize = 16;
+const int maxPreviewSize = 500;
+const int initialPreviewSize = 128;
+const int initialAlbumListWidth = 90;
+const int previewWidthMargin = 25;
+const int maxDescriptionStringLength = 80;
+const double previewProps = 364.0/257.0; // B4 paper proportions
+const QSize maxDictTooltipSize = QSize(350,350);
+const qint64 copyBlockSize = 2*1024*1024L;
+}
+
 
 using QImageHash = QHash<int,QImage>;
 using QByteHash = QHash<int,QByteArray>;

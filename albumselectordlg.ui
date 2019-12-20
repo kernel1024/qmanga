@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AlbumSelectorDlg</class>
- <widget class="QDialog" name="AlbumSelectorDlg">
+ <class>ZAlbumSelectorDlg</class>
+ <widget class="QDialog" name="ZAlbumSelectorDlg">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -98,7 +98,7 @@
   <connection>
    <sender>pushButton</sender>
    <signal>clicked()</signal>
-   <receiver>AlbumSelectorDlg</receiver>
+   <receiver>ZAlbumSelectorDlg</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -114,7 +114,7 @@
   <connection>
    <sender>pushButton_2</sender>
    <signal>clicked()</signal>
-   <receiver>AlbumSelectorDlg</receiver>
+   <receiver>ZAlbumSelectorDlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

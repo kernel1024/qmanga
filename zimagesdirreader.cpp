@@ -10,56 +10,45 @@ ZImagesDirReader::ZImagesDirReader(QObject *parent, const QString &filename)
 
 bool ZImagesDirReader::openFile()
 {
-    if (opened)
+    if (isOpened())
         return false;
 
-    sortList.clear();
-
-    QDir d(fileName);
+    QDir d(getFileName());
     if (!d.isReadable()) return false;
     const QFileInfoList fl = filterSupportedImgFiles(
                                  d.entryInfoList(
-                                     QStringList(QStringLiteral("*")),
+                                     QStringList(QSL("*")),
                                      QDir::Readable | QDir::Files));
     for (int i=0;i<fl.count();i++)
-        sortList << ZFileEntry(fl.at(i).absoluteFilePath(),i);
+        addSortEntry(ZFileEntry(fl.at(i).absoluteFilePath(),i));
 
-    std::sort(sortList.begin(),sortList.end());
-
-    opened = true;
+    performListSort();
+    setOpenFileSuccess();
     return true;
-}
-
-void ZImagesDirReader::closeFile()
-{
-    if (!opened)
-        return;
-
-    opened = false;
-    sortList.clear();
 }
 
 QByteArray ZImagesDirReader::loadPage(int num)
 {
     QByteArray res;
-    res.clear();
-    if (!opened)
+    if (!isOpened())
         return res;
 
-    int idx = 0;
-    int znum = -2;
-    if (num>=0 && num<sortList.count())
-        znum = sortList.at(num).idx;
+    int znum = getSortEntryIdx(num);
+    if (znum<0) {
+        qCritical() << "Incorrect page number";
+        return res;
+    }
 
-    QDir d(fileName);
+    QDir d(getFileName());
     if (!d.isReadable()) return res;
     const QFileInfoList fl = filterSupportedImgFiles(
                                  d.entryInfoList(
-                                     QStringList(QStringLiteral("*")),
+                                     QStringList(QSL("*")),
                                      QDir::Readable | QDir::Files));
+    int idx = 0;
     for (const auto &fi : fl) {
         if (idx==znum) {
-            if (fi.size()>(150*1024*1024)) {
+            if (fi.size()>ZDefaults::maxImageFileSize) {
                 qDebug() << "Image file is too big (over 150Mb). Unable to load.";
                 return res;
             }
@@ -89,16 +78,5 @@ QImage ZImagesDirReader::loadPageImage(int num)
 
 QString ZImagesDirReader::getMagic()
 {
-    return QStringLiteral("DYN");
-}
-
-QString ZImagesDirReader::getInternalPath(int idx)
-{
-    if (!opened)
-        return QString();
-
-    if (idx>=0 && idx<sortList.count())
-        return sortList.at(idx).name;
-
-    return QString();
+    return QSL("DYN");
 }

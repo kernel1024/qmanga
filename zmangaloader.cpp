@@ -4,65 +4,64 @@
 ZMangaLoader::ZMangaLoader(QObject *parent) :
     QObject(parent)
 {
-    mReader = nullptr;
 }
 
 ZMangaLoader::~ZMangaLoader()
 {
-    if (mReader!=nullptr)
+    if (m_reader!=nullptr)
         closeFile();
 }
 
 void ZMangaLoader::postMessage(const QString &msg)
 {
-    emit auxMessage(msg);
+    Q_EMIT auxMessage(msg);
 }
 
 void ZMangaLoader::openFile(const QString &filename, int preferred)
 {
-    if (mReader!=nullptr)
+    if (m_reader!=nullptr)
         closeFile();
 
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,filename,&mimeOk,false);
     if ((za == nullptr) && (!mimeOk)) {
-        emit closeFileRequest();
-        emit gotError(tr("File format not supported."));
+        Q_EMIT closeFileRequest();
+        Q_EMIT gotError(tr("File format not supported."));
         return;
     }
     if ((za == nullptr) && (mimeOk)) {
-        emit closeFileRequest();
-        emit gotError(tr("File not found. Update database or restore file."));
+        Q_EMIT closeFileRequest();
+        Q_EMIT gotError(tr("File not found. Update database or restore file."));
         return;
     }
     if (!za->openFile()) {
-        emit closeFileRequest();
-        emit gotError(tr("Unable to open file."));
+        Q_EMIT closeFileRequest();
+        Q_EMIT gotError(tr("Unable to open file."));
         za->setParent(nullptr);
         delete za;
         return;
     }
-    mReader = za;
-    int pagecnt = mReader->getPageCount();
-    emit gotPageCount(pagecnt,preferred);
+    m_reader = za;
+    int pagecnt = m_reader->getPageCount();
+    Q_EMIT gotPageCount(pagecnt,preferred);
 }
 
 void ZMangaLoader::getPage(int num, bool preferImage)
 {
-    QString ipt = mReader->getInternalPath(num);
+    QString ipt = m_reader->getInternalPath(num);
     if (preferImage) {
-        emit gotPage(QByteArray(),mReader->loadPageImage(num),num,ipt,threadID);
+        Q_EMIT gotPage(QByteArray(),m_reader->loadPageImage(num),num,ipt,m_threadID);
     } else {
-        emit gotPage(mReader->loadPage(num),QImage(),num,ipt,threadID);
+        Q_EMIT gotPage(m_reader->loadPage(num),QImage(),num,ipt,m_threadID);
     }
 }
 
 void ZMangaLoader::closeFile()
 {
-    if (mReader!=nullptr) {
-        mReader->closeFile();
-        mReader->setParent(nullptr);
-        delete mReader;
+    if (m_reader!=nullptr) {
+        m_reader->closeFile();
+        m_reader->setParent(nullptr);
+        delete m_reader;
     }
-    mReader = nullptr;
+    m_reader = nullptr;
 }

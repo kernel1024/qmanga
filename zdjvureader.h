@@ -14,31 +14,31 @@
 class ZDjVuReader : public ZAbstractReader
 {
     Q_OBJECT
+public:
+    ZDjVuReader(QObject *parent, const QString &filename);
+    ~ZDjVuReader() override;
+    bool openFile() override;
+    void closeFile() override;
+    QByteArray loadPage(int num) override;
+    QImage loadPageImage(int num) override;
+    QString getMagic() override;
 
 private:
-    int numPages;
-
-public:
-    explicit ZDjVuReader(QObject *parent, const QString &filename);
-    ~ZDjVuReader();
-    bool openFile();
-    void closeFile();
-    QByteArray loadPage(int num);
-    QImage loadPageImage(int num);
-    QString getMagic();
+    Q_DISABLE_COPY(ZDjVuReader)
 
 };
 
 #ifdef WITH_DJVU
 class ZDjVuDocument {
 public:
-    ddjvu_document_t * document;
+    ddjvu_document_t * document { nullptr };
     QString filename;
-    int pageNum;
-    int ref;
+    int pageNum { 0 };
+    int ref { 0 };
     ZDjVuDocument();
+    ~ZDjVuDocument() = default;
     ZDjVuDocument(const ZDjVuDocument& other);
-    ZDjVuDocument(const QString& aFilename);
+    explicit ZDjVuDocument(const QString& aFilename);
     ZDjVuDocument(ddjvu_document_t * aDocument, const QString& aFilename,  int aPageNum);
     ZDjVuDocument &operator=(const ZDjVuDocument& other) = default;
     bool operator==(const ZDjVuDocument& ref) const;
@@ -49,18 +49,9 @@ public:
 class ZDjVuController : public QObject
 {
     Q_OBJECT
-
-private:
-    static ZDjVuController* m_instance;
-    QMutex docMutex;
-#ifdef WITH_DJVU
-    ddjvu_context_t  * djvuContext;
-    QList<ZDjVuDocument> documents;
-
-    void handle_ddjvu_messages(ddjvu_context_t *ctx, int wait);
-#endif
-
 public:
+    explicit ZDjVuController(QObject* parent = nullptr);
+    ~ZDjVuController() override;
     static ZDjVuController *instance();
     void initDjVuReader();
     void freeDjVuReader();
@@ -70,8 +61,19 @@ public:
     ddjvu_document_t* getDocument(const QString &filename);
 #endif
 
-    friend class ZDjVuReader;
+private:
+    static ZDjVuController* m_instance;
+    QMutex m_docMutex;
+#ifdef WITH_DJVU
+    ddjvu_context_t  * m_djvuContext { nullptr };
+    QList<ZDjVuDocument> m_documents;
 
+    void handle_ddjvu_messages(ddjvu_context_t *ctx, bool wait);
+#endif
+
+    Q_DISABLE_COPY(ZDjVuController)
+
+    friend class ZDjVuReader;
 };
 
 

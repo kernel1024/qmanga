@@ -21,7 +21,7 @@ ZExportDialog::~ZExportDialog()
     delete ui;
 }
 
-void ZExportDialog::setPages(const int currentPage, const int pagesMaximum)
+void ZExportDialog::setPages(int currentPage, int pagesMaximum)
 {
     m_currentPage = currentPage;
     ui->pageCount->setMaximum(pagesMaximum);

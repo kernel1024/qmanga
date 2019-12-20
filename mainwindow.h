@@ -64,12 +64,12 @@ private:
 protected:
     void closeEvent(QCloseEvent * event);
 
-signals:
+Q_SIGNALS:
     void dbAddFiles(const QStringList& aFiles, const QString& album);
     void dbFindNewFiles();
     void dbAddIgnoredFiles(const QStringList& files);
 
-public slots:
+public Q_SLOTS:
     void openAux();
     void openClipboard();
     void openFromIndex(const QString &filename);

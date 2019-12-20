@@ -5,22 +5,23 @@
 #include <QComboBox>
 
 namespace Ui {
-class AlbumSelectorDlg;
+class ZAlbumSelectorDlg;
 }
 
-class AlbumSelectorDlg : public QDialog
+class ZAlbumSelectorDlg : public QDialog
 {
     Q_OBJECT
     
 public:
-    QComboBox* listAlbums;
-
-    explicit AlbumSelectorDlg(QWidget *parent, const QStringList &albums,
+    explicit ZAlbumSelectorDlg(QWidget *parent, const QStringList &albums,
                               const QString &suggest, int toAddCount);
-    ~AlbumSelectorDlg();
+    ~ZAlbumSelectorDlg() override;
+    QString getAlbumName();
     
 private:
-    Ui::AlbumSelectorDlg *ui;
+    Ui::ZAlbumSelectorDlg *ui;
+
+    Q_DISABLE_COPY(ZAlbumSelectorDlg)
 };
 
 #endif // ALBUMSELECTORDLG_H

@@ -22,8 +22,10 @@
 #include "zsearchtab.h"
 #include "ui_zsearchtab.h"
 
-#define STACK_ICONS 0
-#define STACK_TABLE 1
+namespace ZDefaults {
+const int stackIcons = 0;
+const int stackTable = 1;
+}
 
 ZSearchTab::ZSearchTab(QWidget *parent) :
     QWidget(parent),
@@ -31,31 +33,25 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    cachedAlbums.clear();
-
-    progressDlg = nullptr;
-    savedOrdering = Z::UndefinedOrder;
-    savedOrderingDirection = Qt::AscendingOrder;
-
-    descTemplate = ui->srcDesc->text();
+    m_descTemplate = ui->srcDesc->text();
     setDescText();
     ui->srcLoading->hide();
 
     auto completer = new QCompleter(this);
-    searchHistoryModel = new ZMangaSearchHistoryModel(completer);
-    completer->setModel(searchHistoryModel);
+    m_searchHistoryModel = new ZMangaSearchHistoryModel(completer);
+    completer->setModel(m_searchHistoryModel);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     completer->setFilterMode(Qt::MatchContains);
     ui->srcEdit->setCompleter(completer);
     ui->srcEdit->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    ui->srcIconSize->setMinimum(16);
-    ui->srcIconSize->setMaximum(maxPreviewSize);
-    ui->srcIconSize->setValue(128);
+    ui->srcIconSize->setMinimum(ZDefaults::minPreviewSize);
+    ui->srcIconSize->setMaximum(ZDefaults::maxPreviewSize);
+    ui->srcIconSize->setValue(ZDefaults::initialPreviewSize);
     ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     ui->srcList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    ui->srcModeIcon->setChecked(ui->srcStack->currentIndex()==STACK_ICONS);
-    ui->srcModeList->setChecked(ui->srcStack->currentIndex()==STACK_TABLE);
+    ui->srcModeIcon->setChecked(ui->srcStack->currentIndex()==ZDefaults::stackIcons);
+    ui->srcModeList->setChecked(ui->srcStack->currentIndex()==ZDefaults::stackTable);
     ui->srcAlbums->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(ui->srcAlbums,&QTreeWidget::itemClicked,this,&ZSearchTab::albumClicked);
@@ -117,18 +113,18 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     sLoaded->assignProperty(ui->srcEdit,"enabled",true);
     sLoaded->assignProperty(ui->srcAlbums,"enabled",true);
     sLoaded->assignProperty(ui->srcLoading,"visible",false);
-    loadingState.addState(sLoading);
-    loadingState.addState(sLoaded);
-    loadingState.setInitialState(sLoaded);
-    loadingState.start();
+    m_loadingState.addState(sLoading);
+    m_loadingState.addState(sLoaded);
+    m_loadingState.setInitialState(sLoaded);
+    m_loadingState.start();
 
     auto aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
-    tableModel = new ZMangaTableModel(this,ui->srcTable);
-    iconModel = new ZMangaIconModel(this,ui->srcList);
-    tableModel->setSourceModel(aModel);
-    iconModel->setSourceModel(aModel);
-    ui->srcList->setModel(iconModel);
-    ui->srcTable->setModel(tableModel);
+    m_tableModel = new ZMangaTableModel(this,ui->srcTable);
+    m_iconModel = new ZMangaIconModel(this,ui->srcList);
+    m_tableModel->setSourceModel(aModel);
+    m_iconModel->setSourceModel(aModel);
+    ui->srcList->setModel(m_iconModel);
+    ui->srcTable->setModel(m_tableModel);
     connect(ui->srcTable->horizontalHeader(),&QHeaderView::sortIndicatorChanged,
             this,&ZSearchTab::sortingChanged);
 
@@ -139,7 +135,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     connect(zg->db,&ZDB::gotFile,aModel,&ZMangaModel::addItem,Qt::QueuedConnection);
     connect(zg->db,&ZDB::deleteItemsFromModel,aModel,&ZMangaModel::deleteItems,Qt::QueuedConnection);
-    model = aModel;
+    m_model = aModel;
 
     ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->srcTable->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -156,7 +152,7 @@ void ZSearchTab::updateSplitters()
 {
     QList<int> widths;
     ui->splitter->setCollapsible(0,true);
-    widths << 90;
+    widths << ZDefaults::initialAlbumListWidth;
     widths << width()-widths[0];
     ui->splitter->setSizes(widths);
 }
@@ -167,7 +163,7 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
     QAction *acm;
     QMenu cm(view);
 
-    if (savedOrdering == Z::UndefinedOrder) { // Disable sorting control for dynamic albums
+    if (m_savedOrdering == Z::UndefinedOrder) { // Disable sorting control for dynamic albums
         QMenu* smenu = cm.addMenu(QIcon(":/16/view-sort-ascending"),tr("Sort"));
 
         for (int i=0;i<Z::maxOrdering;i++) {
@@ -194,7 +190,7 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
         cm.addSeparator();
     }
 
-    acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-select-all")),tr("Select All"));
+    acm = cm.addAction(QIcon(QSL(":/16/edit-select-all")),tr("Select All"));
     connect(acm,&QAction::triggered,view,&QAbstractItemView::selectAll);
 
     cm.addSeparator();
@@ -205,7 +201,7 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
         if (i.column()==0)
             cnt++;
     }
-    QMenu* dmenu = cm.addMenu(QIcon(QStringLiteral(":/16/edit-delete")),
+    QMenu* dmenu = cm.addMenu(QIcon(QSL(":/16/edit-delete")),
                               tr("Delete selected %1 files").arg(cnt));
     acm = dmenu->addAction(tr("Delete only from database"),this,&ZSearchTab::mangaDel);
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
@@ -214,26 +210,26 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
     acm->setData(2);
 
-    acm = cm.addAction(QIcon(QStringLiteral(":/16/document-open-folder")),
+    acm = cm.addAction(QIcon(QSL(":/16/document-open-folder")),
                        tr("Open containing directory"),this,&ZSearchTab::ctxOpenDir);
     acm->setEnabled(cnt>0 && !ui->srcLoading->isVisible());
 
-    cm.addAction(QIcon(QStringLiteral(":/16/fork")),
+    cm.addAction(QIcon(QSL(":/16/fork")),
                  tr("Open with default DE action"),this,&ZSearchTab::ctxXdgOpen);
 
     cm.addSeparator();
 
 #ifndef Q_OS_WIN
-    cm.addAction(QIcon(QStringLiteral(":/16/edit-copy")),
+    cm.addAction(QIcon(QSL(":/16/edit-copy")),
                  tr("Copy files"),this,&ZSearchTab::ctxFileCopyClipboard);
 #endif
 
-    cm.addAction(QIcon(QStringLiteral(":/16/edit-copy")),
+    cm.addAction(QIcon(QSL(":/16/edit-copy")),
                  tr("Copy files to directory..."),this,&ZSearchTab::ctxFileCopy);
 
     if (li.count()==1) {
-        SQLMangaEntry m = model->getItem(li.first().row());
-        if (m.fileMagic == QStringLiteral("PDF")) {
+        SQLMangaEntry m = m_model->getItem(li.first().row());
+        if (m.fileMagic == QSL("PDF")) {
             cm.addSeparator();
             dmenu = cm.addMenu(tr("Preferred PDF rendering"));
 
@@ -264,15 +260,16 @@ void ZSearchTab::ctxChangeRenderer()
     QModelIndexList li = getSelectedIndexes();
     if (am==nullptr || li.count()!=1) return;
 
-    SQLMangaEntry m = model->getItem(li.first().row());
+    SQLMangaEntry m = m_model->getItem(li.first().row());
 
     bool ok;
     int mode = am->data().toInt(&ok);
-    if (ok)
-        emit dbSetPreferredRendering(m.filename,mode);
-    else
+    if (ok) {
+        Q_EMIT dbSetPreferredRendering(m.filename,mode);
+    } else {
         QMessageBox::warning(this,tr("QManga"),
                              tr("Unable to update preferred rendering."));
+    }
 
     albumClicked(ui->srcAlbums->currentItem(),0);
 
@@ -285,24 +282,24 @@ void ZSearchTab::ctxAlbumMenu(const QPoint &pos)
     QMenu cm(ui->srcAlbums);
     QAction *acm;
     if (itm) {
-        acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-rename")),tr("Rename album"),
+        acm = cm.addAction(QIcon(QSL(":/16/edit-rename")),tr("Rename album"),
                            this,&ZSearchTab::ctxRenameAlbum);
         acm->setData(itm->text(0));
     }
 
-    acm = cm.addAction(QIcon(QStringLiteral(":/16/document-new")),tr("Add empty album"),
+    acm = cm.addAction(QIcon(QSL(":/16/document-new")),tr("Add empty album"),
                        this,&ZSearchTab::ctxAddEmptyAlbum);
 
     if (itm) {
         if (itm->parent()) {
-            acm = cm.addAction(QIcon(QStringLiteral(":/16/go-previous-view-page")),
+            acm = cm.addAction(QIcon(QSL(":/16/go-previous-view-page")),
                                tr("Move to top level"),this,&ZSearchTab::ctxMoveAlbumToTopLevel);
             acm->setData(itm->text(0));
         }
 
         cm.addSeparator();
 
-        acm = cm.addAction(QIcon(QStringLiteral(":/16/edit-delete")),tr("Delete album"),
+        acm = cm.addAction(QIcon(QSL(":/16/edit-delete")),tr("Delete album"),
                            this,&ZSearchTab::ctxDeleteAlbum);
         acm->setData(itm->text(0));
     }
@@ -339,7 +336,7 @@ void ZSearchTab::ctxRenameAlbum()
                                       QLineEdit::Normal,s,&ok);
     if (!ok) return;
 
-    emit dbRenameAlbum(s,n);
+    Q_EMIT dbRenameAlbum(s,n);
 }
 
 void ZSearchTab::ctxDeleteAlbum()
@@ -353,14 +350,14 @@ void ZSearchTab::ctxDeleteAlbum()
                               tr("Are you sure to delete album '%1' and all it's contents from database?\n"
                                  "Sub-albums will be moved to top level.").arg(s),
                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No)==QMessageBox::Yes)
-        emit dbDeleteAlbum(s);
+        Q_EMIT dbDeleteAlbum(s);
 }
 
 void ZSearchTab::ctxAddEmptyAlbum()
 {
     QString name = QInputDialog::getText(this,tr("Add empty album"),tr("Album name"));
     if (!name.isEmpty())
-        emit dbAddAlbum(name,QString());
+        Q_EMIT dbAddAlbum(name,QString());
 }
 
 void ZSearchTab::ctxMoveAlbumToTopLevel()
@@ -370,7 +367,7 @@ void ZSearchTab::ctxMoveAlbumToTopLevel()
     const QString s = nt->data().toString();
     if (s.isEmpty()) return;
 
-    emit dbReparentAlbum(s,QString());
+    Q_EMIT dbReparentAlbum(s,QString());
 }
 
 void ZSearchTab::ctxOpenDir()
@@ -418,9 +415,9 @@ void ZSearchTab::ctxFileCopyClipboard()
     if (uriList.isEmpty()) return;
 
     auto data = new QMimeData();
-    data->setData(QStringLiteral("text/uri-list"),uriList);
-    data->setData(QStringLiteral("text/plain"),plainList);
-    data->setData(QStringLiteral("application/x-kde4-urilist"),uriList);
+    data->setData(QSL("text/uri-list"),uriList);
+    data->setData(QSL("text/plain"),plainList);
+    data->setData(QSL("application/x-kde4-urilist"),uriList);
 
     QClipboard *cl = QApplication::clipboard();
     cl->clear();
@@ -458,7 +455,7 @@ void ZSearchTab::ctxFileCopy()
 
 void ZSearchTab::updateAlbumsList()
 {
-    emit dbGetAlbums();
+    Q_EMIT dbGetAlbums();
 }
 
 void ZSearchTab::updateFocus()
@@ -469,10 +466,10 @@ void ZSearchTab::updateFocus()
 
 QStringList ZSearchTab::getAlbums()
 {
-    return cachedAlbums;
+    return m_cachedAlbums;
 }
 
-void ZSearchTab::setListViewOptions(const QListView::ViewMode mode, int iconSize)
+void ZSearchTab::setListViewOptions(QListView::ViewMode mode, int iconSize)
 {
     ui->srcModeList->setChecked(mode==QListView::ListMode);
     ui->srcModeIcon->setChecked(mode==QListView::IconMode);
@@ -486,7 +483,7 @@ int ZSearchTab::getIconSize() const
 
 QListView::ViewMode ZSearchTab::getListViewMode() const
 {
-    if (ui->srcStack->currentIndex()==STACK_ICONS)
+    if (ui->srcStack->currentIndex()==ZDefaults::stackIcons)
         return QListView::IconMode;
 
     return QListView::ListMode;
@@ -494,34 +491,34 @@ QListView::ViewMode ZSearchTab::getListViewMode() const
 
 void ZSearchTab::loadSearchItems(QSettings &settings)
 {
-    if (searchHistoryModel==nullptr) return;
+    if (m_searchHistoryModel==nullptr) return;
 
     QStringList sl;
 
-    int sz=settings.beginReadArray(QStringLiteral("search_text"));
+    int sz=settings.beginReadArray(QSL("search_text"));
     if (sz>0) {
         for (int i=0;i<sz;i++) {
             settings.setArrayIndex(i);
-            QString s = settings.value(QStringLiteral("txt"),QString()).toString();
+            QString s = settings.value(QSL("txt"),QString()).toString();
             if (!s.isEmpty())
                 sl << s;
             settings.endArray();
         }
     } else {
         settings.endArray();
-        sl = settings.value(QStringLiteral("search_history"),
+        sl = settings.value(QSL("search_history"),
                             QStringList()).toStringList();
     }
 
-    searchHistoryModel->setHistoryItems(sl);
+    m_searchHistoryModel->setHistoryItems(sl);
 }
 
 void ZSearchTab::saveSearchItems(QSettings &settings)
 {
-    if (searchHistoryModel==nullptr) return;
+    if (m_searchHistoryModel==nullptr) return;
 
-    settings.setValue(QStringLiteral("search_history"),
-                      QVariant::fromValue(searchHistoryModel->getHistoryItems()));
+    settings.setValue(QSL("search_history"),
+                      QVariant::fromValue(m_searchHistoryModel->getHistoryItems()));
 }
 
 void ZSearchTab::applySortOrder(Z::Ordering order, Qt::SortOrder direction)
@@ -533,7 +530,7 @@ void ZSearchTab::applySortOrder(Z::Ordering order, Qt::SortOrder direction)
 
 void ZSearchTab::sortingChanged(int logicalIndex, Qt::SortOrder order)
 {
-    iconModel->sort(logicalIndex,order);
+    m_iconModel->sort(logicalIndex,order);
     if (logicalIndex>=0 && logicalIndex<Z::maxOrdering) {
         zg->defaultOrdering = static_cast<Z::Ordering>(logicalIndex);
         zg->defaultOrderingDirection = order;
@@ -543,15 +540,16 @@ void ZSearchTab::sortingChanged(int logicalIndex, Qt::SortOrder order)
 QSize ZSearchTab::gridSize(int ref)
 {
     QFontMetrics fm(font());
-    return QSize(ref+25,ref*previewProps+fm.height()*4);
+    return QSize(ref+ZDefaults::previewWidthMargin,
+                 qRound(ref*ZDefaults::previewProps+fm.height()*4));
 }
 
 QString ZSearchTab::getAlbumNameToAdd(const QString &suggest, int toAddCount)
 {
-    auto dlg = new AlbumSelectorDlg(this,cachedAlbums,suggest,toAddCount);
+    auto dlg = new ZAlbumSelectorDlg(this,m_cachedAlbums,suggest,toAddCount);
     QString ret = QString();
-    if (dlg->exec()) {
-        ret = dlg->listAlbums->lineEdit()->text();
+    if (dlg->exec()==QDialog::Accepted) {
+        ret = dlg->getAlbumName();
     }
     dlg->setParent(nullptr);
     delete dlg;
@@ -571,8 +569,8 @@ QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs) const
     }
 
     for (const auto &i : qAsConst(li)) {
-        if (i.row()>=0 && i.row()<model->getItemsCount()) {
-            QString fname = model->getItem(i.row()).filename;
+        if (i.row()>=0 && i.row()<m_model->getItemsCount()) {
+            QString fname = m_model->getItem(i.row()).filename;
             QFileInfo fi(fname);
             if (fi.exists() && ((fi.isDir() && includeDirs) || fi.isFile())) {
                 if (!res.contains(fi))
@@ -586,7 +584,7 @@ QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs) const
 
 QAbstractItemView *ZSearchTab::activeView() const
 {
-    if (ui->srcStack->currentIndex()==STACK_TABLE)
+    if (ui->srcStack->currentIndex()==ZDefaults::stackTable)
         return ui->srcTable;
 
     return ui->srcList;
@@ -625,57 +623,59 @@ void ZSearchTab::albumClicked(QTreeWidgetItem *item, int column)
 
     if (item==nullptr) return;
 
-    emit statusBarMsg(tr("Searching..."));
+    Q_EMIT statusBarMsg(tr("Searching..."));
 
     setDescText();
 
-    if (model)
-        model->deleteAllItems();
+    if (m_model)
+        m_model->deleteAllItems();
 
     const QString album = item->text(0);
 
-    if (album.startsWith(QStringLiteral("# "))) {
-        if (savedOrdering==Z::UndefinedOrder) {
-            savedOrdering = zg->defaultOrdering;
-            savedOrderingDirection = zg->defaultOrderingDirection;
+    if (album.startsWith(QSL("# "))) {
+        if (m_savedOrdering==Z::UndefinedOrder) {
+            m_savedOrdering = zg->defaultOrdering;
+            m_savedOrderingDirection = zg->defaultOrderingDirection;
         }
         Qt::SortOrder dir;
         Z::Ordering ord = zg->db->getDynAlbumOrdering(album,dir);
         if (ord!=Z::UndefinedOrder)
             applySortOrder(ord,dir);
 
-    } else if (!album.startsWith(QStringLiteral("% ")) &&
-               (savedOrdering!=Z::UndefinedOrder)) {
-        applySortOrder(savedOrdering,savedOrderingDirection);
-        savedOrdering = Z::UndefinedOrder;
+    } else if (!album.startsWith(QSL("% ")) &&
+               (m_savedOrdering!=Z::UndefinedOrder)) {
+        applySortOrder(m_savedOrdering,m_savedOrderingDirection);
+        m_savedOrdering = Z::UndefinedOrder;
     }
 
-    emit dbGetFiles(album,QString());
+    Q_EMIT dbGetFiles(album,QString());
 }
 
 void ZSearchTab::mangaSearch()
 {
-    emit statusBarMsg(tr("Searching..."));
+    Q_EMIT statusBarMsg(tr("Searching..."));
 
     setDescText();
 
-    if (model)
-        model->deleteAllItems();
+    if (m_model)
+        m_model->deleteAllItems();
 
     QString s = ui->srcEdit->text().trimmed();
 
-    searchHistoryModel->appendHistoryItem(s);
+    m_searchHistoryModel->appendHistoryItem(s);
 
-    emit dbGetFiles(QString(),s);
+    Q_EMIT dbGetFiles(QString(),s);
 }
 
-void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &)
+void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &previous)
 {
+    Q_UNUSED(previous)
+
     setDescText();
     if (!current.isValid()) return;
-    if (!model) return;
+    if (!m_model) return;
 
-    int maxl = model->getItemsCount();
+    int maxl = m_model->getItemsCount();
     int row = mapToSource(current).row();
 
     if (row>=maxl) return;
@@ -683,14 +683,17 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     setDescText();
 
     int idx = row;
-    const SQLMangaEntry m = model->getItem(idx);
+    const SQLMangaEntry m = m_model->getItem(idx);
 
     QFileInfo fi(m.filename);
 
-    QString msg = QString(descTemplate).
-            arg(elideString(m.name,80)).arg(m.pagesCount).arg(formatSize(m.fileSize),m.album,m.fileMagic,
-            m.fileDT.toString(QStringLiteral("yyyy-MM-dd")),
-            m.addingDT.toString(QStringLiteral("yyyy-MM-dd")),elideString(fi.path(),80));
+    QString msg = QString(m_descTemplate)
+                  .arg(elideString(m.name,ZDefaults::maxDescriptionStringLength))
+                  .arg(m.pagesCount)
+                  .arg(formatSize(m.fileSize),m.album,m.fileMagic,
+                       m.fileDT.toString(QSL("yyyy-MM-dd")),
+                       m.addingDT.toString(QSL("yyyy-MM-dd")),
+                       elideString(fi.path(),ZDefaults::maxDescriptionStringLength));
 
     setDescText(msg);
 }
@@ -698,19 +701,19 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
 void ZSearchTab::mangaOpen(const QModelIndex &index)
 {
     if (!index.isValid()) return;
-    if (!model) return;
+    if (!m_model) return;
 
-    int maxl = model->getItemsCount();
+    int maxl = m_model->getItemsCount();
 
     int idx = mapToSource(index).row();
     if (idx>=maxl) return;
 
-    QString filename = model->getItem(idx).filename;
+    QString filename = m_model->getItem(idx).filename;
 
-    if (model->getItem(idx).fileMagic==QStringLiteral("DYN"))
-        filename.prepend(QStringLiteral("#DYN#"));
+    if (m_model->getItem(idx).fileMagic==QSL("DYN"))
+        filename.prepend(QSL("#DYN#"));
 
-    emit mangaDblClick(filename);
+    Q_EMIT mangaDblClick(filename);
 }
 
 void ZSearchTab::mangaAdd()
@@ -726,7 +729,7 @@ void ZSearchTab::mangaAdd()
     album = getAlbumNameToAdd(album,fl.count());
     if (album.isEmpty()) return;
 
-    emit dbAddFiles(fl,album);
+    Q_EMIT dbAddFiles(fl,album);
 }
 
 void ZSearchTab::mangaAddDir()
@@ -738,7 +741,7 @@ void ZSearchTab::mangaAddDir()
 
     QDir d(fi);
     d.setFilter(QDir::Files | QDir::Readable);
-    d.setNameFilters(QStringList(QStringLiteral("*")));
+    d.setNameFilters(QStringList(QSL("*")));
     QStringList files;
     QDirIterator it(d, QDirIterator::Subdirectories | QDirIterator::FollowSymlinks);
     while (it.hasNext())
@@ -749,12 +752,12 @@ void ZSearchTab::mangaAddDir()
     album = getAlbumNameToAdd(album,-1);
     if (album.isEmpty()) return;
 
-    emit dbAddFiles(files,album);
+    Q_EMIT dbAddFiles(files,album);
 }
 
 void ZSearchTab::mangaDel()
 {
-    if (!model) return;
+    if (!m_model) return;
     auto ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
     bool delFiles = (ac->data().toInt() == 2);
@@ -772,11 +775,11 @@ void ZSearchTab::mangaDel()
     setDescText();
 
     for (const auto &i : qAsConst(li)) {
-        if (i.row()>=0 && i.row()<model->getItemsCount())
-            dl << model->getItem(i.row()).dbid;
+        if (i.row()>=0 && i.row()<m_model->getItemsCount())
+            dl << m_model->getItem(i.row()).dbid;
     }
 
-    emit dbDelFiles(dl,delFiles);
+    Q_EMIT dbDelFiles(dl,delFiles);
 
     if (cnt!=zg->db->getAlbumsCount())
         updateAlbumsList();
@@ -791,7 +794,7 @@ void ZSearchTab::imagesAddDir()
 
     QDir d(fi);
     const QFileInfoList fl = filterSupportedImgFiles(
-                                 d.entryInfoList(QStringList(QStringLiteral("*")),
+                                 d.entryInfoList(QStringList(QSL("*")),
                                                  QDir::Files | QDir::Readable));
     QStringList files;
     files.reserve(fl.count());
@@ -807,19 +810,21 @@ void ZSearchTab::imagesAddDir()
     if (album.isEmpty()) return;
 
     files.clear();
-    files << QStringLiteral("###DYNAMIC###");
+    files << QSL("###DYNAMIC###");
     files << fi;
 
-    emit dbAddFiles(files,album);
+    Q_EMIT dbAddFiles(files,album);
 }
 
-void ZSearchTab::listModeChanged(bool)
+void ZSearchTab::listModeChanged(bool state)
 {
+    Q_UNUSED(state)
+
     if (ui->srcModeIcon->isChecked()) {
-        ui->srcStack->setCurrentIndex(STACK_ICONS);
+        ui->srcStack->setCurrentIndex(ZDefaults::stackIcons);
         ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     } else {
-        ui->srcStack->setCurrentIndex(STACK_TABLE);
+        ui->srcStack->setCurrentIndex(ZDefaults::stackTable);
     }
 }
 
@@ -835,7 +840,7 @@ void ZSearchTab::dbAlbumsListUpdated()
 
 void ZSearchTab::dbAlbumsListReady(const AlbumVector &albums)
 {
-    cachedAlbums.clear();
+    m_cachedAlbums.clear();
     ui->srcAlbums->clear();
 
     QTreeWidgetItem* dynRoot = nullptr;
@@ -847,7 +852,7 @@ void ZSearchTab::dbAlbumsListReady(const AlbumVector &albums)
         item->setData(0,Qt::UserRole,album.id);
         items[album.id] = item;
         if (album.id>=0)
-            cachedAlbums.append(album.name);
+            m_cachedAlbums.append(album.name);
     }
     for (const auto& album : albums) {
         if (!items.contains(album.id)) continue;
@@ -870,19 +875,19 @@ void ZSearchTab::dbAlbumsListReady(const AlbumVector &albums)
     if (dynRoot)
         ui->srcAlbums->addTopLevelItem(dynRoot);
 
-    if (model)
-        model->deleteAllItems();
+    if (m_model)
+        m_model->deleteAllItems();
 }
 
-void ZSearchTab::dbFilesAdded(const int count, const int total, const int elapsed)
+void ZSearchTab::dbFilesAdded(int count, int total, int elapsed)
 {
-    emit statusBarMsg(QStringLiteral("MBOX#Added %1 out of %2 found files in %3s")
+    Q_EMIT statusBarMsg(QSL("MBOX#Added %1 out of %2 found files in %3s")
                       .arg(count).arg(total).arg(static_cast<double>(elapsed)/1000.0,1,'f',2));
 }
 
-void ZSearchTab::dbFilesLoaded(const int count, const int elapsed)
+void ZSearchTab::dbFilesLoaded(int count, int elapsed)
 {
-    emit statusBarMsg(QStringLiteral("Found %1 results in %2s")
+    Q_EMIT statusBarMsg(QSL("Found %1 results in %2s")
                       .arg(count).arg(static_cast<double>(elapsed)/1000.0,1,'f',2));
     ui->srcTable->resizeColumnsToContents();
 }
@@ -896,15 +901,15 @@ void ZSearchTab::dbNeedTableCreation()
 {
     if (QMessageBox::question(this,tr("QManga"),tr("Database is empty. Recreate tables and structures?"),
                               QMessageBox::Yes,QMessageBox::No)==QMessageBox::Yes)
-        emit dbCreateTables();
+        Q_EMIT dbCreateTables();
 }
 
-void ZSearchTab::dbShowProgressDialog(const bool visible)
+void ZSearchTab::dbShowProgressDialog(bool visible)
 {
     dbShowProgressDialogEx(visible, QString());
 }
 
-void ZSearchTab::dbShowProgressDialogEx(const bool visible, const QString& title)
+void ZSearchTab::dbShowProgressDialogEx(bool visible, const QString& title)
 {
     if (visible) {
         if (progressDlg==nullptr) {
@@ -913,10 +918,11 @@ void ZSearchTab::dbShowProgressDialogEx(const bool visible, const QString& title
                     zg->db,&ZDB::sqlCancelAdding,Qt::QueuedConnection);
         }
         progressDlg->setWindowModality(Qt::WindowModal);
-        if (title.isEmpty())
+        if (title.isEmpty()) {
             progressDlg->setWindowTitle(tr("Adding files to index..."));
-        else
+        } else {
             progressDlg->setWindowTitle(title);
+        }
         progressDlg->setValue(0);
         progressDlg->setLabelText(QString());
         progressDlg->show();
@@ -925,7 +931,7 @@ void ZSearchTab::dbShowProgressDialogEx(const bool visible, const QString& title
     }
 }
 
-void ZSearchTab::dbShowProgressState(const int value, const QString &msg)
+void ZSearchTab::dbShowProgressState(int value, const QString &msg)
 {
     if (progressDlg!=nullptr) {
         progressDlg->setValue(value);

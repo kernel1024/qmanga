@@ -30,16 +30,16 @@ ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *
                                bool onlyArchives, bool createReader)
 {
     *mimeOk = true;
-    if (filename.startsWith(QStringLiteral(":CLIP:")) && !onlyArchives) {
+    if (filename.startsWith(QSL(":CLIP:")) && !onlyArchives) {
         if (createReader)
             return new ZSingleImageReader(parent,filename);
 
         return nullptr;
     }
 
-    if (filename.startsWith(QStringLiteral("#DYN#"))) {
+    if (filename.startsWith(QSL("#DYN#"))) {
         QString fname(filename);
-        fname.remove(QRegExp(QStringLiteral("^#DYN#")));
+        fname.remove(QRegExp(QSL("^#DYN#")));
         if (createReader)
             return new ZImagesDirReader(parent,fname);
 
@@ -50,28 +50,28 @@ ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *
     if (!fi.exists()) return nullptr;
 
     QString mime = detectMIME(filename).toLower();
-    if (mime.contains(QStringLiteral("application/zip"),Qt::CaseInsensitive)) {
+    if (mime.contains(QSL("application/zip"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZZipReader(parent,filename);
 
-    } else if (mime.contains(QStringLiteral("application/x-rar"),Qt::CaseInsensitive) ||
-               mime.contains(QStringLiteral("application/rar"),Qt::CaseInsensitive)) {
+    } else if (mime.contains(QSL("application/x-rar"),Qt::CaseInsensitive) ||
+               mime.contains(QSL("application/rar"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZRarReader(parent,filename);
 
 #ifdef WITH_POPPLER
-    } else if (mime.contains(QStringLiteral("application/pdf"),Qt::CaseInsensitive)) {
+    } else if (mime.contains(QSL("application/pdf"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZPdfReader(parent,filename);
 
 #endif
 #ifdef WITH_DJVU
-    } else if (mime.contains(QStringLiteral("image/vnd.djvu"),Qt::CaseInsensitive)) {
+    } else if (mime.contains(QSL("image/vnd.djvu"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZDjVuReader(parent,filename);
 
 #endif
-    } else if (mime.contains(QStringLiteral("image/"),Qt::CaseInsensitive) && !onlyArchives) {
+    } else if (mime.contains(QSL("image/"),Qt::CaseInsensitive) && !onlyArchives) {
         if (createReader)
             return new ZSingleImageReader(parent,filename);
 
@@ -92,33 +92,33 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
     int line = context.line;
     QString file = QString(context.file);
     QString category = QString(context.category);
-    if (category==QStringLiteral("default"))
+    if (category==QSL("default"))
         category.clear();
     else
         category.append(' ');
 
     switch (type) {
         case QtDebugMsg:
-            lmsg = QStringLiteral("%1Debug: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
+            lmsg = QSL("%1Debug: %2 (%3:%4)").arg(category, msg, file, QSL("%1").arg(line));
             break;
         case QtWarningMsg:
-            lmsg = QStringLiteral("%1Warning: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
+            lmsg = QSL("%1Warning: %2 (%3:%4)").arg(category, msg, file, QSL("%1").arg(line));
             break;
         case QtCriticalMsg:
-            lmsg = QStringLiteral("%1Critical: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
+            lmsg = QSL("%1Critical: %2 (%3:%4)").arg(category, msg, file, QSL("%1").arg(line));
             break;
         case QtFatalMsg:
-            lmsg = QStringLiteral("%1Fatal: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
+            lmsg = QSL("%1Fatal: %2 (%3:%4)").arg(category, msg, file, QSL("%1").arg(line));
             break;
         case QtInfoMsg:
-            lmsg = QStringLiteral("%1Info: %2 (%3:%4)").arg(category, msg, file, QStringLiteral("%1").arg(line));
+            lmsg = QSL("%1Info: %2 (%3:%4)").arg(category, msg, file, QSL("%1").arg(line));
             break;
     }
 
     if (!lmsg.isEmpty()) {
-        QString fmsg = QStringLiteral("%1 %2").arg(QTime::currentTime()
-                                                   .toString(QStringLiteral("h:mm:ss")),lmsg);
-        fmsg.append(QStringLiteral("\r\n"));
+        QString fmsg = QSL("%1 %2").arg(QTime::currentTime()
+                                                   .toString(QSL("h:mm:ss")),lmsg);
+        fmsg.append(QSL("\r\n"));
 
 #ifdef Q_OS_WIN
         HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
@@ -136,25 +136,26 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
 
 QString formatSize(qint64 size)
 {
-    if (size<1024) return QStringLiteral("%1 bytes").arg(size);
-    if (size<1024*1024) return QStringLiteral("%1 Kb").arg(size/1024);
-    if (size<1024*1024*1024) return QStringLiteral("%1 Mb").arg(size/(1024*1024));
-    return QStringLiteral("%1 Gb").arg(size/(1024*1024*1024));
+    if (size<1024) return QSL("%1 bytes").arg(size);
+    if (size<1024*1024) return QSL("%1 Kb").arg(size/1024);
+    if (size<1024*1024*1024) return QSL("%1 Mb").arg(size/(1024*1024));
+    return QSL("%1 Gb").arg(size/(1024*1024*1024));
 }
 
+// TODO: add elide from jpreader (with align option)
 QString elideString(const QString& text, int maxlen)
 {
     if (text.length()<maxlen)
         return text;
 
-    return QStringLiteral("%1...").arg(text.left(maxlen));
+    return QSL("%1...").arg(text.left(maxlen));
 }
 
 QString escapeParam(const QString &param)
 {
     QString res = param;
-    res.replace('\'',QStringLiteral("\\'"));
-    res.replace('"',QStringLiteral("\\\""));
+    res.replace('\'',QSL("\\'"));
+    res.replace('"',QSL("\\\""));
     res.replace(';',QString());
     res.replace('%',QString());
     return res;
@@ -242,7 +243,7 @@ QString detectMIME(const QString& filename)
 {
     QFile f(filename);
     if (!f.open(QIODevice::ReadOnly))
-        return QStringLiteral("text/plain");
+        return QSL("text/plain");
     QByteArray ba = f.read(1024);
     f.close();
     return detectMIME(ba);
@@ -271,7 +272,7 @@ QString detectMIME(const QByteArray &buf)
         if (test==(*it).first.second)
             return (*it).second;
     }
-    return QStringLiteral("text/plain");
+    return QSL("text/plain");
 }
 
 QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
@@ -396,6 +397,7 @@ ZLoaderHelper::ZLoaderHelper(QThread *aThread, ZMangaLoader *aLoader)
     thread = aThread;
     loader = aLoader;
     jobCount = 0;
+    loader->m_threadID = id;
 }
 
 ZLoaderHelper::ZLoaderHelper(const QPointer<QThread> &aThread, const QPointer<ZMangaLoader> &aLoader)
@@ -453,24 +455,24 @@ PIX* Image2PIX(const QImage &qImage) {
 
 QString ocrGetActiveLanguage()
 {
-    QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
-    settings.beginGroup(QStringLiteral("Main"));
-    QString res = settings.value(QStringLiteral("activeLanguage"),QStringLiteral("jpn")).toString();
+    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
+    settings.beginGroup(QSL("Main"));
+    QString res = settings.value(QSL("activeLanguage"),QSL("jpn")).toString();
     settings.endGroup();
     return res;
 }
 
 QString ocrGetDatapath()
 {
-    QSettings settings(QStringLiteral("kernel1024"), QStringLiteral("qmanga-ocr"));
-    settings.beginGroup(QStringLiteral("Main"));
+    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
+    settings.beginGroup(QSL("Main"));
 #ifdef Q_OS_WIN
     QDir appDir(getApplicationDirPath());
     QString res = settings.value(QStringLiteral("datapath"),
                                  appDir.absoluteFilePath(QStringLiteral("tessdata"))).toString();
 #else
-    QString res = settings.value(QStringLiteral("datapath"),
-                                 QStringLiteral("/usr/share/tessdata/")).toString();
+    QString res = settings.value(QSL("datapath"),
+                                 QSL("/usr/share/tessdata/")).toString();
 #endif
     settings.endGroup();
     return res;

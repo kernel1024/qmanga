@@ -6,14 +6,17 @@
 
 class ZImagesDirReader : public ZAbstractReader
 {
+    Q_OBJECT
 public:
-    explicit ZImagesDirReader(QObject *parent, const QString &filename);
-    bool openFile();
-    void closeFile();
-    QByteArray loadPage(int num);
-    QImage loadPageImage(int num);
-    QString getMagic();
-    QString getInternalPath(int idx);
+    ZImagesDirReader(QObject *parent, const QString &filename);
+    ~ZImagesDirReader() override = default;
+    bool openFile() override;
+    QByteArray loadPage(int num) override;
+    QImage loadPageImage(int num) override;
+    QString getMagic() override;
+
+private:
+    Q_DISABLE_COPY(ZImagesDirReader)
 
 };
 

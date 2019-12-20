@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <QProcess>
 #include <QDebug>
 #include "zrarreader.h"
@@ -6,7 +5,7 @@
 ZRarReader::ZRarReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
-    rarExec = QString();
+    m_rarExec = QString();
 }
 
 bool ZRarReader::openFile()
@@ -14,25 +13,24 @@ bool ZRarReader::openFile()
     static const QStringList rarTestParam { "-inul" };
     static const QStringList rarListParam { "vb", "--" };
 
-    if (opened || !zg)
+    if (isOpened() || !zg)
         return false;
-    sortList.clear();
 
-    QFileInfo fi(fileName);
+    QFileInfo fi(getFileName());
     if (!fi.isFile() || !fi.isReadable()) {
         return false;
     }
 
-    rarExec = zg->rarCmd;
-    if (rarExec.isEmpty()) {
+    m_rarExec = zg->rarCmd;
+    if (m_rarExec.isEmpty()) {
 #ifndef Q_OS_WIN
-        if (QProcess::execute(QStringLiteral("rar"),rarTestParam)<0) {
-            if (QProcess::execute(QStringLiteral("unrar"),rarTestParam)<0)
+        if (QProcess::execute(QSL("rar"),rarTestParam)<0) {
+            if (QProcess::execute(QSL("unrar"),rarTestParam)<0)
                 return false;
 
-            rarExec = QStringLiteral("unrar");
+            m_rarExec = QSL("unrar");
         } else
-            rarExec = QStringLiteral("rar");
+            m_rarExec = QSL("rar");
 #else
         rarExec = QStringLiteral("rar.exe");
 #endif
@@ -41,32 +39,31 @@ bool ZRarReader::openFile()
     int cnt = 0;
     QProcess rar;
     QStringList rarListParamList = rarListParam;
-    rarListParamList << fileName;
-    rar.start(rarExec,rarListParamList);
-    rar.waitForFinished(60000);
+    rarListParamList << getFileName();
+    rar.start(m_rarExec,rarListParamList);
+    rar.waitForFinished(ZDefaults::oneMinuteMS);
     while (!rar.atEnd()) {
         QString fname = QString::fromUtf8(rar.readLine()).trimmed();
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         fi.setFile(fname);
         if (!supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
-        sortList << ZFileEntry(fname,cnt);
+        addSortEntry(ZFileEntry(fname,cnt));
         cnt++;
     }
 
-    std::sort(sortList.begin(),sortList.end());
+    performListSort();
+    setOpenFileSuccess();
 
-    opened = true;
     return true;
 }
 
 void ZRarReader::closeFile()
 {
-    if (!opened)
+    if (!isOpened())
         return;
 
-    rarExec.clear();
-    opened = false;
-    sortList.clear();
+    m_rarExec.clear();
+    ZAbstractReader::closeFile();
 }
 
 QByteArray ZRarReader::loadPage(int num)
@@ -74,29 +71,25 @@ QByteArray ZRarReader::loadPage(int num)
     static const QStringList rarExtractParam { "p", "-kb", "-p-", "-o-", "-inul", "--" };
 
     QByteArray res;
-    res.clear();
-    if (!opened)
+    if (!isOpened())
         return res;
 
-    if (num<0 || num>=sortList.count()) return res;
-
-    QString picName = sortList.at(num).name;
-
-    QProcess rar;
-    QStringList rarExtractParamList = rarExtractParam;
-    rarExtractParamList << fileName << picName;
-    rar.start(rarExec,rarExtractParamList);
-    rar.waitForFinished(60000);
-    QByteArray buf = rar.readAll();
-    if (buf.isEmpty()) return res;
-    if (buf.size()>150*1024*1024) {
-        qDebug() << "Image file is too big (over 150Mb). Unable to load.";
+    QString picName = getSortEntryName(num);
+    if (picName.isEmpty()) {
+        qCritical() << "Incorrect page number";
         return res;
     }
 
-    res = buf;
-    buf.clear();
-
+    QProcess rar;
+    QStringList rarExtractParamList = rarExtractParam;
+    rarExtractParamList << getFileName() << picName;
+    rar.start(m_rarExec,rarExtractParamList);
+    rar.waitForFinished(ZDefaults::oneMinuteMS);
+    if (rar.bytesAvailable()>ZDefaults::maxImageFileSize) {
+        qDebug() << "Image file is too big. Unable to load.";
+        return res;
+    }
+    res = rar.readAll();
     return res;
 }
 
@@ -112,16 +105,5 @@ QImage ZRarReader::loadPageImage(int num)
 
 QString ZRarReader::getMagic()
 {
-    return QStringLiteral("RAR");
-}
-
-QString ZRarReader::getInternalPath(int idx)
-{
-    if (!opened)
-        return QString();
-
-    if (idx>=0 && idx<sortList.count())
-        return sortList.at(idx).name;
-
-    return QString();
+    return QSL("RAR");
 }

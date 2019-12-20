@@ -19,89 +19,102 @@ class ZMangaListView;
 class ZMangaModel : public QAbstractTableModel
 {
     Q_OBJECT
-private:
-    QSlider *pixmapSize;
-    QTableView *view;
-
-    SQLMangaVector mList;
-
 public:
-    explicit ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView);
-    ~ZMangaModel();
+    ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView);
+    ~ZMangaModel() override;
 
-    Qt::ItemFlags flags(const QModelIndex & index) const;
+    Qt::ItemFlags flags(const QModelIndex & index) const override;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole, bool listMode = false) const;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
-    int rowCount( const QModelIndex & parent = QModelIndex()) const;
-    int columnCount(const QModelIndex &parent) const;
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    int rowCount( const QModelIndex & parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex &parent) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     int getItemsCount() const;
     SQLMangaEntry getItem(int idx) const;
 
-public slots:
+public Q_SLOTS:
     void deleteAllItems();
     void deleteItems(const QIntVector& dbids);
     void addItem(const SQLMangaEntry& file);
+
+private:
+    QSlider *m_pixmapSize { nullptr };
+    QTableView *m_view { nullptr };
+    SQLMangaVector m_list;
+
+    Q_DISABLE_COPY(ZMangaModel)
 };
 
 class ZMangaTableModel : public QSortFilterProxyModel {
     Q_OBJECT
-private:
-    QTableView *view;
-
 public:
-    explicit ZMangaTableModel(QObject *parent, QTableView *aView);
-    int columnCount(const QModelIndex &parent) const;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+    ZMangaTableModel(QObject *parent, QTableView *aView);
+    ~ZMangaTableModel() override = default;
+    int columnCount(const QModelIndex &parent) const override;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 
+private:
+    QTableView *m_view { nullptr };
+
+    Q_DISABLE_COPY(ZMangaTableModel)
 };
 
 class ZMangaIconModel : public QSortFilterProxyModel {
     Q_OBJECT
-private:
-    ZMangaListView *view;
-
 public:
-    explicit ZMangaIconModel(QObject *parent, ZMangaListView *aView);
-    int columnCount(const QModelIndex &parent) const;
+    ZMangaIconModel(QObject *parent, ZMangaListView *aView);
+    ~ZMangaIconModel() override = default;
+    int columnCount(const QModelIndex &parent) const override;
 
+private:
+    ZMangaListView *m_view { nullptr };
+
+    Q_DISABLE_COPY(ZMangaIconModel)
 };
 
 class ZMangaListView : public QListView {
     Q_OBJECT
 public:
-    ZMangaListView(QWidget *parent = nullptr);
+    explicit ZMangaListView(QWidget *parent = nullptr);
+    ~ZMangaListView() override = default;
 protected:
-    virtual void updateGeometries();
+    void updateGeometries() override;
+private:
+    Q_DISABLE_COPY(ZMangaListView)
 };
 
 class ZMangaSearchHistoryModel : public QAbstractListModel {
     Q_OBJECT
-private:
-    QStringList historyItems;
 public:
-    ZMangaSearchHistoryModel(QObject *parent = nullptr);
-    int rowCount(const QModelIndex &parent) const;
-    QVariant data(const QModelIndex &index, int role) const;
-    Qt::ItemFlags flags(const QModelIndex &index) const;
+    explicit ZMangaSearchHistoryModel(QObject *parent = nullptr);
+    ~ZMangaSearchHistoryModel() override = default;
+    int rowCount(const QModelIndex &parent) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void setHistoryItems(const QStringList& items);
     QStringList getHistoryItems() const;
     void appendHistoryItem(const QString& item);
+private:
+    QStringList m_historyItems;
+
+    Q_DISABLE_COPY(ZMangaSearchHistoryModel)
 };
 
 class ZAlbumsTreeWidget : public QTreeWidget
 {
     Q_OBJECT
+public:
+    explicit ZAlbumsTreeWidget(QWidget *parent = nullptr);
+    ~ZAlbumsTreeWidget() override = default;
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent* event) override;
 private:
     QModelIndex m_draggingItem;
-public:
-    ZAlbumsTreeWidget(QWidget *parent = nullptr);
-    ~ZAlbumsTreeWidget() = default;
-protected:
-    virtual void dragEnterEvent(QDragEnterEvent *event);
-    virtual void dropEvent(QDropEvent* event);
+
+    Q_DISABLE_COPY(ZAlbumsTreeWidget)
 };
 
 #endif // ZMANGAMODEL_H
