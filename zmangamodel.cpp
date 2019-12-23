@@ -9,15 +9,16 @@
 #include "zmangamodel.h"
 
 namespace ZDefaults {
-const int ModelSortRole = Qt::UserRole + 1;
-const double textWidthFactor = 3.5;
-const int columnName = 0;
-const int columnAlbum = 1;
-const int columnPagesCount = 2;
-const int columnFileSize = 3;
-const int columnAddDate = 4;
-const int columnFileDate = 5;
-const int columnMagic = 6;
+constexpr int ModelSortRole = Qt::UserRole + 1;
+constexpr int columnName = 0;
+constexpr int columnAlbum = 1;
+constexpr int columnPagesCount = 2;
+constexpr int columnFileSize = 3;
+constexpr int columnAddDate = 4;
+constexpr int columnFileDate = 5;
+constexpr int columnMagic = 6;
+constexpr int columnsCount = 7;
+constexpr double textWidthFactor = 3.5;
 }
 
 ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView) :
@@ -169,8 +170,7 @@ int ZMangaModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    const int columnsCount = 7;
-    return columnsCount;
+    return ZDefaults::columnsCount;
 }
 
 QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -333,8 +333,7 @@ int ZMangaTableModel::columnCount(const QModelIndex &parent) const
             m_view->setPalette(pl);
         }
     }
-    const int columnsCount = 7;
-    return columnsCount;
+    return ZDefaults::columnsCount;
 }
 
 QVariant ZMangaTableModel::data(const QModelIndex &index, int role) const

@@ -7,19 +7,24 @@
 #include "zabstractreader.h"
 #include "global.h"
 
-const int dynamicAlbumParent = -2;
+constexpr int dynamicAlbumParent = -2;
 
 class ZDB : public QObject
 {
     Q_OBJECT
 private:
-    QString dbHost, dbBase, dbUser, dbPass;
-    QStringList indexedDirs, ignoredFiles;
-    ZStrMap dynAlbums;
-    QStrHash problems;
-    QHash<QString,int> preferredRendering;
+    Q_DISABLE_COPY(ZDB)
 
-    bool wasCanceled;
+    bool m_wasCanceled;
+    QString m_dbHost;
+    QString m_dbBase;
+    QString m_dbUser;
+    QString m_dbPass;
+    QStringList m_indexedDirs;
+    QStringList m_ignoredFiles;
+    ZStrMap m_dynAlbums;
+    QStrHash m_problems;
+    QHash<QString,int> m_preferredRendering;
 
     bool sqlCheckBasePriv(QSqlDatabase &db, bool silent);
     bool checkTablesParams(QSqlDatabase &db);
@@ -38,7 +43,7 @@ private:
 
 public:
     explicit ZDB(QObject *parent = nullptr);
-    ~ZDB() = default;
+    ~ZDB() override = default;
 
     int getAlbumsCount();
     ZStrMap getDynAlbums() const;
@@ -85,7 +90,7 @@ public Q_SLOTS:
     void sqlAddIgnoredFiles(const QStringList& files);
     void sqlSetIgnoredFiles(const QStringList &files);
     void sqlGetTablesDescription();
-    bool sqlSetPreferredRendering(const QString& filename, int mode);
+    void sqlSetPreferredRendering(const QString& filename, int mode);
 };
 
 #endif // ZDB_H

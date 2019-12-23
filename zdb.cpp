@@ -13,25 +13,18 @@
 #include <QDebug>
 #include "zdb.h"
 
-#define FT_DETAILS "1. Edit my.cnf file and save\n" \
-                   "--> ft_stopword_file = \"\" (or link an empty file \"empty_stopwords.txt\")\n" \
-                   "--> ft_min_word_len = 2\n" \
-                   "2. Restart your server (this cannot be done dynamically)\n" \
-                   "3. Change the table engine (if needed) - ALTER TABLE tbl_name ENGINE = MyISAM;\n"\
-                   "4. Perform repair - REPAIR TABLE tbl_name QUICK;"
-
 ZDB::ZDB(QObject *parent) :
     QObject(parent)
 {
-    dbHost = QSL("localhost");
-    dbBase = QSL("qmanga");
-    dbUser = QString();
-    dbPass = QString();
-    wasCanceled = false;
-    indexedDirs.clear();
-    problems.clear();
-    ignoredFiles.clear();
-    preferredRendering.clear();
+    m_dbHost = QSL("localhost");
+    m_dbBase = QSL("qmanga");
+    m_dbUser = QString();
+    m_dbPass = QString();
+    m_wasCanceled = false;
+    m_indexedDirs.clear();
+    m_problems.clear();
+    m_ignoredFiles.clear();
+    m_preferredRendering.clear();
 }
 
 int ZDB::getAlbumsCount()
@@ -50,7 +43,7 @@ int ZDB::getAlbumsCount()
 
 ZStrMap ZDB::getDynAlbums() const
 {
-    return dynAlbums;
+    return m_dynAlbums;
 }
 
 Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order) const
@@ -59,7 +52,7 @@ Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order)
     const QString name = album.mid(2);
 
     order = Qt::AscendingOrder;
-    const QString qr = dynAlbums.value(name,QString());
+    const QString qr = m_dynAlbums.value(name,QString());
     if (!qr.isEmpty()) {
         QRegExp rx(QSL(R"(ORDER\sBY\s(\S+)\s(ASC|DESC)?)"),Qt::CaseInsensitive);
         if (rx.indexIn(qr)>=0) {
@@ -87,21 +80,21 @@ Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order)
 
 QStrHash ZDB::getConfigProblems() const
 {
-    return problems;
+    return m_problems;
 }
 
 void ZDB::setCredentials(const QString &host, const QString &base, const QString &user, const QString &password)
 {
-    dbHost = host;
-    dbBase = base;
-    dbUser = user;
-    dbPass = password;
+    m_dbHost = host;
+    m_dbBase = base;
+    m_dbUser = user;
+    m_dbPass = password;
 }
 
 void ZDB::setDynAlbums(const ZStrMap &albums)
 {
-    dynAlbums.clear();
-    dynAlbums = albums;
+    m_dynAlbums.clear();
+    m_dynAlbums = albums;
 }
 
 void ZDB::sqlCheckBase()
@@ -155,10 +148,10 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     if (!cols.contains(QSL("parent"),Qt::CaseInsensitive)) {
         if (!qr.exec(QSL("ALTER TABLE `albums` ADD COLUMN `parent` "
                                     "INT(11) DEFAULT -1"))) {
-            qDebug() << tr("Unable to add column for albums table.")
+            qWarning() << tr("Unable to add column for albums table.")
                      << qr.lastError().databaseText() << qr.lastError().driverText();
 
-            problems[tr("Adding column")] = tr("Unable to add column for qmanga albums table.\n"
+            m_problems[tr("Adding column")] = tr("Unable to add column for qmanga albums table.\n"
                                                "ALTER TABLE query failed.");
 
             return false;
@@ -173,10 +166,10 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     if (!cols.contains(QSL("preferredRendering"),Qt::CaseInsensitive)) {
         if (!qr.exec(QSL("ALTER TABLE `files` ADD COLUMN `preferredRendering` "
                                     "INT(11) DEFAULT 0"))) {
-            qDebug() << tr("Unable to add column for files table.")
+            qWarning() << tr("Unable to add column for files table.")
                      << qr.lastError().databaseText() << qr.lastError().driverText();
 
-            problems[tr("Adding column")] = tr("Unable to add column for qmanga files table.\n"
+            m_problems[tr("Adding column")] = tr("Unable to add column for qmanga files table.\n"
                                                "ALTER TABLE query failed.");
 
             return false;
@@ -186,10 +179,10 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
     // Add fulltext index for manga names
     if (!qr.exec(QSL("SELECT index_type FROM information_schema.statistics "
                  "WHERE table_schema=DATABASE() AND table_name='files' AND index_name='name_ft'"))) {
-        qDebug() << tr("Unable to get indexes list.")
+        qWarning() << tr("Unable to get indexes list.")
                  << qr.lastError().databaseText() << qr.lastError().driverText();
 
-        problems[tr("Check for indexes")] = tr("Unable to check indexes for qmanga tables.\n"
+        m_problems[tr("Check for indexes")] = tr("Unable to check indexes for qmanga tables.\n"
                                                "SELECT query failed.\n");
 
         return false;
@@ -199,10 +192,10 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
         idxn = qr.value(0).toString();
     if (idxn.isEmpty()) {
         if (!qr.exec(QSL("ALTER TABLE files ADD FULLTEXT INDEX name_ft(name)"))) {
-            qDebug() << tr("Unable to add fulltext index for files table.")
+            qWarning() << tr("Unable to add fulltext index for files table.")
                      << qr.lastError().databaseText() << qr.lastError().driverText();
 
-            problems[tr("Creating indexes")] = tr("Unable to add FULLTEXT index for qmanga files table.\n"
+            m_problems[tr("Creating indexes")] = tr("Unable to add FULLTEXT index for qmanga files table.\n"
                                                   "ALTER TABLE query failed.\n"
                                                   "Fulltext index in necessary for search feature.");
 
@@ -220,13 +213,20 @@ bool ZDB::checkTablesParams(QSqlDatabase &db)
 
 void ZDB::checkConfigOpts(QSqlDatabase &db, bool silent)
 {
+    static const QString ftDetails = QSL("1. Edit my.cnf file and save\n"
+                                         "--> ft_stopword_file = \"\" (or link an empty file \"empty_stopwords.txt\")\n"
+                                         "--> ft_min_word_len = 2\n"
+                                         "2. Restart your server (this cannot be done dynamically)\n"
+                                         "3. Change the table engine (if needed) - ALTER TABLE tbl_name ENGINE = MyISAM;\n"
+                                         "4. Perform repair - REPAIR TABLE tbl_name QUICK;");
+
     if (sqlDbEngine(db)!=Z::MySQL) return;
 
     QSqlQuery qr(db);
     if (!qr.exec(QSL("SELECT @@ft_min_word_len"))) {
-        qDebug() << tr("Unable to check MySQL config options");
+        qWarning() << tr("Unable to check MySQL config options");
 
-        problems[tr("MySQL config")] = tr("Unable to check my.cnf options via global variables.\n"
+        m_problems[tr("MySQL config")] = tr("Unable to check my.cnf options via global variables.\n"
                                           "SELECT query failed.\n"
                                           "QManga needs specific fulltext ft_* options in config.");
 
@@ -237,8 +237,8 @@ void ZDB::checkConfigOpts(QSqlDatabase &db, bool silent)
         int ftlen = qr.value(0).toInt(&okconv);
         if (!okconv || (ftlen>2)) {
             if (!silent)
-                Q_EMIT errorMsg(tr(FT_DETAILS));
-            problems[tr("MySQL config fulltext")] = tr(FT_DETAILS);
+                Q_EMIT errorMsg(ftDetails);
+            m_problems[tr("MySQL config fulltext")] = ftDetails;
         }
     }
 }
@@ -260,7 +260,7 @@ void ZDB::sqlCreateTables()
                      ") ENGINE=MyISAM DEFAULT CHARSET=utf8"))) {
             Q_EMIT errorMsg(tr("Unable to create table `albums`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
+            m_problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
                                                         "CREATE TABLE query failed.");
             sqlCloseBase(db);
             return;
@@ -273,7 +273,7 @@ void ZDB::sqlCreateTables()
                      ") ENGINE=MyISAM DEFAULT CHARSET=utf8"))) {
             Q_EMIT errorMsg(tr("Unable to create table `ignored_files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
+            m_problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
                                                                "CREATE TABLE query failed.");
             sqlCloseBase(db);
             return;
@@ -295,7 +295,7 @@ void ZDB::sqlCreateTables()
                      ") ENGINE=MyISAM  DEFAULT CHARSET=utf8"))) {
             Q_EMIT errorMsg(tr("Unable to create table `files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
+            m_problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
                                                        "CREATE TABLE query failed.");
             sqlCloseBase(db);
             return;
@@ -307,7 +307,7 @@ void ZDB::sqlCreateTables()
                      "`parent` INTEGER DEFAULT -1)"))) {
             Q_EMIT errorMsg(tr("Unable to create table `albums`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
+            m_problems[tr("Create tables - albums")] = tr("Unable to create table `albums`.\n"
                                                         "CREATE TABLE query failed.");
             sqlCloseBase(db);
             return;
@@ -318,7 +318,7 @@ void ZDB::sqlCreateTables()
                      "`filename` TEXT)"))) {
             Q_EMIT errorMsg(tr("Unable to create table `ignored_files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
+            m_problems[tr("Create tables - ignored_files")] = tr("Unable to create table `ignored_files`.\n"
                                                                "CREATE TABLE query failed.");
             sqlCloseBase(db);
             return;
@@ -337,14 +337,14 @@ void ZDB::sqlCreateTables()
                      "`preferredRendering` INTEGER DEFAULT 0)"))) {
             Q_EMIT errorMsg(tr("Unable to create table `files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
+            m_problems[tr("Create tables - files")] = tr("Unable to create table `files`.\n"
                                                        "CREATE TABLE query failed.");
             sqlCloseBase(db);
             return;
         }
     } else {
         Q_EMIT errorMsg(tr("Unable to create tables. Unknown DB engine"));
-        problems[tr("Create tables")] = tr("Unable to create tables.\n"
+        m_problems[tr("Create tables")] = tr("Unable to create tables.\n"
                                            "Unknown DB engine.");
     }
     sqlCloseBase(db);
@@ -361,45 +361,47 @@ QSqlDatabase ZDB::sqlOpenBase()
         if (!db.isValid()) {
             db = QSqlDatabase();
             Q_EMIT errorMsg(tr("Unable to create MySQL driver instance."));
-            problems[tr("Connection")] = tr("Unable to create MySQL driver instance.");
+            m_problems[tr("Connection")] = tr("Unable to create MySQL driver instance.");
             return db;
         }
 
-        db.setHostName(dbHost);
-        db.setDatabaseName(dbBase);
-        db.setUserName(dbUser);
-        db.setPassword(dbPass);
+        db.setHostName(m_dbHost);
+        db.setDatabaseName(m_dbBase);
+        db.setUserName(m_dbUser);
+        db.setPassword(m_dbPass);
 
     } else if (zg->dbEngine==Z::SQLite) {
         db = QSqlDatabase::addDatabase(QSL("QSQLITE"),QUuid::createUuid().toString());
         if (!db.isValid()) {
             db = QSqlDatabase();
             Q_EMIT errorMsg(tr("Unable to create SQLite driver instance."));
-            problems[tr("Connection")] = tr("Unable to create SQLite driver instance.");
+            m_problems[tr("Connection")] = tr("Unable to create SQLite driver instance.");
             return db;
         }
 
         QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         QDir dbDir(dir);
-        if (!dbDir.exists())
+        if (!dbDir.exists()) {
             if (!dbDir.mkpath(dir)) {
                 db = QSqlDatabase();
                 Q_EMIT errorMsg(tr("Unable to create SQLite database file. Check file permissions.\n%1")
                               .arg(dir));
-                problems[tr("Connection")] = tr("Unable to create SQLite database file.");
+                m_problems[tr("Connection")] = tr("Unable to create SQLite database file.");
                 return db;
             }
+        }
 
         db.setDatabaseName(dbDir.filePath(QSL("qmanga.sqlite")));
 
-    } else
+    } else {
         return db;
+    }
 
     if (!db.open()) {
         db = QSqlDatabase();
         Q_EMIT errorMsg(tr("Unable to open database connection. Check connection info.\n%1\n%2")
                       .arg(db.lastError().driverText(),db.lastError().databaseText()));
-        problems[tr("Connection")] = tr("Unable to connect to database.\n"
+        m_problems[tr("Connection")] = tr("Unable to connect to database.\n"
                                         "Check credentials and SQL server running.");
     }
 
@@ -419,7 +421,7 @@ void ZDB::sqlUpdateIgnoredFiles(QSqlDatabase &db)
     while (qr.next())
         sl << qr.value(0).toString();
 
-    ignoredFiles = sl;
+    m_ignoredFiles = sl;
 }
 
 void ZDB::sqlGetAlbums()
@@ -430,8 +432,9 @@ void ZDB::sqlGetAlbums()
 
     QSqlQuery qr(QSL("SELECT id, parent, name FROM `albums` ORDER BY name ASC"),db);
     while (qr.next()) {
-        bool ok1, ok2;
+        bool ok1;
         int id = qr.value(0).toInt(&ok1);
+        bool ok2;
         int parent = qr.value(1).toInt(&ok2);
         if (ok1 && ok2)
             result << AlbumEntry(id,parent,qr.value(2).toString());
@@ -443,7 +446,7 @@ void ZDB::sqlGetAlbums()
 
     int id = -1;
 
-    for (auto it = dynAlbums.constKeyValueBegin(), end = dynAlbums.constKeyValueEnd();
+    for (auto it = m_dynAlbums.constKeyValueBegin(), end = m_dynAlbums.constKeyValueEnd();
          it != end; ++it)
         result << AlbumEntry(id--,dynamicAlbumParent,QSL("# %1").arg((*it).first));
 
@@ -460,10 +463,20 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search)
     QTime tmr;
     tmr.start();
 
+    constexpr int fldName = 0;
+    constexpr int fldPagesCount = 3;
+    constexpr int fldFileSize = 4;
+    constexpr int fldFileMagic = 5;
+    constexpr int fldFileDate = 6;
+    constexpr int fldFileAdded = 7;
+    constexpr int fldID = 8;
+    constexpr int fldAlbumName = 9;
+    constexpr int fldPreferredRendering = 10;
     QString tqr = QSL("SELECT files.name, filename, cover, pagesCount, fileSize, "
                                  "fileMagic, fileDT, addingDT, files.id, albums.name, "
                                  "files.preferredRendering "
                                  "FROM files LEFT JOIN albums ON files.album=albums.id ");
+
     bool checkFS = false;
 
     bool albumBind = false;
@@ -472,8 +485,8 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search)
     if (!album.isEmpty()) {
         if (album.startsWith(QSL("# "))) {
             QString name = album.mid(2);
-            if (dynAlbums.contains(name)){
-                tqr += dynAlbums.value(name);
+            if (m_dynAlbums.contains(name)){
+                tqr += m_dynAlbums.value(name);
             }
         } else if (album.startsWith(QSL("% Deleted"))) {
             checkFS = true;
@@ -504,7 +517,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search)
         qr.addBindValue(QSL("%%%1%%").arg(search));
 
     if (qr.exec()) {
-        preferredRendering.clear();
+        m_preferredRendering.clear();
         while (qr.next()) {
             QImage p = QImage();
             QByteArray ba = qr.value(2).toByteArray();
@@ -518,25 +531,25 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search)
                 if (fi.exists()) continue;
             }
 
-            int prefRendering = qr.value(10).toInt();
-            preferredRendering[fileName] = prefRendering;
+            int prefRendering = qr.value(fldPreferredRendering).toInt();
+            m_preferredRendering[fileName] = prefRendering;
 
-            Q_EMIT gotFile(SQLMangaEntry(qr.value(0).toString(),
+            Q_EMIT gotFile(SQLMangaEntry(qr.value(fldName).toString(),
                                        fileName,
-                                       qr.value(9).toString(),
+                                       qr.value(fldAlbumName).toString(),
                                        p,
-                                       qr.value(3).toInt(),
-                                       qr.value(4).toInt(),
-                                       qr.value(5).toString(),
-                                       qr.value(6).toDateTime(),
-                                       qr.value(7).toDateTime(),
-                                       qr.value(8).toInt(),
+                                       qr.value(fldPagesCount).toInt(),
+                                       qr.value(fldFileSize).toInt(),
+                                       qr.value(fldFileMagic).toString(),
+                                       qr.value(fldFileDate).toDateTime(),
+                                       qr.value(fldFileAdded).toDateTime(),
+                                       qr.value(fldID).toInt(),
                                        static_cast<Z::PDFRendering>(prefRendering)));
             QApplication::processEvents();
             idx++;
         }
     } else
-        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
+        qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
     sqlCloseBase(db);
     Q_EMIT filesLoaded(idx,tmr.elapsed());
 }
@@ -555,7 +568,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     qr.prepare(QSL("SELECT name FROM files WHERE (filename=?)"));
     qr.addBindValue(fname);
     if (!qr.exec()) {
-        qDebug() << "file search query failed";
+        qWarning() << "file search query failed";
         sqlCloseBase(db);
         return;
     }
@@ -567,7 +580,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
 
     QFileInfo fi(fname);
     if (!fi.isReadable()) {
-        qDebug() << "skipping" << fname << "as unreadable";
+        qWarning() << "skipping" << fname << "as unreadable";
         Q_EMIT errorMsg(tr("%1 file is unreadable.").arg(fname));
         sqlCloseBase(db);
         return;
@@ -576,14 +589,14 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
     if (za == nullptr) {
-        qDebug() << fname << "File format not supported";
+        qWarning() << fname << "File format not supported";
         Q_EMIT errorMsg(tr("%1 file format not supported.").arg(fname));
         sqlCloseBase(db);
         return;
     }
 
     if (!za->openFile()) {
-        qDebug() << fname << "Unable to open file.";
+        qWarning() << fname << "Unable to open file.";
         Q_EMIT errorMsg(tr("Unable to open file %1.").arg(fname));
         za->setParent(nullptr);
         delete za;
@@ -598,7 +611,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     if (!qr.exec()) {
         QString msg = tr("Unable to change cover for '%1'.\n%2\n%3")
                 .arg(fname,qr.lastError().databaseText(),qr.lastError().driverText());
-        qDebug() << msg;
+        qWarning() << msg;
         Q_EMIT errorMsg(msg);
     }
     pba.clear();
@@ -628,9 +641,9 @@ void ZDB::sqlRescanIndexedDirs()
 
     sqlCloseBase(db);
 
-    indexedDirs.clear();
+    m_indexedDirs.clear();
     if (!dirs.isEmpty()) {
-        indexedDirs.append(dirs);
+        m_indexedDirs.append(dirs);
         Q_EMIT updateWatchDirList(dirs);
     }
     Q_EMIT albumsListUpdated();
@@ -647,19 +660,19 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
 
     QFileInfo fi(fname);
     if (!fi.isReadable()) {
-        qDebug() << "updating aborted for" << fname << "as unreadable";
+        qWarning() << "updating aborted for" << fname << "as unreadable";
         return;
     }
 
     bool mimeOk = false;
     ZAbstractReader* za = readerFactory(this,fileName,&mimeOk,true);
     if (za == nullptr) {
-        qDebug() << fname << "File format not supported.";
+        qWarning() << fname << "File format not supported.";
         return;
     }
 
     if (!za->openFile()) {
-        qDebug() << fname << "Unable to open file.";
+        qWarning() << fname << "Unable to open file.";
         za->setParent(nullptr);
         delete za;
         return;
@@ -673,10 +686,11 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
                "WHERE (filename=?)"));
 
     qr.bindValue(0,za->getPageCount());
-    if (dynManga)
+    if (dynManga) {
         qr.bindValue(1,0);
-    else
+    } else {
         qr.bindValue(1,fi.size());
+    }
     qr.bindValue(2,za->getMagic());
     qr.bindValue(3,fi.birthTime());
     qr.bindValue(4,fname);
@@ -685,9 +699,10 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     za->setParent(nullptr);
     delete za;
 
-    if (!qr.exec())
-        qDebug() << fname << "unable to update file stats" <<
+    if (!qr.exec()) {
+        qWarning() << fname << "unable to update file stats" <<
                     qr.lastError().databaseText() << qr.lastError().driverText();
+    }
 
     sqlCloseBase(db);
 }
@@ -701,7 +716,7 @@ void ZDB::sqlSearchMissingManga()
 
     QStringList filenames;
 
-    for (const QString& d : qAsConst(indexedDirs)) {
+    for (const QString& d : qAsConst(m_indexedDirs)) {
         QDir dir(d);
         const QFileInfoList fl = dir.entryInfoList(
                                      QStringList(QSL("*")), QDir::Files | QDir::Readable);
@@ -715,24 +730,25 @@ void ZDB::sqlSearchMissingManga()
     if (!qr.exec()) {
         Q_EMIT errorMsg(tr("Unable to drop table `tmp_exfiles`\n\n%1\n%2")
                       .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-        problems[tr("Drop tables - tmp_exfiles")] = tr("Unable to drop temporary table `tmp_exfiles`.\n"
+        m_problems[tr("Drop tables - tmp_exfiles")] = tr("Unable to drop temporary table `tmp_exfiles`.\n"
                                                        "DROP TABLE query failed.");
         sqlCloseBase(db);
         return;
     }
 
     qr.clear();
-    if (sqlDbEngine(db)==Z::MySQL)
+    if (sqlDbEngine(db)==Z::MySQL) {
         qr.prepare(QSL("CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
                    "`filename` varchar(16383), INDEX ifilename (filename)"
                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8"));
-    else if (sqlDbEngine(db)==Z::SQLite)
+    } else if (sqlDbEngine(db)==Z::SQLite) {
         qr.prepare(QSL("CREATE TEMPORARY TABLE IF NOT EXISTS "
                                   "`tmp_exfiles` (`filename` TEXT)"));
+    }
     if (!qr.exec()) {
         Q_EMIT errorMsg(tr("Unable to create temporary table `tmp_exfiles`\n\n%1\n%2")
                       .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-        problems[tr("Create tables - tmp_exfiles")] =
+        m_problems[tr("Create tables - tmp_exfiles")] =
                 tr("Unable to create temporary table `tmp_exfiles`.\n"
                    "CREATE TABLE query failed.");
         sqlCloseBase(db);
@@ -742,8 +758,8 @@ void ZDB::sqlSearchMissingManga()
     QVariantList sl;
     while (!filenames.isEmpty()) {
         sl.clear();
-        sl.reserve(64);
-        while (sl.count()<64 && !filenames.isEmpty())
+        sl.reserve(ZDefaults::maxSQLUpdateStringListSize);
+        while (sl.count()<ZDefaults::maxSQLUpdateStringListSize && !filenames.isEmpty())
             sl << filenames.takeFirst();
         if (!sl.isEmpty()) {
             qr.prepare(QSL("INSERT INTO `tmp_exfiles` VALUES (?)"));
@@ -751,7 +767,7 @@ void ZDB::sqlSearchMissingManga()
             if (!qr.execBatch()) {
                 Q_EMIT errorMsg(tr("Unable to load data to table `tmp_exfiles`\n\n%1\n%2")
                               .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-                problems[tr("Load data infile - tmp_exfiles")] =
+                m_problems[tr("Load data infile - tmp_exfiles")] =
                         tr("Unable to load data to temporary table `tmp_exfiles`.\n"
                            "INSERT INTO query failed.");
                 sqlCloseBase(db);
@@ -768,11 +784,11 @@ void ZDB::sqlSearchMissingManga()
         while (qr.next())
             foundFiles << qr.value(0).toString();
     } else
-        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
+        qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
 
     qr.prepare(QSL("DROP TABLE `tmp_exfiles`"));
     if (!qr.exec())
-        qDebug() << qr.lastError().databaseText() << qr.lastError().driverText();
+        qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
 
     sqlCloseBase(db);
 
@@ -805,13 +821,13 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
         if (!qr.exec()) {
             Q_EMIT errorMsg(tr("Unable to delete from table `ignored_files`\n\n%1\n%2")
                           .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-            problems[tr("Delete from table - ignored_files")] =
+            m_problems[tr("Delete from table - ignored_files")] =
                     tr("Unable to delete from table `ignored_files`.\n"
                        "DELETE FROM query failed.");
             sqlCloseBase(db);
             return;
         }
-        ignoredFiles.clear();
+        m_ignoredFiles.clear();
     }
 
     for (const QString& file : files) {
@@ -823,7 +839,7 @@ void ZDB::sqlInsertIgnoredFilesPrivate(const QStringList &files, bool cleanTable
             sqlCloseBase(db);
             return;
         }
-        ignoredFiles << file;
+        m_ignoredFiles << file;
     }
     sqlCloseBase(db);
 }
@@ -898,39 +914,34 @@ int ZDB::sqlFindAndAddAlbum(const QString &name, const QString &parent, bool cre
 
 QStringList ZDB::sqlGetIgnoredFiles() const
 {
-    return ignoredFiles;
+    return m_ignoredFiles;
 }
 
 Z::PDFRendering ZDB::getPreferredRendering(const QString &filename) const
 {
-    if (preferredRendering.contains(filename))
-        return static_cast<Z::PDFRendering>(preferredRendering.value(filename));
+    if (m_preferredRendering.contains(filename))
+        return static_cast<Z::PDFRendering>(m_preferredRendering.value(filename));
 
     return Z::PDFRendering::Autodetect;
 }
 
-bool ZDB::sqlSetPreferredRendering(const QString &filename, int mode)
+void ZDB::sqlSetPreferredRendering(const QString &filename, int mode)
 {
     QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return Z::PDFRendering::Autodetect;
+    if (!db.isValid()) return;
 
     QSqlQuery qr(db);
     qr.prepare(QSL("UPDATE files SET preferredRendering=? WHERE filename=?"));
     qr.bindValue(0,mode);
     qr.bindValue(1,filename);
-    bool res = true;
     if (!qr.exec()) {
         QString msg = tr("Unable to change preferred rendering for '%1'.\n%2\n%3").
                       arg(filename,qr.lastError().databaseText(),qr.lastError().driverText());
-        qDebug() << msg;
+        qWarning() << msg;
         Q_EMIT errorMsg(msg);
-        res = false;
     }
-    preferredRendering[filename] = mode;
+    m_preferredRendering[filename] = mode;
     sqlCloseBase(db);
-
-    return res;
-
 }
 
 void ZDB::sqlGetTablesDescription()
@@ -948,7 +959,8 @@ void ZDB::sqlGetTablesDescription()
         return;
     }
 
-    QStringList names, types;
+    QStringList names;
+    QStringList types;
     names.reserve(rec.count());
     int nl = 0; int tl = 0;
     for (int i=0; i < rec.count(); i++)
@@ -1034,7 +1046,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
     int ialbum = sqlFindAndAddAlbum(album);
     if (ialbum<0) {
-        qDebug() << "Album '" << album << "' not found, unable to create album.";
+        qWarning() << "Album '" << album << "' not found, unable to create album.";
         return;
     }
 
@@ -1042,7 +1054,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     if (!db.isValid()) return;
     QSqlQuery qr(db);
 
-    wasCanceled = false;
+    m_wasCanceled = false;
 
     QTime tmr;
     tmr.start();
@@ -1053,54 +1065,68 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
     for (int i=0;i<files.count();i++) {
         QFileInfo fi(files.at(i));
         if (!fi.isReadable()) {
-            qDebug() << "skipping" << files.at(i) << "as unreadable";
+            qWarning() << "skipping" << files.at(i) << "as unreadable";
             continue;
         }
 
         bool mimeOk = false;
         ZAbstractReader* za = readerFactory(this,files.at(i),&mimeOk,true);
         if (za == nullptr) {
-            qDebug() << files.at(i) << "File format not supported.";
+            qWarning() << files.at(i) << "File format not supported.";
             continue;
         }
 
         if (!za->openFile()) {
-            qDebug() << files.at(i) << "Unable to open file.";
+            qWarning() << files.at(i) << "Unable to open file.";
             za->setParent(nullptr);
             delete za;
             continue;
         }
 
         QByteArray pba = createMangaPreview(za,0);
+
+        constexpr int fldName = 0;
+        constexpr int fldFilename = 1;
+        constexpr int fldAlbum = 2;
+        constexpr int fldCover = 3;
+        constexpr int fldPagesCount = 4;
+        constexpr int fldFileSize = 5;
+        constexpr int fldFileMagic = 6;
+        constexpr int fldFileDate = 7;
+        constexpr int fldFileAdded = 8;
         qr.prepare(QSL("INSERT INTO files (name, filename, album, cover, "
                                   "pagesCount, fileSize, fileMagic, fileDT, addingDT) "
                                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-        qr.bindValue(0,fi.completeBaseName());
-        qr.bindValue(1,files.at(i));
-        qr.bindValue(2,ialbum);
-        qr.bindValue(3,pba);
-        qr.bindValue(4,za->getPageCount());
-        qr.bindValue(5,fi.size());
-        qr.bindValue(6,za->getMagic());
-        qr.bindValue(7,fi.birthTime());
-        qr.bindValue(8,QDateTime::currentDateTime());
-        if (!qr.exec())
-            qDebug() << files.at(i) << "unable to add" <<
+        qr.bindValue(fldName,fi.completeBaseName());
+        qr.bindValue(fldFilename,files.at(i));
+        qr.bindValue(fldAlbum,ialbum);
+        qr.bindValue(fldCover,pba);
+        qr.bindValue(fldPagesCount,za->getPageCount());
+        qr.bindValue(fldFileSize,fi.size());
+        qr.bindValue(fldFileMagic,za->getMagic());
+        qr.bindValue(fldFileDate,fi.birthTime());
+        qr.bindValue(fldFileAdded,QDateTime::currentDateTime());
+        if (!qr.exec()) {
+            qWarning() << files.at(i) << "unable to add" <<
                         qr.lastError().databaseText() << qr.lastError().driverText();
-        else
+        } else {
             cnt++;
+        }
         pba.clear();
         za->closeFile();
         za->setParent(nullptr);
         delete za;
 
         QString s = fi.fileName();
-        if (s.length()>60) s = s.left(60)+QSL("...");
+        if (s.length()>ZDefaults::maxDescriptionStringLength) {
+            s.truncate(ZDefaults::maxDescriptionStringLength);
+            s.append(QSL("..."));
+        }
         Q_EMIT showProgressState(100*i/files.count(),s);
         QApplication::processEvents();
 
-        if (wasCanceled) {
-            wasCanceled = false;
+        if (m_wasCanceled) {
+            m_wasCanceled = false;
             break;
         }
         QApplication::processEvents();
@@ -1166,7 +1192,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     // get album number
     int ialbum = sqlFindAndAddAlbum(album);
     if (ialbum<0) {
-        qDebug() << "Album '" << album << "' not found, unable to create album.";
+        qWarning() << "Album '" << album << "' not found, unable to create album.";
         return;
     }
 
@@ -1198,23 +1224,33 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
     // add dynamic album to base
     int cnt = 0;
+    constexpr int fldName = 0;
+    constexpr int fldFilename = 1;
+    constexpr int fldAlbum = 2;
+    constexpr int fldCover = 3;
+    constexpr int fldPagesCount = 4;
+    constexpr int fldFileSize = 5;
+    constexpr int fldFileMagic = 6;
+    constexpr int fldFileDate = 7;
+    constexpr int fldFileAdded = 8;
     qr.prepare(QSL("INSERT INTO files (name, filename, album, cover, pagesCount, "
                               "fileSize, fileMagic, fileDT, addingDT) VALUES "
                               "(?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-    qr.bindValue(0,d.dirName());
-    qr.bindValue(1,d.absolutePath());
-    qr.bindValue(2,ialbum);
-    qr.bindValue(3,pba);
-    qr.bindValue(4,files.count());
-    qr.bindValue(5,0);
-    qr.bindValue(6,QSL("DYN"));
-    qr.bindValue(7,fi.birthTime());
-    qr.bindValue(8,QDateTime::currentDateTime());
-    if (!qr.exec())
-        qDebug() << "unable to add dynamic album" << dir <<
-                    qr.lastError().databaseText() << qr.lastError().driverText();
-    else
+    qr.bindValue(fldName,d.dirName());
+    qr.bindValue(fldFilename,d.absolutePath());
+    qr.bindValue(fldAlbum,ialbum);
+    qr.bindValue(fldCover,pba);
+    qr.bindValue(fldPagesCount,files.count());
+    qr.bindValue(fldFileSize,0);
+    qr.bindValue(fldFileMagic,QSL("DYN"));
+    qr.bindValue(fldFileDate,fi.birthTime());
+    qr.bindValue(fldFileAdded,QDateTime::currentDateTime());
+    if (!qr.exec()) {
+        qWarning() << "unable to add dynamic album" << dir <<
+                      qr.lastError().databaseText() << qr.lastError().driverText();
+    } else {
         cnt++;
+    }
     pba.clear();
 
     sqlCloseBase(db);
@@ -1229,11 +1265,12 @@ QString ZDB::prepareSearchQuery(const QString &search)
     QString msearch = search;
     if (search.contains(QRegExp(QSL("\\s")))) {
         bool haveops = false;
-        for (const auto &i : operators)
+        for (const auto &i : operators) {
             if (msearch.contains(i)) {
                 haveops = true;
                 break;
             }
+        }
         if (!haveops) {
             msearch.replace(QRegExp(QSL("\\s+")),QSL("* +"));
             msearch.prepend(QChar('+'));
@@ -1247,7 +1284,7 @@ QString ZDB::prepareSearchQuery(const QString &search)
 
 void ZDB::sqlCancelAdding()
 {
-    wasCanceled = true;
+    m_wasCanceled = true;
 }
 
 void ZDB::sqlDelFiles(const QIntVector &dbids, bool fullDelete)
@@ -1280,9 +1317,10 @@ void ZDB::sqlDelFiles(const QIntVector &dbids, bool fullDelete)
             while (qr.next()) {
                 QString fname = qr.value(0).toString();
                 QString magic = qr.value(1).toString();
-                if (magic!=QSL("DYN"))
+                if (magic!=QSL("DYN")) {
                     if (!QFile::remove(fname))
                         okdel = false;
+                }
             }
         }
     }
@@ -1299,9 +1337,10 @@ void ZDB::sqlDelFiles(const QIntVector &dbids, bool fullDelete)
 
     Q_EMIT deleteItemsFromModel(dbids);
 
-    if (!okdel && fullDelete)
+    if (!okdel && fullDelete) {
         Q_EMIT errorMsg(tr("Errors occured, some files not deleted from filesystem or not found.\n%1\n%2").
                       arg(db.lastError().databaseText(), db.lastError().driverText()));
+    }
 }
 
 void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
@@ -1311,7 +1350,7 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
     if (newName.startsWith('%') || oldName.startsWith('%')) return;
 
     if (sqlFindAndAddAlbum(newName,QString(),false)>=0) {
-        qDebug() << "Unable to rename album - name already exists.";
+        qWarning() << "Unable to rename album - name already exists.";
         Q_EMIT errorMsg(tr("Unable to rename album - name already exists."));
         return;
     }
@@ -1324,7 +1363,7 @@ void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
     qr.bindValue(0,newName);
     qr.bindValue(1,oldName);
     if (!qr.exec()) {
-        qDebug() << "Unable to rename album"
+        qWarning() << "Unable to rename album"
                  << qr.lastError().databaseText() << qr.lastError().driverText();
         Q_EMIT errorMsg(tr("Unable to rename album `%1`\n%2\n%3").
                       arg(oldName,qr.lastError().databaseText(), qr.lastError().driverText()));
@@ -1352,7 +1391,7 @@ void ZDB::sqlDelAlbum(const QString &album)
         QString msg = tr("Unable to delete manga\n%1\n%2").
                       arg(qr.lastError().databaseText(), qr.lastError().driverText());
         Q_EMIT errorMsg(msg);
-        qDebug() << msg;
+        qWarning() << msg;
         sqlCloseBase(db);
         return;
     }
@@ -1363,7 +1402,7 @@ void ZDB::sqlDelAlbum(const QString &album)
         QString msg = tr("Unable to unlink album as parent\n%1\n%2").
                       arg(qr.lastError().databaseText(), qr.lastError().driverText());
         Q_EMIT errorMsg(msg);
-        qDebug() << msg;
+        qWarning() << msg;
         sqlCloseBase(db);
         return;
     }
@@ -1374,7 +1413,7 @@ void ZDB::sqlDelAlbum(const QString &album)
         QString msg = tr("Unable to delete album\n%1\n%2").
                       arg(qr.lastError().databaseText(), qr.lastError().driverText());
         Q_EMIT errorMsg(msg);
-        qDebug() << msg;
+        qWarning() << msg;
         sqlCloseBase(db);
         return;
     }
@@ -1389,7 +1428,7 @@ void ZDB::sqlAddAlbum(const QString &album, const QString &parent)
     if (id<0) {
         QString msg = tr("Unable to create album %1").arg(album);
         Q_EMIT errorMsg(msg);
-        qDebug() << msg;
+        qWarning() << msg;
     } else
         Q_EMIT albumsListUpdated();
 }
@@ -1400,7 +1439,7 @@ void ZDB::sqlReparentAlbum(const QString &album, const QString &parent)
     if (srcId<0) {
         QString msg = tr("Unable to find album %1").arg(album);
         Q_EMIT errorMsg(msg);
-        qDebug() << msg;
+        qWarning() << msg;
         return;
     }
     int parentId = -1;
@@ -1409,7 +1448,7 @@ void ZDB::sqlReparentAlbum(const QString &album, const QString &parent)
         if (parentId<0) {
             QString msg = tr("Unable to find parent album %1").arg(parent);
             Q_EMIT errorMsg(msg);
-            qDebug() << msg;
+            qWarning() << msg;
             return;
         }
     }
@@ -1426,7 +1465,7 @@ void ZDB::sqlReparentAlbum(const QString &album, const QString &parent)
         QString msg = tr("Unable to set album's parent\n%1\n%2").
                       arg(qr.lastError().databaseText(), qr.lastError().driverText());
         Q_EMIT errorMsg(msg);
-        qDebug() << msg;
+        qWarning() << msg;
         sqlCloseBase(db);
         return;
     }

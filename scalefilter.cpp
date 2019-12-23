@@ -80,7 +80,7 @@ using ContributionInfo = struct{
     unsigned int pixel;
 };
 
-const int checkEventsFreq = 25;
+constexpr int checkEventsFreq = 25;
 
 bool horizontalFilter(const QImage *srcImg, QImage *destImg,
                       double x_factor, double blur,

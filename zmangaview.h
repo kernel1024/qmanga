@@ -22,43 +22,52 @@ public:
         zmHeight = 3,
         zmOriginal = 4
     };
+    Q_ENUM(ZoomMode)
 
     enum MouseMode {
         mmOCR,
         mmPan,
         mmCrop
     };
+    Q_ENUM(MouseMode)
 
 private:
-    ZoomMode zoomMode;
-    MouseMode mouseMode;
-    int rotation;
-    QImage curPixmap, curUmPixmap;
-    QPoint drawPos;
-    QPoint zoomPos;
-    QPoint dragPos;
-    QPoint copyPos;
-    QPoint cropPos;
-    QRubberBand* copySelection;
-    QRubberBand* cropSelection;
-    QRect cropRect;
+    Q_DISABLE_COPY(ZMangaView)
 
-    QList<ZLoaderHelper> cacheLoaders;
-    int privPageCount;
+    ZoomMode m_zoomMode { zmFit };
+    MouseMode m_mouseMode { mmOCR };
+    bool m_zoomDynamic { false };
+    int m_rotation { 0 };
+    int m_currentPage { 0 };
+    int m_scrollAccumulator { 0 };
+    int m_privPageCount { 0 };
+    int m_zoomAny { -1 };
+    QImage m_curPixmap;
+    QImage m_curUnscaledPixmap;
+    QPoint m_drawPos;
+    QPoint m_zoomPos;
+    QPoint m_dragPos;
+    QPoint m_copyPos;
+    QPoint m_cropPos;
+    QRubberBand* m_copySelection { nullptr };
+    QRubberBand* m_cropSelection { nullptr };
+    QRect m_cropRect;
+    QPointer<QScrollArea> m_scroller;
 
-    QHash<int,QImage> iCacheImages;
-    QHash<int,QByteArray> iCacheData;
-    QHash<int,QString> pathCache;
-    QIntVector processingPages;
+    QString m_openedFile;
 
-    QList<QSize> lastSizes;
-    QList<int> lastFileSizes;
+    QThreadPool m_resamplersPool;
+    QList<ZLoaderHelper> m_cacheLoaders;
 
-    ZExportDialog exportDialog;
+    QHash<int,QImage> m_iCacheImages;
+    QHash<int,QByteArray> m_iCacheData;
+    QHash<int,QString> m_pathCache;
+    QIntVector m_processingPages;
 
-    QThreadPool resamplersPool;
+    QList<QSize> m_lastSizes;
+    QList<int> m_lastFileSizes;
 
-    int scrollAccumulator;
+    ZExportDialog m_exportDialog;
 
     void cacheDropUnusable();
     void cacheFillNearest();
@@ -68,17 +77,14 @@ private:
     static ZExportWork exportMangaPage(const ZExportWork &item);
 
 public:
-    int currentPage;
-    QScrollArea* scroller;
-    bool zoomDynamic;
-    QString openedFile;
-    int zoomAny;
-
     explicit ZMangaView(QWidget *parent = nullptr);
-    ~ZMangaView();
+    ~ZMangaView() override;
     int getPageCount();
     void getPage(int num);
-    void setMouseMode(MouseMode mode);
+    void setMouseMode(ZMangaView::MouseMode mode);
+    QString getOpenedFile() const;
+    int getCurrentPage() const;
+    void setScroller(QScrollArea* scroller);
     
 Q_SIGNALS:
     void loadedPage(int num, const QString &msg);
@@ -86,8 +92,7 @@ Q_SIGNALS:
     void keyPressed(int key);
     void averageSizes(const QSize &sz, qint64 fsz);
     void minimizeRequested();
-    void closeFileRequested();
-    void rotationUpdated(int degree);
+    void rotationUpdated(double angle);
     void auxMessage(const QString& msg);
     void cropUpdated(const QRect& crop);
     void backgroundUpdated(const QColor& color);
@@ -110,8 +115,6 @@ public Q_SLOTS:
     void redrawPage();
     void redrawPageEx(const QImage &scaled, int page);
     void ownerResized(const QSize& size);
-    void minimizeWindowCtx();
-    void closeFileCtx();
     void changeMangaCoverCtx();
     void exportPagesCtx();
 
@@ -135,14 +138,14 @@ public Q_SLOTS:
     void cacheGotError(const QString& msg);
 
 protected:
-    void wheelEvent(QWheelEvent *event);
-    void paintEvent(QPaintEvent *);
-    void mouseMoveEvent(QMouseEvent *event);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseDoubleClickEvent(QMouseEvent *);
-    void mouseReleaseEvent(QMouseEvent *);
-    void keyPressEvent(QKeyEvent *event);
-    void contextMenuEvent(QContextMenuEvent *event);
+    void wheelEvent(QWheelEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 };
 
 #endif // ZMANGAVIEW_H

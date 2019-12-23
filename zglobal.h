@@ -19,6 +19,8 @@ class ZGlobal : public QObject
 {
     Q_OBJECT
 private:
+    Q_DISABLE_COPY(ZGlobal)
+
     QThread* threadDB;
     QString dbHost, dbBase, dbUser, dbPass;
     QHash<QString,QStringList> dirWatchList;
@@ -26,50 +28,46 @@ private:
     QHash<QString,QString> langNamesList;       // bcp -> names
     QList<qint64> fineRenderTimes;
     QMutex fineRenderMutex;
-    qint64 avgFineRenderTime;
+    qint64 avgFineRenderTime { 0 };
 
     void checkSQLProblems(QWidget *parent);
     void initLanguagesList();
 
 public:
     ZDB* db;
-    ZOCREditor* ocrEditor;
+    ZOCREditor* ocrEditor { nullptr };
     QFileSystemWatcher* fsWatcher;
     QStringList newlyAddedFiles;
 
     explicit ZGlobal(QObject *parent = nullptr);
-    ~ZGlobal();
+    ~ZGlobal() override;
+
+    Blitz::ScaleFilterType downscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
+    Blitz::ScaleFilterType upscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
+    Z::PDFRendering pdfRendering { Z::Autodetect };
+    Z::DBMS dbEngine { Z::SQLite };
+    bool cachePixmaps { false };
+    bool useFineRendering { true };
+    bool filesystemWatcher { false };
+    int cacheWidth { 6 };
+    int magnifySize { 100 };
+    int scrollDelta { 120 };
+    int detectedDelta { 120 };
+    int scrollFactor { 3 };
+    qreal dpiX { 75.0 };
+    qreal dpiY { 75.0 };
+    qreal forceDPI { -1.0 };
+    double resizeBlur { 1.0 };
+    double searchScrollFactor { 0.1 };
 
     ZStrMap bookmarks;
-
     ZStrMap ctxSearchEngines;
     QString defaultSearchEngine;
-
     QString tranSourceLang, tranDestLang;
-
-    Blitz::ScaleFilterType downscaleFilter, upscaleFilter;
-    Z::Ordering defaultOrdering;
-    Qt::SortOrder defaultOrderingDirection;
-    Z::PDFRendering pdfRendering;
-    Z::DBMS dbEngine;
-    int cacheWidth;
-    int magnifySize;
-    double resizeBlur;
     QString savedAuxOpenDir, savedIndexOpenDir, savedAuxSaveDir;
     QColor backgroundColor, frameColor;
     QFont idxFont, ocrFont;
     QString rarCmd;
-    int scrollDelta;
-    int detectedDelta;
-    int scrollFactor;
-    double searchScrollFactor;
-
-    bool cachePixmaps;
-    bool useFineRendering;
-    bool filesystemWatcher;
-
-    qreal dpiX, dpiY;
-    qreal forceDPI;
 
     QColor foregroundColor();
 
@@ -97,14 +95,18 @@ Q_SIGNALS:
     void fsFilesAdded();
     void dbSetDynAlbums(const ZStrMap& albums);
     void dbSetIgnoredFiles(const QStringList& files);
+    void auxMessage(const QString& msg);
+    void loadSearchTabSettings(QSettings *settings);
+    void saveSearchTabSettings(QSettings *settings);
 
 };
 
 class ZFileEntry {
 public:
     QString name;
-    int idx;
-    ZFileEntry();
+    int idx { -1 };
+    ZFileEntry() = default;
+    ~ZFileEntry() = default;
     ZFileEntry(const ZFileEntry& other);
     ZFileEntry(const QString &aName, int aIdx);
     ZFileEntry &operator=(const ZFileEntry& other) = default;

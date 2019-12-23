@@ -20,9 +20,9 @@
 #include "bookmarkdlg.h"
 #include "ocreditor.h"
 
-MainWindow::MainWindow(QWidget *parent) :
+ZMainWindow::ZMainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::ZMainWindow)
 {
     if (zg==nullptr)
         zg = new ZGlobal(this);
@@ -34,26 +34,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowIcon(QIcon(":/Alien9"));
 
-    bookmarksMenu = ui->menuBookmarks;
-    searchTab = ui->searchTab;
-    fullScreen = false;
-    fullScreenControls = false;
-    fastScrollPanel = ui->fastScrollPanel;
-    bookmarksMenu->setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
+    ui->menuBookmarks->setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
 
-    indexerMsgBox.setWindowTitle(tr("QManga"));
+    m_indexerMsgBox.setWindowTitle(tr("QManga"));
 
-    lblSearchStatus = new QLabel(tr("Ready"));
-    lblAverageSizes = new QLabel();
-    lblRotation = new QLabel(tr("Rotation: 0"));
-    lblCrop = new QLabel();
-    lblAverageFineRender = new QLabel();
+    m_lblSearchStatus = new QLabel(tr("Ready"));
+    m_lblAverageSizes = new QLabel();
+    m_lblRotation = new QLabel(tr("Rotation: 0"));
+    m_lblCrop = new QLabel();
+    m_lblAverageFineRender = new QLabel();
 
-    statusBar()->addPermanentWidget(lblAverageFineRender);
-    statusBar()->addPermanentWidget(lblAverageSizes);
-    statusBar()->addPermanentWidget(lblSearchStatus);
-    statusBar()->addPermanentWidget(lblRotation);
-    statusBar()->addPermanentWidget(lblCrop);
+    statusBar()->addPermanentWidget(m_lblAverageFineRender);
+    statusBar()->addPermanentWidget(m_lblAverageSizes);
+    statusBar()->addPermanentWidget(m_lblSearchStatus);
+    statusBar()->addPermanentWidget(m_lblRotation);
+    statusBar()->addPermanentWidget(m_lblCrop);
 
     ui->spinPosition->hide();
     ui->fastScrollPanel->hide();
@@ -63,85 +58,85 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    zoomGroup = new QButtonGroup(this);
-    zoomGroup->addButton(ui->btnZoomFit, ZMangaView::zmFit);
-    zoomGroup->addButton(ui->btnZoomWidth, ZMangaView::zmWidth);
-    zoomGroup->addButton(ui->btnZoomHeight, ZMangaView::zmHeight);
-    zoomGroup->addButton(ui->btnZoomOriginal, ZMangaView::zmOriginal);
-    zoomGroup->setExclusive(true);
+    m_zoomGroup = new QButtonGroup(this);
+    m_zoomGroup->addButton(ui->btnZoomFit, ZMangaView::zmFit);
+    m_zoomGroup->addButton(ui->btnZoomWidth, ZMangaView::zmWidth);
+    m_zoomGroup->addButton(ui->btnZoomHeight, ZMangaView::zmHeight);
+    m_zoomGroup->addButton(ui->btnZoomOriginal, ZMangaView::zmOriginal);
+    m_zoomGroup->setExclusive(true);
 
-    connect(ui->actionExit,&QAction::triggered,this,&MainWindow::close);
-    connect(ui->actionOpen,&QAction::triggered,this,&MainWindow::openAux);
-    connect(ui->actionOpenClipboard,&QAction::triggered,this,&MainWindow::openClipboard);
-    connect(ui->actionClose,&QAction::triggered,this,&MainWindow::closeManga);
+    connect(ui->actionExit,&QAction::triggered,this,&ZMainWindow::close);
+    connect(ui->actionOpen,&QAction::triggered,this,&ZMainWindow::openAux);
+    connect(ui->actionOpenClipboard,&QAction::triggered,this,&ZMainWindow::openClipboard);
+    connect(ui->actionClose,&QAction::triggered,this,&ZMainWindow::closeManga);
     connect(ui->actionSettings,&QAction::triggered,zg,&ZGlobal::settingsDlg);
-    connect(ui->actionAddBookmark,&QAction::triggered,this,&MainWindow::createBookmark);
-    connect(ui->actionAbout,&QAction::triggered,this,&MainWindow::helpAbout);
-    connect(ui->actionFullscreen,&QAction::triggered,this,&MainWindow::switchFullscreen);
-    connect(ui->actionMinimize,&QAction::triggered,this,&MainWindow::showMinimized);
+    connect(ui->actionAddBookmark,&QAction::triggered,this,&ZMainWindow::createBookmark);
+    connect(ui->actionAbout,&QAction::triggered,this,&ZMainWindow::helpAbout);
+    connect(ui->actionFullscreen,&QAction::triggered,this,&ZMainWindow::switchFullscreen);
+    connect(ui->actionMinimize,&QAction::triggered,this,&ZMainWindow::showMinimized);
     connect(ui->actionSaveSettings,&QAction::triggered,zg,&ZGlobal::saveSettings);
     connect(ui->actionShowOCR,&QAction::triggered,zg->ocrEditor,&ZOCREditor::show);
 
-    connect(ui->btnOpen,&QPushButton::clicked,this,&MainWindow::openAux);
-    connect(ui->mangaView,&ZMangaView::loadedPage,this,&MainWindow::dispPage);
-    connect(ui->scrollArea,&ZScrollArea::sizeChanged,ui->mangaView,&ZMangaView::ownerResized);
-    connect(ui->comboZoom,qOverload<const QString &>(&QComboBox::currentIndexChanged),
-            ui->mangaView,&ZMangaView::setZoomAny);
-    connect(ui->mangaView,&ZMangaView::doubleClicked,this,&MainWindow::switchFullscreen);
-    connect(ui->mangaView,&ZMangaView::keyPressed,this,&MainWindow::viewerKeyPressed);
-    connect(ui->mangaView,&ZMangaView::minimizeRequested,this,&MainWindow::showMinimized);
-    connect(ui->mangaView,&ZMangaView::closeFileRequested,this,&MainWindow::closeManga);
-    connect(searchTab,&ZSearchTab::mangaDblClick,this,&MainWindow::openFromIndex);
-    connect(searchTab,&ZSearchTab::statusBarMsg,this,&MainWindow::auxMessage);
-    connect(ui->mangaView,&ZMangaView::auxMessage,this,&MainWindow::auxMessage);
-    connect(ui->mangaView,&ZMangaView::averageSizes,this,&MainWindow::msgFromMangaView);
-    connect(ui->spinPosition,&QSpinBox::editingFinished,this,&MainWindow::pageNumEdited);
+    connect(ui->searchTab,&ZSearchTab::mangaDblClick,this,&ZMainWindow::openFromIndex);
+    connect(ui->searchTab,&ZSearchTab::statusBarMsg,this,&ZMainWindow::auxMessage);
+    connect(ui->tabWidget,&QTabWidget::currentChanged,this,&ZMainWindow::tabChanged);
+    connect(ui->fastScrollSlider,&QSlider::valueChanged,this,&ZMainWindow::fastScroll);
+
+    connect(ui->btnOpen,&QPushButton::clicked,this,&ZMainWindow::openAux);
     connect(ui->btnRotateCCW,&QPushButton::clicked,ui->mangaView,&ZMangaView::viewRotateCCW);
     connect(ui->btnRotateCW,&QPushButton::clicked,ui->mangaView,&ZMangaView::viewRotateCW);
-    connect(ui->mangaView,&ZMangaView::rotationUpdated,this,&MainWindow::rotationUpdated);
-    connect(ui->mangaView,&ZMangaView::cropUpdated,this,&MainWindow::cropUpdated);
-    connect(ui->mangaView,&ZMangaView::backgroundUpdated,this,&MainWindow::viewerBackgroundUpdated);
-
     connect(ui->btnNavFirst,&QPushButton::clicked,ui->mangaView,&ZMangaView::navFirst);
     connect(ui->btnNavPrev,&QPushButton::clicked,ui->mangaView,&ZMangaView::navPrev);
     connect(ui->btnNavNext,&QPushButton::clicked,ui->mangaView,&ZMangaView::navNext);
     connect(ui->btnNavLast,&QPushButton::clicked,ui->mangaView,&ZMangaView::navLast);
-
-    connect(zoomGroup,qOverload<int>(&QButtonGroup::buttonClicked),this,[this](int mode){
+    connect(ui->btnZoomDynamic,&QPushButton::toggled,ui->mangaView,&ZMangaView::setZoomDynamic);
+    connect(ui->btnSearchTab,&QPushButton::clicked,this,&ZMainWindow::openSearchTab);
+    connect(ui->btnFSAdd,&QPushButton::clicked,this,&ZMainWindow::fsAddFiles);
+    connect(ui->btnFSCheck,&QPushButton::clicked,this,&ZMainWindow::fsCheckAvailability);
+    connect(ui->btnFSDelete,&QPushButton::clicked,this,&ZMainWindow::fsDelFiles);
+    connect(ui->btnFSFind,&QPushButton::clicked,this,&ZMainWindow::fsFindNewFiles);
+    connect(m_zoomGroup,qOverload<int>(&QButtonGroup::buttonClicked),this,[this](int mode){
         ui->comboZoom->setEnabled(mode==ZMangaView::zmOriginal);
         ui->mangaView->setZoomMode(mode);
     });
-    connect(ui->btnZoomDynamic,&QPushButton::toggled,ui->mangaView,&ZMangaView::setZoomDynamic);
 
-    connect(ui->btnSearchTab,&QPushButton::clicked,this,&MainWindow::openSearchTab);
-    connect(ui->tabWidget,&QTabWidget::currentChanged,this,&MainWindow::tabChanged);
-
-    connect(ui->fastScrollSlider,&QSlider::valueChanged,this,&MainWindow::fastScroll);
-
+    connect(ui->scrollArea,&ZScrollArea::sizeChanged,ui->mangaView,&ZMangaView::ownerResized);
+    connect(ui->comboZoom,qOverload<const QString &>(&QComboBox::currentIndexChanged),
+            ui->mangaView,&ZMangaView::setZoomAny);
+    connect(ui->spinPosition,&QSpinBox::editingFinished,this,&ZMainWindow::pageNumEdited);
     connect(ui->comboMouseMode,qOverload<int>(&QComboBox::currentIndexChanged),
-            this,&MainWindow::changeMouseMode);
+            this,&ZMainWindow::changeMouseMode);
+
+    connect(ui->mangaView,&ZMangaView::loadedPage,this,&ZMainWindow::dispPage);
+    connect(ui->mangaView,&ZMangaView::doubleClicked,this,&ZMainWindow::switchFullscreen);
+    connect(ui->mangaView,&ZMangaView::keyPressed,this,&ZMainWindow::viewerKeyPressed);
+    connect(ui->mangaView,&ZMangaView::minimizeRequested,this,&ZMainWindow::showMinimized);
+    connect(ui->mangaView,&ZMangaView::auxMessage,this,&ZMainWindow::auxMessage);
+    connect(ui->mangaView,&ZMangaView::averageSizes,this,&ZMainWindow::msgFromMangaView);
+    connect(ui->mangaView,&ZMangaView::rotationUpdated,this,&ZMainWindow::rotationUpdated);
+    connect(ui->mangaView,&ZMangaView::cropUpdated,this,&ZMainWindow::cropUpdated);
+    connect(ui->mangaView,&ZMangaView::backgroundUpdated,this,&ZMainWindow::viewerBackgroundUpdated);
 
     connect(ui->fsResults,&QTableWidget::customContextMenuRequested,
-            this,&MainWindow::fsResultsMenuCtx);
-    connect(ui->btnFSAdd,&QPushButton::clicked,this,&MainWindow::fsAddFiles);
-    connect(ui->btnFSCheck,&QPushButton::clicked,this,&MainWindow::fsCheckAvailability);
-    connect(ui->btnFSDelete,&QPushButton::clicked,this,&MainWindow::fsDelFiles);
-    connect(ui->btnFSFind,&QPushButton::clicked,this,&MainWindow::fsFindNewFiles);
-    connect(zg->db,&ZDB::foundNewFiles,
-            this,&MainWindow::fsFoundNewFiles,Qt::QueuedConnection);
-    connect(this,&MainWindow::dbAddIgnoredFiles,
-            zg->db,&ZDB::sqlAddIgnoredFiles,Qt::QueuedConnection);
-    connect(this,&MainWindow::dbFindNewFiles,
-            zg->db,&ZDB::sqlSearchMissingManga,Qt::QueuedConnection);
-    connect(zg,&ZGlobal::fsFilesAdded,this,&MainWindow::fsNewFilesAdded);
-    connect(this,&MainWindow::dbAddFiles,
-            zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
+            this,&ZMainWindow::fsResultsMenuCtx);
 
-    ui->mangaView->scroller = ui->scrollArea;
+    connect(zg,&ZGlobal::auxMessage,this,&ZMainWindow::auxMessage);
+    // Explicitly use DirectConnection for synchronous call
+    connect(zg,&ZGlobal::loadSearchTabSettings,ui->searchTab,&ZSearchTab::loadSettings,Qt::DirectConnection);
+    connect(zg,&ZGlobal::saveSearchTabSettings,ui->searchTab,&ZSearchTab::saveSettings,Qt::DirectConnection);
+
+    connect(zg->db,&ZDB::foundNewFiles,this,&ZMainWindow::fsFoundNewFiles,Qt::QueuedConnection);
+    connect(zg,&ZGlobal::fsFilesAdded,this,&ZMainWindow::fsNewFilesAdded);
+
+    connect(this,&ZMainWindow::dbAddIgnoredFiles,zg->db,&ZDB::sqlAddIgnoredFiles,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbFindNewFiles,zg->db,&ZDB::sqlSearchMissingManga,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbAddFiles,zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
+
+    ui->mangaView->setScroller(ui->scrollArea);
     zg->loadSettings();
     centerWindow(!isMaximized());
-    savedGeometry=geometry();
-    savedMaximized=isMaximized();
+    m_savedGeometry=geometry();
+    m_savedMaximized=isMaximized();
     dispPage(-1,QString());
 
     QString fname;
@@ -153,20 +148,26 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnZoomFit->click();
 
 #ifdef WITH_OCR
-    if (!ocr)
+    if (!ocr) {
         QMessageBox::critical(nullptr,tr("QManga"),tr("Could not initialize Tesseract. \n"
                                                       "Maybe language training data is not installed."));
+    }
 #endif
 }
 
-MainWindow::~MainWindow()
+ZMainWindow::~ZMainWindow()
 {
     delete ui;
     zg = nullptr;
 }
 
-void MainWindow::centerWindow(bool moveWindow)
+void ZMainWindow::centerWindow(bool moveWindow)
 {
+    constexpr int initialHeightFrac = 80;
+    constexpr int initialWidthFrac = 135;
+    constexpr int maxWidth = 1000;
+    constexpr int maxWidthFrac = 80;
+
     QScreen *screen = nullptr;
 
     if (window() && window()->windowHandle()) {
@@ -178,47 +179,99 @@ void MainWindow::centerWindow(bool moveWindow)
         screen = QApplication::primaryScreen();
 
     QRect rect(screen->availableGeometry());
-    int h = 80*rect.height()/100;
-    QSize nw(135*h/100,h);
-    if (nw.width()<1000) nw.setWidth(80*rect.width()/100);
+    int h = initialHeightFrac*rect.height()/100;
+    QSize nw(initialWidthFrac*h/100,h);
+    if (nw.width()<maxWidth) nw.setWidth(maxWidthFrac*rect.width()/100);
 
     if (moveWindow) {
         resize(nw);
         move(rect.width()/2 - frameGeometry().width()/2,
              rect.height()/2 - frameGeometry().height()/2);
-        searchTab->updateSplitters();
+        ui->searchTab->updateSplitters();
     }
 
     zg->dpiX = screen->physicalDotsPerInchX();
     zg->dpiY = screen->physicalDotsPerInchY();
 #ifdef Q_OS_WIN
-    if (abs(zg->dpiX-zg->dpiY)>20.0) {
+    const qreal maxDPIdifference = 20.0;
+    const qreal minDPI = 130.0;
+    if (abs(zg->dpiX-zg->dpiY)>maxDPIdifference) {
         qreal dpi = qMax(zg->dpiX,zg->dpiY);
-        if (dpi<130.0) dpi=130.0;
+        if (dpi<minDPI) dpi=minDPI;
         zg->dpiX = dpi;
         zg->dpiY = dpi;
     }
 #endif
 }
 
-bool MainWindow::isMangaOpened()
+bool ZMainWindow::isMangaOpened()
 {
     return (ui->mangaView->getPageCount()>0);
 }
 
-bool MainWindow::isFullScreenControlsVisible()
+bool ZMainWindow::isFullScreenControlsVisible()
 {
-    return !fullScreen || fullScreenControls;
+    return !m_fullScreen || m_fullScreenControls;
 }
 
-void MainWindow::setZoomMode(int mode)
+void ZMainWindow::setZoomMode(int mode)
 {
-    auto btn = zoomGroup->button(mode);
+    auto btn = m_zoomGroup->button(mode);
     if (btn)
         btn->click();
 }
 
-void MainWindow::openAuxFile(const QString &filename)
+void ZMainWindow::addContextMenuItems(QMenu* menu)
+{
+    auto nt = new QAction(QIcon(":/16/zoom-fit-best"),tr("Zoom fit"),nullptr);
+    connect(nt,&QAction::triggered,this,[this](){
+        setZoomMode(ZMangaView::zmFit);
+    });
+    menu->addAction(nt);
+    nt = new QAction(QIcon(":/16/zoom-fit-width"),tr("Zoom width"),nullptr);
+    connect(nt,&QAction::triggered,this,[this](){
+        setZoomMode(ZMangaView::zmWidth);
+    });
+    menu->addAction(nt);
+    nt = new QAction(QIcon(":/16/zoom-fit-height"),tr("Zoom height"),nullptr);
+    connect(nt,&QAction::triggered,this,[this](){
+        setZoomMode(ZMangaView::zmHeight);
+    });
+    menu->addAction(nt);
+    nt = new QAction(QIcon(":/16/zoom-original"),tr("Zoom original"),nullptr);
+    connect(nt,&QAction::triggered,this,[this](){
+        setZoomMode(ZMangaView::zmOriginal);
+    });
+    menu->addAction(nt);
+    menu->addSeparator();
+//    nt = new QAction(QIcon(":/16/zoom-draw"),tr("Zoom dynamic"),nullptr);
+//    nt->setCheckable(true);
+//    nt->setChecked(m_zoomDynamic);
+//    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomDynamic);
+//    menu->addAction(nt);
+    menu->addSeparator();
+
+    nt = new QAction(QIcon(":/16/document-close"),tr("Close manga"),nullptr);
+    connect(nt,&QAction::triggered,this,&ZMainWindow::closeManga);
+    menu->addAction(nt);
+    menu->addSeparator();
+    nt = new QAction(QIcon(":/16/go-down"),tr("Minimize window"),nullptr);
+    connect(nt,&QAction::triggered,this,&ZMainWindow::showMinimized);
+    menu->addAction(nt);
+    nt = new QAction(QIcon(":/16/transform-move"),tr("Show fast scroller"),nullptr);
+    nt->setCheckable(true);
+    nt->setChecked(ui->fastScrollPanel->isVisible());
+    connect(nt,&QAction::toggled,ui->fastScrollPanel,&QFrame::setVisible);
+    menu->addAction(nt);
+    nt = new QAction(QIcon(":/16/edit-rename"),tr("Show controls"),nullptr);
+    nt->setCheckable(true);
+    nt->setShortcut(QKeySequence(Qt::Key_Return));
+    nt->setChecked(isFullScreenControlsVisible());
+    connect(nt,&QAction::toggled,this,&ZMainWindow::switchFullscreenControls);
+    menu->addAction(nt);
+}
+
+void ZMainWindow::openAuxFile(const QString &filename)
 {
     QFileInfo fi(filename);
     zg->savedAuxOpenDir = fi.path();
@@ -227,21 +280,21 @@ void MainWindow::openAuxFile(const QString &filename)
     ui->mangaView->openFile(filename);
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void ZMainWindow::closeEvent(QCloseEvent *event)
 {
     if (zg!=nullptr)
         zg->saveSettings();
     event->accept();
 }
 
-void MainWindow::openAux()
+void ZMainWindow::openAux()
 {
     QString filename = getOpenFileNameD(this,tr("Open manga or image"),zg->savedAuxOpenDir);
     if (!filename.isEmpty())
         openAuxFile(filename);
 }
 
-void MainWindow::openClipboard()
+void ZMainWindow::openClipboard()
 {
     if (!QApplication::clipboard()->mimeData()->hasImage()) {
         QMessageBox::warning(this,tr("QManga"),tr("Clipboard is empty or contains incompatible data."));
@@ -260,19 +313,19 @@ void MainWindow::openClipboard()
     ui->mangaView->openFile(bs);
 }
 
-void MainWindow::openFromIndex(const QString &filename)
+void ZMainWindow::openFromIndex(const QString &filename)
 {
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(filename);
 }
 
-void MainWindow::closeManga()
+void ZMainWindow::closeManga()
 {
     ui->mangaView->closeFile();
     ui->spinPosition->hide();
 }
 
-void MainWindow::dispPage(int num, const QString &msg)
+void ZMainWindow::dispPage(int num, const QString &msg)
 {
     updateTitle();
     if (num<0 || !isMangaOpened()) {
@@ -299,25 +352,26 @@ void MainWindow::dispPage(int num, const QString &msg)
         ui->fastScrollSlider->blockSignals(false);
     }
 
-    if (!msg.isEmpty())
+    if (!msg.isEmpty()) {
         statusBar()->showMessage(msg);
-    else
+    } else {
         statusBar()->clearMessage();
+    }
 }
 
-void MainWindow::switchFullscreen()
+void ZMainWindow::switchFullscreen()
 {
-    fullScreen = !fullScreen;
-    fullScreenControls = false;
+    m_fullScreen = !m_fullScreen;
+    m_fullScreenControls = false;
 
-    if (fullScreen) {
-        savedMaximized = isMaximized();
-        savedGeometry = geometry();
+    if (m_fullScreen) {
+        m_savedMaximized = isMaximized();
+        m_savedGeometry = geometry();
     }
 
     updateControlsVisibility();
     int m = 2;
-    if (fullScreen) m = 0;
+    if (m_fullScreen) m = 0;
     if (ui->centralWidget != nullptr) {
         ui->centralWidget->layout()->setMargin(m);
         ui->centralWidget->layout()->setContentsMargins(m,m,m,m);
@@ -326,29 +380,29 @@ void MainWindow::switchFullscreen()
         ui->tabWidget->currentWidget()->layout()->setMargin(m);
         ui->tabWidget->currentWidget()->layout()->setContentsMargins(m,m,m,m);
     }
-    if (fullScreen)
+    if (m_fullScreen) {
         showFullScreen();
-    else {
-        if (savedMaximized) {
+    } else {
+        if (m_savedMaximized) {
             showNormal();
             showMaximized();
         } else {
             showNormal();
-            setGeometry(savedGeometry);
+            setGeometry(m_savedGeometry);
         }
     }
-    ui->actionFullscreen->setChecked(fullScreen);
+    ui->actionFullscreen->setChecked(m_fullScreen);
 }
 
-void MainWindow::switchFullscreenControls()
+void ZMainWindow::switchFullscreenControls()
 {
-    if (!fullScreen) return;
+    if (!m_fullScreen) return;
 
-    fullScreenControls = !fullScreenControls;
+    m_fullScreenControls = !m_fullScreenControls;
     updateControlsVisibility();
 }
 
-void MainWindow::updateControlsVisibility()
+void ZMainWindow::updateControlsVisibility()
 {
     bool state = isFullScreenControlsVisible();
 
@@ -358,9 +412,9 @@ void MainWindow::updateControlsVisibility()
     ui->toolbar->setVisible(state);
 }
 
-void MainWindow::viewerKeyPressed(int key)
+void ZMainWindow::viewerKeyPressed(int key)
 {
-    if (fullScreen) {
+    if (m_fullScreen) {
         if (key==Qt::Key_Return) {
             switchFullscreenControls();
         }
@@ -370,46 +424,47 @@ void MainWindow::viewerKeyPressed(int key)
     }
 }
 
-void MainWindow::updateViewer()
+void ZMainWindow::updateViewer()
 {
     ui->mangaView->redrawPage();
 }
 
-void MainWindow::rotationUpdated(int degree)
+void ZMainWindow::rotationUpdated(double angle)
 {
-    lblRotation->setText(tr("Rotation: %1").arg(degree));
+    m_lblRotation->setText(tr("Rotation: %1").arg(angle,0,'f'));
 }
 
-void MainWindow::cropUpdated(const QRect &crop)
+void ZMainWindow::cropUpdated(const QRect &crop)
 {
-    if (!crop.isNull())
-        lblCrop->setText(tr("Cropped: %1x%2").arg(crop.width()).arg(crop.height()));
-    else
-        lblCrop->clear();
+    if (!crop.isNull()) {
+        m_lblCrop->setText(tr("Cropped: %1x%2").arg(crop.width()).arg(crop.height()));
+    } else {
+        m_lblCrop->clear();
+    }
 }
 
-void MainWindow::fastScroll(int page)
+void ZMainWindow::fastScroll(int page)
 {
     if (!isMangaOpened()) return;
     if (page<=0 || page>ui->mangaView->getPageCount()) return;
     ui->mangaView->setPage(page-1);
 }
 
-void MainWindow::updateFastScrollPosition()
+void ZMainWindow::updateFastScrollPosition()
 {
     if (!isMangaOpened()) return;
     ui->fastScrollSlider->blockSignals(true);
-    ui->fastScrollSlider->setValue(ui->mangaView->currentPage+1);
+    ui->fastScrollSlider->setValue(ui->mangaView->getCurrentPage()+1);
     ui->fastScrollSlider->blockSignals(false);
 }
 
-void MainWindow::tabChanged(int idx)
+void ZMainWindow::tabChanged(int idx)
 {
-    if (idx==1 && searchTab!=nullptr)
-        searchTab->updateFocus();
+    if (idx==1 && ui->searchTab!=nullptr)
+        ui->searchTab->updateFocus();
 }
 
-void MainWindow::changeMouseMode(int mode)
+void ZMainWindow::changeMouseMode(int mode)
 {
     switch (mode) {
         case 0: ui->mangaView->setMouseMode(ZMangaView::mmOCR); break;
@@ -421,7 +476,7 @@ void MainWindow::changeMouseMode(int mode)
     }
 }
 
-void MainWindow::viewerBackgroundUpdated(const QColor &color)
+void ZMainWindow::viewerBackgroundUpdated(const QColor &color)
 {
     Q_UNUSED(color)
     static QColor oldColor(Qt::black);
@@ -436,13 +491,13 @@ void MainWindow::viewerBackgroundUpdated(const QColor &color)
     oldColor = c;
 }
 
-void MainWindow::updateBookmarks()
+void ZMainWindow::updateBookmarks()
 {
-    while (bookmarksMenu->actions().count()>2)
-        bookmarksMenu->removeAction(bookmarksMenu->actions().constLast());
+    while (ui->menuBookmarks->actions().count()>2)
+        ui->menuBookmarks->removeAction(ui->menuBookmarks->actions().constLast());
     for (auto it = zg->bookmarks.constKeyValueBegin(), end = zg->bookmarks.constKeyValueEnd();
          it != end; ++it) {
-        QAction* a = bookmarksMenu->addAction((*it).first,this,&MainWindow::openBookmark);
+        QAction* a = ui->menuBookmarks->addAction((*it).first,this,&ZMainWindow::openBookmark);
         QString st = (*it).second;
         a->setData(st);
         if (st.split('\n').count()>0)
@@ -451,12 +506,13 @@ void MainWindow::updateBookmarks()
     }
 }
 
-void MainWindow::updateTitle()
+void ZMainWindow::updateTitle()
 {
     QString t;
     t.clear();
-    if (!ui->mangaView->openedFile.isEmpty()) {
-        QFileInfo fi(ui->mangaView->openedFile);
+    const QString openedFile = ui->mangaView->getOpenedFile();
+    if (!openedFile.isEmpty()) {
+        QFileInfo fi(openedFile);
         t = tr("%1 - QManga").arg(fi.fileName());
     } else {
         t = tr("QManga - Manga viewer and indexer");
@@ -464,26 +520,26 @@ void MainWindow::updateTitle()
     setWindowTitle(t);
 }
 
-void MainWindow::createBookmark()
+void ZMainWindow::createBookmark()
 {
-    if (ui->mangaView->openedFile.isEmpty()) return;
-    QFileInfo fi(ui->mangaView->openedFile);
-    ZTwoEditDlg *dlg = new ZTwoEditDlg(this,tr("Add bookmark"),tr("Title"),tr("Filename"),
-                                       fi.completeBaseName(),ui->mangaView->openedFile);
-    if (dlg->exec()) {
-        QString t = dlg->getDlgEdit1();
+    const QString openedFile = ui->mangaView->getOpenedFile();
+    if (openedFile.isEmpty()) return;
+    QFileInfo fi(openedFile);
+    ZTwoEditDlg dlg(this,tr("Add bookmark"),tr("Title"),tr("Filename"),
+                                       fi.completeBaseName(),openedFile);
+    if (dlg.exec()==QDialog::Accepted) {
+        QString t = dlg.getDlgEdit1();
         if (!t.isEmpty() && !zg->bookmarks.contains(t)) {
-            zg->bookmarks[t]=QSL("%1\n%2").arg(dlg->getDlgEdit2()).arg(ui->mangaView->currentPage);
+            zg->bookmarks[t]=QSL("%1\n%2").arg(dlg.getDlgEdit2()).arg(ui->mangaView->getCurrentPage());
             updateBookmarks();
-        } else
+        } else {
             QMessageBox::warning(this,tr("QManga"),
                                  tr("Unable to add bookmark (frame is empty or duplicate title). Try again."));
+        }
     }
-    dlg->setParent(nullptr);
-    delete dlg;
 }
 
-void MainWindow::openBookmark()
+void ZMainWindow::openBookmark()
 {
     auto a = qobject_cast<QAction *>(sender());
     if (a==nullptr) return;
@@ -507,12 +563,12 @@ void MainWindow::openBookmark()
     ui->mangaView->openFileEx(f,page);
 }
 
-void MainWindow::openSearchTab()
+void ZMainWindow::openSearchTab()
 {
     ui->tabWidget->setCurrentIndex(1);
 }
 
-void MainWindow::helpAbout()
+void ZMainWindow::helpAbout()
 {
     QMessageBox::about(this, tr("QManga"),
                        tr("Manga reader with MySQL indexer.\n\nLicensed under GPL v3 license.\n\n"
@@ -522,38 +578,40 @@ void MainWindow::helpAbout()
 
 }
 
-void MainWindow::auxMessage(const QString &msg)
+void ZMainWindow::auxMessage(const QString &msg)
 {
     QString s = msg;
     bool showMsgBox = s.startsWith(QSL("MBOX#"));
     if (showMsgBox)
         s.remove(QSL("MBOX#"));
-    lblSearchStatus->setText(s);
+    m_lblSearchStatus->setText(s);
     if (showMsgBox) {
-        if (indexerMsgBox.isVisible())
-            indexerMsgBox.setText(indexerMsgBox.text()+QSL("\n")+s);
-        else
-            indexerMsgBox.setText(s);
-        indexerMsgBox.exec();
+        if (m_indexerMsgBox.isVisible()) {
+            m_indexerMsgBox.setText(m_indexerMsgBox.text()+QSL("\n")+s);
+        } else {
+            m_indexerMsgBox.setText(s);
+        }
+        m_indexerMsgBox.exec();
     }
 }
 
-void MainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
+void ZMainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
 {
-    if (zg->cachePixmaps)
-        lblAverageSizes->setText(tr("Avg size: %1x%2").arg(sz.width()).arg(sz.height()));
-    else
-        lblAverageSizes->setText(tr("Avg size: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
+    if (zg->cachePixmaps) {
+        m_lblAverageSizes->setText(tr("Avg size: %1x%2").arg(sz.width()).arg(sz.height()));
+    } else {
+        m_lblAverageSizes->setText(tr("Avg size: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
+    }
 
     if (zg->getAvgFineRenderTime()>0)
-        lblAverageFineRender->setText(tr("Avg filter: %1 ms").arg(zg->getAvgFineRenderTime()));
+        m_lblAverageFineRender->setText(tr("Avg filter: %1 ms").arg(zg->getAvgFineRenderTime()));
 }
 
-void MainWindow::fsAddFiles()
+void ZMainWindow::fsAddFiles()
 {
     QHash<QString,QStringList> fl;
     fl.clear();
-    for (const auto &i : qAsConst(fsScannedFiles)) {
+    for (const auto &i : qAsConst(m_fsScannedFiles)) {
         fl[i.album].append(i.fileName);
         zg->newlyAddedFiles.removeAll(i.fileName);
     }
@@ -564,12 +622,12 @@ void MainWindow::fsAddFiles()
     zg->fsCheckFilesAvailability();
 }
 
-void MainWindow::fsCheckAvailability()
+void ZMainWindow::fsCheckAvailability()
 {
     zg->fsCheckFilesAvailability();
 }
 
-void MainWindow::fsDelFiles()
+void ZMainWindow::fsDelFiles()
 {
     QVector<int> rows;
     const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
@@ -581,19 +639,19 @@ void MainWindow::fsDelFiles()
     }
     if (rows.isEmpty()) return;
     QVector<ZFSFile> nl;
-    for (int i=0;i<fsScannedFiles.count();i++) {
+    for (int i=0;i<m_fsScannedFiles.count();i++) {
         if (!rows.contains(i))
-            nl << fsScannedFiles.at(i);
+            nl << m_fsScannedFiles.at(i);
     }
-    fsScannedFiles = nl;
+    m_fsScannedFiles = nl;
     fsUpdateFileList();
 }
 
-void MainWindow::fsNewFilesAdded()
+void ZMainWindow::fsNewFilesAdded()
 {
-    fsAddFilesMutex.lock();
+    m_fsAddFilesMutex.lock();
     ui->fsResults->clear();
-    fsScannedFiles.clear();
+    m_fsScannedFiles.clear();
     const QStringList f = zg->newlyAddedFiles;
 
     for (const auto &i : f) {
@@ -601,39 +659,39 @@ void MainWindow::fsNewFilesAdded()
         bool mimeOk;
         readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
         if (mimeOk)
-            fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
+            m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
     }
     fsUpdateFileList();
-    fsAddFilesMutex.unlock();
+    m_fsAddFilesMutex.unlock();
 }
 
-void MainWindow::fsUpdateFileList()
+void ZMainWindow::fsUpdateFileList()
 {
     QStringList h;
     h << tr("File") << tr("Album");
     ui->fsResults->setColumnCount(2);
-    ui->fsResults->setRowCount(fsScannedFiles.count());
+    ui->fsResults->setRowCount(m_fsScannedFiles.count());
     ui->fsResults->setHorizontalHeaderLabels(h);
-    for (int i=0;i<fsScannedFiles.count();i++) {
-        ui->fsResults->setItem(i,0,new QTableWidgetItem(fsScannedFiles[i].name));
-        ui->fsResults->setItem(i,1,new QTableWidgetItem(fsScannedFiles[i].album));
+    for (int i=0;i<m_fsScannedFiles.count();i++) {
+        ui->fsResults->setItem(i,0,new QTableWidgetItem(m_fsScannedFiles[i].name));
+        ui->fsResults->setItem(i,1,new QTableWidgetItem(m_fsScannedFiles[i].album));
         QTableWidgetItem* w = ui->fsResults->item(i,0);
         if (w!=nullptr)
-                w->setToolTip(fsScannedFiles[i].fileName);
+                w->setToolTip(m_fsScannedFiles[i].fileName);
     }
     ui->fsResults->setColumnWidth(0,ui->tabWidget->width()/2);
 }
 
-void MainWindow::fsResultsMenuCtx(const QPoint &pos)
+void ZMainWindow::fsResultsMenuCtx(const QPoint &pos)
 {
-    QStringList albums = searchTab->getAlbums();
+    QStringList albums = ui->searchTab->getAlbums();
     QMenu cm(this);
     cm.setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
     QAction* ac;
     int cnt=0;
     if (!ui->fsResults->selectedItems().isEmpty()) {
         ac = new QAction(QIcon(":/16/dialog-cancel"),tr("Ignore these file(s)"),this);
-        connect(ac,&QAction::triggered,this,&MainWindow::fsAddIgnoredFiles);
+        connect(ac,&QAction::triggered,this,&ZMainWindow::fsAddIgnoredFiles);
         cm.addAction(ac);
         cm.addSeparator();
         cnt++;
@@ -641,7 +699,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
     for (const auto &i : albums) {
         if (i.startsWith(QSL("#"))) continue;
         ac = new QAction(i,nullptr);
-        connect(ac,&QAction::triggered,this,&MainWindow::fsResultsCtxApplyAlbum);
+        connect(ac,&QAction::triggered,this,&ZMainWindow::fsResultsCtxApplyAlbum);
         ac->setData(i);
         cm.addAction(ac);
         cnt++;
@@ -650,7 +708,7 @@ void MainWindow::fsResultsMenuCtx(const QPoint &pos)
         cm.exec(ui->fsResults->mapToGlobal(pos));
 }
 
-void MainWindow::fsResultsCtxApplyAlbum()
+void ZMainWindow::fsResultsCtxApplyAlbum()
 {
     auto ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
@@ -666,34 +724,35 @@ void MainWindow::fsResultsCtxApplyAlbum()
         idxs << i->row();
 
     for (const auto &i : qAsConst(idxs))
-        fsScannedFiles[i].album = s;
+        m_fsScannedFiles[i].album = s;
 
     fsUpdateFileList();
 }
 
-void MainWindow::fsFindNewFiles()
+void ZMainWindow::fsFindNewFiles()
 {
-    fsScannedFiles.clear();
+    m_fsScannedFiles.clear();
     fsUpdateFileList();
-    searchTab->dbShowProgressDialogEx(true,tr("Scanning filesystem"));
-    searchTab->dbShowProgressState(25,tr("Scanning filesystem..."));
+    ui->searchTab->dbShowProgressDialogEx(true,tr("Scanning filesystem"));
+    ui->searchTab->dbShowProgressState(ZDefaults::fileScannerStaticPercentage,
+                                       tr("Scanning filesystem..."));
     Q_EMIT dbFindNewFiles();
 }
 
-void MainWindow::fsFoundNewFiles(const QStringList &files)
+void ZMainWindow::fsFoundNewFiles(const QStringList &files)
 {
     for (const QString& filename : files) {
         QFileInfo fi(filename);
         bool mimeOk;
         readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
         if (mimeOk)
-            fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
+            m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
     }
     fsUpdateFileList();
-    searchTab->dbShowProgressDialog(false);
+    ui->searchTab->dbShowProgressDialog(false);
 }
 
-void MainWindow::fsAddIgnoredFiles()
+void ZMainWindow::fsAddIgnoredFiles()
 {
     QList<int> rows;
     const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
@@ -706,30 +765,22 @@ void MainWindow::fsAddIgnoredFiles()
     if (rows.isEmpty()) return;
     QVector<ZFSFile> nl;
     QStringList sl;
-    for (int i=0;i<fsScannedFiles.count();i++) {
-        if (!rows.contains(i))
-            nl << fsScannedFiles.at(i);
-        else
-            sl << fsScannedFiles.at(i).fileName;
-
+    for (int i=0;i<m_fsScannedFiles.count();i++) {
+        if (!rows.contains(i)) {
+            nl << m_fsScannedFiles.at(i);
+        } else {
+            sl << m_fsScannedFiles.at(i).fileName;
+        }
     }
     Q_EMIT dbAddIgnoredFiles(sl);
-    fsScannedFiles = nl;
+    m_fsScannedFiles = nl;
     fsUpdateFileList();
 }
 
-void MainWindow::pageNumEdited()
+void ZMainWindow::pageNumEdited()
 {
-    if (ui->spinPosition->value()!=ui->mangaView->currentPage)
+    if (ui->spinPosition->value()!=ui->mangaView->getCurrentPage())
         ui->mangaView->setPage(ui->spinPosition->value()-1);
-}
-
-
-ZFSFile::ZFSFile()
-{
-    name.clear();
-    fileName.clear();
-    album.clear();
 }
 
 ZFSFile::ZFSFile(const ZFSFile &other)

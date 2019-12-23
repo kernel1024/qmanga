@@ -35,7 +35,7 @@ public:
     QString filename;
     int pageNum { 0 };
     int ref { 0 };
-    ZDjVuDocument();
+    ZDjVuDocument() = default;
     ~ZDjVuDocument() = default;
     ZDjVuDocument(const ZDjVuDocument& other);
     explicit ZDjVuDocument(const QString& aFilename);

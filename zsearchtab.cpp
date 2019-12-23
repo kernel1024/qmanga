@@ -23,8 +23,8 @@
 #include "ui_zsearchtab.h"
 
 namespace ZDefaults {
-const int stackIcons = 0;
-const int stackTable = 1;
+constexpr int stackIcons = 0;
+constexpr int stackTable = 1;
 }
 
 ZSearchTab::ZSearchTab(QWidget *parent) :
@@ -47,7 +47,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     ui->srcIconSize->setMinimum(ZDefaults::minPreviewSize);
     ui->srcIconSize->setMaximum(ZDefaults::maxPreviewSize);
-    ui->srcIconSize->setValue(ZDefaults::initialPreviewSize);
+    ui->srcIconSize->setValue(ZDefaults::previewSize);
     ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     ui->srcList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->srcModeIcon->setChecked(ui->srcStack->currentIndex()==ZDefaults::stackIcons);
@@ -152,7 +152,7 @@ void ZSearchTab::updateSplitters()
 {
     QList<int> widths;
     ui->splitter->setCollapsible(0,true);
-    widths << ZDefaults::initialAlbumListWidth;
+    widths << ZDefaults::albumListWidth;
     widths << width()-widths[0];
     ui->splitter->setSizes(widths);
 }
@@ -169,9 +169,9 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
         for (int i=0;i<Z::maxOrdering;i++) {
             acm = new QAction(Z::sortMenu.value(static_cast<Z::Ordering>(i)),this);
             acm->setCheckable(true);
-            acm->setChecked(static_cast<int>(zg->defaultOrdering) == i);
+            acm->setChecked(static_cast<int>(m_defaultOrdering) == i);
             connect(acm,&QAction::triggered,this,[this,i](){
-                applySortOrder(static_cast<Z::Ordering>(i),zg->defaultOrderingDirection);
+                applySortOrder(static_cast<Z::Ordering>(i),m_defaultOrderingDirection);
             });
             smenu->addAction(acm);
         }
@@ -179,12 +179,12 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
 
         acm = new QAction(tr("Reverse order"),this);
         acm->setCheckable(true);
-        acm->setChecked(zg->defaultOrderingDirection == Qt::DescendingOrder);
+        acm->setChecked(m_defaultOrderingDirection == Qt::DescendingOrder);
         connect(acm,&QAction::triggered,this,[this](){
             Qt::SortOrder order = Qt::AscendingOrder;
-            if (zg->defaultOrderingDirection == Qt::AscendingOrder)
+            if (m_defaultOrderingDirection == Qt::AscendingOrder)
                 order = Qt::DescendingOrder; // reverse
-            applySortOrder(zg->defaultOrdering,order);
+            applySortOrder(m_defaultOrdering,order);
         });
         smenu->addAction(acm);
         cm.addSeparator();
@@ -489,36 +489,63 @@ QListView::ViewMode ZSearchTab::getListViewMode() const
     return QListView::ListMode;
 }
 
-void ZSearchTab::loadSearchItems(QSettings &settings)
+void ZSearchTab::loadSettings(QSettings *settings)
 {
     if (m_searchHistoryModel==nullptr) return;
 
-    QStringList sl;
+    if (settings!=nullptr) {
+        // TODO: backward compatibility. Delete this sometime after.
+        settings->beginGroup(QSL("MainWindow"));
+        QStringList history = settings->value(QSL("search_history"),QStringList()).toStringList();
+        settings->endGroup();
+        // -----------
 
-    int sz=settings.beginReadArray(QSL("search_text"));
-    if (sz>0) {
-        for (int i=0;i<sz;i++) {
-            settings.setArrayIndex(i);
-            QString s = settings.value(QSL("txt"),QString()).toString();
-            if (!s.isEmpty())
-                sl << s;
-            settings.endArray();
-        }
-    } else {
-        settings.endArray();
-        sl = settings.value(QSL("search_history"),
-                            QStringList()).toStringList();
+        settings->beginGroup(QSL("SearchTab"));
+
+        QListView::ViewMode mode = QListView::IconMode;
+        if (settings->value(QSL("listMode"),false).toBool())
+            mode = QListView::ListMode;
+        int iconSize = settings->value(QSL("iconSize"),ZDefaults::previewSize).toInt();
+        setListViewOptions(mode, iconSize);
+
+        m_defaultOrdering = static_cast<Z::Ordering>(settings->value(QSL("defaultOrdering"),
+                                                                     Z::Name).toInt());
+        m_defaultOrderingDirection = static_cast<Qt::SortOrder>(settings->value(
+                                                                    QSL("defaultOrderingDirection"),
+                                                                    Qt::AscendingOrder).toInt());
+
+        if (history.isEmpty())
+            history = settings->value(QSL("search_history"),QStringList()).toStringList();
+
+        settings->endGroup();
+
+        m_searchHistoryModel->setHistoryItems(history);
     }
 
-    m_searchHistoryModel->setHistoryItems(sl);
+    bool isDBaccessible = zg->dbEngine!=Z::UndefinedDB;
+    setEnabled(isDBaccessible);
+    if (isDBaccessible) {
+        updateAlbumsList();
+        if (settings!=nullptr)
+            applySortOrder(m_defaultOrdering,m_defaultOrderingDirection);
+    }
 }
 
-void ZSearchTab::saveSearchItems(QSettings &settings)
+void ZSearchTab::saveSettings(QSettings *settings)
 {
     if (m_searchHistoryModel==nullptr) return;
 
-    settings.setValue(QSL("search_history"),
-                      QVariant::fromValue(m_searchHistoryModel->getHistoryItems()));
+    settings->beginGroup(QSL("SearchTab"));
+
+    settings->setValue(QSL("listMode"),getListViewMode()==QListView::ListMode);
+    settings->setValue(QSL("iconSize"),getIconSize());
+    settings->setValue(QSL("defaultOrdering"),static_cast<int>(m_defaultOrdering));
+    settings->setValue(QSL("defaultOrderingDirection"),
+                      static_cast<int>(m_defaultOrderingDirection));
+    settings->setValue(QSL("search_history"),
+                       QVariant::fromValue(m_searchHistoryModel->getHistoryItems()));
+
+    settings->endGroup();
 }
 
 void ZSearchTab::applySortOrder(Z::Ordering order, Qt::SortOrder direction)
@@ -532,8 +559,8 @@ void ZSearchTab::sortingChanged(int logicalIndex, Qt::SortOrder order)
 {
     m_iconModel->sort(logicalIndex,order);
     if (logicalIndex>=0 && logicalIndex<Z::maxOrdering) {
-        zg->defaultOrdering = static_cast<Z::Ordering>(logicalIndex);
-        zg->defaultOrderingDirection = order;
+        m_defaultOrdering = static_cast<Z::Ordering>(logicalIndex);
+        m_defaultOrderingDirection = order;
     }
 }
 
@@ -619,8 +646,6 @@ void ZSearchTab::setDescText(const QString &text)
 
 void ZSearchTab::albumClicked(QTreeWidgetItem *item, int column)
 {
-    Q_UNUSED(column)
-
     if (item==nullptr) return;
 
     Q_EMIT statusBarMsg(tr("Searching..."));
@@ -634,8 +659,8 @@ void ZSearchTab::albumClicked(QTreeWidgetItem *item, int column)
 
     if (album.startsWith(QSL("# "))) {
         if (m_savedOrdering==Z::UndefinedOrder) {
-            m_savedOrdering = zg->defaultOrdering;
-            m_savedOrderingDirection = zg->defaultOrderingDirection;
+            m_savedOrdering = m_defaultOrdering;
+            m_savedOrderingDirection = m_defaultOrderingDirection;
         }
         Qt::SortOrder dir;
         Z::Ordering ord = zg->db->getDynAlbumOrdering(album,dir);
@@ -648,6 +673,7 @@ void ZSearchTab::albumClicked(QTreeWidgetItem *item, int column)
         m_savedOrdering = Z::UndefinedOrder;
     }
 
+    Q_UNUSED(column)
     Q_EMIT dbGetFiles(album,QString());
 }
 
@@ -688,12 +714,12 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     QFileInfo fi(m.filename);
 
     QString msg = QString(m_descTemplate)
-                  .arg(elideString(m.name,ZDefaults::maxDescriptionStringLength))
+                  .arg(elideString(m.name,ZDefaults::maxDescriptionStringLength,Qt::ElideMiddle))
                   .arg(m.pagesCount)
                   .arg(formatSize(m.fileSize),m.album,m.fileMagic,
                        m.fileDT.toString(QSL("yyyy-MM-dd")),
                        m.addingDT.toString(QSL("yyyy-MM-dd")),
-                       elideString(fi.path(),ZDefaults::maxDescriptionStringLength));
+                       elideString(fi.path(),ZDefaults::maxDescriptionStringLength,Qt::ElideMiddle));
 
     setDescText(msg);
 }
@@ -882,13 +908,13 @@ void ZSearchTab::dbAlbumsListReady(const AlbumVector &albums)
 void ZSearchTab::dbFilesAdded(int count, int total, int elapsed)
 {
     Q_EMIT statusBarMsg(QSL("MBOX#Added %1 out of %2 found files in %3s")
-                      .arg(count).arg(total).arg(static_cast<double>(elapsed)/1000.0,1,'f',2));
+                      .arg(count).arg(total).arg(static_cast<double>(elapsed)/ZDefaults::oneSecondMSf,1,'f',2));
 }
 
 void ZSearchTab::dbFilesLoaded(int count, int elapsed)
 {
     Q_EMIT statusBarMsg(QSL("Found %1 results in %2s")
-                      .arg(count).arg(static_cast<double>(elapsed)/1000.0,1,'f',2));
+                      .arg(count).arg(static_cast<double>(elapsed)/ZDefaults::oneSecondMSf,1,'f',2));
     ui->srcTable->resizeColumnsToContents();
 }
 

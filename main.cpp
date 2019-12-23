@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    MainWindow w;
+    ZMainWindow w;
 
 #ifdef Q_OS_WIN
     QDir appDir(getApplicationDirPath());

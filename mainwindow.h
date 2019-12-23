@@ -18,51 +18,53 @@ public:
     QString name;
     QString album;
     QString fileName;
-    ZFSFile();
+    ZFSFile() = default;
+    ~ZFSFile() = default;
     ZFSFile(const ZFSFile& other);
     ZFSFile(const QString &aName, const QString &aFileName, const QString &aAlbum);
     ZFSFile &operator=(const ZFSFile& other) = default;
 };
 
 namespace Ui {
-class MainWindow;
+class ZMainWindow;
 }
 
-class MainWindow : public QMainWindow
+class ZMainWindow : public QMainWindow
 {
     Q_OBJECT
-    
 public:
-    QMenu* bookmarksMenu;
-    ZSearchTab* searchTab;
-    QLabel* lblSearchStatus;
-    QLabel* lblAverageSizes;
-    QLabel* lblRotation;
-    QLabel* lblCrop;
-    QLabel* lblAverageFineRender;
-    QFrame* fastScrollPanel;
-    QButtonGroup* zoomGroup;
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit ZMainWindow(QWidget *parent = nullptr);
+    ~ZMainWindow() override;
     void centerWindow(bool moveWindow);
     bool isMangaOpened();
     bool isFullScreenControlsVisible();
     void setZoomMode(int mode);
+    void addContextMenuItems(QMenu *menu);
     
 private:
-    Ui::MainWindow *ui;
-    bool fullScreen;
-    bool fullScreenControls;
-    QVector<ZFSFile> fsScannedFiles;
-    QMutex fsAddFilesMutex;
-    bool savedMaximized;
-    QRect savedGeometry;
-    QMessageBox indexerMsgBox;
+    Q_DISABLE_COPY(ZMainWindow)
+
+    Ui::ZMainWindow *ui;
+    bool m_fullScreen { false };
+    bool m_fullScreenControls { false };
+    bool m_savedMaximized { false };
+    QVector<ZFSFile> m_fsScannedFiles;
+    QMutex m_fsAddFilesMutex;
+    QRect m_savedGeometry;
+    QMessageBox m_indexerMsgBox;
+
+    QLabel* m_lblSearchStatus;
+    QLabel* m_lblAverageSizes;
+    QLabel* m_lblRotation;
+    QLabel* m_lblCrop;
+    QLabel* m_lblAverageFineRender;
+    QButtonGroup* m_zoomGroup;
+
     void openAuxFile(const QString& filename);
     void updateControlsVisibility();
 
 protected:
-    void closeEvent(QCloseEvent * event);
+    void closeEvent(QCloseEvent * event) override;
 
 Q_SIGNALS:
     void dbAddFiles(const QStringList& aFiles, const QString& album);
@@ -80,7 +82,7 @@ public Q_SLOTS:
     void switchFullscreenControls();
     void viewerKeyPressed(int key);
     void updateViewer();
-    void rotationUpdated(int degree);
+    void rotationUpdated(double angle);
     void cropUpdated(const QRect& crop);
     void fastScroll(int page);
     void updateFastScrollPosition();

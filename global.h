@@ -33,11 +33,27 @@ const int resizeTimerDiffMS = 200;
 const int maxImageFileSize = 150*1024*1024;
 const int minPreviewSize = 16;
 const int maxPreviewSize = 500;
-const int initialPreviewSize = 128;
-const int initialAlbumListWidth = 90;
+const int previewSize = 128;
+const int albumListWidth = 90;
 const int previewWidthMargin = 25;
 const int maxDescriptionStringLength = 80;
+const int avgSizeSamplesCount = 10;
+const int exportFilenameNumWidth = 10;
+const int ocrSquareMinimumSize = 20;
+const int errorPageLoadMsgVerticalMargin = 5;
+const int fileScannerStaticPercentage = 25;
+const int maxSQLUpdateStringListSize = 64;
+const int magnifySize = 150;
+const int scrollDelta = 120;
+const int scrollFactor = 5;
+const int cacheWidth = 6;
 const double previewProps = 364.0/257.0; // B4 paper proportions
+const double oneSecondMSf = 1000.0;
+const double angle_90deg = 90.0;
+const double dynamicZoomUpScale = 3.0;
+const double searchScrollFactor = 0.1;
+const double resizeBlur = 1.0;
+const double forceDPI = -1.0;
 const QSize maxDictTooltipSize = QSize(350,350);
 const qint64 copyBlockSize = 2*1024*1024L;
 }
@@ -53,6 +69,8 @@ class ZMangaLoader;
 class ZMangaView;
 
 namespace Z {
+
+// TODO: add prefixes, and Q_ENUM_NS
 
 enum DBMS {
     UndefinedDB = -1,
@@ -121,18 +139,19 @@ Q_DECLARE_METATYPE(Z::Ordering)
 
 class SQLMangaEntry {
 public:
-    int dbid;
+    Z::PDFRendering rendering { Z::PDFRendering::Autodetect };
+    int dbid { -1 };
+    int pagesCount { -1 };
+    qint64 fileSize { -1 };
     QString name;
     QString filename;
     QString album;
     QImage cover;
-    int pagesCount;
-    qint64 fileSize;
     QString fileMagic;
     QDateTime fileDT;
     QDateTime addingDT;
-    Z::PDFRendering rendering;
-    SQLMangaEntry();
+    SQLMangaEntry() = default;
+    ~SQLMangaEntry() = default;
     SQLMangaEntry(const SQLMangaEntry& other);
     SQLMangaEntry(int aDbid);
     SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
@@ -146,10 +165,11 @@ public:
 
 class AlbumEntry{
 public:
-    int id;
-    int parent;
+    int id { -1 };
+    int parent { -1 };
     QString name;
-    AlbumEntry() : id(-1), parent(-1) {}
+    AlbumEntry() = default;
+    ~AlbumEntry() = default;
     AlbumEntry(int aId) : id(aId), parent(-1) {}
     AlbumEntry(const AlbumEntry& other);
     AlbumEntry(int aId, int aParent, const QString& aName);
@@ -160,12 +180,13 @@ public:
 
 class ZLoaderHelper {
 public:
+    int jobCount { 0 };
     QUuid id;
     QPointer<QThread> thread;
     QPointer<ZMangaLoader> loader;
-    int jobCount;
 
     ZLoaderHelper();
+    ~ZLoaderHelper() = default;
     ZLoaderHelper(const ZLoaderHelper& other);
     ZLoaderHelper(const QUuid& aThreadID);
     ZLoaderHelper(QThread* aThread, ZMangaLoader* aLoader);
@@ -179,13 +200,14 @@ public:
 
 class ZExportWork {
 public:
+    int filenameLength { 0 };
+    int quality { 0 };
+    int idx { -1 };
     QDir dir;
     QString format;
     QString sourceFile;
-    int filenameLength;
-    int quality;
-    int idx;
-    ZExportWork();
+    ZExportWork() = default;
+    ~ZExportWork() = default;
     ZExportWork(const ZExportWork& other);
     ZExportWork(int aIdx, const QDir& aDir, const QString& aSourceFile, const QString& aFormat,
                 int aFilenameLength, int aQuality);
@@ -202,7 +224,7 @@ extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, 
 
 QStringList supportedImg();
 QString formatSize(qint64 size);
-QString elideString(const QString& text, int maxlen);
+QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode = Qt::ElideRight);
 QString escapeParam(const QString &param);
 int compareWithNumerics(const QString &ref1, const QString &ref2);
 QFileInfoList filterSupportedImgFiles(const QFileInfoList &entryList);

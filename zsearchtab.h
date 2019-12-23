@@ -28,14 +28,24 @@ public:
     void updateAlbumsList();
     void updateFocus();
     QStringList getAlbums();
-    void setListViewOptions(QListView::ViewMode mode, int iconSize);
-    int getIconSize() const;
-    QListView::ViewMode getListViewMode() const;
-
-    void loadSearchItems(QSettings &settings);
-    void saveSearchItems(QSettings &settings);
     void applySortOrder(Z::Ordering order, Qt::SortOrder direction);
+
 private:
+    Q_DISABLE_COPY(ZSearchTab)
+
+    Ui::ZSearchTab *ui;
+    Z::Ordering m_savedOrdering { Z::UndefinedOrder };
+    Qt::SortOrder m_savedOrderingDirection { Qt::AscendingOrder };
+    Z::Ordering m_defaultOrdering { Z::Name };
+    Qt::SortOrder m_defaultOrderingDirection { Qt::AscendingOrder };
+    QStateMachine m_loadingState;
+    QString m_descTemplate;
+    QStringList m_cachedAlbums;
+    QPointer<ZMangaModel> m_model;
+    QPointer<ZMangaSearchHistoryModel> m_searchHistoryModel;
+    QPointer<ZMangaTableModel> m_tableModel;
+    QPointer<ZMangaIconModel> m_iconModel;
+    QPointer<QProgressDialog> progressDlg;
 
     QSize gridSize(int ref);
     QString getAlbumNameToAdd(const QString &suggest, int toAddCount);
@@ -43,6 +53,9 @@ private:
     QAbstractItemView* activeView() const;
     QModelIndexList getSelectedIndexes() const;
     QModelIndex mapToSource(const QModelIndex &index);
+    int getIconSize() const;
+    QListView::ViewMode getListViewMode() const;
+    void setListViewOptions(QListView::ViewMode mode, int iconSize);
     void setDescText(const QString& text = QString());
 
 public Q_SLOTS:
@@ -72,6 +85,7 @@ public Q_SLOTS:
     void ctxXdgOpen();
     void ctxFileCopy();
     void ctxFileCopyClipboard();
+    void ctxChangeRenderer();
 
     void dbShowProgressDialog(bool visible);
     void dbShowProgressDialogEx(bool visible, const QString &title);
@@ -82,7 +96,9 @@ public Q_SLOTS:
     void dbFilesLoaded(int count, int elapsed);
     void dbErrorMsg(const QString& msg);
     void dbNeedTableCreation();
-    void ctxChangeRenderer();
+
+    void loadSettings(QSettings *settings);
+    void saveSettings(QSettings *settings);
 
 Q_SIGNALS:
     void mangaDblClick(const QString &filename);
@@ -96,23 +112,7 @@ Q_SIGNALS:
     void dbDeleteAlbum(const QString& album);
     void dbAddAlbum(const QString& album, const QString& parent);
     void dbReparentAlbum(const QString& album, const QString& parent);
-    bool dbSetPreferredRendering(const QString& filename, int mode);
-
-private:
-    Ui::ZSearchTab *ui;
-
-    Z::Ordering m_savedOrdering { Z::UndefinedOrder };
-    Qt::SortOrder m_savedOrderingDirection { Qt::AscendingOrder };
-    QStateMachine m_loadingState;
-    QString m_descTemplate;
-    QStringList m_cachedAlbums;
-    QPointer<ZMangaModel> m_model;
-    QPointer<ZMangaSearchHistoryModel> m_searchHistoryModel;
-    QPointer<ZMangaTableModel> m_tableModel;
-    QPointer<ZMangaIconModel> m_iconModel;
-    QPointer<QProgressDialog> progressDlg;
-
-    Q_DISABLE_COPY(ZSearchTab)
+    void dbSetPreferredRendering(const QString& filename, int mode);
 
 };
 

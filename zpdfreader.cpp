@@ -124,7 +124,7 @@ bool ZPdfReader::openFile()
                         int dheight = xitem.streamGetDict()->lookup("Height").getInt();
                         int dBPP = xitem.streamGetDict()->lookup("BitsPerComponent").getInt();
 
-                        const int oneBytePerComponent = 8;
+                        constexpr int oneBytePerComponent = 8;
                         if (dBPP == oneBytePerComponent) {
                             m_images << ZPDFImg(pos,size,dwidth,dheight,Z::imgFlate);
                         }
@@ -150,8 +150,8 @@ bool ZPdfReader::openFile()
         postMessage(tr("PDF renderer"));
     }
 
-    const int pageCounterWidth = 6;
-    const int pageCounterBase = 10;
+    constexpr int pageCounterWidth = 6;
+    constexpr int pageCounterBase = 10;
     for (int i=0;i<numPages;i++) {
         addSortEntry(ZFileEntry(QSL("%1").arg(i,pageCounterWidth,
                                                          pageCounterBase,QChar('0')),i));

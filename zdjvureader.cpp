@@ -27,8 +27,8 @@ bool ZDjVuReader::openFile()
         return false;
     }
 
-    const int pageCounterWidth = 6;
-    const int pageCounterBase = 10;
+    constexpr int pageCounterWidth = 6;
+    constexpr int pageCounterBase = 10;
     for (int i=0;i<numPages;i++) {
         addSortEntry(ZFileEntry(QSL("%1")
                                 .arg(i,pageCounterWidth,pageCounterBase,QChar('0')),i));
@@ -302,12 +302,6 @@ void ZDjVuController::handle_ddjvu_messages ( ddjvu_context_t * ctx, bool wait )
     }
 }
 
-ZDjVuDocument::ZDjVuDocument()
-    : document(nullptr)
-{
-    filename.clear();
-}
-
 ZDjVuDocument::ZDjVuDocument(const ZDjVuDocument &other)
 {
     document = other.document;
@@ -317,7 +311,6 @@ ZDjVuDocument::ZDjVuDocument(const ZDjVuDocument &other)
 }
 
 ZDjVuDocument::ZDjVuDocument(const QString &aFilename)
-    : document(nullptr)
 {
     filename = aFilename;
 }

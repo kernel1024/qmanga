@@ -1,4 +1,3 @@
-#include <QMessageBox>
 #include <QMutex>
 #include <QTextCodec>
 #include <QTextEncoder>
@@ -142,13 +141,21 @@ QString formatSize(qint64 size)
     return QSL("%1 Gb").arg(size/(1024*1024*1024));
 }
 
-// TODO: add elide from jpreader (with align option)
-QString elideString(const QString& text, int maxlen)
+QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode)
 {
     if (text.length()<maxlen)
         return text;
 
-    return QSL("%1...").arg(text.left(maxlen));
+    if (mode == Qt::ElideRight)
+        return QSL("%1...").arg(text.left(maxlen));
+
+    if (mode == Qt::ElideLeft)
+        return QSL("...%1").arg(text.right(maxlen));
+
+    if (mode == Qt::ElideMiddle)
+        return QSL("%1...%2").arg(text.left(maxlen/2),text.right(maxlen/2));
+
+    return text;
 }
 
 QString escapeParam(const QString &param)
@@ -298,21 +305,6 @@ QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
                                     rf,Qt::KeepAspectRatio,page,currentPage);
 }
 
-SQLMangaEntry::SQLMangaEntry()
-{
-    name = QString();
-    filename = QString();
-    cover = QImage();
-    album = QString();
-    pagesCount = -1;
-    fileSize = -1;
-    fileMagic = QString();
-    fileDT = QDateTime();
-    addingDT = QDateTime();
-    dbid = -1;
-    rendering = Z::PDFRendering::Autodetect;
-}
-
 SQLMangaEntry::SQLMangaEntry(const SQLMangaEntry &other)
 {
     name = other.name;
@@ -374,7 +366,6 @@ bool SQLMangaEntry::operator !=(const SQLMangaEntry &ref) const
 ZLoaderHelper::ZLoaderHelper()
 {
     id = QUuid::createUuid();
-    jobCount = 0;
 }
 
 ZLoaderHelper::ZLoaderHelper(const ZLoaderHelper &other)
@@ -531,13 +522,6 @@ QFileInfoList filterSupportedImgFiles(const QFileInfoList& entryList)
     }
 
     return res;
-}
-
-ZExportWork::ZExportWork()
-{
-    filenameLength = 0;
-    quality = 0;
-    idx = -1;
 }
 
 ZExportWork::ZExportWork(const ZExportWork &other)

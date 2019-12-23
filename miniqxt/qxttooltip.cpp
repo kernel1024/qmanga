@@ -224,8 +224,8 @@ QPoint QxtToolTipPrivate::calculatePos(QScreen *scr, QPoint eventPos) const
 {
     QRect screen = scr->availableGeometry();
     const QPoint posMargin(2,16);
-    const int horizontalOffset = 4;
-    const int verticalOffset = 24;
+    constexpr int horizontalOffset = 4;
+    constexpr int verticalOffset = 24;
 
     QPoint p = eventPos + posMargin;
     QSize s = sizeHint();
