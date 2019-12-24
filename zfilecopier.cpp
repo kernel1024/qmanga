@@ -89,7 +89,7 @@ bool ZFileCopier::copyDir(const QFileInfo &src)
     if (!sdir.isReadable())
         return false;
 
-    const QFileInfoList fl = filterSupportedImgFiles(
+    const QFileInfoList fl = zF->filterSupportedImgFiles(
                                  sdir.entryInfoList(QStringList(QSL("*")),
                                                     QDir::Readable | QDir::Files));
 

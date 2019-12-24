@@ -15,131 +15,127 @@
 #ifdef WITH_OCR
 #include <tesseract/baseapi.h>
 #include <leptonica/allheaders.h>
-
-#if TESSERACT_MAJOR_VERSION>=4
-    #define JTESS_API4 1
-#endif
 #endif // WITH_OCR
 
 #include <scalefilter.h>
 
 #define QSL QStringLiteral
+#define zF (ZGenericFuncs::instance())
 
 namespace ZDefaults {
-const int oneMinuteMS = 60000;
-const int oneSecondMS = 1000;
-const int resizeTimerInitialMS = 500;
-const int resizeTimerDiffMS = 200;
-const int maxImageFileSize = 150*1024*1024;
-const int minPreviewSize = 16;
-const int maxPreviewSize = 500;
-const int previewSize = 128;
-const int albumListWidth = 90;
-const int previewWidthMargin = 25;
-const int maxDescriptionStringLength = 80;
-const int avgSizeSamplesCount = 10;
-const int exportFilenameNumWidth = 10;
-const int ocrSquareMinimumSize = 20;
-const int errorPageLoadMsgVerticalMargin = 5;
-const int fileScannerStaticPercentage = 25;
-const int maxSQLUpdateStringListSize = 64;
-const int magnifySize = 150;
-const int scrollDelta = 120;
-const int scrollFactor = 5;
-const int cacheWidth = 6;
-const double previewProps = 364.0/257.0; // B4 paper proportions
-const double oneSecondMSf = 1000.0;
-const double angle_90deg = 90.0;
-const double dynamicZoomUpScale = 3.0;
-const double searchScrollFactor = 0.1;
-const double resizeBlur = 1.0;
-const double forceDPI = -1.0;
-const QSize maxDictTooltipSize = QSize(350,350);
-const qint64 copyBlockSize = 2*1024*1024L;
+constexpr int oneMinuteMS = 60000;
+constexpr int oneSecondMS = 1000;
+constexpr int resizeTimerInitialMS = 500;
+constexpr int resizeTimerDiffMS = 200;
+constexpr int maxImageFileSize = 150*1024*1024;
+constexpr int minPreviewSize = 16;
+constexpr int maxPreviewSize = 500;
+constexpr int previewSize = 128;
+constexpr int albumListWidth = 90;
+constexpr int previewWidthMargin = 25;
+constexpr int maxDescriptionStringLength = 80;
+constexpr int avgSizeSamplesCount = 10;
+constexpr int exportFilenameNumWidth = 10;
+constexpr int ocrSquareMinimumSize = 20;
+constexpr int errorPageLoadMsgVerticalMargin = 5;
+constexpr int fileScannerStaticPercentage = 25;
+constexpr int maxSQLUpdateStringListSize = 64;
+constexpr int magnifySize = 150;
+constexpr int scrollDelta = 120;
+constexpr int scrollFactor = 5;
+constexpr int cacheWidth = 6;
+constexpr int magicBlockSize = 1024;
+constexpr double previewProps = 364.0/257.0; // B4 paper proportions
+constexpr double oneSecondMSf = 1000.0;
+constexpr double angle_90deg = 90.0;
+constexpr double dynamicZoomUpScale = 3.0;
+constexpr double searchScrollFactor = 0.1;
+constexpr double resizeBlur = 1.0;
+constexpr double forceDPI = -1.0;
+constexpr double standardDPI = 75.0;
+constexpr QSize maxDictTooltipSize = QSize(350,350);
+constexpr qint64 copyBlockSize = 2*1024*1024L;
 }
-
-
-using QImageHash = QHash<int,QImage>;
-using QByteHash = QHash<int,QByteArray>;
-using QIntVector = QVector<int>;
-using QStrHash = QHash<QString,QString>;
 
 class ZAbstractReader;
 class ZMangaLoader;
 class ZMangaView;
 
 namespace Z {
-
-// TODO: add prefixes, and Q_ENUM_NS
+Q_NAMESPACE
 
 enum DBMS {
-    UndefinedDB = -1,
-    MySQL = 0,
-    SQLite = 1
+    dbmsUndefinedDB = -1,
+    dbmsMySQL = 0,
+    dbmsSQLite = 1
 };
+Q_ENUM_NS(DBMS)
 
 enum PDFRendering {
-    Autodetect = 0,
-    PageRenderer = 1,
-    ImageCatalog = 2
+    pdfAutodetect = 0,
+    pdfPageRenderer = 1,
+    pdfImageCatalog = 2
 };
+Q_ENUM_NS(PDFRendering)
 
 enum Ordering {
-    UndefinedOrder = -1,
-    Name = 0,
-    Album = 1,
-    PagesCount = 2,
-    FileSize = 3,
-    AddingDate = 4,
-    CreationFileDate = 5,
-    Magic = 6
+    ordUndefined = -1,
+    ordName = 0,
+    ordAlbum = 1,
+    ordPagesCount = 2,
+    ordFileSize = 3,
+    ordAddingDate = 4,
+    ordCreationFileDate = 5,
+    ordMagic = 6
 };
+Q_ENUM_NS(Ordering)
 
 enum PDFImageFormat {
     imgUndefined = -1,
     imgFlate = 1,
     imgDCT = 2
 };
+Q_ENUM_NS(PDFImageFormat)
 
 static const int maxOrdering = 7;
 
 static const QHash<Ordering,QString> headerColumns = {
-    {Name, "Name"},
-    {Album, "Album"},
-    {PagesCount, "Pages"},
-    {FileSize, "Size"},
-    {AddingDate, "Added"},
-    {CreationFileDate, "Created"},
-    {Magic, "Type"}
+    {ordName, "Name"},
+    {ordAlbum, "Album"},
+    {ordPagesCount, "Pages"},
+    {ordFileSize, "Size"},
+    {ordAddingDate, "Added"},
+    {ordCreationFileDate, "Created"},
+    {ordMagic, "Type"}
 };
 
 static const QHash<Ordering,QString> sqlColumns = {
-    {Name, "files.name"},
-    {Album, "albums.name"},
-    {PagesCount, "pagesCount"},
-    {FileSize, "fileSize"},
-    {AddingDate, "addingDT"},
-    {CreationFileDate, "fileDT"},
-    {Magic,"fileMagic"}
+    {ordName, "files.name"},
+    {ordAlbum, "albums.name"},
+    {ordPagesCount, "pagesCount"},
+    {ordFileSize, "fileSize"},
+    {ordAddingDate, "addingDT"},
+    {ordCreationFileDate, "fileDT"},
+    {ordMagic,"fileMagic"}
 };
 
 static const QHash<Ordering,QString> sortMenu = {
-    {Name, "By name"},
-    {Album, "By album"},
-    {PagesCount, "By pages count"},
-    {FileSize, "By file size"},
-    {AddingDate, "By adding date"},
-    {CreationFileDate, "By file creation date"},
-    {Magic, "By file type"}
+    {ordName, "By name"},
+    {ordAlbum, "By album"},
+    {ordPagesCount, "By pages count"},
+    {ordFileSize, "By file size"},
+    {ordAddingDate, "By adding date"},
+    {ordCreationFileDate, "By file creation date"},
+    {ordMagic, "By file type"}
 };
 
 }
 
 Q_DECLARE_METATYPE(Z::Ordering)
 
-class SQLMangaEntry {
+class ZSQLMangaEntry {
 public:
-    Z::PDFRendering rendering { Z::PDFRendering::Autodetect };
+    Z::PDFRendering rendering { Z::PDFRendering::pdfAutodetect };
     int dbid { -1 };
     int pagesCount { -1 };
     qint64 fileSize { -1 };
@@ -150,32 +146,32 @@ public:
     QString fileMagic;
     QDateTime fileDT;
     QDateTime addingDT;
-    SQLMangaEntry() = default;
-    ~SQLMangaEntry() = default;
-    SQLMangaEntry(const SQLMangaEntry& other);
-    SQLMangaEntry(int aDbid);
-    SQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
-                  const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
+    ZSQLMangaEntry() = default;
+    ~ZSQLMangaEntry() = default;
+    ZSQLMangaEntry(const ZSQLMangaEntry& other);
+    explicit ZSQLMangaEntry(int aDbid);
+    ZSQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
+                  const QImage &aCover, int aPagesCount, qint64 aFileSize,
                   const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT,
                   int aDbid, Z::PDFRendering aRendering);
-    SQLMangaEntry &operator=(const SQLMangaEntry& other) = default;
-    bool operator==(const SQLMangaEntry& ref) const;
-    bool operator!=(const SQLMangaEntry& ref) const;
+    ZSQLMangaEntry &operator=(const ZSQLMangaEntry& other) = default;
+    bool operator==(const ZSQLMangaEntry& ref) const;
+    bool operator!=(const ZSQLMangaEntry& ref) const;
 };
 
-class AlbumEntry{
+class ZAlbumEntry{
 public:
     int id { -1 };
     int parent { -1 };
     QString name;
-    AlbumEntry() = default;
-    ~AlbumEntry() = default;
-    AlbumEntry(int aId) : id(aId), parent(-1) {}
-    AlbumEntry(const AlbumEntry& other);
-    AlbumEntry(int aId, int aParent, const QString& aName);
-    AlbumEntry &operator=(const AlbumEntry& other) = default;
-    bool operator==(const AlbumEntry& ref) const;
-    bool operator!=(const AlbumEntry& ref) const;
+    ZAlbumEntry() = default;
+    ~ZAlbumEntry() = default;
+    explicit ZAlbumEntry(int aId) : id(aId) {}
+    ZAlbumEntry(const ZAlbumEntry& other);
+    ZAlbumEntry(int aId, int aParent, const QString& aName);
+    ZAlbumEntry &operator=(const ZAlbumEntry& other) = default;
+    bool operator==(const ZAlbumEntry& ref) const;
+    bool operator!=(const ZAlbumEntry& ref) const;
 };
 
 class ZLoaderHelper {
@@ -188,7 +184,7 @@ public:
     ZLoaderHelper();
     ~ZLoaderHelper() = default;
     ZLoaderHelper(const ZLoaderHelper& other);
-    ZLoaderHelper(const QUuid& aThreadID);
+    explicit ZLoaderHelper(const QUuid& aThreadID);
     ZLoaderHelper(QThread* aThread, ZMangaLoader* aLoader);
     ZLoaderHelper(const QPointer<QThread> &aThread, const QPointer<ZMangaLoader> &aLoader);
     ZLoaderHelper &operator=(const ZLoaderHelper& other) = default;
@@ -215,56 +211,73 @@ public:
     bool isValid() const;
 };
 
-using SQLMangaVector = QVector<SQLMangaEntry>;
-using AlbumVector = QVector<AlbumEntry>;
+using ZIntVector = QVector<int>;
+using ZStrHash = QHash<QString,QString>;
+using ZSQLMangaVector = QVector<ZSQLMangaEntry>;
+using ZAlbumVector = QVector<ZAlbumEntry>;
+using ZStrMap = QMap<QString, QString>;
 
+class ZGenericFuncs : public QObject
+{
+    Q_OBJECT
+public:
+    explicit ZGenericFuncs(QObject *parent = nullptr);
+    ~ZGenericFuncs() override = default;
+    static ZGenericFuncs* instance();
+    static void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
-extern ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
-                                      bool onlyArchives, bool createReader = true);
+    void initialize();
 
-QStringList supportedImg();
-QString formatSize(qint64 size);
-QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode = Qt::ElideRight);
-QString escapeParam(const QString &param);
-int compareWithNumerics(const QString &ref1, const QString &ref2);
-QFileInfoList filterSupportedImgFiles(const QFileInfoList &entryList);
-void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
-
-QString getOpenFileNameD ( QWidget * parent = nullptr,
-                           const QString & caption = QString(),
-                           const QString & dir = QString(),
-                           const QString & filter = QString(),
-                           QString * selectedFilter = nullptr,
-                           QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-QStringList getOpenFileNamesD ( QWidget * parent = nullptr,
-                                const QString & caption = QString(),
-                                const QString & dir = QString(),
-                                const QString & filter = QString(),
-                                QString * selectedFilter = nullptr,
-                                QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-QString	getExistingDirectoryD ( QWidget * parent = nullptr,
-                                const QString & caption = QString(),
-                                const QString & dir = QString(),
-                                QFileDialog::Options options = QFileDialog::ShowDirsOnly |
-                                                               QFileDialog::DontUseNativeDialog);
-
-QString detectMIME(const QString &filename);
-QString detectMIME(const QByteArray &buf);
-QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
-                   Blitz::ScaleFilterType filter = Blitz::LanczosFilter, int page = -1,
-                   const int *currentPage = nullptr);
+    ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
+                                          bool onlyArchives, bool createReader = true);
+    QStringList supportedImg();
+    QString formatSize(qint64 size);
+    QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode = Qt::ElideRight);
+    QString escapeParam(const QString &param);
+    int compareWithNumerics(const QString &ref1, const QString &ref2);
+    QFileInfoList filterSupportedImgFiles(const QFileInfoList &entryList);
+    QString getOpenFileNameD ( QWidget * parent = nullptr,
+                                      const QString & caption = QString(),
+                                      const QString & dir = QString(),
+                                      const QString & filter = QString(),
+                                      QString * selectedFilter = nullptr,
+                                      QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
+    QStringList getOpenFileNamesD ( QWidget * parent = nullptr,
+                                           const QString & caption = QString(),
+                                           const QString & dir = QString(),
+                                           const QString & filter = QString(),
+                                           QString * selectedFilter = nullptr,
+                                           QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
+    QString	getExistingDirectoryD ( QWidget * parent = nullptr,
+                                            const QString & caption = QString(),
+                                            const QString & dir = QString(),
+                                            QFileDialog::Options options = QFileDialog::ShowDirsOnly |
+                                                                           QFileDialog::DontUseNativeDialog);
+    QString detectMIME(const QString &filename);
+    QString detectMIME(const QByteArray &buf);
+    QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
+                              Blitz::ScaleFilterType filter = Blitz::LanczosFilter, int page = -1,
+                              const int *currentPage = nullptr);
 
 #ifdef WITH_OCR
-extern tesseract::TessBaseAPI* ocr;
-
 #ifdef Q_OS_WIN
-QString getApplicationDirPath();
+    QString getApplicationDirPath();
+#endif
+    QString ocrGetActiveLanguage();
+    QString ocrGetDatapath();
+    void initializeOCR();
+    QString processImageWithOCR(const QImage& image);
+    bool isOCRReady() const;
 #endif
 
-QString ocrGetActiveLanguage();
-QString ocrGetDatapath();
-tesseract::TessBaseAPI *initializeOCR();
-PIX* Image2PIX(const QImage& qImage);
+private:
+    Q_DISABLE_COPY(ZGenericFuncs)
+
+#ifdef WITH_OCR
+    tesseract::TessBaseAPI* m_ocr { nullptr };
+    PIX* Image2PIX(const QImage& qImage);
 #endif
+
+};
 
 #endif // GLOBAL_H

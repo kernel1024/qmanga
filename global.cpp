@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QSettings>
 #include <iostream>
+#include <clocale>
 #include <QDebug>
 
 #include "zmangaloader.h"
@@ -25,7 +26,58 @@
 #include <windows.h>
 #endif
 
-ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
+ZGenericFuncs::ZGenericFuncs(QObject *parent)
+    : QObject(parent)
+{
+}
+
+ZGenericFuncs *ZGenericFuncs::instance()
+{
+    static ZGenericFuncs* inst = nullptr;
+    static QMutex lock;
+
+    QMutexLocker locker(&lock);
+    if (inst==nullptr)
+        inst = new ZGenericFuncs(QApplication::instance());
+
+    return inst;
+}
+
+void ZGenericFuncs::initialize()
+{
+#if TESSERACT_MAJOR_VERSION>=4
+    setlocale (LC_ALL, "C");
+    setlocale (LC_CTYPE, "C");
+#endif
+    setlocale (LC_NUMERIC, "C");
+
+#ifdef WITH_OCR
+    initializeOCR();
+#endif
+
+    qInstallMessageHandler(ZGenericFuncs::stdConsoleOutput);
+    qRegisterMetaType<ZIntVector>("ZIntVector");
+    qRegisterMetaType<ZSQLMangaEntry>("ZSQLMangaEntry");
+    qRegisterMetaType<ZAlbumEntry>("ZAlbumEntry");
+    qRegisterMetaType<ZAlbumVector>("ZAlbumVector");
+    qRegisterMetaType<QUuid>("QUuid");
+    qRegisterMetaType<Z::Ordering>("Z::Ordering");
+    qRegisterMetaType<ZExportWork>("ZExportWork");
+    qRegisterMetaTypeStreamOperators<ZStrMap>("ZStrMap");
+#ifdef WITH_DJVU
+    qRegisterMetaType<ZDjVuDocument>("ZDjVuDocument");
+#endif
+
+#ifdef Q_OS_WIN
+    QDir appDir(getApplicationDirPath());
+    QApplication::addLibraryPath(appDir.absoluteFilePath("imageformats"));
+
+    if (QApplication::arguments().contains("--debug"))
+        AllocConsole();
+#endif
+}
+
+ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
                                bool onlyArchives, bool createReader)
 {
     *mimeOk = true;
@@ -80,7 +132,7 @@ ZAbstractReader *readerFactory(QObject* parent, const QString & filename, bool *
     return nullptr;
 }
 
-void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void ZGenericFuncs::stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     static QMutex loggerMutex;
 
@@ -91,10 +143,11 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
     int line = context.line;
     QString file = QString(context.file);
     QString category = QString(context.category);
-    if (category==QSL("default"))
+    if (category==QSL("default")) {
         category.clear();
-    else
+    } else {
         category.append(' ');
+    }
 
     switch (type) {
         case QtDebugMsg:
@@ -133,15 +186,13 @@ void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const Q
     loggerMutex.unlock();
 }
 
-QString formatSize(qint64 size)
+QString ZGenericFuncs::formatSize(qint64 size)
 {
-    if (size<1024) return QSL("%1 bytes").arg(size);
-    if (size<1024*1024) return QSL("%1 Kb").arg(size/1024);
-    if (size<1024*1024*1024) return QSL("%1 Mb").arg(size/(1024*1024));
-    return QSL("%1 Gb").arg(size/(1024*1024*1024));
+    const int precision = 2;
+    return QLocale::c().formattedDataSize(size,precision,QLocale::DataSizeTraditionalFormat);
 }
 
-QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode)
+QString ZGenericFuncs::elideString(const QString& text, int maxlen, Qt::TextElideMode mode)
 {
     if (text.length()<maxlen)
         return text;
@@ -158,7 +209,7 @@ QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode)
     return text;
 }
 
-QString escapeParam(const QString &param)
+QString ZGenericFuncs::escapeParam(const QString &param)
 {
     QString res = param;
     res.replace('\'',QSL("\\'"));
@@ -168,10 +219,12 @@ QString escapeParam(const QString &param)
     return res;
 }
 
-int compareWithNumerics(const QString &ref1, const QString &ref2)
+int ZGenericFuncs::compareWithNumerics(const QString &ref1, const QString &ref2)
 {
-    QStringList r1nums,r1sep;
-    QString sn,sc;
+    QStringList r1nums;
+    QStringList r1sep;
+    QString sn;
+    QString sc;
     for (int i=0;i<=ref1.length();i++) {
         if (!sn.isEmpty() &&
                 ((i==ref1.length()) ||
@@ -182,16 +235,18 @@ int compareWithNumerics(const QString &ref1, const QString &ref2)
             sc.clear();
         }
         if (i<ref1.length()) {
-            if (ref1[i].isDigit())
+            if (ref1[i].isDigit()) {
                 sn.append(ref1[i]);
-            else if (ref1[i].isLetter())
+            } else if (ref1[i].isLetter()) {
                 sc.append(ref1[i]);
+            }
         } else {
             sc.clear();
             sn.clear();
         }
     }
-    QStringList r2nums,r2sep;
+    QStringList r2nums;
+    QStringList r2sep;
     sn.clear();
     sc.clear();
     for (int i=0;i<=ref2.length();i++) {
@@ -204,10 +259,11 @@ int compareWithNumerics(const QString &ref1, const QString &ref2)
             sc.clear();
         }
         if (i<ref2.length()) {
-            if (ref2[i].isDigit())
+            if (ref2[i].isDigit()) {
                 sn.append(ref2[i]);
-            else if (ref2[i].isLetter())
+            } else if (ref2[i].isLetter()) {
                 sc.append(ref2[i]);
+            }
         } else {
             sc.clear();
             sn.clear();
@@ -231,32 +287,32 @@ int compareWithNumerics(const QString &ref1, const QString &ref2)
     return QString::compare(ref1,ref2);
 }
 
-QString getOpenFileNameD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
+QString ZGenericFuncs::getOpenFileNameD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
 {
     return QFileDialog::getOpenFileName(parent,caption,dir,filter,selectedFilter,options);
 }
 
-QStringList getOpenFileNamesD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
+QStringList ZGenericFuncs::getOpenFileNamesD ( QWidget * parent, const QString & caption, const QString & dir, const QString & filter, QString * selectedFilter, QFileDialog::Options options )
 {
     return QFileDialog::getOpenFileNames(parent,caption,dir,filter,selectedFilter,options);
 }
 
-QString	getExistingDirectoryD ( QWidget * parent, const QString & caption, const QString & dir, QFileDialog::Options options )
+QString	ZGenericFuncs::getExistingDirectoryD ( QWidget * parent, const QString & caption, const QString & dir, QFileDialog::Options options )
 {
     return QFileDialog::getExistingDirectory(parent,caption,dir,options);
 }
 
-QString detectMIME(const QString& filename)
+QString ZGenericFuncs::detectMIME(const QString& filename)
 {
     QFile f(filename);
     if (!f.open(QIODevice::ReadOnly))
         return QSL("text/plain");
-    QByteArray ba = f.read(1024);
+    QByteArray ba = f.read(ZDefaults::magicBlockSize);
     f.close();
     return detectMIME(ba);
 }
 
-QString detectMIME(const QByteArray &buf)
+QString ZGenericFuncs::detectMIME(const QByteArray &buf)
 {
     static const QHash<QPair<int, QByteArray>, QString> magicList = {
         { { 0, QByteArrayLiteral("\x50\x4b\x03\x04") }, "application/zip" },
@@ -282,16 +338,16 @@ QString detectMIME(const QByteArray &buf)
     return QSL("text/plain");
 }
 
-QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
+QImage ZGenericFuncs::resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
                    Blitz::ScaleFilterType filter, int page, const int *currentPage)
 {
     if (!zg) return QImage();
 
     QSize dsize = src.size().scaled(targetSize,Qt::KeepAspectRatio);
 
-    Blitz::ScaleFilterType rf = zg->downscaleFilter;
+    Blitz::ScaleFilterType rf = zg->getDownscaleFilter();
     if (dsize.width()>src.size().width())
-        rf = zg->upscaleFilter;
+        rf = zg->getUpscaleFilter();
 
     if (forceFilter)
         rf = filter;
@@ -301,11 +357,177 @@ QImage resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
     if (rf==Blitz::Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
 
-    return Blitz::smoothScaleFilter(src,targetSize,zg->resizeBlur,
+    return Blitz::smoothScaleFilter(src,targetSize,zg->getResizeBlur(),
                                     rf,Qt::KeepAspectRatio,page,currentPage);
 }
 
-SQLMangaEntry::SQLMangaEntry(const SQLMangaEntry &other)
+QStringList ZGenericFuncs::supportedImg()
+{
+    static const QStringList res {"jpg", "jpeg", "jpe", "gif", "png", "tiff", "tif", "bmp"};
+    return res;
+}
+
+QFileInfoList ZGenericFuncs::filterSupportedImgFiles(const QFileInfoList& entryList)
+{
+    QFileInfoList res;
+    QStringList suffices = supportedImg();
+    for (const auto &fi : entryList) {
+        if (suffices.contains(fi.suffix(),Qt::CaseInsensitive))
+            res.append(fi);
+    }
+
+    return res;
+}
+
+#ifdef WITH_OCR
+PIX* ZGenericFuncs::Image2PIX(const QImage &qImage) {
+    PIX * pixs;
+    l_uint32 *lines;
+
+    QImage img = qImage.rgbSwapped();
+    int width = img.width();
+    int height = img.height();
+    int depth = img.depth();
+    int wpl = img.bytesPerLine() / 4;
+
+    pixs = pixCreate(width, height, depth);
+    pixSetWpl(pixs, wpl);
+    pixSetColormap(pixs, nullptr);
+    l_uint32 *datas = pixs->data;
+
+    for (int y = 0; y < height; y++) {
+        lines = datas + y * wpl;
+        memcpy(lines,img.scanLine(y),static_cast<uint>(img.bytesPerLine()));
+    }
+    return pixEndianByteSwapNew(pixs);
+}
+
+QString ZGenericFuncs::processImageWithOCR(const QImage &image)
+{
+    m_ocr->SetImage(Image2PIX(image));
+    char* rtext = m_ocr->GetUTF8Text();
+    QString s = QString::fromUtf8(rtext);
+    delete[] rtext;
+    return s;
+}
+
+bool ZGenericFuncs::isOCRReady() const
+{
+    return (m_ocr!=nullptr);
+}
+
+QString ZGenericFuncs::ocrGetActiveLanguage()
+{
+    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
+    settings.beginGroup(QSL("Main"));
+    QString res = settings.value(QSL("activeLanguage"),QSL("jpn")).toString();
+    settings.endGroup();
+    return res;
+}
+
+QString ZGenericFuncs::ocrGetDatapath()
+{
+    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
+    settings.beginGroup(QSL("Main"));
+#ifdef Q_OS_WIN
+    QDir appDir(getApplicationDirPath());
+    QString res = settings.value(QStringLiteral("datapath"),
+                                 appDir.absoluteFilePath(QStringLiteral("tessdata"))).toString();
+#else
+    QString res = settings.value(QSL("datapath"),
+                                 QSL("/usr/share/tessdata/")).toString();
+#endif
+    settings.endGroup();
+    return res;
+}
+
+void ZGenericFuncs::initializeOCR()
+{
+    m_ocr = new tesseract::TessBaseAPI();
+    QByteArray tesspath = ocrGetDatapath().toUtf8();
+
+    QString lang = ocrGetActiveLanguage();
+    if (lang.isEmpty() || (m_ocr->Init(tesspath.constData(),lang.toUtf8().constData())!=0)) {
+        qCritical() << "Could not initialize Tesseract. "
+                       "Maybe language training data is not installed.";
+    }
+}
+
+#ifdef Q_OS_WIN
+QString ZGenericFuncs::getApplicationDirPath()
+{
+    static QString res {};
+    if (!res.isEmpty())
+        return res;
+
+    wchar_t path[MAX_PATH];
+    size_t sz = GetModuleFileNameW(nullptr,path,MAX_PATH);
+    if (sz>0) {
+        QFileInfo fi(QString::fromWCharArray(path,static_cast<int>(sz)));
+        if (fi.isFile())
+            res = fi.absolutePath();
+    }
+    if (res.isEmpty())
+        qFatal("Unable to determine executable path.");
+    return res;
+}
+#endif // WIN32
+
+#endif // OCR
+
+// ZGenericFuncs -----------------------
+
+ZExportWork::ZExportWork(const ZExportWork &other)
+{
+    dir = other.dir;
+    format = other.format;
+    sourceFile = other.sourceFile;
+    filenameLength = other.filenameLength;
+    quality = other.quality;
+    idx = other.idx;
+}
+
+ZExportWork::ZExportWork(int aIdx, const QDir &aDir, const QString &aSourceFile,
+                         const QString &aFormat, int aFilenameLength, int aQuality)
+{
+    dir = aDir;
+    format = aFormat;
+    sourceFile = aSourceFile;
+    filenameLength = aFilenameLength;
+    quality = aQuality;
+    idx = aIdx;
+}
+
+bool ZExportWork::isValid() const
+{
+    return (idx>=0 && !sourceFile.isEmpty());
+}
+
+ZAlbumEntry::ZAlbumEntry(const ZAlbumEntry &other)
+{
+    id = other.id;
+    parent = other.parent;
+    name = other.name;
+}
+
+ZAlbumEntry::ZAlbumEntry(int aId, int aParent, const QString &aName)
+{
+    id = aId;
+    parent = aParent;
+    name = aName;
+}
+
+bool ZAlbumEntry::operator==(const ZAlbumEntry &ref) const
+{
+    return (id == ref.id);
+}
+
+bool ZAlbumEntry::operator!=(const ZAlbumEntry &ref) const
+{
+    return (id != ref.id);
+}
+
+ZSQLMangaEntry::ZSQLMangaEntry(const ZSQLMangaEntry &other)
 {
     name = other.name;
     filename = other.filename;
@@ -320,7 +542,7 @@ SQLMangaEntry::SQLMangaEntry(const SQLMangaEntry &other)
     rendering = other.rendering;
 }
 
-SQLMangaEntry::SQLMangaEntry(int aDbid)
+ZSQLMangaEntry::ZSQLMangaEntry(int aDbid)
 {
     name = QString();
     filename = QString();
@@ -332,11 +554,11 @@ SQLMangaEntry::SQLMangaEntry(int aDbid)
     fileDT = QDateTime();
     addingDT = QDateTime();
     dbid = aDbid;
-    rendering = Z::PDFRendering::Autodetect;
+    rendering = Z::PDFRendering::pdfAutodetect;
 }
 
-SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, const QString &aAlbum,
-                             const QImage &aCover, const int aPagesCount, const qint64 aFileSize,
+ZSQLMangaEntry::ZSQLMangaEntry(const QString &aName, const QString &aFilename, const QString &aAlbum,
+                             const QImage &aCover, int aPagesCount, qint64 aFileSize,
                              const QString &aFileMagic, const QDateTime &aFileDT,
                              const QDateTime &aAddingDT, int aDbid, Z::PDFRendering aRendering)
 {
@@ -353,12 +575,12 @@ SQLMangaEntry::SQLMangaEntry(const QString &aName, const QString &aFilename, con
     rendering = aRendering;
 }
 
-bool SQLMangaEntry::operator ==(const SQLMangaEntry &ref) const
+bool ZSQLMangaEntry::operator ==(const ZSQLMangaEntry &ref) const
 {
     return (ref.dbid==dbid);
 }
 
-bool SQLMangaEntry::operator !=(const SQLMangaEntry &ref) const
+bool ZSQLMangaEntry::operator !=(const ZSQLMangaEntry &ref) const
 {
     return (ref.dbid!=dbid);
 }
@@ -418,158 +640,4 @@ void ZLoaderHelper::delJob()
 {
     if (jobCount>0)
         jobCount--;
-}
-
-
-#ifdef WITH_OCR
-PIX* Image2PIX(const QImage &qImage) {
-    PIX * pixs;
-    l_uint32 *lines;
-
-    QImage img = qImage.rgbSwapped();
-    int width = img.width();
-    int height = img.height();
-    int depth = img.depth();
-    int wpl = img.bytesPerLine() / 4;
-
-    pixs = pixCreate(width, height, depth);
-    pixSetWpl(pixs, wpl);
-    pixSetColormap(pixs, nullptr);
-    l_uint32 *datas = pixs->data;
-
-    for (int y = 0; y < height; y++) {
-        lines = datas + y * wpl;
-        memcpy(lines,img.scanLine(y),static_cast<uint>(img.bytesPerLine()));
-    }
-    return pixEndianByteSwapNew(pixs);
-}
-
-QString ocrGetActiveLanguage()
-{
-    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
-    settings.beginGroup(QSL("Main"));
-    QString res = settings.value(QSL("activeLanguage"),QSL("jpn")).toString();
-    settings.endGroup();
-    return res;
-}
-
-QString ocrGetDatapath()
-{
-    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
-    settings.beginGroup(QSL("Main"));
-#ifdef Q_OS_WIN
-    QDir appDir(getApplicationDirPath());
-    QString res = settings.value(QStringLiteral("datapath"),
-                                 appDir.absoluteFilePath(QStringLiteral("tessdata"))).toString();
-#else
-    QString res = settings.value(QSL("datapath"),
-                                 QSL("/usr/share/tessdata/")).toString();
-#endif
-    settings.endGroup();
-    return res;
-}
-
-tesseract::TessBaseAPI* initializeOCR()
-{
-    ocr = new tesseract::TessBaseAPI();
-    QByteArray tesspath = ocrGetDatapath().toUtf8();
-
-    QString lang = ocrGetActiveLanguage();
-    if (lang.isEmpty() || ocr->Init(tesspath.constData(),lang.toUtf8().constData())) {
-        qCritical() << "Could not initialize Tesseract. "
-                       "Maybe language training data is not installed.";
-        return nullptr;
-    }
-    return ocr;
-}
-
-#ifdef Q_OS_WIN
-QString getApplicationDirPath()
-{
-    static QString res {};
-    if (!res.isEmpty())
-        return res;
-
-    wchar_t path[MAX_PATH];
-    size_t sz = GetModuleFileNameW(nullptr,path,MAX_PATH);
-    if (sz>0) {
-        QFileInfo fi(QString::fromWCharArray(path,static_cast<int>(sz)));
-        if (fi.isFile())
-            res = fi.absolutePath();
-    }
-    if (res.isEmpty())
-        qFatal("Unable to determine executable path.");
-    return res;
-}
-#endif
-
-#endif
-
-
-QStringList supportedImg()
-{
-    static const QStringList res {"jpg", "jpeg", "jpe", "gif", "png", "tiff", "tif", "bmp"};
-    return res;
-}
-
-QFileInfoList filterSupportedImgFiles(const QFileInfoList& entryList)
-{
-    QFileInfoList res;
-    QStringList suffices = supportedImg();
-    for (const auto &fi : entryList) {
-        if (suffices.contains(fi.suffix(),Qt::CaseInsensitive))
-            res.append(fi);
-    }
-
-    return res;
-}
-
-ZExportWork::ZExportWork(const ZExportWork &other)
-{
-    dir = other.dir;
-    format = other.format;
-    sourceFile = other.sourceFile;
-    filenameLength = other.filenameLength;
-    quality = other.quality;
-    idx = other.idx;
-}
-
-ZExportWork::ZExportWork(int aIdx, const QDir &aDir, const QString &aSourceFile,
-                         const QString &aFormat, int aFilenameLength, int aQuality)
-{
-    dir = aDir;
-    format = aFormat;
-    sourceFile = aSourceFile;
-    filenameLength = aFilenameLength;
-    quality = aQuality;
-    idx = aIdx;
-}
-
-bool ZExportWork::isValid() const
-{
-    return (idx>=0 && !sourceFile.isEmpty());
-}
-
-AlbumEntry::AlbumEntry(const AlbumEntry &other)
-{
-    id = other.id;
-    parent = other.parent;
-    name = other.name;
-}
-
-AlbumEntry::AlbumEntry(int aId, int aParent, const QString &aName)
-{
-    id = aId;
-    parent = aParent;
-    name = aName;
-}
-
-bool AlbumEntry::operator==(const AlbumEntry &ref) const
-{
-    return (id == ref.id);
-}
-
-bool AlbumEntry::operator!=(const AlbumEntry &ref) const
-{
-    return (id != ref.id);
 }

@@ -1,58 +1,12 @@
 #include <QApplication>
-#include <QDir>
-#include <clocale>
 #include "mainwindow.h"
 #include "global.h"
-#include "zdjvureader.h"
-#ifdef Q_OS_WIN
-#include <windows.h>
-#endif
-
-#ifdef WITH_OCR
-tesseract::TessBaseAPI* ocr = nullptr;
-#endif
 
 int main(int argc, char *argv[])
 {
-#ifdef JTESS_API4
-    setlocale (LC_ALL, "C");
-    setlocale (LC_CTYPE, "C");
-#endif
-    setlocale (LC_NUMERIC, "C");
-
-#ifdef WITH_OCR
-    ocr = initializeOCR();
-#endif
-
-    qInstallMessageHandler(stdConsoleOutput);
-    qRegisterMetaType<QIntVector>("QIntVector");
-    qRegisterMetaType<QImageHash>("QImageHash");
-    qRegisterMetaType<SQLMangaEntry>("SQLMangaEntry");
-    qRegisterMetaType<AlbumEntry>("AlbumEntry");
-    qRegisterMetaType<AlbumVector>("AlbumVector");
-    qRegisterMetaType<QByteHash>("QByteHash");
-    qRegisterMetaType<QUuid>("QUuid");
-    qRegisterMetaType<Z::Ordering>("Z::Ordering");
-    qRegisterMetaType<ZExportWork>("ZExportWork");
-    qRegisterMetaTypeStreamOperators<ZStrMap>("ZStrMap");
-#ifdef WITH_DJVU
-    qRegisterMetaType<ZDjVuDocument>("ZDjVuDocument");
-#endif
-
-
     QApplication a(argc, argv);
-
+    zF->initialize();
     ZMainWindow w;
-
-#ifdef Q_OS_WIN
-    QDir appDir(getApplicationDirPath());
-    QApplication::addLibraryPath(appDir.absoluteFilePath("imageformats"));
-
-    if (QApplication::arguments().contains("--debug"))
-        AllocConsole();
-#endif
-
     w.show();
-    
     return a.exec();
 }

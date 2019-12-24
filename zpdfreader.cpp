@@ -94,11 +94,11 @@ bool ZPdfReader::openFile()
     if (m_doc==nullptr || !m_doc->isOk())
         return false;
 
-    Z::PDFRendering mode = zg->db->getPreferredRendering(fileName);
-    if (mode==Z::Autodetect)
-        mode = zg->pdfRendering;
+    Z::PDFRendering mode = zg->db()->getPreferredRendering(fileName);
+    if (mode==Z::pdfAutodetect)
+        mode = zg->getPdfRendering();
 
-    if (mode==Z::Autodetect || mode==Z::ImageCatalog) {
+    if (mode==Z::pdfAutodetect || mode==Z::pdfImageCatalog) {
 
         for (int pageNum=1;pageNum<=m_doc->getNumPages();pageNum++) {
             Dict *dict = m_doc->getPage(pageNum)->getResourceDict();
@@ -139,8 +139,8 @@ bool ZPdfReader::openFile()
     }
 
     int numPages;
-    if ((mode==Z::Autodetect && m_images.count()==m_doc->getNumPages()) ||
-            (mode==Z::ImageCatalog && m_images.count()>0)) {
+    if ((mode==Z::pdfAutodetect && m_images.count()==m_doc->getNumPages()) ||
+            (mode==Z::pdfImageCatalog && m_images.count()>0)) {
         m_useImageCatalog = true;
         numPages = m_images.count();
         postMessage(tr("PDF images catalog"));
@@ -239,11 +239,12 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
             return;
         }
     } else {
-        qreal xdpi = zg->dpiX;
-        qreal ydpi = zg->dpiY;
-        if (zg->forceDPI>0.0) {
-            xdpi = zg->forceDPI;
-            ydpi = zg->forceDPI;
+        qreal xdpi = zg->getDpiX();
+        qreal ydpi = zg->getDpiY();
+        qreal forceDPI = zg->getForceDPI();
+        if (forceDPI>0.0) {
+            xdpi = forceDPI;
+            ydpi = forceDPI;
         }
         const quint8 cRed = 0xff;
         const quint8 cGreen = 0xff;
@@ -339,6 +340,7 @@ bool ZPDFImg::operator!=(const ZPDFImg &ref) const
 
 #ifdef WITH_POPPLER
 
+// TODO: convert to static class members
 void initPdfReader()
 {
     globalParams = new GlobalParams();

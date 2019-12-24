@@ -20,6 +20,7 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x050B00
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+    zglobalprivate.cpp \
     zmangaview.cpp \
     zabstractreader.cpp \
     zglobal.cpp \
@@ -45,6 +46,7 @@ SOURCES += main.cpp\
     zdjvureader.cpp
 
 HEADERS  += mainwindow.h \
+    zglobalprivate.h \
     zmangaview.h \
     zabstractreader.h \
     zglobal.h \

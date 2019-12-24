@@ -21,7 +21,7 @@ bool ZRarReader::openFile()
         return false;
     }
 
-    m_rarExec = zg->rarCmd;
+    m_rarExec = zg->getRarCmd();
     if (m_rarExec.isEmpty()) {
 #ifndef Q_OS_WIN
         if (QProcess::execute(QSL("rar"),rarTestParam)<0) {
@@ -46,7 +46,7 @@ bool ZRarReader::openFile()
         QString fname = QString::fromUtf8(rar.readLine()).trimmed();
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         fi.setFile(fname);
-        if (!supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
+        if (!zF->supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
         addSortEntry(ZFileEntry(fname,cnt));
         cnt++;
     }

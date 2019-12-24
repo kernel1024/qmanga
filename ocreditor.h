@@ -18,13 +18,6 @@ class ZOCREditor;
 class ZOCREditor : public QDialog
 {
     Q_OBJECT
-    
-public:
-    explicit ZOCREditor(QWidget *parent = nullptr);
-    ~ZOCREditor() override;
-    void addText(const QStringList& text);
-    void setEditorFont(const QFont& font);
-    
 private:
     Q_DISABLE_COPY(ZOCREditor)
 
@@ -39,7 +32,13 @@ private:
     QString storedSelection;
     void findWordTranslation(const QString& text);
 
+public:
+    explicit ZOCREditor(QWidget *parent = nullptr);
+    ~ZOCREditor() override;
+    void setEditorFont(const QFont& font);
+
 public Q_SLOTS:
+    void addOCRText(const QStringList& text);
     void showWnd();
     void translate();
     void gotTranslation(const QString& text);

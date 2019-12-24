@@ -37,10 +37,12 @@ ZMangaView::ZMangaView(QWidget *parent) :
     p.setBrush(QPalette::Dark,QBrush(QColor(Qt::black)));
     setPalette(p);
 
-    connect(this,&ZMangaView::changeMangaCover,zg->db,&ZDB::sqlChangeFilePreview,Qt::QueuedConnection);
-    connect(this,&ZMangaView::updateFileStats,zg->db,&ZDB::sqlUpdateFileStats,Qt::QueuedConnection);
+    connect(this,&ZMangaView::changeMangaCover,zg->db(),&ZDB::sqlChangeFilePreview,Qt::QueuedConnection);
+    connect(this,&ZMangaView::updateFileStats,zg->db(),&ZDB::sqlUpdateFileStats,Qt::QueuedConnection);
 
     connect(this,&ZMangaView::requestRedrawPageEx,this,&ZMangaView::redrawPageEx,Qt::QueuedConnection);
+
+    connect(this,&ZMangaView::addOCRText,zg->ocrEditor(),&ZOCREditor::addOCRText);
 
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
@@ -92,13 +94,13 @@ void ZMangaView::cacheGetPage(int num)
     }
 
     m_cacheLoaders[idx].addJob();
-    bool preferImages = zg->cachePixmaps;
+    bool preferImages = zg->getCachePixmaps();
 
     auto loader = m_cacheLoaders.at(idx).loader;
-    QMetaObject::invokeMethod(loader,[loader,num,preferImages]{
+    QTimer::singleShot(0,loader,[loader,num,preferImages]{
         if (loader)
             loader->getPage(num,preferImages);
-    },Qt::QueuedConnection);
+    });
 }
 
 void ZMangaView::setZoomMode(int mode)
@@ -123,8 +125,8 @@ void ZMangaView::getPage(int num)
         m_scroller->horizontalScrollBar()->setValue(0);
 
     cacheDropUnusable();
-    if ((zg->cachePixmaps && m_iCacheImages.contains(m_currentPage)) ||
-            (!zg->cachePixmaps && m_iCacheData.contains(m_currentPage)))
+    if ((zg->getCachePixmaps() && m_iCacheImages.contains(m_currentPage)) ||
+            (!zg->getCachePixmaps() && m_iCacheData.contains(m_currentPage)))
         displayCurrentPage();
     cacheFillNearest();
 }
@@ -151,11 +153,11 @@ void ZMangaView::setScroller(QScrollArea *scroller)
 
 void ZMangaView::displayCurrentPage()
 {
-    if ((zg->cachePixmaps && m_iCacheImages.contains(m_currentPage)) ||
-            (!zg->cachePixmaps && m_iCacheData.contains(m_currentPage))) {
+    if ((zg->getCachePixmaps() && m_iCacheImages.contains(m_currentPage)) ||
+            (!zg->getCachePixmaps() && m_iCacheData.contains(m_currentPage))) {
         QImage p = QImage();
         qint64 ffsz = 0;
-        if (!zg->cachePixmaps) {
+        if (!zg->getCachePixmaps()) {
             QByteArray img = m_iCacheData.value(m_currentPage);
             ffsz = img.size();
             if (!p.loadFromData(img))
@@ -270,14 +272,14 @@ void ZMangaView::wheelEvent(QWheelEvent *event)
         }
 
         // at the page border, attempting to flip the page
-        sf = zg->scrollFactor;
+        sf = zg->getScrollFactor();
     }
 
-    if (abs(dy)<zg->detectedDelta)
-        zg->detectedDelta = abs(dy);
+    if (abs(dy)<zg->getDetectedDelta())
+        zg->setDetectedDelta(abs(dy));
 
     m_scrollAccumulator+= dy;
-    int numSteps = m_scrollAccumulator / (zg->scrollDelta * sf);
+    int numSteps = m_scrollAccumulator / (zg->getScrollDelta() * sf);
 
     if (numSteps!=0)
         setPage(m_currentPage-numSteps);
@@ -307,7 +309,7 @@ void ZMangaView::paintEvent(QPaintEvent *event)
             if (baseRect.contains(mp,true)) {
                 mp.setX(mp.x()*m_curUnscaledPixmap.width()/m_curPixmap.width());
                 mp.setY(mp.y()*m_curUnscaledPixmap.height()/m_curPixmap.height());
-                int msz = zg->magnifySize;
+                int msz = zg->getMagnifySize();
 
                 if (m_curPixmap.width()<m_curUnscaledPixmap.width() || m_curPixmap.height()<m_curUnscaledPixmap.height()) {
                     QRect cutBox(mp.x()-msz/2,mp.y()-msz/2,msz,msz);
@@ -332,7 +334,8 @@ void ZMangaView::paintEvent(QPaintEvent *event)
                     if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
                     if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
                     QImage zoomed = m_curUnscaledPixmap.copy(cutBox);
-                    zoomed = resizeImage(zoomed,zoomed.size()*ZDefaults::dynamicZoomUpScale,true,zg->upscaleFilter);
+                    zoomed = zF->resizeImage(zoomed,zoomed.size()*ZDefaults::dynamicZoomUpScale,
+                                             true,zg->getUpscaleFilter());
                     baseRect = QRect(QPoint(m_zoomPos.x()-zoomed.width()/2,m_zoomPos.y()-zoomed.height()/2),
                                      zoomed.size());
                     if (baseRect.left()<0) baseRect.moveLeft(0);
@@ -349,7 +352,7 @@ void ZMangaView::paintEvent(QPaintEvent *event)
                 && m_curUnscaledPixmap.isNull()) {
             QPixmap p(QSL(":/32/edit-delete"));
             w.drawPixmap((width()-p.width())/2,(height()-p.height())/2,p);
-            w.setPen(QPen(zg->foregroundColor()));
+            w.setPen(QPen(zg->getForegroundColor()));
             w.drawText(0,(height()-p.height())/2+p.height()+ZDefaults::errorPageLoadMsgVerticalMargin,
                        width(),w.fontMetrics().height(),Qt::AlignCenter,
                        tr("Error loading page %1").arg(m_currentPage+1));
@@ -444,14 +447,11 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             cp.setWidth(cp.width()*m_curUnscaledPixmap.width()/m_curPixmap.width());
             cp.setHeight(cp.height()*m_curUnscaledPixmap.height()/m_curPixmap.height());
             cp = cp.intersected(m_curUnscaledPixmap.rect());
-            if (ocr!=nullptr &&
+            if (zF->isOCRReady() &&
                     cp.width()>ZDefaults::ocrSquareMinimumSize &&
                     cp.height()>ZDefaults::ocrSquareMinimumSize) {
                 QImage cpx = m_curUnscaledPixmap.copy(cp);
-                ocr->SetImage(Image2PIX(cpx));
-                char* rtext = ocr->GetUTF8Text();
-                QString s = QString::fromUtf8(rtext);
-                delete[] rtext;
+                QString s = zF->processImageWithOCR(cpx);
                 QStringList sl = s.split('\n',QString::SkipEmptyParts);
                 int maxlen = 0;
                 for (const auto &i : sl) {
@@ -469,10 +469,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                     }
                     sl = sl2;
                 }
-                if (zg->ocrEditor!=nullptr) {
-                    zg->ocrEditor->addText(sl);
-                    zg->ocrEditor->showWnd();
-                }
+                Q_EMIT addOCRText(sl);
             }
         }
     } else if (event->button()==Qt::LeftButton &&
@@ -591,9 +588,9 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
     if (!scaled.isNull() && page!=m_currentPage) return;
 
     QPalette p = palette();
-    p.setBrush(QPalette::Dark,QBrush(zg->backgroundColor));
+    p.setBrush(QPalette::Dark,QBrush(zg->getBackgroundColor()));
     setPalette(p);
-    Q_EMIT backgroundUpdated(zg->backgroundColor);
+    Q_EMIT backgroundUpdated(zg->getBackgroundColor());
 
     if (m_openedFile.isEmpty()) return;
     if (page<0 || page>=m_privPageCount) return;
@@ -644,12 +641,12 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                     m_curPixmap = m_curUnscaledPixmap.scaled(targetSize,Qt::IgnoreAspectRatio,
                                                    Qt::FastTransformation);
 
-                    if (zg->useFineRendering) {
+                    if (zg->getUseFineRendering()) {
                         Blitz::ScaleFilterType filter;
                         if (targetSize.width()>m_curUnscaledPixmap.width()) {
-                            filter = zg->upscaleFilter;
+                            filter = zg->getUpscaleFilter();
                         } else {
-                            filter = zg->downscaleFilter;
+                            filter = zg->getDownscaleFilter();
                         }
 
                         if (filter!=Blitz::UndefinedFilter) {
@@ -658,7 +655,8 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                                 QElapsedTimer timer;
                                 timer.start();
 
-                                QImage res = resizeImage(image,targetSize,true,filter,page,&m_currentPage);
+                                QImage res = zF->resizeImage(image,targetSize,true,filter,
+                                                             page,&m_currentPage);
 
                                 if (!res.isNull()) {
                                     qint64 elapsed = timer.elapsed();
@@ -742,10 +740,10 @@ void ZMangaView::exportPagesCtx()
 
     m_exportDialog.setPages(m_currentPage,m_privPageCount-m_currentPage);
     m_exportDialog.setParent(window(),Qt::Dialog);
-    m_exportDialog.setExportDir(zg->savedAuxSaveDir);
+    m_exportDialog.setExportDir(zg->getSavedAuxSaveDir());
     if (m_exportDialog.exec()!=QDialog::Accepted) return;
 
-    zg->savedAuxSaveDir = m_exportDialog.getExportDir();
+    zg->setSavedAuxSaveDir(m_exportDialog.getExportDir());
 
     int cnt = m_exportDialog.getPagesCount();
 
@@ -862,10 +860,10 @@ void ZMangaView::cacheGotPage(const QByteArray &page, const QImage &pageImage, i
     if (m_processingPages.contains(num))
         m_processingPages.removeOne(num);
 
-    if ((zg->cachePixmaps && m_iCacheImages.contains(num)) ||
-            (!zg->cachePixmaps && m_iCacheData.contains(num))) return;
+    if ((zg->getCachePixmaps() && m_iCacheImages.contains(num)) ||
+            (!zg->getCachePixmaps() && m_iCacheData.contains(num))) return;
 
-    if (!zg->cachePixmaps) {
+    if (!zg->getCachePixmaps()) {
         m_iCacheData[num]=page;
     } else {
         m_iCacheImages[num]=pageImage;
@@ -891,22 +889,22 @@ void ZMangaView::cacheGotError(const QString &msg)
 
 void ZMangaView::cacheDropUnusable()
 {
-    if (zg->cachePixmaps) {
+    if (zg->getCachePixmaps()) {
         m_iCacheData.clear();
     } else {
         m_iCacheImages.clear();
     }
 
-    QIntVector toCache = cacheGetActivePages();
+    ZIntVector toCache = cacheGetActivePages();
     QList<int> cached;
-    if (zg->cachePixmaps) {
+    if (zg->getCachePixmaps()) {
         cached = m_iCacheImages.keys();
     } else {
         cached = m_iCacheData.keys();
     }
     for (const auto &i : qAsConst(cached)) {
         if (!toCache.contains(i)) {
-            if (zg->cachePixmaps) {
+            if (zg->getCachePixmaps()) {
                 m_iCacheImages.remove(i);
             } else {
                 m_iCacheData.remove(i);
@@ -918,11 +916,11 @@ void ZMangaView::cacheDropUnusable()
 
 void ZMangaView::cacheFillNearest()
 {
-    QIntVector toCache = cacheGetActivePages();
+    ZIntVector toCache = cacheGetActivePages();
     int idx = 0;
     while (idx<toCache.count()) {
         bool contains = false;
-        if (zg->cachePixmaps) {
+        if (zg->getCachePixmaps()) {
             contains = m_iCacheImages.contains(toCache.at(idx));
         } else {
             contains = m_iCacheData.contains(toCache.at(idx));
@@ -942,10 +940,10 @@ void ZMangaView::cacheFillNearest()
     }
 }
 
-QIntVector ZMangaView::cacheGetActivePages()
+ZIntVector ZMangaView::cacheGetActivePages()
 {
-    QIntVector l;
-    l.reserve(zg->cacheWidth*2+1);
+    ZIntVector l;
+    l.reserve(zg->getCacheWidth()*2+1);
 
     if (m_currentPage==-1) return l;
     if (m_privPageCount<=0) {
@@ -954,11 +952,11 @@ QIntVector ZMangaView::cacheGetActivePages()
     }
 
     int cacheRadius = 1;
-    if (zg->cacheWidth>=2) {
-        if ((zg->cacheWidth % 2)==0) {
-            cacheRadius = zg->cacheWidth / 2;
+    if (zg->getCacheWidth()>=2) {
+        if ((zg->getCacheWidth() % 2)==0) {
+            cacheRadius = zg->getCacheWidth() / 2;
         } else {
-            cacheRadius = (zg->cacheWidth+1) / 2;
+            cacheRadius = (zg->getCacheWidth()+1) / 2;
         }
     }
 

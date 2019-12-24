@@ -18,19 +18,16 @@
 #include "ui_mainwindow.h"
 #include "zglobal.h"
 #include "bookmarkdlg.h"
-#include "ocreditor.h"
 
 ZMainWindow::ZMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ZMainWindow)
 {
+    // TODO: move zg initialization to zF
     if (zg==nullptr)
         zg = new ZGlobal(this);
 
     ui->setupUi(this);
-
-    if (zg->ocrEditor==nullptr)
-        zg->ocrEditor = new ZOCREditor(this);
 
     setWindowIcon(QIcon(":/Alien9"));
 
@@ -75,7 +72,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->actionFullscreen,&QAction::triggered,this,&ZMainWindow::switchFullscreen);
     connect(ui->actionMinimize,&QAction::triggered,this,&ZMainWindow::showMinimized);
     connect(ui->actionSaveSettings,&QAction::triggered,zg,&ZGlobal::saveSettings);
-    connect(ui->actionShowOCR,&QAction::triggered,zg->ocrEditor,&ZOCREditor::show);
+    connect(ui->actionShowOCR,&QAction::triggered,zg->ocrEditor(),&ZOCREditor::show);
 
     connect(ui->searchTab,&ZSearchTab::mangaDblClick,this,&ZMainWindow::openFromIndex);
     connect(ui->searchTab,&ZSearchTab::statusBarMsg,this,&ZMainWindow::auxMessage);
@@ -125,12 +122,12 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(zg,&ZGlobal::loadSearchTabSettings,ui->searchTab,&ZSearchTab::loadSettings,Qt::DirectConnection);
     connect(zg,&ZGlobal::saveSearchTabSettings,ui->searchTab,&ZSearchTab::saveSettings,Qt::DirectConnection);
 
-    connect(zg->db,&ZDB::foundNewFiles,this,&ZMainWindow::fsFoundNewFiles,Qt::QueuedConnection);
+    connect(zg->db(),&ZDB::foundNewFiles,this,&ZMainWindow::fsFoundNewFiles,Qt::QueuedConnection);
     connect(zg,&ZGlobal::fsFilesAdded,this,&ZMainWindow::fsNewFilesAdded);
 
-    connect(this,&ZMainWindow::dbAddIgnoredFiles,zg->db,&ZDB::sqlAddIgnoredFiles,Qt::QueuedConnection);
-    connect(this,&ZMainWindow::dbFindNewFiles,zg->db,&ZDB::sqlSearchMissingManga,Qt::QueuedConnection);
-    connect(this,&ZMainWindow::dbAddFiles,zg->db,&ZDB::sqlAddFiles,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbAddIgnoredFiles,zg->db(),&ZDB::sqlAddIgnoredFiles,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbFindNewFiles,zg->db(),&ZDB::sqlSearchMissingManga,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbAddFiles,zg->db(),&ZDB::sqlAddFiles,Qt::QueuedConnection);
 
     ui->mangaView->setScroller(ui->scrollArea);
     zg->loadSettings();
@@ -148,7 +145,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     ui->btnZoomFit->click();
 
 #ifdef WITH_OCR
-    if (!ocr) {
+    if (!zF->isOCRReady()) {
         QMessageBox::critical(nullptr,tr("QManga"),tr("Could not initialize Tesseract. \n"
                                                       "Maybe language training data is not installed."));
     }
@@ -190,16 +187,14 @@ void ZMainWindow::centerWindow(bool moveWindow)
         ui->searchTab->updateSplitters();
     }
 
-    zg->dpiX = screen->physicalDotsPerInchX();
-    zg->dpiY = screen->physicalDotsPerInchY();
+    zg->setDPI(screen->physicalDotsPerInchX(),screen->physicalDotsPerInchY());
 #ifdef Q_OS_WIN
     const qreal maxDPIdifference = 20.0;
     const qreal minDPI = 130.0;
-    if (abs(zg->dpiX-zg->dpiY)>maxDPIdifference) {
-        qreal dpi = qMax(zg->dpiX,zg->dpiY);
+    if (abs(zg->getDpiX() - zg->getDpiY())>maxDPIdifference) {
+        qreal dpi = qMax(zg->getDpiX(),zg->getDpiY());
         if (dpi<minDPI) dpi=minDPI;
-        zg->dpiX = dpi;
-        zg->dpiY = dpi;
+        zg->setDPI(dpi,dpi);
     }
 #endif
 }
@@ -274,7 +269,7 @@ void ZMainWindow::addContextMenuItems(QMenu* menu)
 void ZMainWindow::openAuxFile(const QString &filename)
 {
     QFileInfo fi(filename);
-    zg->savedAuxOpenDir = fi.path();
+    zg->setSavedAuxOpenDir(fi.path());
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(filename);
@@ -289,7 +284,7 @@ void ZMainWindow::closeEvent(QCloseEvent *event)
 
 void ZMainWindow::openAux()
 {
-    QString filename = getOpenFileNameD(this,tr("Open manga or image"),zg->savedAuxOpenDir);
+    QString filename = zF->getOpenFileNameD(this,tr("Open manga or image"),zg->getSavedAuxOpenDir());
     if (!filename.isEmpty())
         openAuxFile(filename);
 }
@@ -484,7 +479,7 @@ void ZMainWindow::viewerBackgroundUpdated(const QColor &color)
     QColor c = palette().window().color();
     if (c != oldColor) {
         QPalette p = ui->fastScrollSlider->palette();
-        p.setBrush(QPalette::Window, QBrush(zg->backgroundColor));
+        p.setBrush(QPalette::Window, QBrush(zg->getBackgroundColor()));
         ui->fastScrollSlider->setPalette(p);
     }
 
@@ -495,7 +490,8 @@ void ZMainWindow::updateBookmarks()
 {
     while (ui->menuBookmarks->actions().count()>2)
         ui->menuBookmarks->removeAction(ui->menuBookmarks->actions().constLast());
-    for (auto it = zg->bookmarks.constKeyValueBegin(), end = zg->bookmarks.constKeyValueEnd();
+    const auto bookmarks = zg->getBookmarks();
+    for (auto it = bookmarks.constKeyValueBegin(), end = bookmarks.constKeyValueEnd();
          it != end; ++it) {
         QAction* a = ui->menuBookmarks->addAction((*it).first,this,&ZMainWindow::openBookmark);
         QString st = (*it).second;
@@ -529,8 +525,8 @@ void ZMainWindow::createBookmark()
                                        fi.completeBaseName(),openedFile);
     if (dlg.exec()==QDialog::Accepted) {
         QString t = dlg.getDlgEdit1();
-        if (!t.isEmpty() && !zg->bookmarks.contains(t)) {
-            zg->bookmarks[t]=QSL("%1\n%2").arg(dlg.getDlgEdit2()).arg(ui->mangaView->getCurrentPage());
+        if (!t.isEmpty() && !zg->getBookmarks().contains(t)) {
+            zg->addBookmark(t,QSL("%1\n%2").arg(dlg.getDlgEdit2()).arg(ui->mangaView->getCurrentPage()));
             updateBookmarks();
         } else {
             QMessageBox::warning(this,tr("QManga"),
@@ -597,10 +593,11 @@ void ZMainWindow::auxMessage(const QString &msg)
 
 void ZMainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
 {
-    if (zg->cachePixmaps) {
+    if (zg->getCachePixmaps()) {
         m_lblAverageSizes->setText(tr("Avg size: %1x%2").arg(sz.width()).arg(sz.height()));
     } else {
-        m_lblAverageSizes->setText(tr("Avg size: %1x%2, %3").arg(sz.width()).arg(sz.height()).arg(formatSize(fsz)));
+        m_lblAverageSizes->setText(tr("Avg size: %1x%2, %3").arg(sz.width()).arg(sz.height())
+                                   .arg(zF->formatSize(fsz)));
     }
 
     if (zg->getAvgFineRenderTime()>0)
@@ -613,7 +610,7 @@ void ZMainWindow::fsAddFiles()
     fl.clear();
     for (const auto &i : qAsConst(m_fsScannedFiles)) {
         fl[i.album].append(i.fileName);
-        zg->newlyAddedFiles.removeAll(i.fileName);
+        zg->removeFileFromNewlyAdded(i.fileName);
     }
 
     for (auto it = fl.constKeyValueBegin(), end = fl.constKeyValueEnd(); it != end; ++it)
@@ -652,12 +649,12 @@ void ZMainWindow::fsNewFilesAdded()
     m_fsAddFilesMutex.lock();
     ui->fsResults->clear();
     m_fsScannedFiles.clear();
-    const QStringList f = zg->newlyAddedFiles;
+    const QStringList f = zg->getNewlyAddedFiles();
 
     for (const auto &i : f) {
         QFileInfo fi(i);
         bool mimeOk;
-        readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
+        zF->readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
         if (mimeOk)
             m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
     }
@@ -744,7 +741,7 @@ void ZMainWindow::fsFoundNewFiles(const QStringList &files)
     for (const QString& filename : files) {
         QFileInfo fi(filename);
         bool mimeOk;
-        readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
+        zF->readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
         if (mimeOk)
             m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
     }

@@ -21,36 +21,11 @@ class ZSettingsDialog;
 class ZSettingsDialog : public QDialog
 {
     Q_OBJECT
-    
 public:
-    QComboBox *comboUpscaleFilter, *comboDownscaleFilter;
-    QSpinBox* spinCacheWidth;
-    QSpinBox* spinMagnify;
-    QLineEdit* editMySqlLogin;
-    QLineEdit* editMySqlPassword;
-    QLineEdit* editMySqlBase;
-    QLineEdit* editMySqlHost;
-    QLineEdit* editRar;
-    QListWidget* listBookmarks;
-    QRadioButton* radioCachePixmaps;
-    QRadioButton* radioCacheData;
-    QCheckBox* checkFineRendering;
-    QCheckBox* checkFSWatcher;
-    QSpinBox* spinScrollDelta;
-    QSpinBox* spinScrollFactor;
-    QLabel* labelDetectedDelta;
-    QListWidget* listDynAlbums;
-    QComboBox* comboPDFRendererMode;
-    QCheckBox* checkForceDPI;
-    QDoubleSpinBox* spinForceDPI;
-    QDoubleSpinBox* spinBlur;
-    QRadioButton* radioMySQL;
-    QRadioButton* radioSQLite;
-    QDoubleSpinBox* spinSearchScrollFactor;
-    QLineEdit* editOCRDatapath;
+    Ui::ZSettingsDialog *ui;
 
     explicit ZSettingsDialog(QWidget *parent = nullptr);
-    ~ZSettingsDialog();
+    ~ZSettingsDialog() override;
     QColor getBkColor();
     QFont getIdxFont();
     QFont getOCRFont();
@@ -62,14 +37,6 @@ public:
     QString getOCRLanguage();
     QString getTranSourceLanguage();
     QString getTranDestLanguage();
-    
-private:
-    QColor bkColor, frameColor;
-    QFont idxFont;
-    QFont ocrFont;
-    Ui::ZSettingsDialog *ui;
-    QMap<QPushButton *, QListWidget *> delLookup;
-
     void updateTranslatorLanguages();
 
 Q_SIGNALS:
@@ -94,6 +61,10 @@ public Q_SLOTS:
     void updateSQLFields(bool checked);
     void ocrDatapathDlg();
     void updateOCRLanguages();
+
+private:
+    Q_DISABLE_COPY(ZSettingsDialog)
+
 };
 
 #endif // SETTINGSDIALOG_H

@@ -14,45 +14,49 @@
 #include "zdb.h"
 #include "zpdfreader.h"
 #include "zdjvureader.h"
+#include "zglobalprivate.h"
+#include "ui_settingsdialog.h"
 
 ZGlobal* zg = nullptr;
 
-ZGlobal::ZGlobal(QObject *parent) :
-    QObject(parent)
+ZGlobal::ZGlobal(QWidget *parent) :
+    QObject(parent),
+    dptr(new ZGlobalPrivate(this,parent))
 {
+    Q_D(ZGlobal);
+
     initLanguagesList();
-    tranSourceLang = QSL("ja");
-    tranDestLang = QSL("en");
+    d->m_tranSourceLang = QSL("ja");
+    d->m_tranDestLang = QSL("en");
 
-    fsWatcher = new QFileSystemWatcher(this);
-    connect(fsWatcher,&QFileSystemWatcher::directoryChanged,this,&ZGlobal::directoryChanged);
+    connect(d->fsWatcher.data(),&QFileSystemWatcher::directoryChanged,this,&ZGlobal::directoryChanged);
 
-    threadDB = new QThread();
-    db = new ZDB();
     connect(this,&ZGlobal::dbSetCredentials,
-            db,&ZDB::setCredentials,Qt::QueuedConnection);
-    connect(this,&ZGlobal::dbCheckBase,db,&ZDB::sqlCheckBase,Qt::QueuedConnection);
-    connect(this,&ZGlobal::dbRescanIndexedDirs,db,&ZDB::sqlRescanIndexedDirs,Qt::QueuedConnection);
-    connect(db,&ZDB::updateWatchDirList,
+            d->m_db.data(),&ZDB::setCredentials,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbCheckBase,d->m_db.data(),&ZDB::sqlCheckBase,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbRescanIndexedDirs,d->m_db.data(),&ZDB::sqlRescanIndexedDirs,Qt::QueuedConnection);
+    connect(d->m_db.data(),&ZDB::updateWatchDirList,
             this,&ZGlobal::updateWatchDirList,Qt::QueuedConnection);
-    connect(db,&ZDB::baseCheckComplete,
+    connect(d->m_db.data(),&ZDB::baseCheckComplete,
             this,&ZGlobal::dbCheckComplete,Qt::QueuedConnection);
-    connect(this,&ZGlobal::dbSetDynAlbums,db,&ZDB::setDynAlbums,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbSetDynAlbums,d->m_db.data(),&ZDB::setDynAlbums,Qt::QueuedConnection);
     connect(this,&ZGlobal::dbSetIgnoredFiles,
-            db,&ZDB::sqlSetIgnoredFiles,Qt::QueuedConnection);
-    db->moveToThread(threadDB);
-    connect(threadDB,&QThread::finished,db,&QObject::deleteLater,Qt::QueuedConnection);
-    connect(threadDB,&QThread::finished,threadDB,&QObject::deleteLater,Qt::QueuedConnection);
+            d->m_db.data(),&ZDB::sqlSetIgnoredFiles,Qt::QueuedConnection);
+    d->m_db->moveToThread(d->m_threadDB.data());
+    connect(d->m_threadDB.data(),&QThread::finished,d->m_db.data(),&QObject::deleteLater,Qt::QueuedConnection);
+    connect(d->m_threadDB.data(),&QThread::finished,d->m_threadDB.data(),&QObject::deleteLater,Qt::QueuedConnection);
 
-    threadDB->start();
+    d->m_threadDB->start();
 
+    // TODO: move this to zF
     initPdfReader();
     ZDjVuController::instance()->initDjVuReader();
 }
 
 ZGlobal::~ZGlobal()
 {
-    threadDB->quit();
+    Q_D(ZGlobal);
+    d->m_threadDB->quit();
     QApplication::processEvents();
     freePdfReader();
     ZDjVuController::instance()->freeDjVuReader();
@@ -60,7 +64,8 @@ ZGlobal::~ZGlobal()
 
 void ZGlobal::checkSQLProblems(QWidget *parent)
 {
-    QStrHash problems = db->getConfigProblems();
+    Q_D(const ZGlobal);
+    ZStrHash problems = d->m_db->getConfigProblems();
     if (problems.isEmpty()) return;
 
     Q_EMIT auxMessage(tr("%1 problems with MySQL").arg(problems.count()));
@@ -84,64 +89,64 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
 
 void ZGlobal::loadSettings()
 {
+    Q_D(ZGlobal);
     auto w = qobject_cast<ZMainWindow *>(parent());
 
     QSettings settings(QSL("kernel1024"), QSL("qmanga"));
     settings.beginGroup(QSL("MainWindow"));
-    cacheWidth = settings.value(QSL("cacheWidth"),ZDefaults::cacheWidth).toInt();
-    downscaleFilter = static_cast<Blitz::ScaleFilterType>(
+    d->m_cacheWidth = settings.value(QSL("cacheWidth"),ZDefaults::cacheWidth).toInt();
+    d->m_downscaleFilter = static_cast<Blitz::ScaleFilterType>(
                           settings.value(QSL("downscaleFilter"),Blitz::LanczosFilter).toInt());
-    upscaleFilter = static_cast<Blitz::ScaleFilterType>(
+    d->m_upscaleFilter = static_cast<Blitz::ScaleFilterType>(
                         settings.value(QSL("upscaleFilter"),Blitz::MitchellFilter).toInt());
-    dbUser = settings.value(QSL("mysqlUser"),QString()).toString();
-    dbPass = settings.value(QSL("mysqlPassword"),QString()).toString();
-    dbBase = settings.value(QSL("mysqlBase"),QSL("qmanga")).toString();
-    dbHost = settings.value(QSL("mysqlHost"),QSL("localhost")).toString();
-    rarCmd = settings.value(QSL("rarCmd"),QString()).toString();
-    savedAuxOpenDir = settings.value(QSL("savedAuxOpenDir"),QString()).toString();
-    savedIndexOpenDir = settings.value(QSL("savedIndexOpenDir"),QString()).toString();
-    savedAuxSaveDir = settings.value(QSL("savedAuxSaveDir"),QString()).toString();
-    magnifySize = settings.value(QSL("magnifySize"),ZDefaults::magnifySize).toInt();
-    resizeBlur = settings.value(QSL("resizingBlur"),ZDefaults::resizeBlur).toDouble();
-    scrollDelta = settings.value(QSL("scrollDelta"),ZDefaults::scrollDelta).toInt();
-    scrollFactor = settings.value(QSL("scrollFactor"),ZDefaults::scrollFactor).toInt();
-    searchScrollFactor = settings.value(QSL("searchScrollFactor"),ZDefaults::searchScrollFactor).toDouble();
-    pdfRendering = static_cast<Z::PDFRendering>(
+    d->m_dbUser = settings.value(QSL("mysqlUser"),QString()).toString();
+    d->m_dbPass = settings.value(QSL("mysqlPassword"),QString()).toString();
+    d->m_dbBase = settings.value(QSL("mysqlBase"),QSL("qmanga")).toString();
+    d->m_dbHost = settings.value(QSL("mysqlHost"),QSL("localhost")).toString();
+    d->m_rarCmd = settings.value(QSL("rarCmd"),QString()).toString();
+    d->m_savedAuxOpenDir = settings.value(QSL("savedAuxOpenDir"),QString()).toString();
+    d->m_savedIndexOpenDir = settings.value(QSL("savedIndexOpenDir"),QString()).toString();
+    d->m_savedAuxSaveDir = settings.value(QSL("savedAuxSaveDir"),QString()).toString();
+    d->m_magnifySize = settings.value(QSL("magnifySize"),ZDefaults::magnifySize).toInt();
+    d->m_resizeBlur = settings.value(QSL("resizingBlur"),ZDefaults::resizeBlur).toDouble();
+    d->m_scrollDelta = settings.value(QSL("scrollDelta"),ZDefaults::scrollDelta).toInt();
+    d->m_scrollFactor = settings.value(QSL("scrollFactor"),ZDefaults::scrollFactor).toInt();
+    d->m_searchScrollFactor = settings.value(QSL("searchScrollFactor"),ZDefaults::searchScrollFactor).toDouble();
+    d->m_pdfRendering = static_cast<Z::PDFRendering>(
                        settings.value(QSL("pdfRendering"),
-                                      Z::Autodetect).toInt());
-    dbEngine = static_cast<Z::DBMS>(settings.value(QSL("dbEngine"),Z::SQLite).toInt());
-    forceDPI = settings.value(QSL("forceDPI"),ZDefaults::forceDPI).toDouble();
-    backgroundColor = QColor(settings.value(QSL("backgroundColor"),
+                                      Z::pdfAutodetect).toInt());
+    d->m_dbEngine = static_cast<Z::DBMS>(settings.value(QSL("dbEngine"),Z::dbmsSQLite).toInt());
+    d->m_forceDPI = settings.value(QSL("forceDPI"),ZDefaults::forceDPI).toDouble();
+    d->m_backgroundColor = QColor(settings.value(QSL("backgroundColor"),
                                             QSL("#303030")).toString());
-    frameColor = QColor(settings.value(QSL("frameColor"),
+    d->m_frameColor = QColor(settings.value(QSL("frameColor"),
                                        QColor(Qt::lightGray).name()).toString());
-    cachePixmaps = settings.value(QSL("cachePixmaps"),false).toBool();
-    useFineRendering = settings.value(QSL("fineRendering"),true).toBool();
-    filesystemWatcher = settings.value(QSL("filesystemWatcher"),false).toBool();
-    defaultSearchEngine = settings.value(QSL("defaultSearchEngine"),QString()).toString();
-    ctxSearchEngines = settings.value(QSL("ctxSearchEngines")).value<ZStrMap>();
+    d->m_cachePixmaps = settings.value(QSL("cachePixmaps"),false).toBool();
+    d->m_useFineRendering = settings.value(QSL("fineRendering"),true).toBool();
+    d->m_filesystemWatcher = settings.value(QSL("filesystemWatcher"),false).toBool();
+    d->m_defaultSearchEngine = settings.value(QSL("defaultSearchEngine"),QString()).toString();
+    d->m_ctxSearchEngines = settings.value(QSL("ctxSearchEngines")).value<ZStrMap>();
 
-
-    if (!idxFont.fromString(settings.value(QSL("idxFont"),QString()).toString()))
-        idxFont = QApplication::font("QListView");
-    if (!ocrFont.fromString(settings.value(QSL("ocrFont"),QString()).toString()))
-        ocrFont = QApplication::font("QPlainTextView");
-    if (!backgroundColor.isValid())
-        backgroundColor = QApplication::palette("QWidget").dark().color();
-    if (!frameColor.isValid())
-        frameColor = QColor(Qt::lightGray);
+    if (!d->m_idxFont.fromString(settings.value(QSL("idxFont"),QString()).toString()))
+        d->m_idxFont = QApplication::font("QListView");
+    if (!d->m_ocrFont.fromString(settings.value(QSL("ocrFont"),QString()).toString()))
+        d->m_ocrFont = QApplication::font("QPlainTextView");
+    if (!d->m_backgroundColor.isValid())
+        d->m_backgroundColor = QApplication::palette("QWidget").dark().color();
+    if (!d->m_frameColor.isValid())
+        d->m_frameColor = QColor(Qt::lightGray);
 
     bool showMaximized = false;
     if (w!=nullptr)
         showMaximized = settings.value(QSL("maximized"),false).toBool();
 
-    bookmarks = settings.value(QSL("bookmarks")).value<ZStrMap>();
+    d->m_bookmarks = settings.value(QSL("bookmarks")).value<ZStrMap>();
     ZStrMap albums = settings.value(QSL("dynAlbums")).value<ZStrMap>();
     Q_EMIT dbSetDynAlbums(albums);
 
     settings.endGroup();
 
-    Q_EMIT dbSetCredentials(dbHost,dbBase,dbUser,dbPass);
+    Q_EMIT dbSetCredentials(d->m_dbHost,d->m_dbBase,d->m_dbUser,d->m_dbPass);
     Q_EMIT loadSearchTabSettings(&settings);
 
     if (w!=nullptr) {
@@ -152,50 +157,51 @@ void ZGlobal::loadSettings()
         w->updateViewer();
     }
     Q_EMIT dbCheckBase();
-    if (filesystemWatcher)
+    if (d->m_filesystemWatcher)
         Q_EMIT dbRescanIndexedDirs();
 
-    if (ocrEditor!=nullptr)
-        ocrEditor->setEditorFont(ocrFont);
+    if (d->m_ocrEditor!=nullptr)
+        d->m_ocrEditor->setEditorFont(d->m_ocrFont);
 
     checkSQLProblems(w);
 }
 
 void ZGlobal::saveSettings()
 {
+    Q_D(const ZGlobal);
     QSettings settings(QSL("kernel1024"), QSL("qmanga"));
     settings.beginGroup(QSL("MainWindow"));
     settings.remove(QString());
-    settings.setValue(QSL("cacheWidth"),cacheWidth);
-    settings.setValue(QSL("downscaleFilter"),static_cast<int>(downscaleFilter));
-    settings.setValue(QSL("upscaleFilter"),static_cast<int>(upscaleFilter));
-    settings.setValue(QSL("mysqlUser"),dbUser);
-    settings.setValue(QSL("mysqlPassword"),dbPass);
-    settings.setValue(QSL("mysqlBase"),dbBase);
-    settings.setValue(QSL("mysqlHost"),dbHost);
-    settings.setValue(QSL("rarCmd"),rarCmd);
-    settings.setValue(QSL("savedAuxOpenDir"),savedAuxOpenDir);
-    settings.setValue(QSL("savedAuxSaveDir"),savedAuxSaveDir);
-    settings.setValue(QSL("savedIndexOpenDir"),savedIndexOpenDir);
-    settings.setValue(QSL("magnifySize"),magnifySize);
-    settings.setValue(QSL("resizingBlur"),resizeBlur);
-    settings.setValue(QSL("scrollDelta"),scrollDelta);
-    settings.setValue(QSL("scrollFactor"),scrollFactor);
-    settings.setValue(QSL("searchScrollFactor"),searchScrollFactor);
-    settings.setValue(QSL("pdfRendering"),pdfRendering);
-    settings.setValue(QSL("dbEngine"),dbEngine);
-    settings.setValue(QSL("forceDPI"),forceDPI);
-    settings.setValue(QSL("backgroundColor"),backgroundColor.name());
-    settings.setValue(QSL("frameColor"),frameColor.name());
-    settings.setValue(QSL("cachePixmaps"),cachePixmaps);
-    settings.setValue(QSL("fineRendering"),useFineRendering);
-    settings.setValue(QSL("filesystemWatcher"),filesystemWatcher);
-    settings.setValue(QSL("idxFont"),idxFont.toString());
-    settings.setValue(QSL("ocrFont"),ocrFont.toString());
-    settings.setValue(QSL("defaultSearchEngine"),defaultSearchEngine);
-    settings.setValue(QSL("ctxSearchEngines"),QVariant::fromValue(ctxSearchEngines));
-    settings.setValue(QSL("tranSourceLanguage"),tranSourceLang);
-    settings.setValue(QSL("tranDestLanguage"),tranDestLang);
+    settings.setValue(QSL("cacheWidth"),d->m_cacheWidth);
+    settings.setValue(QSL("downscaleFilter"),static_cast<int>(d->m_downscaleFilter));
+    settings.setValue(QSL("upscaleFilter"),static_cast<int>(d->m_upscaleFilter));
+    settings.setValue(QSL("mysqlUser"),d->m_dbUser);
+    settings.setValue(QSL("mysqlPassword"),d->m_dbPass);
+    settings.setValue(QSL("mysqlBase"),d->m_dbBase);
+    settings.setValue(QSL("mysqlHost"),d->m_dbHost);
+    settings.setValue(QSL("rarCmd"),d->m_rarCmd);
+    settings.setValue(QSL("savedAuxOpenDir"),d->m_savedAuxOpenDir);
+    settings.setValue(QSL("savedAuxSaveDir"),d->m_savedAuxSaveDir);
+    settings.setValue(QSL("savedIndexOpenDir"),d->m_savedIndexOpenDir);
+    settings.setValue(QSL("magnifySize"),d->m_magnifySize);
+    settings.setValue(QSL("resizingBlur"),d->m_resizeBlur);
+    settings.setValue(QSL("scrollDelta"),d->m_scrollDelta);
+    settings.setValue(QSL("scrollFactor"),d->m_scrollFactor);
+    settings.setValue(QSL("searchScrollFactor"),d->m_searchScrollFactor);
+    settings.setValue(QSL("pdfRendering"),d->m_pdfRendering);
+    settings.setValue(QSL("dbEngine"),d->m_dbEngine);
+    settings.setValue(QSL("forceDPI"),d->m_forceDPI);
+    settings.setValue(QSL("backgroundColor"),d->m_backgroundColor.name());
+    settings.setValue(QSL("frameColor"),d->m_frameColor.name());
+    settings.setValue(QSL("cachePixmaps"),d->m_cachePixmaps);
+    settings.setValue(QSL("fineRendering"),d->m_useFineRendering);
+    settings.setValue(QSL("filesystemWatcher"),d->m_filesystemWatcher);
+    settings.setValue(QSL("idxFont"),d->m_idxFont.toString());
+    settings.setValue(QSL("ocrFont"),d->m_ocrFont.toString());
+    settings.setValue(QSL("defaultSearchEngine"),d->m_defaultSearchEngine);
+    settings.setValue(QSL("ctxSearchEngines"),QVariant::fromValue(d->m_ctxSearchEngines));
+    settings.setValue(QSL("tranSourceLanguage"),d->m_tranSourceLang);
+    settings.setValue(QSL("tranDestLanguage"),d->m_tranDestLang);
 
     auto w = qobject_cast<ZMainWindow *>(parent());
     if (w!=nullptr) {
@@ -203,8 +209,8 @@ void ZGlobal::saveSettings()
 
     }
 
-    settings.setValue(QSL("bookmarks"),QVariant::fromValue(bookmarks));
-    settings.setValue(QSL("dynAlbums"),QVariant::fromValue(db->getDynAlbums()));
+    settings.setValue(QSL("bookmarks"),QVariant::fromValue(d->m_bookmarks));
+    settings.setValue(QSL("dynAlbums"),QVariant::fromValue(d->m_db->getDynAlbums()));
 
     settings.endGroup();
 
@@ -213,31 +219,33 @@ void ZGlobal::saveSettings()
 
 void ZGlobal::updateWatchDirList(const QStringList &watchDirs)
 {
-    dirWatchList.clear();
+    Q_D(ZGlobal);
+    d->m_dirWatchList.clear();
     for (const auto &i : watchDirs) {
-        QDir d(i);
-        if (!d.isReadable()) continue;
-        dirWatchList[d.absolutePath()] =
-                d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
+        QDir dir(i);
+        if (!dir.isReadable()) continue;
+        d->m_dirWatchList[dir.absolutePath()] =
+                dir.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
     }
-    fsWatcher->addPaths(watchDirs);
+    d->fsWatcher->addPaths(watchDirs);
 }
 
 void ZGlobal::directoryChanged(const QString &dir)
 {
+    Q_D(ZGlobal);
     QStringList ignoredFiles;
-    if (db!=nullptr)
-        ignoredFiles = db->sqlGetIgnoredFiles();
+    if (d->m_db!=nullptr)
+        ignoredFiles = d->m_db->sqlGetIgnoredFiles();
 
-    QDir d(dir);
-    if (!d.isReadable()) return;
-    const QStringList nlist = d.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
-    const QStringList olist = dirWatchList.value(d.absolutePath());
+    QDir dr(dir);
+    if (!dr.isReadable()) return;
+    const QStringList nlist = dr.entryList(QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
+    const QStringList olist = d->m_dirWatchList.value(dr.absolutePath());
     for (const auto &i : nlist) {
-        QString fname = d.absoluteFilePath(i);
-        if (!olist.contains(i) && !newlyAddedFiles.contains(fname) &&
+        QString fname = dr.absoluteFilePath(i);
+        if (!olist.contains(i) && !d->m_newlyAddedFiles.contains(fname) &&
                 !ignoredFiles.contains(fname))
-            newlyAddedFiles << fname;
+            d->m_newlyAddedFiles.append(fname);
     }
     fsCheckFilesAvailability();
 }
@@ -250,22 +258,24 @@ void ZGlobal::dbCheckComplete()
 
 void ZGlobal::addFineRenderTime(qint64 msec)
 {
-    fineRenderMutex.lock();
+    Q_D(ZGlobal);
+    d->m_fineRenderMutex.lock();
 
-    fineRenderTimes.append(msec);
-    if (fineRenderTimes.count()>100)
-        fineRenderTimes.removeFirst();
+    d->m_fineRenderTimes.append(msec);
+    if (d->m_fineRenderTimes.count()>100)
+        d->m_fineRenderTimes.removeFirst();
 
     qint64 sum = 0;
-    for (const qint64 a : qAsConst(fineRenderTimes))
+    for (const qint64 a : qAsConst(d->m_fineRenderTimes))
         sum += a;
-    avgFineRenderTime = static_cast<int>(sum) / fineRenderTimes.count();
+    d->m_avgFineRenderTime = static_cast<int>(sum) / d->m_fineRenderTimes.count();
 
-    fineRenderMutex.unlock();
+    d->m_fineRenderMutex.unlock();
 }
 
-QColor ZGlobal::foregroundColor()
+QColor ZGlobal::getForegroundColor() const
 {
+    Q_D(const ZGlobal);
     constexpr qreal redLuma = 0.2989;
     constexpr qreal greenLuma = 0.5870;
     constexpr qreal blueLuma = 0.1140;
@@ -273,7 +283,7 @@ QColor ZGlobal::foregroundColor()
     qreal r;
     qreal g;
     qreal b;
-    backgroundColor.getRgbF(&r,&g,&b);
+    d->m_backgroundColor.getRgbF(&r,&g,&b);
     qreal br = r*redLuma+g*greenLuma+b*blueLuma;
     if (br>halfLuma)
         return QColor(Qt::black);
@@ -283,11 +293,12 @@ QColor ZGlobal::foregroundColor()
 
 void ZGlobal::fsCheckFilesAvailability()
 {
+    Q_D(ZGlobal);
     int i = 0;
-    while (i<newlyAddedFiles.count() && !newlyAddedFiles.isEmpty()) {
-        QFileInfo fi(newlyAddedFiles.at(i));
+    while (i<d->m_newlyAddedFiles.count() && !d->m_newlyAddedFiles.isEmpty()) {
+        QFileInfo fi(d->m_newlyAddedFiles.at(i));
         if (!(fi.isReadable() && fi.isFile())) {
-            newlyAddedFiles.removeAt(i);
+            d->m_newlyAddedFiles.removeAt(i);
         } else {
             i++;
         }
@@ -297,126 +308,127 @@ void ZGlobal::fsCheckFilesAvailability()
 
 void ZGlobal::settingsDlg()
 {
+    Q_D(ZGlobal);
     auto w = qobject_cast<ZMainWindow *>(parent());
-    auto dlg = new ZSettingsDialog(w);
+    ZSettingsDialog dlg(w);
 
     checkSQLProblems(w);
 
-    dlg->editMySqlLogin->setText(dbUser);
-    dlg->editMySqlPassword->setText(dbPass);
-    dlg->editMySqlBase->setText(dbBase);
-    dlg->editMySqlHost->setText(dbHost);
-    dlg->editRar->setText(rarCmd);
-    dlg->spinCacheWidth->setValue(cacheWidth);
-    dlg->spinMagnify->setValue(magnifySize);
-    dlg->spinBlur->setValue(resizeBlur);
-    dlg->spinScrollDelta->setValue(scrollDelta);
-    dlg->spinScrollFactor->setValue(scrollFactor);
-    dlg->spinSearchScrollFactor->setValue(searchScrollFactor);
-    dlg->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(detectedDelta));
-    if (cachePixmaps) {
-        dlg->radioCachePixmaps->setChecked(true);
+    dlg.ui->editMySqlLogin->setText(d->m_dbUser);
+    dlg.ui->editMySqlPassword->setText(d->m_dbPass);
+    dlg.ui->editMySqlBase->setText(d->m_dbBase);
+    dlg.ui->editMySqlHost->setText(d->m_dbHost);
+    dlg.ui->editRar->setText(d->m_rarCmd);
+    dlg.ui->spinCacheWidth->setValue(d->m_cacheWidth);
+    dlg.ui->spinMagnify->setValue(d->m_magnifySize);
+    dlg.ui->spinBlur->setValue(d->m_resizeBlur);
+    dlg.ui->spinScrollDelta->setValue(d->m_scrollDelta);
+    dlg.ui->spinScrollFactor->setValue(d->m_scrollFactor);
+    dlg.ui->spinSearchScrollFactor->setValue(d->m_searchScrollFactor);
+    dlg.ui->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(d->m_detectedDelta));
+    if (d->m_cachePixmaps) {
+        dlg.ui->rbCachePixmaps->setChecked(true);
     } else {
-        dlg->radioCacheData->setChecked(true);
+        dlg.ui->rbCacheData->setChecked(true);
     }
-    if (dbEngine==Z::MySQL) {
-        dlg->radioMySQL->setChecked(true);
+    if (d->m_dbEngine==Z::dbmsMySQL) {
+        dlg.ui->rbMySQL->setChecked(true);
     } else {
-        dlg->radioSQLite->setChecked(true);
+        dlg.ui->rbSQLite->setChecked(true);
     }
-    dlg->checkFineRendering->setChecked(useFineRendering);
-    dlg->updateBkColor(backgroundColor);
-    dlg->updateIdxFont(idxFont);
-    dlg->updateOCRFont(ocrFont);
-    dlg->updateFrameColor(frameColor);
-    dlg->checkFSWatcher->setChecked(filesystemWatcher);
-    dlg->comboUpscaleFilter->setCurrentIndex(static_cast<int>(upscaleFilter));
-    dlg->comboDownscaleFilter->setCurrentIndex(static_cast<int>(downscaleFilter));
-    dlg->comboPDFRendererMode->setCurrentIndex(static_cast<int>(pdfRendering));
-    dlg->spinForceDPI->setEnabled(forceDPI>0.0);
-    dlg->checkForceDPI->setChecked(forceDPI>0.0);
-    if (forceDPI<=0.0) {
-        dlg->spinForceDPI->setValue(dpiX);
+    dlg.ui->checkFineRendering->setChecked(d->m_useFineRendering);
+    dlg.updateBkColor(d->m_backgroundColor);
+    dlg.updateIdxFont(d->m_idxFont);
+    dlg.updateOCRFont(d->m_ocrFont);
+    dlg.updateFrameColor(d->m_frameColor);
+    dlg.ui->checkFSWatcher->setChecked(d->m_filesystemWatcher);
+    dlg.ui->comboUpscaleFilter->setCurrentIndex(static_cast<int>(d->m_upscaleFilter));
+    dlg.ui->comboDownscaleFilter->setCurrentIndex(static_cast<int>(d->m_downscaleFilter));
+    dlg.ui->comboPDFRenderMode->setCurrentIndex(static_cast<int>(d->m_pdfRendering));
+    dlg.ui->spinPDFDPI->setEnabled(d->m_forceDPI>0.0);
+    dlg.ui->checkPDFDPI->setChecked(d->m_forceDPI>0.0);
+    if (d->m_forceDPI<=0.0) {
+        dlg.ui->spinPDFDPI->setValue(d->m_dpiX);
     } else {
-        dlg->spinForceDPI->setValue(forceDPI);
+        dlg.ui->spinPDFDPI->setValue(d->m_forceDPI);
     }
 
-    for (auto bIt=bookmarks.constKeyValueBegin(), end=bookmarks.constKeyValueEnd(); bIt!=end; ++bIt) {
+    for (auto bIt=d->m_bookmarks.constKeyValueBegin(), end=d->m_bookmarks.constKeyValueEnd(); bIt!=end; ++bIt) {
         QString st = (*bIt).second;
         if (st.split('\n').count()>0)
             st = st.split('\n').at(0);
         auto li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*bIt).first,
-                                                                           (*bIt).second));
+                                                           (*bIt).second));
         li->setData(Qt::UserRole,(*bIt).first);
         li->setData(Qt::UserRole+1,(*bIt).second);
-        dlg->listBookmarks->addItem(li);
+        dlg.ui->listBookmarks->addItem(li);
     }
-    ZStrMap albums = db->getDynAlbums();
+    ZStrMap albums = d->m_db->getDynAlbums();
     for (auto tIt = albums.constKeyValueBegin(), end = albums.constKeyValueEnd(); tIt!=end; ++tIt) {
         auto li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*tIt).first,
-                                                                           (*tIt).second));
+                                                           (*tIt).second));
         li->setData(Qt::UserRole,(*tIt).first);
         li->setData(Qt::UserRole+1,(*tIt).second);
-        dlg->listDynAlbums->addItem(li);
+        dlg.ui->listDynAlbums->addItem(li);
     }
-    dlg->setIgnoredFiles(db->sqlGetIgnoredFiles());
-    dlg->setSearchEngines(ctxSearchEngines);
-    dlg->updateSQLFields(false);
+    dlg.setIgnoredFiles(d->m_db->sqlGetIgnoredFiles());
+    dlg.setSearchEngines(d->m_ctxSearchEngines);
+    dlg.updateSQLFields(false);
 
 #ifdef WITH_OCR
-    dlg->editOCRDatapath->setText(ocrGetDatapath());
-    dlg->updateOCRLanguages();
+    dlg.ui->editOCRDatapath->setText(zF->ocrGetDatapath());
+    dlg.updateOCRLanguages();
 #endif
 
-    if (dlg->exec()==QDialog::Accepted) {
-        dbUser=dlg->editMySqlLogin->text();
-        dbPass=dlg->editMySqlPassword->text();
-        dbBase=dlg->editMySqlBase->text();
-        dbHost=dlg->editMySqlHost->text();
-        rarCmd=dlg->editRar->text();
-        cacheWidth=dlg->spinCacheWidth->value();
-        magnifySize=dlg->spinMagnify->value();
-        resizeBlur=dlg->spinBlur->value();
-        scrollDelta=dlg->spinScrollDelta->value();
-        scrollFactor=dlg->spinScrollFactor->value();
-        searchScrollFactor=dlg->spinSearchScrollFactor->value();
-        backgroundColor=dlg->getBkColor();
-        frameColor=dlg->getFrameColor();
-        idxFont=dlg->getIdxFont();
-        ocrFont=dlg->getOCRFont();
-        cachePixmaps=dlg->radioCachePixmaps->isChecked();
-        useFineRendering=dlg->checkFineRendering->isChecked();
-        filesystemWatcher=dlg->checkFSWatcher->isChecked();
-        upscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg->comboUpscaleFilter->currentIndex());
-        downscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg->comboDownscaleFilter->currentIndex());
-        pdfRendering = static_cast<Z::PDFRendering>(dlg->comboPDFRendererMode->currentIndex());
-        ctxSearchEngines=dlg->getSearchEngines();
+    if (dlg.exec()==QDialog::Accepted) {
+        d->m_dbUser=dlg.ui->editMySqlLogin->text();
+        d->m_dbPass=dlg.ui->editMySqlPassword->text();
+        d->m_dbBase=dlg.ui->editMySqlBase->text();
+        d->m_dbHost=dlg.ui->editMySqlHost->text();
+        d->m_rarCmd=dlg.ui->editRar->text();
+        d->m_cacheWidth=dlg.ui->spinCacheWidth->value();
+        d->m_magnifySize=dlg.ui->spinMagnify->value();
+        d->m_resizeBlur=dlg.ui->spinBlur->value();
+        d->m_scrollDelta=dlg.ui->spinScrollDelta->value();
+        d->m_scrollFactor=dlg.ui->spinScrollFactor->value();
+        d->m_searchScrollFactor=dlg.ui->spinSearchScrollFactor->value();
+        d->m_backgroundColor=dlg.getBkColor();
+        d->m_frameColor=dlg.getFrameColor();
+        d->m_idxFont=dlg.getIdxFont();
+        d->m_ocrFont=dlg.getOCRFont();
+        d->m_cachePixmaps=dlg.ui->rbCachePixmaps->isChecked();
+        d->m_useFineRendering=dlg.ui->checkFineRendering->isChecked();
+        d->m_filesystemWatcher=dlg.ui->checkFSWatcher->isChecked();
+        d->m_upscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg.ui->comboUpscaleFilter->currentIndex());
+        d->m_downscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg.ui->comboDownscaleFilter->currentIndex());
+        d->m_pdfRendering = static_cast<Z::PDFRendering>(dlg.ui->comboPDFRenderMode->currentIndex());
+        d->m_ctxSearchEngines=dlg.getSearchEngines();
 
 #ifndef Q_OS_WIN
-        tranSourceLang=dlg->getTranSourceLanguage();
-        tranDestLang=dlg->getTranDestLanguage();
+        d->m_tranSourceLang=dlg.getTranSourceLanguage();
+        d->m_tranDestLang=dlg.getTranDestLanguage();
 #endif
 
-        if (dlg->checkForceDPI->isChecked()) {
-            forceDPI = dlg->spinForceDPI->value();
+        if (dlg.ui->checkPDFDPI->isChecked()) {
+            d->m_forceDPI = dlg.ui->spinPDFDPI->value();
         } else {
-            forceDPI = -1.0;
+            d->m_forceDPI = -1.0;
         }
-        if (dlg->radioMySQL->isChecked()) {
-            dbEngine = Z::MySQL;
-        } else if (dlg->radioSQLite->isChecked()) {
-            dbEngine = Z::SQLite;
+        if (dlg.ui->rbMySQL->isChecked()) {
+            d->m_dbEngine = Z::dbmsMySQL;
+        } else if (dlg.ui->rbSQLite->isChecked()) {
+            d->m_dbEngine = Z::dbmsSQLite;
         }
-        bookmarks.clear();
-        for (int i=0; i<dlg->listBookmarks->count(); i++) {
-            bookmarks[dlg->listBookmarks->item(i)->data(Qt::UserRole).toString()]=
-                    dlg->listBookmarks->item(i)->data(Qt::UserRole+1).toString();
+        d->m_bookmarks.clear();
+        for (int i=0; i<dlg.ui->listBookmarks->count(); i++) {
+            d->m_bookmarks[dlg.ui->listBookmarks->item(i)->data(Qt::UserRole).toString()]=
+                    dlg.ui->listBookmarks->item(i)->data(Qt::UserRole+1).toString();
         }
-        Q_EMIT dbSetCredentials(dbHost,dbBase,dbUser,dbPass);
+        Q_EMIT dbSetCredentials(d->m_dbHost,d->m_dbBase,d->m_dbUser,d->m_dbPass);
         albums.clear();
-        for (int i=0; i<dlg->listDynAlbums->count(); i++) {
-            albums[dlg->listDynAlbums->item(i)->data(Qt::UserRole).toString()]=
-                    dlg->listDynAlbums->item(i)->data(Qt::UserRole+1).toString();
+        for (int i=0; i<dlg.ui->listDynAlbums->count(); i++) {
+            albums[dlg.ui->listDynAlbums->item(i)->data(Qt::UserRole).toString()]=
+                    dlg.ui->listDynAlbums->item(i)->data(Qt::UserRole+1).toString();
         }
         Q_EMIT dbSetDynAlbums(albums);
         if (w!=nullptr) {
@@ -425,18 +437,18 @@ void ZGlobal::settingsDlg()
         }
         Q_EMIT loadSearchTabSettings(nullptr);
         Q_EMIT dbCheckBase();
-        Q_EMIT dbSetIgnoredFiles(dlg->getIgnoredFiles());
-        if (filesystemWatcher)
+        Q_EMIT dbSetIgnoredFiles(dlg.getIgnoredFiles());
+        if (d->m_filesystemWatcher)
             Q_EMIT dbRescanIndexedDirs();
-        if (ocrEditor!=nullptr)
-            ocrEditor->setEditorFont(ocrFont);
+        if (d->m_ocrEditor!=nullptr)
+            d->m_ocrEditor->setEditorFont(d->m_ocrFont);
 
 #ifdef WITH_OCR
-        bool needRestart = (dlg->editOCRDatapath->text() != ocrGetDatapath());
+        bool needRestart = (dlg.ui->editOCRDatapath->text() != zF->ocrGetDatapath());
         QSettings settingsOCR(QSL("kernel1024"), QSL("qmanga-ocr"));
         settingsOCR.beginGroup(QSL("Main"));
-        settingsOCR.setValue(QSL("activeLanguage"), dlg->getOCRLanguage());
-        settingsOCR.setValue(QSL("datapath"), dlg->editOCRDatapath->text());
+        settingsOCR.setValue(QSL("activeLanguage"), dlg.getOCRLanguage());
+        settingsOCR.setValue(QSL("datapath"), dlg.ui->editOCRDatapath->text());
         settingsOCR.endGroup();
 
         if (needRestart) {
@@ -445,21 +457,20 @@ void ZGlobal::settingsDlg()
         }
 #endif
     }
-    dlg->setParent(nullptr);
-    delete dlg;
 }
 
-QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine)
+QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine) const
 {
-    if (ctxSearchEngines.isEmpty())
+    Q_D(const ZGlobal);
+    if (d->m_ctxSearchEngines.isEmpty())
         return QUrl();
 
-    auto it = ctxSearchEngines.constKeyValueBegin();
+    auto it = d->m_ctxSearchEngines.constKeyValueBegin();
     QString url = (*it).second;
-    if (engine.isEmpty() && !defaultSearchEngine.isEmpty())
-        url = ctxSearchEngines.value(defaultSearchEngine);
-    if (!engine.isEmpty() && ctxSearchEngines.contains(engine))
-        url = ctxSearchEngines.value(engine);
+    if (engine.isEmpty() && !d->m_defaultSearchEngine.isEmpty())
+        url = d->m_ctxSearchEngines.value(d->m_defaultSearchEngine);
+    if (!engine.isEmpty() && d->m_ctxSearchEngines.contains(engine))
+        url = d->m_ctxSearchEngines.value(engine);
 
     url.replace(QSL("%s"),text);
     url.replace(QSL("%ps"),QUrl::toPercentEncoding(text));
@@ -469,13 +480,14 @@ QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine)
 
 void ZGlobal::initLanguagesList()
 {
+    Q_D(ZGlobal);
     QList<QLocale> allLocales = QLocale::matchingLocales(
                 QLocale::AnyLanguage,
                 QLocale::AnyScript,
                 QLocale::AnyCountry);
 
-    langNamesList.clear();
-    langSortedBCP47List.clear();
+    d->m_langNamesList.clear();
+    d->m_langSortedBCP47List.clear();
 
     for(const QLocale &locale : allLocales) {
         QString bcp = locale.bcp47Name();
@@ -488,26 +500,276 @@ void ZGlobal::initLanguagesList()
         if (bcp == QSL("en"))
             name = QSL("English (en)");
 
-        if (!langNamesList.contains(bcp)) {
-            langNamesList.insert(bcp,name);
-            langSortedBCP47List.insert(name,bcp);
+        if (!d->m_langNamesList.contains(bcp)) {
+            d->m_langNamesList.insert(bcp,name);
+            d->m_langSortedBCP47List.insert(name,bcp);
         }
     }
 }
 
-QString ZGlobal::getLanguageName(const QString& bcp47Name)
+double ZGlobal::getSearchScrollFactor() const
 {
-    return langNamesList.value(bcp47Name);
+    Q_D(const ZGlobal);
+    return d->m_searchScrollFactor;
 }
 
-qint64 ZGlobal::getAvgFineRenderTime()
+double ZGlobal::getResizeBlur() const
 {
-    return avgFineRenderTime;
+    Q_D(const ZGlobal);
+    return d->m_resizeBlur;
+}
+
+qreal ZGlobal::getForceDPI() const
+{
+    Q_D(const ZGlobal);
+    return d->m_forceDPI;
+}
+
+qreal ZGlobal::getDpiY() const
+{
+    Q_D(const ZGlobal);
+    return d->m_dpiY;
+}
+
+qreal ZGlobal::getDpiX() const
+{
+    Q_D(const ZGlobal);
+    return d->m_dpiX;
+}
+
+int ZGlobal::getScrollFactor() const
+{
+    Q_D(const ZGlobal);
+    return d->m_scrollFactor;
+}
+
+int ZGlobal::getDetectedDelta() const
+{
+    Q_D(const ZGlobal);
+    return d->m_detectedDelta;
+}
+
+int ZGlobal::getScrollDelta() const
+{
+    Q_D(const ZGlobal);
+    return d->m_scrollDelta;
+}
+
+int ZGlobal::getMagnifySize() const
+{
+    Q_D(const ZGlobal);
+    return d->m_magnifySize;
+}
+
+int ZGlobal::getCacheWidth() const
+{
+    Q_D(const ZGlobal);
+    return d->m_cacheWidth;
+}
+
+bool ZGlobal::getFilesystemWatcher() const
+{
+    Q_D(const ZGlobal);
+    return d->m_filesystemWatcher;
+}
+
+bool ZGlobal::getUseFineRendering() const
+{
+    Q_D(const ZGlobal);
+    return d->m_useFineRendering;
+}
+
+bool ZGlobal::getCachePixmaps() const
+{
+    Q_D(const ZGlobal);
+    return d->m_cachePixmaps;
+}
+
+Z::DBMS ZGlobal::getDbEngine() const
+{
+    Q_D(const ZGlobal);
+    return d->m_dbEngine;
+}
+
+Z::PDFRendering ZGlobal::getPdfRendering() const
+{
+    Q_D(const ZGlobal);
+    return d->m_pdfRendering;
+}
+
+Blitz::ScaleFilterType ZGlobal::getUpscaleFilter() const
+{
+    Q_D(const ZGlobal);
+    return d->m_upscaleFilter;
+}
+
+Blitz::ScaleFilterType ZGlobal::getDownscaleFilter() const
+{
+    Q_D(const ZGlobal);
+    return d->m_downscaleFilter;
+}
+
+QString ZGlobal::getDefaultSearchEngine() const
+{
+    Q_D(const ZGlobal);
+    return d->m_defaultSearchEngine;
+}
+
+QString ZGlobal::getTranSourceLang() const
+{
+    Q_D(const ZGlobal);
+    return d->m_tranSourceLang;
+}
+
+QString ZGlobal::getTranDestLang() const
+{
+    Q_D(const ZGlobal);
+    return d->m_tranDestLang;
+}
+
+QString ZGlobal::getSavedAuxOpenDir() const
+{
+    Q_D(const ZGlobal);
+    return d->m_savedAuxOpenDir;
+}
+
+void ZGlobal::setSavedAuxOpenDir(const QString &value)
+{
+    Q_D(ZGlobal);
+    d->m_savedAuxOpenDir = value;
+}
+
+QString ZGlobal::getSavedIndexOpenDir() const
+{
+    Q_D(const ZGlobal);
+    return d->m_savedIndexOpenDir;
+}
+
+void ZGlobal::setSavedIndexOpenDir(const QString &value)
+{
+    Q_D(ZGlobal);
+    d->m_savedIndexOpenDir = value;
+}
+
+QString ZGlobal::getSavedAuxSaveDir() const
+{
+    Q_D(const ZGlobal);
+    return d->m_savedAuxSaveDir;
+}
+
+void ZGlobal::setSavedAuxSaveDir(const QString &value)
+{
+    Q_D(ZGlobal);
+    d->m_savedAuxSaveDir = value;
+}
+
+QColor ZGlobal::getBackgroundColor() const
+{
+    Q_D(const ZGlobal);
+    return d->m_backgroundColor;
+}
+
+QColor ZGlobal::getFrameColor() const
+{
+    Q_D(const ZGlobal);
+    return d->m_frameColor;
+}
+
+QFont ZGlobal::getIdxFont() const
+{
+    Q_D(const ZGlobal);
+    return d->m_idxFont;
+}
+
+QFont ZGlobal::getOcrFont() const
+{
+    Q_D(const ZGlobal);
+    return d->m_ocrFont;
+}
+
+QString ZGlobal::getRarCmd() const
+{
+    Q_D(const ZGlobal);
+    return d->m_rarCmd;
+}
+
+void ZGlobal::setDefaultSearchEngine(const QString &value)
+{
+    Q_D(ZGlobal);
+    d->m_defaultSearchEngine = value;
+}
+
+QStringList ZGlobal::getNewlyAddedFiles() const
+{
+    Q_D(const ZGlobal);
+    return d->m_newlyAddedFiles;
+}
+
+void ZGlobal::removeFileFromNewlyAdded(const QString &filename)
+{
+    Q_D(ZGlobal);
+    d->m_newlyAddedFiles.removeAll(filename);
+}
+
+ZStrMap ZGlobal::getBookmarks() const
+{
+    Q_D(const ZGlobal);
+    return d->m_bookmarks;
+}
+
+void ZGlobal::addBookmark(const QString &title, const QString &filename)
+{
+    Q_D(ZGlobal);
+    d->m_bookmarks[title] = filename;
+}
+
+ZStrMap ZGlobal::getCtxSearchEngines() const
+{
+    Q_D(const ZGlobal);
+    return d->m_ctxSearchEngines;
+}
+
+ZDB *ZGlobal::db() const
+{
+    Q_D(const ZGlobal);
+    return d->m_db.data();
+}
+
+ZOCREditor *ZGlobal::ocrEditor() const
+{
+    Q_D(const ZGlobal);
+    return d->m_ocrEditor.data();
+}
+
+void ZGlobal::setDPI(qreal x, qreal y)
+{
+    Q_D(ZGlobal);
+    d->m_dpiX = x;
+    d->m_dpiY = y;
+}
+
+void ZGlobal::setDetectedDelta(int value)
+{
+    Q_D(ZGlobal);
+    d->m_detectedDelta = value;
+}
+
+QString ZGlobal::getLanguageName(const QString& bcp47Name) const
+{
+    Q_D(const ZGlobal);
+    return d->m_langNamesList.value(bcp47Name);
+}
+
+qint64 ZGlobal::getAvgFineRenderTime() const
+{
+    Q_D(const ZGlobal);
+    return d->m_avgFineRenderTime;
 }
 
 QStringList ZGlobal::getLanguageCodes() const
 {
-    return langSortedBCP47List.values();
+    Q_D(const ZGlobal);
+    return d->m_langSortedBCP47List.values();
 }
 
 ZFileEntry::ZFileEntry(const ZFileEntry &other)
@@ -537,8 +799,8 @@ bool ZFileEntry::operator <(const ZFileEntry &ref) const
     QFileInfo fi1(name);
     QFileInfo fi2(ref.name);
     if (fi1.path()==fi2.path())
-        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
-    return (compareWithNumerics(fi1.path(),fi2.path())<0);
+        return (zF->compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
+    return (zF->compareWithNumerics(fi1.path(),fi2.path())<0);
 }
 
 bool ZFileEntry::operator >(const ZFileEntry &ref) const
@@ -546,6 +808,6 @@ bool ZFileEntry::operator >(const ZFileEntry &ref) const
     QFileInfo fi1(name);
     QFileInfo fi2(ref.name);
     if (fi1.path()==fi2.path())
-        return (compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())>0);
-    return (compareWithNumerics(fi1.path(),fi2.path())>0);
+        return (zF->compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())>0);
+    return (zF->compareWithNumerics(fi1.path(),fi2.path())>0);
 }

@@ -89,11 +89,12 @@ QImage ZDjVuReader::loadPageImage(int num)
     }
 
     //ddjvu_page_set_rotation ( page, DDJVU_ROTATE_0 ); // need?
-    qreal xdpi = zg->dpiX;
-    qreal ydpi = zg->dpiY;
-    if (zg->forceDPI>0.0) {
-        xdpi = zg->forceDPI;
-        ydpi = zg->forceDPI;
+    qreal xdpi = zg->getDpiX();
+    qreal ydpi = zg->getDpiY();
+    qreal forceDPI = zg->getForceDPI();
+    if (forceDPI>0.0) {
+        xdpi = forceDPI;
+        ydpi = forceDPI;
     }
     w = static_cast<int>( w * xdpi / resolution );
     h = static_cast<int>( h * ydpi / resolution );

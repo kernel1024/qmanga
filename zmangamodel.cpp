@@ -67,7 +67,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         QPainter cp(&rp);
         cp.fillRect(0,0,rp.width(),rp.height(),m_view->palette().base());
 
-        SQLMangaEntry itm = m_list.at(idx);
+        ZSQLMangaEntry itm = m_list.at(idx);
         QImage p = itm.cover;
         if (p.isNull())
             p = QImage(QSL(":/32/edit-delete"));
@@ -78,8 +78,8 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         } else {
             cp.drawImage((rp.width()-p.width())/2,0,p);
         }
-        if (zg->frameColor!=zg->backgroundColor) {
-            cp.setPen(QPen(zg->frameColor));
+        if (zg->getFrameColor()!=zg->getBackgroundColor()) {
+            cp.setPen(QPen(zg->getFrameColor()));
             cp.drawLine(0,0,rp.width()-1,0);
             cp.drawLine(rp.width()-1,0,rp.width()-1,rp.height()-1);
             cp.drawLine(rp.width()-1,rp.height()-1,0,rp.height()-1);
@@ -89,15 +89,15 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
     }
 
     if (role == Qt::TextColorRole) {
-        return zg->foregroundColor();
+        return zg->getForegroundColor();
     }
 
     if (role == Qt::FontRole) {
-        return zg->idxFont;
+        return zg->getIdxFont();
     }
 
     if (role == Qt::DisplayRole) {
-        SQLMangaEntry t = m_list.at(idx);
+        ZSQLMangaEntry t = m_list.at(idx);
         int col = index.column();
         QString tmp;
         int i;
@@ -122,7 +122,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
                 return tmp;
             case ZDefaults::columnAlbum: return t.album;
             case ZDefaults::columnPagesCount: return QSL("%1").arg(t.pagesCount);
-            case ZDefaults::columnFileSize: return formatSize(t.fileSize);
+            case ZDefaults::columnFileSize: return zF->formatSize(t.fileSize);
             case ZDefaults::columnAddDate: return t.addingDT.toString(QSL("yyyy-MM-dd"));
             case ZDefaults::columnFileDate: return t.fileDT.toString(QSL("yyyy-MM-dd"));
             case ZDefaults::columnMagic: return t.fileMagic;
@@ -131,7 +131,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
     }
 
     if (role == ZDefaults::ModelSortRole) {
-        SQLMangaEntry t = m_list.at(idx);
+        ZSQLMangaEntry t = m_list.at(idx);
         int col = index.column();
         switch (col) {
             case ZDefaults::columnName: return t.name;
@@ -193,10 +193,10 @@ int ZMangaModel::getItemsCount() const
     return m_list.count();
 }
 
-SQLMangaEntry ZMangaModel::getItem(int idx) const
+ZSQLMangaEntry ZMangaModel::getItem(int idx) const
 {
     if (idx<0 || idx>=m_list.count())
-        return SQLMangaEntry();
+        return ZSQLMangaEntry();
 
     return m_list.at(idx);
 }
@@ -209,10 +209,10 @@ void ZMangaModel::deleteAllItems()
     endRemoveRows();
 }
 
-void ZMangaModel::deleteItems(const QIntVector &dbids)
+void ZMangaModel::deleteItems(const ZIntVector &dbids)
 {
     for (const auto &i : dbids) {
-        int idx = m_list.indexOf(SQLMangaEntry(i));
+        int idx = m_list.indexOf(ZSQLMangaEntry(i));
         if (idx>=0) {
             beginRemoveRows(QModelIndex(),idx,idx);
             m_list.removeAt(idx);
@@ -221,7 +221,7 @@ void ZMangaModel::deleteItems(const QIntVector &dbids)
     }
 }
 
-void ZMangaModel::addItem(const SQLMangaEntry &file)
+void ZMangaModel::addItem(const ZSQLMangaEntry &file)
 {
     int posidx = m_list.count();
     beginInsertRows(QModelIndex(),posidx,posidx);
@@ -308,7 +308,8 @@ void ZMangaListView::updateGeometries()
     QListView::updateGeometries();
     if (verticalScrollBar()!=nullptr) {
         verticalScrollBar()->setSingleStep(
-                    static_cast<int>(static_cast<double>(gridSize().height())*zg->searchScrollFactor));
+                    static_cast<int>(static_cast<double>(gridSize().height())
+                                     *zg->getSearchScrollFactor()));
     }
 }
 
@@ -327,9 +328,9 @@ int ZMangaTableModel::columnCount(const QModelIndex &parent) const
         return 0;
 
     if (zg!=nullptr) {
-        if (m_view->palette().base().color()!=zg->backgroundColor) {
+        if (m_view->palette().base().color()!=zg->getBackgroundColor()) {
             QPalette pl = m_view->palette();
-            pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
+            pl.setBrush(QPalette::Base,QBrush(zg->getBackgroundColor()));
             m_view->setPalette(pl);
         }
     }
@@ -357,9 +358,9 @@ int ZMangaIconModel::columnCount(const QModelIndex &parent) const
         return 0;
 
     if (zg!=nullptr) {
-        if (m_view->palette().base().color()!=zg->backgroundColor) {
+        if (m_view->palette().base().color()!=zg->getBackgroundColor()) {
             QPalette pl = m_view->palette();
-            pl.setBrush(QPalette::Base,QBrush(zg->backgroundColor));
+            pl.setBrush(QPalette::Base,QBrush(zg->getBackgroundColor()));
             m_view->setPalette(pl);
         }
     }
@@ -422,9 +423,9 @@ void ZAlbumsTreeWidget::dropEvent(QDropEvent *event)
     const QString srcName = src->text(0);
     const QString dstName = dst->text(0);
 
-    QMetaObject::invokeMethod(zg->db,[srcName,dstName](){
-        if (zg->db)
-            zg->db->sqlReparentAlbum(srcName,dstName);
-    },Qt::QueuedConnection);
+    QTimer::singleShot(0,zg->db(),[srcName,dstName](){
+        if (zg->db())
+            zg->db()->sqlReparentAlbum(srcName,dstName);
+    });
     event->accept();
 }

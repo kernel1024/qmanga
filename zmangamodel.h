@@ -31,17 +31,17 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     int getItemsCount() const;
-    SQLMangaEntry getItem(int idx) const;
+    ZSQLMangaEntry getItem(int idx) const;
 
 public Q_SLOTS:
     void deleteAllItems();
-    void deleteItems(const QIntVector& dbids);
-    void addItem(const SQLMangaEntry& file);
+    void deleteItems(const ZIntVector& dbids);
+    void addItem(const ZSQLMangaEntry& file);
 
 private:
     QSlider *m_pixmapSize { nullptr };
     QTableView *m_view { nullptr };
-    SQLMangaVector m_list;
+    ZSQLMangaVector m_list;
 
     Q_DISABLE_COPY(ZMangaModel)
 };

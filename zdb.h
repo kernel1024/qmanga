@@ -23,7 +23,7 @@ private:
     QStringList m_indexedDirs;
     QStringList m_ignoredFiles;
     ZStrMap m_dynAlbums;
-    QStrHash m_problems;
+    ZStrHash m_problems;
     QHash<QString,int> m_preferredRendering;
 
     bool sqlCheckBasePriv(QSqlDatabase &db, bool silent);
@@ -47,7 +47,7 @@ public:
 
     int getAlbumsCount();
     ZStrMap getDynAlbums() const;
-    QStrHash getConfigProblems() const;
+    ZStrHash getConfigProblems() const;
     QStringList sqlGetIgnoredFiles() const;
     Z::PDFRendering getPreferredRendering(const QString& filename) const;
     Z::Ordering getDynAlbumOrdering(const QString &album, Qt::SortOrder &order) const;
@@ -60,10 +60,10 @@ Q_SIGNALS:
     void albumsListUpdated();
     void showProgressDialog(bool visible);
     void showProgressState(int value, const QString& msg);
-    void gotAlbums(const AlbumVector& albums);
-    void gotFile(const SQLMangaEntry& file);
+    void gotAlbums(const ZAlbumVector& albums);
+    void gotFile(const ZSQLMangaEntry& file);
     void filesLoaded(int count, int elapsed);
-    void deleteItemsFromModel(const QIntVector& dbids);
+    void deleteItemsFromModel(const ZIntVector& dbids);
     void updateWatchDirList(const QStringList& dirs);
     void foundNewFiles(const QStringList& files);
     void gotTablesDescription(const QString& text);
@@ -79,7 +79,7 @@ public Q_SLOTS:
     void sqlDelAlbum(const QString& album);
     void sqlAddAlbum(const QString& album, const QString& parent = QString());
     void sqlReparentAlbum(const QString& album, const QString& parent);
-    void sqlDelFiles(const QIntVector& dbids, bool fullDelete);
+    void sqlDelFiles(const ZIntVector& dbids, bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
     void sqlGetFiles(const QString& album, const QString& search);

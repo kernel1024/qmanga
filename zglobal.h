@@ -1,82 +1,80 @@
 #ifndef ZGLOBAL_H
 #define ZGLOBAL_H
 
-#include <QFileSystemWatcher>
-#include <QHash>
+#include <QObject>
 #include <QMap>
-#include <QUrl>
-#include <QList>
-#include <QMutex>
 #include "global.h"
 #include "ocreditor.h"
 
 class ZMangaModel;
 class ZDB;
 
-using ZStrMap = QMap<QString, QString>;
+class ZGlobalPrivate;
 
 class ZGlobal : public QObject
 {
     Q_OBJECT
 private:
     Q_DISABLE_COPY(ZGlobal)
-
-    QThread* threadDB;
-    QString dbHost, dbBase, dbUser, dbPass;
-    QHash<QString,QStringList> dirWatchList;
-    QMap<QString,QString> langSortedBCP47List;  // names -> bcp (for sorting)
-    QHash<QString,QString> langNamesList;       // bcp -> names
-    QList<qint64> fineRenderTimes;
-    QMutex fineRenderMutex;
-    qint64 avgFineRenderTime { 0 };
+    Q_DECLARE_PRIVATE_D(dptr,ZGlobal)
+    QScopedPointer<ZGlobalPrivate> dptr;
 
     void checkSQLProblems(QWidget *parent);
     void initLanguagesList();
 
 public:
-    ZDB* db;
-    ZOCREditor* ocrEditor { nullptr };
-    QFileSystemWatcher* fsWatcher;
-    QStringList newlyAddedFiles;
-
-    explicit ZGlobal(QObject *parent = nullptr);
+    explicit ZGlobal(QWidget *parent = nullptr);
     ~ZGlobal() override;
 
-    Blitz::ScaleFilterType downscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
-    Blitz::ScaleFilterType upscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
-    Z::PDFRendering pdfRendering { Z::Autodetect };
-    Z::DBMS dbEngine { Z::SQLite };
-    bool cachePixmaps { false };
-    bool useFineRendering { true };
-    bool filesystemWatcher { false };
-    int cacheWidth { 6 };
-    int magnifySize { 100 };
-    int scrollDelta { 120 };
-    int detectedDelta { 120 };
-    int scrollFactor { 3 };
-    qreal dpiX { 75.0 };
-    qreal dpiY { 75.0 };
-    qreal forceDPI { -1.0 };
-    double resizeBlur { 1.0 };
-    double searchScrollFactor { 0.1 };
-
-    ZStrMap bookmarks;
-    ZStrMap ctxSearchEngines;
-    QString defaultSearchEngine;
-    QString tranSourceLang, tranDestLang;
-    QString savedAuxOpenDir, savedIndexOpenDir, savedAuxSaveDir;
-    QColor backgroundColor, frameColor;
-    QFont idxFont, ocrFont;
-    QString rarCmd;
-
-    QColor foregroundColor();
-
     void fsCheckFilesAvailability();
-    QUrl createSearchUrl(const QString &text, const QString &engine = QString());
-
+    QUrl createSearchUrl(const QString &text, const QString &engine = QString()) const;
     QStringList getLanguageCodes() const;
-    QString getLanguageName(const QString &bcp47Name);
-    qint64 getAvgFineRenderTime();
+    QString getLanguageName(const QString &bcp47Name) const;
+    qint64 getAvgFineRenderTime() const;
+    ZDB *db() const;
+    ZOCREditor *ocrEditor() const;
+
+    // settings management
+    Blitz::ScaleFilterType getDownscaleFilter() const;
+    Blitz::ScaleFilterType getUpscaleFilter() const;
+    Z::PDFRendering getPdfRendering() const;
+    Z::DBMS getDbEngine() const;
+    bool getCachePixmaps() const;
+    bool getUseFineRendering() const;
+    bool getFilesystemWatcher() const;
+    int getCacheWidth() const;
+    int getMagnifySize() const;
+    int getScrollDelta() const;
+    int getDetectedDelta() const;
+    void setDetectedDelta(int value);
+    int getScrollFactor() const;
+    qreal getDpiX() const;
+    qreal getDpiY() const;
+    qreal getForceDPI() const;
+    void setDPI(qreal x, qreal y);
+    double getResizeBlur() const;
+    double getSearchScrollFactor() const;
+    QString getDefaultSearchEngine() const;
+    QString getTranSourceLang() const;
+    QString getTranDestLang() const;
+    QString getSavedAuxOpenDir() const;
+    void setSavedAuxOpenDir(const QString &value);
+    QString getSavedIndexOpenDir() const;
+    void setSavedIndexOpenDir(const QString &value);
+    QString getSavedAuxSaveDir() const;
+    void setSavedAuxSaveDir(const QString &value);
+    QColor getForegroundColor() const;
+    QColor getBackgroundColor() const;
+    QColor getFrameColor() const;
+    QFont getIdxFont() const;
+    QFont getOcrFont() const;
+    QString getRarCmd() const;
+    void setDefaultSearchEngine(const QString &value);
+    QStringList getNewlyAddedFiles() const;
+    void removeFileFromNewlyAdded(const QString &filename);
+    ZStrMap getBookmarks() const;
+    void addBookmark(const QString& title, const QString& filename);
+    ZStrMap getCtxSearchEngines() const;
 
 public Q_SLOTS:
     void settingsDlg();

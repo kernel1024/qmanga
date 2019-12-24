@@ -34,9 +34,9 @@ private:
     Q_DISABLE_COPY(ZSearchTab)
 
     Ui::ZSearchTab *ui;
-    Z::Ordering m_savedOrdering { Z::UndefinedOrder };
+    Z::Ordering m_savedOrdering { Z::ordUndefined };
     Qt::SortOrder m_savedOrderingDirection { Qt::AscendingOrder };
-    Z::Ordering m_defaultOrdering { Z::Name };
+    Z::Ordering m_defaultOrdering { Z::ordName };
     Qt::SortOrder m_defaultOrderingDirection { Qt::AscendingOrder };
     QStateMachine m_loadingState;
     QString m_descTemplate;
@@ -91,7 +91,7 @@ public Q_SLOTS:
     void dbShowProgressDialogEx(bool visible, const QString &title);
     void dbShowProgressState(int value, const QString& msg);
     void dbAlbumsListUpdated();
-    void dbAlbumsListReady(const AlbumVector &albums);
+    void dbAlbumsListReady(const ZAlbumVector &albums);
     void dbFilesAdded(int count, int total, int elapsed);
     void dbFilesLoaded(int count, int elapsed);
     void dbErrorMsg(const QString& msg);
@@ -108,7 +108,7 @@ Q_SIGNALS:
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
     void dbGetFiles(const QString& album, const QString& search);
-    void dbDelFiles(const QIntVector& dbids, bool fullDelete);
+    void dbDelFiles(const ZIntVector& dbids, bool fullDelete);
     void dbDeleteAlbum(const QString& album);
     void dbAddAlbum(const QString& album, const QString& parent);
     void dbReparentAlbum(const QString& album, const QString& parent);

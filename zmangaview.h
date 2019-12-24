@@ -62,7 +62,7 @@ private:
     QHash<int,QImage> m_iCacheImages;
     QHash<int,QByteArray> m_iCacheData;
     QHash<int,QString> m_pathCache;
-    QIntVector m_processingPages;
+    ZIntVector m_processingPages;
 
     QList<QSize> m_lastSizes;
     QList<int> m_lastFileSizes;
@@ -71,7 +71,7 @@ private:
 
     void cacheDropUnusable();
     void cacheFillNearest();
-    QIntVector cacheGetActivePages();
+    ZIntVector cacheGetActivePages();
     void displayCurrentPage();
     void cacheGetPage(int num);   
     static ZExportWork exportMangaPage(const ZExportWork &item);
@@ -97,6 +97,7 @@ Q_SIGNALS:
     void cropUpdated(const QRect& crop);
     void backgroundUpdated(const QColor& color);
     void requestRedrawPageEx(const QImage &scaled, int page);
+    void addOCRText(const QStringList& text);
 
     // cache signals
     void cacheOpenFile(const QString &filename, int preferred);

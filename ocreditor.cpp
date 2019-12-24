@@ -69,12 +69,6 @@ ZOCREditor::~ZOCREditor()
     delete ui;
 }
 
-void ZOCREditor::addText(const QStringList &text)
-{
-    for (const auto &i : text)
-        ui->editor->appendPlainText(i);
-}
-
 void ZOCREditor::setEditorFont(const QFont &font)
 {
     ui->editor->setFont(font);
@@ -92,6 +86,13 @@ void ZOCREditor::findWordTranslation(const QString &text)
         ui->status->setText(tr("Searching in dictionary..."));
     }
 #endif
+}
+
+void ZOCREditor::addOCRText(const QStringList &text)
+{
+    for (const auto &i : text)
+        ui->editor->appendPlainText(i);
+    showWnd();
 }
 
 void ZOCREditor::showWnd()
@@ -112,8 +113,8 @@ void ZOCREditor::translate()
             QString s = ui->editor->toPlainText();
             if (!ui->editor->textCursor().selectedText().isEmpty())
                 s = ui->editor->textCursor().selectedText();
-            translator->setSrcLang(zg->tranSourceLang);
-            translator->setDestLang(zg->tranDestLang);
+            translator->setSrcLang(zg->getTranSourceLang());
+            translator->setDestLang(zg->getTranDestLang());
             translator->startAuxTranslation(s);
             ui->status->setText(tr("Translation in progress..."));
         }
@@ -182,10 +183,10 @@ void ZOCREditor::contextMenu(const QPoint &pos)
         cm.addAction(ac);
 #endif
 
-        if (!zg->ctxSearchEngines.isEmpty()) {
+        if (!zg->getCtxSearchEngines().isEmpty()) {
             cm.addSeparator();
 
-            QStringList searchNames = zg->ctxSearchEngines.keys();
+            QStringList searchNames = zg->getCtxSearchEngines().keys();
             searchNames.sort(Qt::CaseInsensitive);
             for (const QString& name : searchNames) {
                 QUrl url = zg->createSearchUrl(sText,name);
