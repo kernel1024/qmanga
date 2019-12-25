@@ -52,9 +52,6 @@ class ZDjVuController : public QObject
 public:
     explicit ZDjVuController(QObject* parent = nullptr);
     ~ZDjVuController() override;
-    static ZDjVuController *instance();
-    void initDjVuReader();
-    void freeDjVuReader();
     bool loadDjVu(const QString& filename, int &numPages);
     void closeDjVu(const QString& filename);
 #ifdef WITH_DJVU
@@ -62,7 +59,6 @@ public:
 #endif
 
 private:
-    static ZDjVuController* m_instance;
     QMutex m_docMutex;
 #ifdef WITH_DJVU
     ddjvu_context_t  * m_djvuContext { nullptr };
@@ -70,6 +66,8 @@ private:
 
     void handle_ddjvu_messages(ddjvu_context_t *ctx, bool wait);
 #endif
+    void initDjVuReader();
+    void freeDjVuReader();
 
     Q_DISABLE_COPY(ZDjVuController)
 

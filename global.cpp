@@ -31,6 +31,8 @@ ZGenericFuncs::ZGenericFuncs(QObject *parent)
 {
 }
 
+ZGenericFuncs::~ZGenericFuncs() = default;
+
 ZGenericFuncs *ZGenericFuncs::instance()
 {
     static ZGenericFuncs* inst = nullptr;
@@ -75,6 +77,20 @@ void ZGenericFuncs::initialize()
     if (QApplication::arguments().contains("--debug"))
         AllocConsole();
 #endif
+
+    m_pdfController.reset(new ZPdfController(this));
+    m_djvuController.reset(new ZDjVuController(this));
+    m_zg.reset(new ZGlobal(this));
+}
+
+ZDjVuController *ZGenericFuncs::djvuController() const
+{
+    return m_djvuController.data();
+}
+
+ZGlobal *ZGenericFuncs::global() const
+{
+    return m_zg.data();
 }
 
 ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
@@ -141,8 +157,8 @@ void ZGenericFuncs::stdConsoleOutput(QtMsgType type, const QMessageLogContext &c
     QString lmsg = QString();
 
     int line = context.line;
-    QString file = QString(context.file);
-    QString category = QString(context.category);
+    QString file = QString::fromUtf8(context.file);
+    QString category = QString::fromUtf8(context.category);
     if (category==QSL("default")) {
         category.clear();
     } else {
@@ -341,13 +357,13 @@ QString ZGenericFuncs::detectMIME(const QByteArray &buf)
 QImage ZGenericFuncs::resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,
                    Blitz::ScaleFilterType filter, int page, const int *currentPage)
 {
-    if (!zg) return QImage();
+    if (!zF->global()) return QImage();
 
     QSize dsize = src.size().scaled(targetSize,Qt::KeepAspectRatio);
 
-    Blitz::ScaleFilterType rf = zg->getDownscaleFilter();
+    Blitz::ScaleFilterType rf = zF->global()->getDownscaleFilter();
     if (dsize.width()>src.size().width())
-        rf = zg->getUpscaleFilter();
+        rf = zF->global()->getUpscaleFilter();
 
     if (forceFilter)
         rf = filter;
@@ -357,13 +373,14 @@ QImage ZGenericFuncs::resizeImage(const QImage& src, const QSize& targetSize, bo
     if (rf==Blitz::Bilinear)
         return src.scaled(targetSize,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
 
-    return Blitz::smoothScaleFilter(src,targetSize,zg->getResizeBlur(),
+    return Blitz::smoothScaleFilter(src,targetSize,zF->global()->getResizeBlur(),
                                     rf,Qt::KeepAspectRatio,page,currentPage);
 }
 
 QStringList ZGenericFuncs::supportedImg()
 {
-    static const QStringList res {"jpg", "jpeg", "jpe", "gif", "png", "tiff", "tif", "bmp"};
+    static const QStringList res { QSL("jpg"), QSL("jpeg"), QSL("jpe"), QSL("gif"), QSL("png"),
+                QSL("tiff"), QSL("tif"), QSL("bmp") };
     return res;
 }
 

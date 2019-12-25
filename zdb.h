@@ -56,13 +56,13 @@ Q_SIGNALS:
     void errorMsg(const QString& msg);
     void needTableCreation();
     void baseCheckComplete();
-    void filesAdded(int count, int total, int elapsed);
+    void filesAdded(int count, int total, qint64 elapsed);
     void albumsListUpdated();
     void showProgressDialog(bool visible);
     void showProgressState(int value, const QString& msg);
     void gotAlbums(const ZAlbumVector& albums);
     void gotFile(const ZSQLMangaEntry& file);
-    void filesLoaded(int count, int elapsed);
+    void filesLoaded(int count, qint64 elapsed);
     void deleteItemsFromModel(const ZIntVector& dbids);
     void updateWatchDirList(const QStringList& dirs);
     void foundNewFiles(const QStringList& files);

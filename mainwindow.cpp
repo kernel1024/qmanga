@@ -23,13 +23,10 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ZMainWindow)
 {
-    // TODO: move zg initialization to zF
-    if (zg==nullptr)
-        zg = new ZGlobal(this);
-
     ui->setupUi(this);
+    zF->global()->setMainWindow(this);
 
-    setWindowIcon(QIcon(":/Alien9"));
+    setWindowIcon(QIcon(QSL(":/Alien9")));
 
     ui->menuBookmarks->setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
 
@@ -66,13 +63,13 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->actionOpen,&QAction::triggered,this,&ZMainWindow::openAux);
     connect(ui->actionOpenClipboard,&QAction::triggered,this,&ZMainWindow::openClipboard);
     connect(ui->actionClose,&QAction::triggered,this,&ZMainWindow::closeManga);
-    connect(ui->actionSettings,&QAction::triggered,zg,&ZGlobal::settingsDlg);
+    connect(ui->actionSettings,&QAction::triggered,zF->global(),&ZGlobal::settingsDlg);
     connect(ui->actionAddBookmark,&QAction::triggered,this,&ZMainWindow::createBookmark);
     connect(ui->actionAbout,&QAction::triggered,this,&ZMainWindow::helpAbout);
     connect(ui->actionFullscreen,&QAction::triggered,this,&ZMainWindow::switchFullscreen);
     connect(ui->actionMinimize,&QAction::triggered,this,&ZMainWindow::showMinimized);
-    connect(ui->actionSaveSettings,&QAction::triggered,zg,&ZGlobal::saveSettings);
-    connect(ui->actionShowOCR,&QAction::triggered,zg->ocrEditor(),&ZOCREditor::show);
+    connect(ui->actionSaveSettings,&QAction::triggered,zF->global(),&ZGlobal::saveSettings);
+    connect(ui->actionShowOCR,&QAction::triggered,zF->global()->ocrEditor(),&ZOCREditor::show);
 
     connect(ui->searchTab,&ZSearchTab::mangaDblClick,this,&ZMainWindow::openFromIndex);
     connect(ui->searchTab,&ZSearchTab::statusBarMsg,this,&ZMainWindow::auxMessage);
@@ -117,20 +114,20 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->fsResults,&QTableWidget::customContextMenuRequested,
             this,&ZMainWindow::fsResultsMenuCtx);
 
-    connect(zg,&ZGlobal::auxMessage,this,&ZMainWindow::auxMessage);
+    connect(zF->global(),&ZGlobal::auxMessage,this,&ZMainWindow::auxMessage);
     // Explicitly use DirectConnection for synchronous call
-    connect(zg,&ZGlobal::loadSearchTabSettings,ui->searchTab,&ZSearchTab::loadSettings,Qt::DirectConnection);
-    connect(zg,&ZGlobal::saveSearchTabSettings,ui->searchTab,&ZSearchTab::saveSettings,Qt::DirectConnection);
+    connect(zF->global(),&ZGlobal::loadSearchTabSettings,ui->searchTab,&ZSearchTab::loadSettings,Qt::DirectConnection);
+    connect(zF->global(),&ZGlobal::saveSearchTabSettings,ui->searchTab,&ZSearchTab::saveSettings,Qt::DirectConnection);
 
-    connect(zg->db(),&ZDB::foundNewFiles,this,&ZMainWindow::fsFoundNewFiles,Qt::QueuedConnection);
-    connect(zg,&ZGlobal::fsFilesAdded,this,&ZMainWindow::fsNewFilesAdded);
+    connect(zF->global()->db(),&ZDB::foundNewFiles,this,&ZMainWindow::fsFoundNewFiles,Qt::QueuedConnection);
+    connect(zF->global(),&ZGlobal::fsFilesAdded,this,&ZMainWindow::fsNewFilesAdded);
 
-    connect(this,&ZMainWindow::dbAddIgnoredFiles,zg->db(),&ZDB::sqlAddIgnoredFiles,Qt::QueuedConnection);
-    connect(this,&ZMainWindow::dbFindNewFiles,zg->db(),&ZDB::sqlSearchMissingManga,Qt::QueuedConnection);
-    connect(this,&ZMainWindow::dbAddFiles,zg->db(),&ZDB::sqlAddFiles,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbAddIgnoredFiles,zF->global()->db(),&ZDB::sqlAddIgnoredFiles,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbFindNewFiles,zF->global()->db(),&ZDB::sqlSearchMissingManga,Qt::QueuedConnection);
+    connect(this,&ZMainWindow::dbAddFiles,zF->global()->db(),&ZDB::sqlAddFiles,Qt::QueuedConnection);
 
     ui->mangaView->setScroller(ui->scrollArea);
-    zg->loadSettings();
+    zF->global()->loadSettings();
     centerWindow(!isMaximized());
     m_savedGeometry=geometry();
     m_savedMaximized=isMaximized();
@@ -155,7 +152,6 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
 ZMainWindow::~ZMainWindow()
 {
     delete ui;
-    zg = nullptr;
 }
 
 void ZMainWindow::centerWindow(bool moveWindow)
@@ -187,14 +183,14 @@ void ZMainWindow::centerWindow(bool moveWindow)
         ui->searchTab->updateSplitters();
     }
 
-    zg->setDPI(screen->physicalDotsPerInchX(),screen->physicalDotsPerInchY());
+    zF->global()->setDPI(screen->physicalDotsPerInchX(),screen->physicalDotsPerInchY());
 #ifdef Q_OS_WIN
     const qreal maxDPIdifference = 20.0;
     const qreal minDPI = 130.0;
-    if (abs(zg->getDpiX() - zg->getDpiY())>maxDPIdifference) {
-        qreal dpi = qMax(zg->getDpiX(),zg->getDpiY());
+    if (abs(zF->global()->getDpiX() - zF->global()->getDpiY())>maxDPIdifference) {
+        qreal dpi = qMax(zF->global()->getDpiX(),zF->global()->getDpiY());
         if (dpi<minDPI) dpi=minDPI;
-        zg->setDPI(dpi,dpi);
+        zF->global()->setDPI(dpi,dpi);
     }
 #endif
 }
@@ -218,47 +214,49 @@ void ZMainWindow::setZoomMode(int mode)
 
 void ZMainWindow::addContextMenuItems(QMenu* menu)
 {
-    auto nt = new QAction(QIcon(":/16/zoom-fit-best"),tr("Zoom fit"),nullptr);
+    auto nt = new QAction(QIcon(QSL(":/16/zoom-fit-best")),tr("Zoom fit"),nullptr);
     connect(nt,&QAction::triggered,this,[this](){
         setZoomMode(ZMangaView::zmFit);
     });
     menu->addAction(nt);
-    nt = new QAction(QIcon(":/16/zoom-fit-width"),tr("Zoom width"),nullptr);
+    nt = new QAction(QIcon(QSL(":/16/zoom-fit-width")),tr("Zoom width"),nullptr);
     connect(nt,&QAction::triggered,this,[this](){
         setZoomMode(ZMangaView::zmWidth);
     });
     menu->addAction(nt);
-    nt = new QAction(QIcon(":/16/zoom-fit-height"),tr("Zoom height"),nullptr);
+    nt = new QAction(QIcon(QSL(":/16/zoom-fit-height")),tr("Zoom height"),nullptr);
     connect(nt,&QAction::triggered,this,[this](){
         setZoomMode(ZMangaView::zmHeight);
     });
     menu->addAction(nt);
-    nt = new QAction(QIcon(":/16/zoom-original"),tr("Zoom original"),nullptr);
+    nt = new QAction(QIcon(QSL(":/16/zoom-original")),tr("Zoom original"),nullptr);
     connect(nt,&QAction::triggered,this,[this](){
         setZoomMode(ZMangaView::zmOriginal);
     });
     menu->addAction(nt);
     menu->addSeparator();
-//    nt = new QAction(QIcon(":/16/zoom-draw"),tr("Zoom dynamic"),nullptr);
-//    nt->setCheckable(true);
-//    nt->setChecked(m_zoomDynamic);
-//    connect(nt,&QAction::triggered,this,&ZMangaView::setZoomDynamic);
-//    menu->addAction(nt);
+    nt = new QAction(QIcon(QSL(":/16/zoom-draw")),tr("Zoom dynamic"),nullptr);
+    nt->setCheckable(true);
+    nt->setChecked(ui->mangaView->getZoomDynamic());
+    connect(nt,&QAction::triggered,this,[this](){
+        ui->btnZoomDynamic->click();
+    });
+    menu->addAction(nt);
     menu->addSeparator();
 
-    nt = new QAction(QIcon(":/16/document-close"),tr("Close manga"),nullptr);
+    nt = new QAction(QIcon(QSL(":/16/document-close")),tr("Close manga"),nullptr);
     connect(nt,&QAction::triggered,this,&ZMainWindow::closeManga);
     menu->addAction(nt);
     menu->addSeparator();
-    nt = new QAction(QIcon(":/16/go-down"),tr("Minimize window"),nullptr);
+    nt = new QAction(QIcon(QSL(":/16/go-down")),tr("Minimize window"),nullptr);
     connect(nt,&QAction::triggered,this,&ZMainWindow::showMinimized);
     menu->addAction(nt);
-    nt = new QAction(QIcon(":/16/transform-move"),tr("Show fast scroller"),nullptr);
+    nt = new QAction(QIcon(QSL(":/16/transform-move")),tr("Show fast scroller"),nullptr);
     nt->setCheckable(true);
     nt->setChecked(ui->fastScrollPanel->isVisible());
     connect(nt,&QAction::toggled,ui->fastScrollPanel,&QFrame::setVisible);
     menu->addAction(nt);
-    nt = new QAction(QIcon(":/16/edit-rename"),tr("Show controls"),nullptr);
+    nt = new QAction(QIcon(QSL(":/16/edit-rename")),tr("Show controls"),nullptr);
     nt->setCheckable(true);
     nt->setShortcut(QKeySequence(Qt::Key_Return));
     nt->setChecked(isFullScreenControlsVisible());
@@ -269,7 +267,7 @@ void ZMainWindow::addContextMenuItems(QMenu* menu)
 void ZMainWindow::openAuxFile(const QString &filename)
 {
     QFileInfo fi(filename);
-    zg->setSavedAuxOpenDir(fi.path());
+    zF->global()->setSavedAuxOpenDir(fi.path());
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(filename);
@@ -277,14 +275,14 @@ void ZMainWindow::openAuxFile(const QString &filename)
 
 void ZMainWindow::closeEvent(QCloseEvent *event)
 {
-    if (zg!=nullptr)
-        zg->saveSettings();
+    if (zF->global()!=nullptr)
+        zF->global()->saveSettings();
     event->accept();
 }
 
 void ZMainWindow::openAux()
 {
-    QString filename = zF->getOpenFileNameD(this,tr("Open manga or image"),zg->getSavedAuxOpenDir());
+    QString filename = zF->getOpenFileNameD(this,tr("Open manga or image"),zF->global()->getSavedAuxOpenDir());
     if (!filename.isEmpty())
         openAuxFile(filename);
 }
@@ -479,7 +477,7 @@ void ZMainWindow::viewerBackgroundUpdated(const QColor &color)
     QColor c = palette().window().color();
     if (c != oldColor) {
         QPalette p = ui->fastScrollSlider->palette();
-        p.setBrush(QPalette::Window, QBrush(zg->getBackgroundColor()));
+        p.setBrush(QPalette::Window, QBrush(zF->global()->getBackgroundColor()));
         ui->fastScrollSlider->setPalette(p);
     }
 
@@ -490,7 +488,7 @@ void ZMainWindow::updateBookmarks()
 {
     while (ui->menuBookmarks->actions().count()>2)
         ui->menuBookmarks->removeAction(ui->menuBookmarks->actions().constLast());
-    const auto bookmarks = zg->getBookmarks();
+    const auto bookmarks = zF->global()->getBookmarks();
     for (auto it = bookmarks.constKeyValueBegin(), end = bookmarks.constKeyValueEnd();
          it != end; ++it) {
         QAction* a = ui->menuBookmarks->addAction((*it).first,this,&ZMainWindow::openBookmark);
@@ -525,8 +523,8 @@ void ZMainWindow::createBookmark()
                                        fi.completeBaseName(),openedFile);
     if (dlg.exec()==QDialog::Accepted) {
         QString t = dlg.getDlgEdit1();
-        if (!t.isEmpty() && !zg->getBookmarks().contains(t)) {
-            zg->addBookmark(t,QSL("%1\n%2").arg(dlg.getDlgEdit2()).arg(ui->mangaView->getCurrentPage()));
+        if (!t.isEmpty() && !zF->global()->getBookmarks().contains(t)) {
+            zF->global()->addBookmark(t,QSL("%1\n%2").arg(dlg.getDlgEdit2()).arg(ui->mangaView->getCurrentPage()));
             updateBookmarks();
         } else {
             QMessageBox::warning(this,tr("QManga"),
@@ -593,15 +591,15 @@ void ZMainWindow::auxMessage(const QString &msg)
 
 void ZMainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
 {
-    if (zg->getCachePixmaps()) {
+    if (zF->global()->getCachePixmaps()) {
         m_lblAverageSizes->setText(tr("Avg size: %1x%2").arg(sz.width()).arg(sz.height()));
     } else {
         m_lblAverageSizes->setText(tr("Avg size: %1x%2, %3").arg(sz.width()).arg(sz.height())
                                    .arg(zF->formatSize(fsz)));
     }
 
-    if (zg->getAvgFineRenderTime()>0)
-        m_lblAverageFineRender->setText(tr("Avg filter: %1 ms").arg(zg->getAvgFineRenderTime()));
+    if (zF->global()->getAvgFineRenderTime()>0)
+        m_lblAverageFineRender->setText(tr("Avg filter: %1 ms").arg(zF->global()->getAvgFineRenderTime()));
 }
 
 void ZMainWindow::fsAddFiles()
@@ -610,18 +608,18 @@ void ZMainWindow::fsAddFiles()
     fl.clear();
     for (const auto &i : qAsConst(m_fsScannedFiles)) {
         fl[i.album].append(i.fileName);
-        zg->removeFileFromNewlyAdded(i.fileName);
+        zF->global()->removeFileFromNewlyAdded(i.fileName);
     }
 
     for (auto it = fl.constKeyValueBegin(), end = fl.constKeyValueEnd(); it != end; ++it)
         Q_EMIT dbAddFiles((*it).second,(*it).first);
 
-    zg->fsCheckFilesAvailability();
+    zF->global()->fsCheckFilesAvailability();
 }
 
 void ZMainWindow::fsCheckAvailability()
 {
-    zg->fsCheckFilesAvailability();
+    zF->global()->fsCheckFilesAvailability();
 }
 
 void ZMainWindow::fsDelFiles()
@@ -649,7 +647,7 @@ void ZMainWindow::fsNewFilesAdded()
     m_fsAddFilesMutex.lock();
     ui->fsResults->clear();
     m_fsScannedFiles.clear();
-    const QStringList f = zg->getNewlyAddedFiles();
+    const QStringList f = zF->global()->getNewlyAddedFiles();
 
     for (const auto &i : f) {
         QFileInfo fi(i);
@@ -681,18 +679,18 @@ void ZMainWindow::fsUpdateFileList()
 
 void ZMainWindow::fsResultsMenuCtx(const QPoint &pos)
 {
-    QStringList albums = ui->searchTab->getAlbums();
     QMenu cm(this);
     cm.setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
     QAction* ac;
     int cnt=0;
     if (!ui->fsResults->selectedItems().isEmpty()) {
-        ac = new QAction(QIcon(":/16/dialog-cancel"),tr("Ignore these file(s)"),this);
+        ac = new QAction(QIcon(QSL(":/16/dialog-cancel")),tr("Ignore these file(s)"),this);
         connect(ac,&QAction::triggered,this,&ZMainWindow::fsAddIgnoredFiles);
         cm.addAction(ac);
         cm.addSeparator();
         cnt++;
     }
+    const QStringList albums = ui->searchTab->getAlbums();
     for (const auto &i : albums) {
         if (i.startsWith(QSL("#"))) continue;
         ac = new QAction(i,nullptr);

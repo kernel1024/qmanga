@@ -11,13 +11,14 @@
 #include <QPointer>
 #include <QTimer>
 #include <QThread>
+#include <QScopedPointer>
 
 #ifdef WITH_OCR
 #include <tesseract/baseapi.h>
 #include <leptonica/allheaders.h>
 #endif // WITH_OCR
 
-#include <scalefilter.h>
+#include "scalefilter.h"
 
 #define QSL QStringLiteral
 #define zF (ZGenericFuncs::instance())
@@ -60,6 +61,9 @@ constexpr qint64 copyBlockSize = 2*1024*1024L;
 class ZAbstractReader;
 class ZMangaLoader;
 class ZMangaView;
+class ZPdfController;
+class ZDjVuController;
+class ZGlobal;
 
 namespace Z {
 Q_NAMESPACE
@@ -222,11 +226,13 @@ class ZGenericFuncs : public QObject
     Q_OBJECT
 public:
     explicit ZGenericFuncs(QObject *parent = nullptr);
-    ~ZGenericFuncs() override = default;
+    ~ZGenericFuncs() override;
     static ZGenericFuncs* instance();
     static void stdConsoleOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
     void initialize();
+    ZDjVuController* djvuController() const;
+    ZGlobal* global() const;
 
     ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
                                           bool onlyArchives, bool createReader = true);
@@ -272,6 +278,10 @@ public:
 
 private:
     Q_DISABLE_COPY(ZGenericFuncs)
+
+    QScopedPointer<ZGlobal> m_zg; // keep first!
+    QScopedPointer<ZPdfController> m_pdfController;
+    QScopedPointer<ZDjVuController> m_djvuController;
 
 #ifdef WITH_OCR
     tesseract::TessBaseAPI* m_ocr { nullptr };

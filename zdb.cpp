@@ -111,7 +111,7 @@ void ZDB::sqlCheckBase()
 
 bool ZDB::sqlCheckBasePriv(QSqlDatabase& db, bool silent)
 {
-    static const QStringList tables { "files", "albums", "ignored_files" };
+    static const QStringList tables { QSL("files"), QSL("albums"), QSL("ignored_files") };
 
     int cnt=0;
     const QStringList list = db.tables(QSql::Tables);
@@ -354,9 +354,9 @@ QSqlDatabase ZDB::sqlOpenBase()
 {
     QSqlDatabase db;
 
-    if (zg==nullptr) return db;
+    if (zF->global()==nullptr) return db;
 
-    if (zg->getDbEngine()==Z::dbmsMySQL) {
+    if (zF->global()->getDbEngine()==Z::dbmsMySQL) {
         db = QSqlDatabase::addDatabase(QSL("QMYSQL"),QUuid::createUuid().toString());
         if (!db.isValid()) {
             db = QSqlDatabase();
@@ -370,7 +370,7 @@ QSqlDatabase ZDB::sqlOpenBase()
         db.setUserName(m_dbUser);
         db.setPassword(m_dbPass);
 
-    } else if (zg->getDbEngine()==Z::dbmsSQLite) {
+    } else if (zF->global()->getDbEngine()==Z::dbmsSQLite) {
         db = QSqlDatabase::addDatabase(QSL("QSQLITE"),QUuid::createUuid().toString());
         if (!db.isValid()) {
             db = QSqlDatabase();
@@ -460,7 +460,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search)
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
 
-    QTime tmr;
+    QElapsedTimer tmr;
     tmr.start();
 
     constexpr int fldName = 0;
@@ -1017,6 +1017,7 @@ void ZDB::sqlGetTablesDescription()
            +s2.leftJustified(tl,' ')+QSL(" |");
     s1.fill('-',nl); s2.fill('-',tl);
     res << QSL("+-")+s1+QSL("-+-")+s2+QSL("-+");
+    res.reserve(names.count());
     for (int i=0;i<names.count();i++) {
         s1 = names.at(i);
         s2 = types.at(i);
@@ -1056,7 +1057,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
     m_wasCanceled = false;
 
-    QTime tmr;
+    QElapsedTimer tmr;
     tmr.start();
 
     Q_EMIT showProgressDialog(true);
@@ -1200,7 +1201,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     if (!db.isValid()) return;
     QSqlQuery qr(db);
 
-    QTime tmr;
+    QElapsedTimer tmr;
     tmr.start();
 
     // get album preview image
@@ -1261,7 +1262,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
 QString ZDB::prepareSearchQuery(const QString &search)
 {
-    static const QStringList operators({" +", " ~", " -", "* ", "\""});
+    static const QStringList operators({QSL(" +"), QSL(" ~"), QSL(" -"), QSL("* "), QSL("\"")});
     QString msearch = search;
     if (search.contains(QRegExp(QSL("\\s")))) {
         bool haveops = false;

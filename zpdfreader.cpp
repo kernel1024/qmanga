@@ -94,9 +94,9 @@ bool ZPdfReader::openFile()
     if (m_doc==nullptr || !m_doc->isOk())
         return false;
 
-    Z::PDFRendering mode = zg->db()->getPreferredRendering(fileName);
+    Z::PDFRendering mode = zF->global()->db()->getPreferredRendering(fileName);
     if (mode==Z::pdfAutodetect)
-        mode = zg->getPdfRendering();
+        mode = zF->global()->getPdfRendering();
 
     if (mode==Z::pdfAutodetect || mode==Z::pdfImageCatalog) {
 
@@ -239,9 +239,9 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
             return;
         }
     } else {
-        qreal xdpi = zg->getDpiX();
-        qreal ydpi = zg->getDpiY();
-        qreal forceDPI = zg->getForceDPI();
+        qreal xdpi = zF->global()->getDpiX();
+        qreal ydpi = zF->global()->getDpiY();
+        qreal forceDPI = zF->global()->getForceDPI();
         if (forceDPI>0.0) {
             xdpi = forceDPI;
             ydpi = forceDPI;
@@ -337,28 +337,18 @@ bool ZPDFImg::operator!=(const ZPDFImg &ref) const
     return (pos!=ref.pos || size!=ref.size || format!=ref.format);
 }
 
-
-#ifdef WITH_POPPLER
-
-// TODO: convert to static class members
-void initPdfReader()
+ZPdfController::ZPdfController(QObject *parent)
+    : QObject(parent)
 {
+#ifdef WITH_POPPLER
     globalParams = new GlobalParams();
+#endif
 }
 
-void freePdfReader()
+ZPdfController::~ZPdfController()
 {
+#ifdef WITH_POPPLER
     delete globalParams;
     globalParams = nullptr;
-}
-
-#else // WITH_POPPLER
-
-void initPdfReader()
-{
-}
-
-void freePdfReader()
-{
-}
 #endif
+}

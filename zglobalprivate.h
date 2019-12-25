@@ -12,11 +12,13 @@
 #include "scalefilter.h"
 #include "zglobal.h"
 
+class ZMainWindow;
+
 class ZGlobalPrivate : public QObject
 {
     Q_OBJECT
 public:
-    ZGlobalPrivate(QObject *parent, QWidget* parentWidget);
+    explicit ZGlobalPrivate(QObject *parent = nullptr);
     ~ZGlobalPrivate() override;
 
     Blitz::ScaleFilterType m_downscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
@@ -69,6 +71,8 @@ public:
     QScopedPointer<QFileSystemWatcher, QScopedPointerDeleteLater> fsWatcher;
     QScopedPointer<ZOCREditor, QScopedPointerDeleteLater> m_ocrEditor;
     QScopedPointer<QThread, QScopedPointerDeleteLater> m_threadDB;
+
+    QPointer<ZMainWindow> m_mainWindow;
 
 private:
     Q_DISABLE_COPY(ZGlobalPrivate)

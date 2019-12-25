@@ -113,8 +113,8 @@ void ZOCREditor::translate()
             QString s = ui->editor->toPlainText();
             if (!ui->editor->textCursor().selectedText().isEmpty())
                 s = ui->editor->textCursor().selectedText();
-            translator->setSrcLang(zg->getTranSourceLang());
-            translator->setDestLang(zg->getTranDestLang());
+            translator->setSrcLang(zF->global()->getTranSourceLang());
+            translator->setDestLang(zF->global()->getTranDestLang());
             translator->startAuxTranslation(s);
             ui->status->setText(tr("Translation in progress..."));
         }
@@ -183,13 +183,13 @@ void ZOCREditor::contextMenu(const QPoint &pos)
         cm.addAction(ac);
 #endif
 
-        if (!zg->getCtxSearchEngines().isEmpty()) {
+        if (!zF->global()->getCtxSearchEngines().isEmpty()) {
             cm.addSeparator();
 
-            QStringList searchNames = zg->getCtxSearchEngines().keys();
+            QStringList searchNames = zF->global()->getCtxSearchEngines().keys();
             searchNames.sort(Qt::CaseInsensitive);
-            for (const QString& name : searchNames) {
-                QUrl url = zg->createSearchUrl(sText,name);
+            for (const QString& name : qAsConst(searchNames)) {
+                QUrl url = zF->global()->createSearchUrl(sText,name);
                 if (!url.isEmpty() && url.isValid()) {
                     ac = new QAction(name,nullptr);
                     connect(ac, &QAction::triggered, [url](){

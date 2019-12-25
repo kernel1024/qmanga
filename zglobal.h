@@ -7,6 +7,7 @@
 #include "ocreditor.h"
 
 class ZMangaModel;
+class ZMainWindow;
 class ZDB;
 
 class ZGlobalPrivate;
@@ -23,16 +24,17 @@ private:
     void initLanguagesList();
 
 public:
-    explicit ZGlobal(QWidget *parent = nullptr);
+    explicit ZGlobal(QObject *parent = nullptr);
     ~ZGlobal() override;
 
     void fsCheckFilesAvailability();
+    void setMainWindow(ZMainWindow* wnd);
     QUrl createSearchUrl(const QString &text, const QString &engine = QString()) const;
     QStringList getLanguageCodes() const;
     QString getLanguageName(const QString &bcp47Name) const;
     qint64 getAvgFineRenderTime() const;
     ZDB *db() const;
-    ZOCREditor *ocrEditor() const;
+    ZOCREditor *ocrEditor();
 
     // settings management
     Blitz::ScaleFilterType getDownscaleFilter() const;
@@ -113,8 +115,5 @@ public:
     bool operator<(const ZFileEntry& ref) const;
     bool operator>(const ZFileEntry& ref) const;
 };
-
-
-extern ZGlobal* zg;
 
 #endif // ZGLOBAL_H

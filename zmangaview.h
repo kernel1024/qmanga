@@ -85,7 +85,8 @@ public:
     QString getOpenedFile() const;
     int getCurrentPage() const;
     void setScroller(QScrollArea* scroller);
-    
+    bool getZoomDynamic() const;
+
 Q_SIGNALS:
     void loadedPage(int num, const QString &msg);
     void doubleClicked();

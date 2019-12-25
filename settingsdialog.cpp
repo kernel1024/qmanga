@@ -118,7 +118,7 @@ void ZSettingsDialog::setSearchEngines(const ZStrMap &engines)
     for (auto it = engines.constKeyValueBegin(), end = engines.constKeyValueEnd(); it != end; ++it) {
         auto li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
                                       arg((*it).first,(*it).second,
-                                          (*it).first==zg->getDefaultSearchEngine() ? tr("(default)") : QString()));
+                                          (*it).first==zF->global()->getDefaultSearchEngine() ? tr("(default)") : QString()));
         li->setData(Qt::UserRole,(*it).first);
         li->setData(Qt::UserRole+1,(*it).second);
         ui->listSearch->addItem(li);
@@ -161,7 +161,7 @@ void ZSettingsDialog::updateOCRLanguages()
     QDir datapath(ui->editOCRDatapath->text());
     if (datapath.isReadable()) {
         int aidx = -1;
-        QFileInfoList files = datapath.entryInfoList({"*.traineddata"});
+        const QFileInfoList files = datapath.entryInfoList( { QSL("*.traineddata") } );
         for (const QFileInfo& fi : files) {
             QString base = fi.baseName();
             ui->comboOCRLanguage->addItem(fi.fileName(),base);
@@ -183,14 +183,14 @@ void ZSettingsDialog::updateTranslatorLanguages()
 #ifndef Q_OS_WIN
     ui->comboLangSource->clear();
     ui->comboLangDest->clear();
-    const QStringList sl = zg->getLanguageCodes();
+    const QStringList sl = zF->global()->getLanguageCodes();
     int idx1 = -1;
     int idx2 = -1;
     for (const QString& bcp : sl) {
-        ui->comboLangSource->addItem(zg->getLanguageName(bcp),QVariant::fromValue(bcp));
-        ui->comboLangDest->addItem(zg->getLanguageName(bcp),QVariant::fromValue(bcp));
-        if (bcp==zg->getTranSourceLang()) idx1 = ui->comboLangSource->count()-1;
-        if (bcp==zg->getTranDestLang()) idx2 = ui->comboLangDest->count()-1;
+        ui->comboLangSource->addItem(zF->global()->getLanguageName(bcp),QVariant::fromValue(bcp));
+        ui->comboLangDest->addItem(zF->global()->getLanguageName(bcp),QVariant::fromValue(bcp));
+        if (bcp==zF->global()->getTranSourceLang()) idx1 = ui->comboLangSource->count()-1;
+        if (bcp==zF->global()->getTranDestLang()) idx2 = ui->comboLangDest->count()-1;
     }
     if (idx1>=0) ui->comboLangSource->setCurrentIndex(idx1);
     else if (ui->comboLangSource->count()>0) ui->comboLangSource->setCurrentIndex(0);
@@ -220,7 +220,7 @@ void ZSettingsDialog::addSearchEngine()
             auto li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
                                           arg(data[tr("Menu title")],
                                           data[tr("Url template")],
-                    data[tr("Menu title")]==zg->getDefaultSearchEngine() ? tr("(default)") : QString()));
+                    data[tr("Menu title")]==zF->global()->getDefaultSearchEngine() ? tr("(default)") : QString()));
             li->setData(Qt::UserRole,data[tr("Menu title")]);
             li->setData(Qt::UserRole+1,data[tr("Url template")]);
             ui->listSearch->addItem(li);
@@ -230,7 +230,7 @@ void ZSettingsDialog::addSearchEngine()
 
 void ZSettingsDialog::delSearchEngine()
 {
-    QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
+    const QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
     for (QListWidgetItem* i : dl) {
         ui->listSearch->removeItemWidget(i);
         delete i;
@@ -242,7 +242,7 @@ void ZSettingsDialog::setDefaultSearch()
     QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
     if (dl.isEmpty()) return;
 
-    zg->setDefaultSearchEngine(dl.first()->data(Qt::UserRole).toString());
+    zF->global()->setDefaultSearchEngine(dl.first()->data(Qt::UserRole).toString());
 
     setSearchEngines(getSearchEngines());
 }
@@ -282,7 +282,7 @@ void ZSettingsDialog::delListWidgetItem()
     }
     if (list==nullptr) return;
 
-    QList<QListWidgetItem *> dl = list->selectedItems();
+    const QList<QListWidgetItem *> dl = list->selectedItems();
     for (QListWidgetItem* i : dl) {
         list->removeItemWidget(i);
         delete i;
@@ -353,9 +353,9 @@ void ZSettingsDialog::dynAdd()
                        "from FROM clause to the end of query.\n"
                        "This part can consists of WHERE, ORDER, LIMIT and any other MySQL SELECT clauses."));
 
-    connect(zg->db(),&ZDB::gotTablesDescription,&dlg,&ZTwoEditDlg::setAuxText,Qt::QueuedConnection);
+    connect(zF->global()->db(),&ZDB::gotTablesDescription,&dlg,&ZTwoEditDlg::setAuxText,Qt::QueuedConnection);
     connect(this,&ZSettingsDialog::getTablesDescription,
-            zg->db(),&ZDB::sqlGetTablesDescription,Qt::QueuedConnection);
+            zF->global()->db(),&ZDB::sqlGetTablesDescription,Qt::QueuedConnection);
     Q_EMIT getTablesDescription();
 
     if (dlg.exec()==QDialog::Accepted) {
@@ -393,7 +393,7 @@ void ZSettingsDialog::openRar()
 #ifdef Q_OS_WIN
     filter = tr("Executable files (*.exe)");
 #endif
-    QString filename = zF->getOpenFileNameD(this,tr("Select console RAR binary"),zg->getSavedAuxOpenDir(),filter);
+    QString filename = zF->getOpenFileNameD(this,tr("Select console RAR binary"),zF->global()->getSavedAuxOpenDir(),filter);
     if (!filename.isEmpty())
         ui->editRar->setText(filename);
 }

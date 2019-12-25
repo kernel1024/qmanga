@@ -17,11 +17,9 @@
 #include "zglobalprivate.h"
 #include "ui_settingsdialog.h"
 
-ZGlobal* zg = nullptr;
-
-ZGlobal::ZGlobal(QWidget *parent) :
+ZGlobal::ZGlobal(QObject *parent) :
     QObject(parent),
-    dptr(new ZGlobalPrivate(this,parent))
+    dptr(new ZGlobalPrivate(this))
 {
     Q_D(ZGlobal);
 
@@ -47,10 +45,6 @@ ZGlobal::ZGlobal(QWidget *parent) :
     connect(d->m_threadDB.data(),&QThread::finished,d->m_threadDB.data(),&QObject::deleteLater,Qt::QueuedConnection);
 
     d->m_threadDB->start();
-
-    // TODO: move this to zF
-    initPdfReader();
-    ZDjVuController::instance()->initDjVuReader();
 }
 
 ZGlobal::~ZGlobal()
@@ -58,8 +52,6 @@ ZGlobal::~ZGlobal()
     Q_D(ZGlobal);
     d->m_threadDB->quit();
     QApplication::processEvents();
-    freePdfReader();
-    ZDjVuController::instance()->freeDjVuReader();
 }
 
 void ZGlobal::checkSQLProblems(QWidget *parent)
@@ -90,7 +82,7 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
 void ZGlobal::loadSettings()
 {
     Q_D(ZGlobal);
-    auto w = qobject_cast<ZMainWindow *>(parent());
+    if (!d->m_mainWindow) return;
 
     QSettings settings(QSL("kernel1024"), QSL("qmanga"));
     settings.beginGroup(QSL("MainWindow"));
@@ -136,9 +128,7 @@ void ZGlobal::loadSettings()
     if (!d->m_frameColor.isValid())
         d->m_frameColor = QColor(Qt::lightGray);
 
-    bool showMaximized = false;
-    if (w!=nullptr)
-        showMaximized = settings.value(QSL("maximized"),false).toBool();
+    bool showMaximized = settings.value(QSL("maximized"),false).toBool();
 
     d->m_bookmarks = settings.value(QSL("bookmarks")).value<ZStrMap>();
     ZStrMap albums = settings.value(QSL("dynAlbums")).value<ZStrMap>();
@@ -149,21 +139,18 @@ void ZGlobal::loadSettings()
     Q_EMIT dbSetCredentials(d->m_dbHost,d->m_dbBase,d->m_dbUser,d->m_dbPass);
     Q_EMIT loadSearchTabSettings(&settings);
 
-    if (w!=nullptr) {
-        if (showMaximized)
-            w->showMaximized();
+    if (showMaximized)
+        d->m_mainWindow->showMaximized();
 
-        w->updateBookmarks();
-        w->updateViewer();
-    }
+    d->m_mainWindow->updateBookmarks();
+    d->m_mainWindow->updateViewer();
     Q_EMIT dbCheckBase();
     if (d->m_filesystemWatcher)
         Q_EMIT dbRescanIndexedDirs();
 
-    if (d->m_ocrEditor!=nullptr)
-        d->m_ocrEditor->setEditorFont(d->m_ocrFont);
+    ocrEditor()->setEditorFont(d->m_ocrFont);
 
-    checkSQLProblems(w);
+    checkSQLProblems(d->m_mainWindow);
 }
 
 void ZGlobal::saveSettings()
@@ -203,11 +190,8 @@ void ZGlobal::saveSettings()
     settings.setValue(QSL("tranSourceLanguage"),d->m_tranSourceLang);
     settings.setValue(QSL("tranDestLanguage"),d->m_tranDestLang);
 
-    auto w = qobject_cast<ZMainWindow *>(parent());
-    if (w!=nullptr) {
-        settings.setValue(QSL("maximized"),w->isMaximized());
-
-    }
+    if (d->m_mainWindow)
+        settings.setValue(QSL("maximized"),d->m_mainWindow->isMaximized());
 
     settings.setValue(QSL("bookmarks"),QVariant::fromValue(d->m_bookmarks));
     settings.setValue(QSL("dynAlbums"),QVariant::fromValue(d->m_db->getDynAlbums()));
@@ -252,8 +236,8 @@ void ZGlobal::directoryChanged(const QString &dir)
 
 void ZGlobal::dbCheckComplete()
 {
-    auto w = qobject_cast<ZMainWindow *>(parent());
-    checkSQLProblems(w);
+    Q_D(const ZGlobal);
+    checkSQLProblems(d->m_mainWindow);
 }
 
 void ZGlobal::addFineRenderTime(qint64 msec)
@@ -306,13 +290,20 @@ void ZGlobal::fsCheckFilesAvailability()
     Q_EMIT fsFilesAdded();
 }
 
+void ZGlobal::setMainWindow(ZMainWindow *wnd)
+{
+    Q_D(ZGlobal);
+    d->m_mainWindow = wnd;
+}
+
 void ZGlobal::settingsDlg()
 {
     Q_D(ZGlobal);
-    auto w = qobject_cast<ZMainWindow *>(parent());
-    ZSettingsDialog dlg(w);
+    if (!d->m_mainWindow) return;
 
-    checkSQLProblems(w);
+    ZSettingsDialog dlg(d->m_mainWindow);
+
+    checkSQLProblems(d->m_mainWindow);
 
     dlg.ui->editMySqlLogin->setText(d->m_dbUser);
     dlg.ui->editMySqlPassword->setText(d->m_dbPass);
@@ -431,17 +422,14 @@ void ZGlobal::settingsDlg()
                     dlg.ui->listDynAlbums->item(i)->data(Qt::UserRole+1).toString();
         }
         Q_EMIT dbSetDynAlbums(albums);
-        if (w!=nullptr) {
-            w->updateBookmarks();
-            w->updateViewer();
-        }
+        d->m_mainWindow->updateBookmarks();
+        d->m_mainWindow->updateViewer();
         Q_EMIT loadSearchTabSettings(nullptr);
         Q_EMIT dbCheckBase();
         Q_EMIT dbSetIgnoredFiles(dlg.getIgnoredFiles());
         if (d->m_filesystemWatcher)
             Q_EMIT dbRescanIndexedDirs();
-        if (d->m_ocrEditor!=nullptr)
-            d->m_ocrEditor->setEditorFont(d->m_ocrFont);
+        ocrEditor()->setEditorFont(d->m_ocrFont);
 
 #ifdef WITH_OCR
         bool needRestart = (dlg.ui->editOCRDatapath->text() != zF->ocrGetDatapath());
@@ -473,7 +461,7 @@ QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine) const
         url = d->m_ctxSearchEngines.value(engine);
 
     url.replace(QSL("%s"),text);
-    url.replace(QSL("%ps"),QUrl::toPercentEncoding(text));
+    url.replace(QSL("%ps"),QString::fromUtf8(QUrl::toPercentEncoding(text)));
 
     return QUrl::fromUserInput(url);
 }
@@ -481,7 +469,7 @@ QUrl ZGlobal::createSearchUrl(const QString& text, const QString& engine) const
 void ZGlobal::initLanguagesList()
 {
     Q_D(ZGlobal);
-    QList<QLocale> allLocales = QLocale::matchingLocales(
+    const QList<QLocale> allLocales = QLocale::matchingLocales(
                 QLocale::AnyLanguage,
                 QLocale::AnyScript,
                 QLocale::AnyCountry);
@@ -735,9 +723,12 @@ ZDB *ZGlobal::db() const
     return d->m_db.data();
 }
 
-ZOCREditor *ZGlobal::ocrEditor() const
+ZOCREditor *ZGlobal::ocrEditor()
 {
-    Q_D(const ZGlobal);
+    Q_D(ZGlobal);
+    if (!d->m_ocrEditor)
+        d->m_ocrEditor.reset(new ZOCREditor(d->m_mainWindow));
+
     return d->m_ocrEditor.data();
 }
 

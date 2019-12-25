@@ -22,7 +22,7 @@ bool ZDjVuReader::openFile()
         return false;
 
     int numPages;
-    if (!ZDjVuController::instance()->loadDjVu(getFileName(), numPages)) {
+    if (!zF->djvuController()->loadDjVu(getFileName(), numPages)) {
         qWarning() << tr("Unable to load file ") << getFileName();
         return false;
     }
@@ -47,7 +47,7 @@ void ZDjVuReader::closeFile()
     if (!isOpened())
         return;
 #ifdef WITH_DJVU
-    ZDjVuController::instance()->closeDjVu(getFileName());
+    zF->djvuController()->closeDjVu(getFileName());
 #endif
 
     ZAbstractReader::closeFile();
@@ -56,7 +56,7 @@ void ZDjVuReader::closeFile()
 QImage ZDjVuReader::loadPageImage(int num)
 {
 #ifdef WITH_DJVU
-    ddjvu_document_t* document = ZDjVuController::instance()->getDocument(getFileName());
+    ddjvu_document_t* document = zF->djvuController()->getDocument(getFileName());
     if (!isOpened() || document==nullptr) {
         qWarning() << "Uninitialized context for page " << num;
         return QImage();
@@ -89,9 +89,9 @@ QImage ZDjVuReader::loadPageImage(int num)
     }
 
     //ddjvu_page_set_rotation ( page, DDJVU_ROTATE_0 ); // need?
-    qreal xdpi = zg->getDpiX();
-    qreal ydpi = zg->getDpiY();
-    qreal forceDPI = zg->getForceDPI();
+    qreal xdpi = zF->global()->getDpiX();
+    qreal ydpi = zF->global()->getDpiY();
+    qreal forceDPI = zF->global()->getForceDPI();
     if (forceDPI>0.0) {
         xdpi = forceDPI;
         ydpi = forceDPI;
@@ -162,24 +162,15 @@ QString ZDjVuReader::getMagic()
     return QSL("DJVU");
 }
 
-ZDjVuController* ZDjVuController::m_instance = nullptr;
-
 ZDjVuController::ZDjVuController(QObject *parent)
     : QObject(parent)
 {
-
+    initDjVuReader();
 }
 
 ZDjVuController::~ZDjVuController()
 {
     freeDjVuReader();
-}
-
-ZDjVuController *ZDjVuController::instance()
-{
-    if (!m_instance)
-        m_instance = new ZDjVuController();
-    return m_instance;
 }
 
 void ZDjVuController::initDjVuReader()
@@ -190,7 +181,6 @@ void ZDjVuController::initDjVuReader()
         qCritical() << "Unable to create djvulibre context. DjVu support disabled.";
         m_djvuContext = nullptr;
     }
-    m_documents.clear();
 #endif
 }
 

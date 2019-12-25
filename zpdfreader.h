@@ -7,6 +7,7 @@
 
 #include <QMutex>
 #include "zabstractreader.h"
+#include "global.h"
 
 class ZPDFImg {
 public:
@@ -54,7 +55,12 @@ private:
 
 };
 
-void initPdfReader();
-void freePdfReader();
+class ZPdfController : public QObject
+{
+    Q_OBJECT
+public:
+    ZPdfController(QObject *parent = nullptr);
+    ~ZPdfController() override;
+};
 
 #endif // ZPDFREADER_H

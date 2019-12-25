@@ -92,8 +92,8 @@ public Q_SLOTS:
     void dbShowProgressState(int value, const QString& msg);
     void dbAlbumsListUpdated();
     void dbAlbumsListReady(const ZAlbumVector &albums);
-    void dbFilesAdded(int count, int total, int elapsed);
-    void dbFilesLoaded(int count, int elapsed);
+    void dbFilesAdded(int count, int total, qint64 elapsed);
+    void dbFilesLoaded(int count, qint64 elapsed);
     void dbErrorMsg(const QString& msg);
     void dbNeedTableCreation();
 

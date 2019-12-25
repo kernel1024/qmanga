@@ -18,7 +18,7 @@ void ZScrollArea::resizeEvent(QResizeEvent *event)
     QScrollArea::resizeEvent(event);
     savedSize = event->size();
 
-    int preferredInterval = static_cast<int>(zg->getAvgFineRenderTime()) / 2;
+    int preferredInterval = static_cast<int>(zF->global()->getAvgFineRenderTime()) / 2;
     if ((qAbs(preferredInterval - resizeTimer.interval()) > ZDefaults::resizeTimerDiffMS)
             && (preferredInterval > 100))
         resizeTimer.setInterval(preferredInterval);

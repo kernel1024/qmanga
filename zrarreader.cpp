@@ -10,10 +10,10 @@ ZRarReader::ZRarReader(QObject *parent, const QString &filename) :
 
 bool ZRarReader::openFile()
 {
-    static const QStringList rarTestParam { "-inul" };
-    static const QStringList rarListParam { "vb", "--" };
+    static const QStringList rarTestParam { QSL("-inul") };
+    static const QStringList rarListParam { QSL("vb"), QSL("--") };
 
-    if (isOpened() || !zg)
+    if (isOpened() || !zF->global())
         return false;
 
     QFileInfo fi(getFileName());
@@ -21,7 +21,7 @@ bool ZRarReader::openFile()
         return false;
     }
 
-    m_rarExec = zg->getRarCmd();
+    m_rarExec = zF->global()->getRarCmd();
     if (m_rarExec.isEmpty()) {
 #ifndef Q_OS_WIN
         if (QProcess::execute(QSL("rar"),rarTestParam)<0) {
@@ -32,7 +32,7 @@ bool ZRarReader::openFile()
         } else
             m_rarExec = QSL("rar");
 #else
-        rarExec = QStringLiteral("rar.exe");
+        rarExec = QSL("rar.exe");
 #endif
     }
 
@@ -68,7 +68,7 @@ void ZRarReader::closeFile()
 
 QByteArray ZRarReader::loadPage(int num)
 {
-    static const QStringList rarExtractParam { "p", "-kb", "-p-", "-o-", "-inul", "--" };
+    static const QStringList rarExtractParam { QSL("p"), QSL("-kb"), QSL("-p-"), QSL("-o-"), QSL("-inul"), QSL("--") };
 
     QByteArray res;
     if (!isOpened())

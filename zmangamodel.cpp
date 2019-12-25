@@ -50,7 +50,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
 {
     const QChar zeroWidthSpace(0x200b);
 
-    if (zg==nullptr) return QVariant();
+    if (zF->global()==nullptr) return QVariant();
     if (!checkIndex(index,CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
         return QVariant();
 
@@ -78,8 +78,8 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         } else {
             cp.drawImage((rp.width()-p.width())/2,0,p);
         }
-        if (zg->getFrameColor()!=zg->getBackgroundColor()) {
-            cp.setPen(QPen(zg->getFrameColor()));
+        if (zF->global()->getFrameColor()!=zF->global()->getBackgroundColor()) {
+            cp.setPen(QPen(zF->global()->getFrameColor()));
             cp.drawLine(0,0,rp.width()-1,0);
             cp.drawLine(rp.width()-1,0,rp.width()-1,rp.height()-1);
             cp.drawLine(rp.width()-1,rp.height()-1,0,rp.height()-1);
@@ -89,11 +89,11 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
     }
 
     if (role == Qt::TextColorRole) {
-        return zg->getForegroundColor();
+        return zF->global()->getForegroundColor();
     }
 
     if (role == Qt::FontRole) {
-        return zg->getIdxFont();
+        return zF->global()->getIdxFont();
     }
 
     if (role == Qt::DisplayRole) {
@@ -309,7 +309,7 @@ void ZMangaListView::updateGeometries()
     if (verticalScrollBar()!=nullptr) {
         verticalScrollBar()->setSingleStep(
                     static_cast<int>(static_cast<double>(gridSize().height())
-                                     *zg->getSearchScrollFactor()));
+                                     *zF->global()->getSearchScrollFactor()));
     }
 }
 
@@ -327,10 +327,10 @@ int ZMangaTableModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    if (zg!=nullptr) {
-        if (m_view->palette().base().color()!=zg->getBackgroundColor()) {
+    if (zF->global()!=nullptr) {
+        if (m_view->palette().base().color()!=zF->global()->getBackgroundColor()) {
             QPalette pl = m_view->palette();
-            pl.setBrush(QPalette::Base,QBrush(zg->getBackgroundColor()));
+            pl.setBrush(QPalette::Base,QBrush(zF->global()->getBackgroundColor()));
             m_view->setPalette(pl);
         }
     }
@@ -357,10 +357,10 @@ int ZMangaIconModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    if (zg!=nullptr) {
-        if (m_view->palette().base().color()!=zg->getBackgroundColor()) {
+    if (zF->global()!=nullptr) {
+        if (m_view->palette().base().color()!=zF->global()->getBackgroundColor()) {
             QPalette pl = m_view->palette();
-            pl.setBrush(QPalette::Base,QBrush(zg->getBackgroundColor()));
+            pl.setBrush(QPalette::Base,QBrush(zF->global()->getBackgroundColor()));
             m_view->setPalette(pl);
         }
     }
@@ -423,9 +423,9 @@ void ZAlbumsTreeWidget::dropEvent(QDropEvent *event)
     const QString srcName = src->text(0);
     const QString dstName = dst->text(0);
 
-    QTimer::singleShot(0,zg->db(),[srcName,dstName](){
-        if (zg->db())
-            zg->db()->sqlReparentAlbum(srcName,dstName);
+    QTimer::singleShot(0,zF->global()->db(),[srcName,dstName](){
+        if (zF->global()->db())
+            zF->global()->db()->sqlReparentAlbum(srcName,dstName);
     });
     event->accept();
 }
