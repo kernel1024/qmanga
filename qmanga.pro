@@ -95,11 +95,13 @@ LIBS += -lz
         error("Dependency error: libzip not found.")
     }
 
-    packagesExist(poppler) {
-        CONFIG += use_poppler
-        message("Using Poppler:        YES")
-    } else {
-        message("Using Poppler:        NO")
+    packagesExist(poppler-cpp) {
+        packagesExist(poppler) {
+            CONFIG += use_poppler
+            message("Using Poppler:        YES")
+        } else {
+            message("Using Poppler:        NO")
+        }
     }
 
     packagesExist(tesseract) {
@@ -118,7 +120,7 @@ LIBS += -lz
 
     use_poppler {
         DEFINES += WITH_POPPLER=1
-        PKGCONFIG += poppler
+        PKGCONFIG += poppler-cpp poppler
     }
 
     use_ocr {
