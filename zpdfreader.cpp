@@ -26,6 +26,7 @@ extern "C" {
 #include <zlib.h>
 }
 
+#include <memory>
 #include <QBuffer>
 #include <QMutexLocker>
 #include <QDebug>
@@ -351,8 +352,10 @@ ZPdfController::ZPdfController(QObject *parent)
 #ifdef ZPDF_PRE083_API
     globalParams = new GlobalParams();
 #else
-    globalParams.reset(new GlobalParams());
+    globalParams = std::make_unique<GlobalParams>();
 #endif
+    const auto textEncoding = "UTF-8";
+    globalParams->setTextEncoding(const_cast<char *>(textEncoding));
 #endif
 }
 
