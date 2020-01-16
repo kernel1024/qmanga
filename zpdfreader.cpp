@@ -13,6 +13,13 @@
 #include <poppler/PDFDoc.h>
 #include <poppler/Error.h>
 
+#include <poppler/cpp/poppler-version.h>
+#if POPPLER_VERSION_MAJOR==0
+    #if POPPLER_VERSION_MINOR<83
+        #define ZPDF_PRE083_API 1
+    #endif
+#endif
+
 #endif
 
 extern "C" {
@@ -341,14 +348,20 @@ ZPdfController::ZPdfController(QObject *parent)
     : QObject(parent)
 {
 #ifdef WITH_POPPLER
+#ifdef ZPDF_PRE083_API
     globalParams = new GlobalParams();
+#else
+    globalParams.reset(new GlobalParams());
+#endif
 #endif
 }
 
 ZPdfController::~ZPdfController()
 {
 #ifdef WITH_POPPLER
+#ifdef ZPDF_PRE083_API
     delete globalParams;
     globalParams = nullptr;
+#endif
 #endif
 }
