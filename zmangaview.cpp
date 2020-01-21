@@ -12,6 +12,7 @@
 #include <QtConcurrentRun>
 #include <QFutureWatcher>
 #include <QThreadPool>
+#include <QElapsedTimer>
 #include <functional>
 #include <climits>
 #include <cmath>

@@ -32,7 +32,7 @@ bool ZRarReader::openFile()
         } else
             m_rarExec = QSL("rar");
 #else
-        rarExec = QSL("rar.exe");
+        m_rarExec = QSL("rar.exe");
 #endif
     }
 

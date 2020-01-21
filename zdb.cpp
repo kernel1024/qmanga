@@ -10,6 +10,7 @@
 #include <QSqlRecord>
 #include <QSqlField>
 #include <QVariant>
+#include <QElapsedTimer>
 #include <QDebug>
 #include "zdb.h"
 

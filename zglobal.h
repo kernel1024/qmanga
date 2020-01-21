@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QSettings>
 #include "global.h"
 #include "ocreditor.h"
 

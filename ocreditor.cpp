@@ -4,6 +4,7 @@
 #include <QUrlQuery>
 #include <QDesktopServices>
 #include <QToolButton>
+#include <QDebug>
 #include "zglobal.h"
 #include "qxttooltip.h"
 #include "ocreditor.h"
