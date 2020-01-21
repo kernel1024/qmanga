@@ -5,6 +5,8 @@
 #include <QDir>
 #include <QApplication>
 #include <QSettings>
+#include <QAtomicInteger>
+#include <QPointer>
 #include <iostream>
 #include <clocale>
 #include <QDebug>
@@ -35,14 +37,20 @@ ZGenericFuncs::~ZGenericFuncs() = default;
 
 ZGenericFuncs *ZGenericFuncs::instance()
 {
-    static ZGenericFuncs* inst = nullptr;
-    static QMutex lock;
+    static QPointer<ZGenericFuncs> inst;
+    static QAtomicInteger<bool> initializedOnce(false);
 
-    QMutexLocker locker(&lock);
-    if (inst==nullptr)
-        inst = new ZGenericFuncs(QApplication::instance());
+    if (inst.isNull()) {
+        if (initializedOnce.testAndSetAcquire(false,true)) {
+            inst = new ZGenericFuncs(QApplication::instance());
+            return inst.data();
+        }
 
-    return inst;
+        qCritical() << "Accessing to zF after destruction!!!";
+        return nullptr;
+    }
+
+    return inst.data();
 }
 
 void ZGenericFuncs::initialize()
@@ -491,6 +499,48 @@ QString ZGenericFuncs::getApplicationDirPath()
 #endif // WIN32
 
 #endif // OCR
+
+const QHash<Z::Ordering, QString> &ZGenericFuncs::getHeaderColumns()
+{
+    static const QHash<Z::Ordering,QString> headerColumns = {
+        { Z::Ordering::ordName, QSL("Name") },
+        { Z::Ordering::ordAlbum, QSL("Album") },
+        { Z::Ordering::ordPagesCount, QSL("Pages") },
+        { Z::Ordering::ordFileSize, QSL("Size") },
+        { Z::Ordering::ordAddingDate, QSL("Added") },
+        { Z::Ordering::ordCreationFileDate, QSL("Created") },
+        { Z::Ordering::ordMagic, QSL("Type") }
+    };
+    return headerColumns;
+}
+
+const QHash<Z::Ordering, QString> &ZGenericFuncs::getSqlColumns()
+{
+    static const QHash<Z::Ordering,QString> sqlColumns = {
+        { Z::Ordering::ordName, QSL("files.name") },
+        { Z::Ordering::ordAlbum, QSL("albums.name") },
+        { Z::Ordering::ordPagesCount, QSL("pagesCount") },
+        { Z::Ordering::ordFileSize, QSL("fileSize") },
+        { Z::Ordering::ordAddingDate, QSL("addingDT") },
+        { Z::Ordering::ordCreationFileDate, QSL("fileDT") },
+        { Z::Ordering::ordMagic, QSL("fileMagic") }
+    };
+    return sqlColumns;
+}
+
+const QHash<Z::Ordering, QString> &ZGenericFuncs::getSortMenu()
+{
+    static const QHash<Z::Ordering,QString> sortMenu = {
+        { Z::Ordering::ordName, QSL("By name") },
+        { Z::Ordering::ordAlbum, QSL("By album") },
+        { Z::Ordering::ordPagesCount, QSL("By pages count") },
+        { Z::Ordering::ordFileSize, QSL("By file size") },
+        { Z::Ordering::ordAddingDate, QSL("By adding date") },
+        { Z::Ordering::ordCreationFileDate, QSL("By file creation date") },
+        { Z::Ordering::ordMagic, QSL("By file type") }
+    };
+    return sortMenu;
+}
 
 // ZGenericFuncs -----------------------
 

@@ -179,8 +179,8 @@ QVariant ZMangaModel::headerData(int section, Qt::Orientation orientation, int r
             role == Qt::DisplayRole &&
             section>=0 && section<Z::maxOrdering) {
         auto s = static_cast<Z::Ordering>(section);
-        if (Z::headerColumns.contains(s))
-            return Z::headerColumns.value(s);
+        if (ZGenericFuncs::getHeaderColumns().contains(s))
+            return ZGenericFuncs::getHeaderColumns().value(s);
 
         return QVariant();
     }

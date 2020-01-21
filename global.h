@@ -103,36 +103,6 @@ Q_ENUM_NS(PDFImageFormat)
 
 static const int maxOrdering = 7;
 
-static const QHash<Ordering,QString> headerColumns = {
-    {ordName, "Name"},
-    {ordAlbum, "Album"},
-    {ordPagesCount, "Pages"},
-    {ordFileSize, "Size"},
-    {ordAddingDate, "Added"},
-    {ordCreationFileDate, "Created"},
-    {ordMagic, "Type"}
-};
-
-static const QHash<Ordering,QString> sqlColumns = {
-    {ordName, "files.name"},
-    {ordAlbum, "albums.name"},
-    {ordPagesCount, "pagesCount"},
-    {ordFileSize, "fileSize"},
-    {ordAddingDate, "addingDT"},
-    {ordCreationFileDate, "fileDT"},
-    {ordMagic,"fileMagic"}
-};
-
-static const QHash<Ordering,QString> sortMenu = {
-    {ordName, "By name"},
-    {ordAlbum, "By album"},
-    {ordPagesCount, "By pages count"},
-    {ordFileSize, "By file size"},
-    {ordAddingDate, "By adding date"},
-    {ordCreationFileDate, "By file creation date"},
-    {ordMagic, "By file type"}
-};
-
 }
 
 Q_DECLARE_METATYPE(Z::Ordering)
@@ -233,6 +203,9 @@ public:
     void initialize();
     ZDjVuController* djvuController() const;
     ZGlobal* global() const;
+    static const QHash<Z::Ordering, QString> &getHeaderColumns();
+    static const QHash<Z::Ordering, QString> &getSqlColumns();
+    static const QHash<Z::Ordering, QString> &getSortMenu();
 
     ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
                                           bool onlyArchives, bool createReader = true);
@@ -275,7 +248,6 @@ public:
     QString processImageWithOCR(const QImage& image);
     bool isOCRReady() const;
 #endif
-
 private:
     Q_DISABLE_COPY(ZGenericFuncs)
 

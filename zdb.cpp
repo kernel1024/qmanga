@@ -67,8 +67,9 @@ Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order)
             if (!col.isEmpty()) {
                 if (!col.at(0).isLetterOrNumber())
                     col.remove(col.at(0));
-                for(auto it = Z::sqlColumns.constKeyValueBegin(),
-                    end = Z::sqlColumns.constKeyValueEnd(); it != end; ++it) {
+                const auto columns = ZGenericFuncs::getSqlColumns();
+                for(auto it = columns.constKeyValueBegin(),
+                    end = columns.constKeyValueEnd(); it != end; ++it) {
                     if (col.compare((*it).second,Qt::CaseInsensitive)==0) {
                         return (*it).first;
                     }

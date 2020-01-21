@@ -167,7 +167,7 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
         QMenu* smenu = cm.addMenu(QIcon(QSL(":/16/view-sort-ascending")),tr("Sort"));
 
         for (int i=0;i<Z::maxOrdering;i++) {
-            acm = new QAction(Z::sortMenu.value(static_cast<Z::Ordering>(i)),this);
+            acm = new QAction(ZGenericFuncs::getSortMenu().value(static_cast<Z::Ordering>(i)),this);
             acm->setCheckable(true);
             acm->setChecked(static_cast<int>(m_defaultOrdering) == i);
             connect(acm,&QAction::triggered,this,[this,i](){
