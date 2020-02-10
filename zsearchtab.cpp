@@ -494,12 +494,6 @@ void ZSearchTab::loadSettings(QSettings *settings)
     if (m_searchHistoryModel==nullptr) return;
 
     if (settings!=nullptr) {
-        // TODO: backward compatibility. Delete this sometime after.
-        settings->beginGroup(QSL("MainWindow"));
-        QStringList history = settings->value(QSL("search_history"),QStringList()).toStringList();
-        settings->endGroup();
-        // -----------
-
         settings->beginGroup(QSL("SearchTab"));
 
         QListView::ViewMode mode = QListView::IconMode;
@@ -514,8 +508,7 @@ void ZSearchTab::loadSettings(QSettings *settings)
                                                                     QSL("defaultOrderingDirection"),
                                                                     Qt::AscendingOrder).toInt());
 
-        if (history.isEmpty())
-            history = settings->value(QSL("search_history"),QStringList()).toStringList();
+        const QStringList history = settings->value(QSL("search_history"),QStringList()).toStringList();
 
         settings->endGroup();
 
