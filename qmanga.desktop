@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=QManga
+Exec=qmanga %f
+Icon=Alien9
+GenericName=QManga book reader
+Terminal=false
+Categories=Application;Graphics;Viewer;
+MimeType=application/x-cbz;application/x-cbr;image/jpeg;image/png;image/gif;image/bmp;application/x-zip;application/zip;application/x-rar;application/pdf;image/vnd.djvu

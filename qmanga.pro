@@ -10,7 +10,6 @@ QT       += core gui widgets sql concurrent
     QT += dbus
 }
 
-TARGET = qmanga
 TEMPLATE = app
 
 # warn on *any* usage of deprecated APIs
@@ -168,3 +167,15 @@ OTHER_FILES += \
     org.kernel1024.jpreader.browsercontroller.xml \
     org.qjrad.dictionary.xml \
     README.md
+
+isEmpty(INSTALL_PREFIX):INSTALL_PREFIX = /usr
+TARGET       = qmanga
+TARGET.files = qmanga
+TARGET.path  = $$INSTALL_PREFIX/bin
+INSTALLS    += TARGET desktop icons
+
+desktop.files	= qmanga.desktop
+desktop.path	= $$INSTALL_PREFIX/share/applications
+
+icons.files	= img/Alien9.png
+icons.path	= $$INSTALL_PREFIX/share/icons
