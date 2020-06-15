@@ -20,7 +20,8 @@
 
 #include "scalefilter.h"
 
-#define QSL QStringLiteral
+#define QSL QStringLiteral // NOLINT
+#define QBAL QByteArrayLiteral // NOLINT
 #define zF (ZGenericFuncs::instance())
 
 namespace ZDefaults {
@@ -48,7 +49,6 @@ constexpr int cacheWidth = 6;
 constexpr int magicBlockSize = 1024;
 constexpr double previewProps = 364.0/257.0; // B4 paper proportions
 constexpr double oneSecondMSf = 1000.0;
-constexpr double angle_90deg = 90.0;
 constexpr double dynamicZoomUpScale = 3.0;
 constexpr double searchScrollFactor = 0.1;
 constexpr double resizeBlur = 1.0;

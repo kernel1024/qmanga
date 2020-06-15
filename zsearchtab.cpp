@@ -37,7 +37,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     setDescText();
     ui->srcLoading->hide();
 
-    auto completer = new QCompleter(this);
+    auto *completer = new QCompleter(this);
     m_searchHistoryModel = new ZMangaSearchHistoryModel(completer);
     completer->setModel(m_searchHistoryModel);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
@@ -95,8 +95,8 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,&ZSearchTab::dbSetPreferredRendering,zF->global()->db(),&ZDB::sqlSetPreferredRendering,
             Qt::QueuedConnection);
 
-    auto sLoaded = new QState();
-    auto sLoading = new QState();
+    auto *sLoaded = new QState();
+    auto *sLoading = new QState();
     sLoading->addTransition(zF->global()->db(),&ZDB::filesLoaded,sLoaded);
     sLoaded->addTransition(this,&ZSearchTab::dbGetFiles,sLoading);
     sLoading->assignProperty(ui->srcAddBtn,"enabled",false);
@@ -118,7 +118,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     m_loadingState.setInitialState(sLoaded);
     m_loadingState.start();
 
-    auto aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
+    auto *aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
     m_tableModel = new ZMangaTableModel(this,ui->srcTable);
     m_iconModel = new ZMangaIconModel(this,ui->srcList);
     m_tableModel->setSourceModel(aModel);
@@ -160,7 +160,7 @@ void ZSearchTab::updateSplitters()
 void ZSearchTab::ctxMenu(const QPoint &pos)
 {
     QAbstractItemView *view = activeView();
-    QAction *acm;
+    QAction *acm = nullptr;
     QMenu cm(view);
 
     if (m_savedOrdering == Z::ordUndefined) { // Disable sorting control for dynamic albums
@@ -256,13 +256,13 @@ void ZSearchTab::ctxMenu(const QPoint &pos)
 
 void ZSearchTab::ctxChangeRenderer()
 {
-    auto am = qobject_cast<QAction *>(sender());
+    auto *am = qobject_cast<QAction *>(sender());
     QModelIndexList li = getSelectedIndexes();
     if (am==nullptr || li.count()!=1) return;
 
     ZSQLMangaEntry m = m_model->getItem(li.first().row());
 
-    bool ok;
+    bool ok = false;
     int mode = am->data().toInt(&ok);
     if (ok) {
         Q_EMIT dbSetPreferredRendering(m.filename,mode);
@@ -280,7 +280,7 @@ void ZSearchTab::ctxAlbumMenu(const QPoint &pos)
     QTreeWidgetItem* itm = ui->srcAlbums->itemAt(pos);
 
     QMenu cm(ui->srcAlbums);
-    QAction *acm;
+    QAction *acm = nullptr;
     if (itm) {
         acm = cm.addAction(QIcon(QSL(":/16/edit-rename")),tr("Rename album"),
                            this,&ZSearchTab::ctxRenameAlbum);
@@ -310,7 +310,7 @@ void ZSearchTab::ctxAlbumMenu(const QPoint &pos)
 void ZSearchTab::ctxEditMenu(const QPoint &pos)
 {
     QMenu* menu = ui->srcEdit->createStandardContextMenu();
-    QAction* ac;
+    QAction* ac = nullptr;
 
     menu->insertSeparator(menu->actions().first());
 
@@ -326,12 +326,12 @@ void ZSearchTab::ctxEditMenu(const QPoint &pos)
 
 void ZSearchTab::ctxRenameAlbum()
 {
-    auto nt = qobject_cast<QAction *>(sender());
+    auto *nt = qobject_cast<QAction *>(sender());
     if (nt==nullptr) return;
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
 
-    bool ok;
+    bool ok = false;
     QString n = QInputDialog::getText(this,tr("Rename album"),tr("New name for album '%1'").arg(s),
                                       QLineEdit::Normal,s,&ok);
     if (!ok) return;
@@ -341,7 +341,7 @@ void ZSearchTab::ctxRenameAlbum()
 
 void ZSearchTab::ctxDeleteAlbum()
 {
-    auto nt = qobject_cast<QAction *>(sender());
+    auto *nt = qobject_cast<QAction *>(sender());
     if (nt==nullptr) return;
     QString s = nt->data().toString();
     if (s.isEmpty()) return;
@@ -362,7 +362,7 @@ void ZSearchTab::ctxAddEmptyAlbum()
 
 void ZSearchTab::ctxMoveAlbumToTopLevel()
 {
-    auto nt = qobject_cast<QAction *>(sender());
+    auto *nt = qobject_cast<QAction *>(sender());
     if (nt==nullptr) return;
     const QString s = nt->data().toString();
     if (s.isEmpty()) return;
@@ -414,7 +414,7 @@ void ZSearchTab::ctxFileCopyClipboard()
 
     if (uriList.isEmpty()) return;
 
-    auto data = new QMimeData();
+    auto *data = new QMimeData();
     data->setData(QSL("text/uri-list"),uriList);
     data->setData(QSL("text/plain"),plainList);
     data->setData(QSL("application/x-kde4-urilist"),uriList);
@@ -434,12 +434,12 @@ void ZSearchTab::ctxFileCopy()
     if (dst.isEmpty()) return;
     zF->global()->setSavedAuxSaveDir(dst);
 
-    auto dlg = new QProgressDialog(this);
+    auto *dlg = new QProgressDialog(this);
     dlg->setWindowModality(Qt::WindowModal);
     dlg->setWindowTitle(tr("Copying manga files..."));
 
-    auto zfc = new ZFileCopier(fl,dlg,dst);
-    auto zfc_thread = new QThread();
+    auto *zfc = new ZFileCopier(fl,dlg,dst);
+    auto *zfc_thread = new QThread();
 
     connect(zfc,&ZFileCopier::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);
     connect(dlg,&QProgressDialog::canceled,zfc,&ZFileCopier::abort,Qt::QueuedConnection);
@@ -566,7 +566,7 @@ QSize ZSearchTab::gridSize(int ref)
 
 QString ZSearchTab::getAlbumNameToAdd(const QString &suggest, int toAddCount)
 {
-    auto dlg = new ZAlbumSelectorDlg(this,m_cachedAlbums,suggest,toAddCount);
+    auto *dlg = new ZAlbumSelectorDlg(this,m_cachedAlbums,suggest,toAddCount);
     QString ret = QString();
     if (dlg->exec()==QDialog::Accepted) {
         ret = dlg->getAlbumName();
@@ -616,7 +616,7 @@ QModelIndexList ZSearchTab::getSelectedIndexes() const
     const QModelIndexList list = activeView()->selectionModel()->selectedIndexes();
     res.reserve(list.count());
     for (const QModelIndex& idx : list) {
-        auto proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
+        auto *proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
         if (proxy!=nullptr)
             res.append(proxy->mapToSource(idx));
     }
@@ -625,7 +625,7 @@ QModelIndexList ZSearchTab::getSelectedIndexes() const
 
 QModelIndex ZSearchTab::mapToSource(const QModelIndex& index)
 {
-    auto proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
+    auto *proxy = qobject_cast<QAbstractProxyModel *>(activeView()->model());
     if (proxy!=nullptr)
         return proxy->mapToSource(index);
 
@@ -656,7 +656,7 @@ void ZSearchTab::albumClicked(QTreeWidgetItem *item, int column)
             m_savedOrdering = m_defaultOrdering;
             m_savedOrderingDirection = m_defaultOrderingDirection;
         }
-        Qt::SortOrder dir;
+        Qt::SortOrder dir = Qt::AscendingOrder;
         Z::Ordering ord = zF->global()->db()->getDynAlbumOrdering(album,dir);
         if (ord!=Z::ordUndefined)
             applySortOrder(ord,dir);
@@ -778,7 +778,7 @@ void ZSearchTab::mangaAddDir()
 void ZSearchTab::mangaDel()
 {
     if (!m_model) return;
-    auto ac = qobject_cast<QAction *>(sender());
+    auto *ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
     bool delFiles = (ac->data().toInt() == 2);
 
@@ -867,7 +867,7 @@ void ZSearchTab::dbAlbumsListReady(const ZAlbumVector &albums)
 
     QHash<int,QTreeWidgetItem*> items;
     for (const auto& album : albums) {
-        auto item = new QTreeWidgetItem();
+        auto *item = new QTreeWidgetItem();
         item->setText(0,album.name);
         item->setData(0,Qt::UserRole,album.id);
         items[album.id] = item;

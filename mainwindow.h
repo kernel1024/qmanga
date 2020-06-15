@@ -37,7 +37,7 @@ public:
     ~ZMainWindow() override;
     void centerWindow(bool moveWindow);
     bool isMangaOpened();
-    bool isFullScreenControlsVisible();
+    bool isFullScreenControlsVisible() const;
     void setZoomMode(int mode);
     void addContextMenuItems(QMenu *menu);
     

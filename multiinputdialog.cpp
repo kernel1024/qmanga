@@ -15,14 +15,14 @@ ZMultiInputDialog::ZMultiInputDialog(QWidget *parent, const QString& title,
 
     int i = 0;
     for (auto it = data.constKeyValueBegin(), end = data.constKeyValueEnd(); it != end; ++it) {
-        auto label = new QLabel(this);
+        auto *label = new QLabel(this);
         label->setObjectName(QSL("label_%1").arg(i));
         label->setText((*it).first);
         labels << label;
 
         formLayout->setWidget(i, QFormLayout::LabelRole, label);
 
-        auto lineEdit = new QLineEdit(this);
+        auto *lineEdit = new QLineEdit(this);
         lineEdit->setObjectName(QSL("lineEdit_%1").arg(i));
         lineEdit->setText((*it).second);
         edits << lineEdit;
@@ -35,7 +35,7 @@ ZMultiInputDialog::ZMultiInputDialog(QWidget *parent, const QString& title,
     ui->verticalLayout->insertLayout(0,formLayout);
 
     if (!helperText.isEmpty()) {
-        auto hlp = new QLabel(this);
+        auto *hlp = new QLabel(this);
         hlp->setObjectName(QSL("label_helper"));
         hlp->setText(helperText);
         ui->verticalLayout->insertWidget(0,hlp);

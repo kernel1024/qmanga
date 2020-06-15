@@ -34,9 +34,10 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
 
     m_lblSearchStatus = new QLabel(tr("Ready"));
     m_lblAverageSizes = new QLabel();
-    m_lblRotation = new QLabel(tr("Rotation: 0"));
+    m_lblRotation = new QLabel();
     m_lblCrop = new QLabel();
     m_lblAverageFineRender = new QLabel();
+    rotationUpdated(0.0);
 
     statusBar()->addPermanentWidget(m_lblAverageFineRender);
     statusBar()->addPermanentWidget(m_lblAverageSizes);
@@ -200,21 +201,21 @@ bool ZMainWindow::isMangaOpened()
     return (ui->mangaView->getPageCount()>0);
 }
 
-bool ZMainWindow::isFullScreenControlsVisible()
+bool ZMainWindow::isFullScreenControlsVisible() const
 {
     return !m_fullScreen || m_fullScreenControls;
 }
 
 void ZMainWindow::setZoomMode(int mode)
 {
-    auto btn = m_zoomGroup->button(mode);
+    auto *btn = m_zoomGroup->button(mode);
     if (btn)
         btn->click();
 }
 
 void ZMainWindow::addContextMenuItems(QMenu* menu)
 {
-    auto nt = new QAction(QIcon(QSL(":/16/zoom-fit-best")),tr("Zoom fit"),nullptr);
+    auto *nt = new QAction(QIcon(QSL(":/16/zoom-fit-best")),tr("Zoom fit"),nullptr);
     connect(nt,&QAction::triggered,this,[this](){
         setZoomMode(ZMangaView::zmFit);
     });
@@ -424,7 +425,7 @@ void ZMainWindow::updateViewer()
 
 void ZMainWindow::rotationUpdated(double angle)
 {
-    m_lblRotation->setText(tr("Rotation: %1").arg(angle,0,'f'));
+    m_lblRotation->setText(tr("Rotation: %1").arg(qRadiansToDegrees(angle),1,'f',1));
 }
 
 void ZMainWindow::cropUpdated(const QRect &crop)
@@ -535,7 +536,7 @@ void ZMainWindow::createBookmark()
 
 void ZMainWindow::openBookmark()
 {
-    auto a = qobject_cast<QAction *>(sender());
+    auto *a = qobject_cast<QAction *>(sender());
     if (a==nullptr) return;
 
     QString f = a->data().toString();
@@ -543,7 +544,7 @@ void ZMainWindow::openBookmark()
     int page = 0;
     if (sl.count()>1) {
         f = sl.at(0);
-        bool okconv;
+        bool okconv = false;
         page = sl.at(1).toInt(&okconv);
         if (!okconv) page = 0;
     }
@@ -651,7 +652,7 @@ void ZMainWindow::fsNewFilesAdded()
 
     for (const auto &i : f) {
         QFileInfo fi(i);
-        bool mimeOk;
+        bool mimeOk = false;
         zF->readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
         if (mimeOk)
             m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
@@ -681,7 +682,7 @@ void ZMainWindow::fsResultsMenuCtx(const QPoint &pos)
 {
     QMenu cm(this);
     cm.setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
-    QAction* ac;
+    QAction* ac = nullptr;
     int cnt=0;
     if (!ui->fsResults->selectedItems().isEmpty()) {
         ac = new QAction(QIcon(QSL(":/16/dialog-cancel")),tr("Ignore these file(s)"),this);
@@ -705,7 +706,7 @@ void ZMainWindow::fsResultsMenuCtx(const QPoint &pos)
 
 void ZMainWindow::fsResultsCtxApplyAlbum()
 {
-    auto ac = qobject_cast<QAction *>(sender());
+    auto *ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
     QString s = ac->data().toString();
     if (s.isEmpty()) {
@@ -738,7 +739,7 @@ void ZMainWindow::fsFoundNewFiles(const QStringList &files)
 {
     for (const QString& filename : files) {
         QFileInfo fi(filename);
-        bool mimeOk;
+        bool mimeOk = false;
         zF->readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
         if (mimeOk)
             m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());

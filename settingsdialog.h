@@ -26,18 +26,18 @@ public:
 
     explicit ZSettingsDialog(QWidget *parent = nullptr);
     ~ZSettingsDialog() override;
-    QColor getBkColor();
-    QFont getIdxFont();
-    QFont getOCRFont();
-    QColor getFrameColor();
-    QStringList getIgnoredFiles();
-    void setIgnoredFiles(const QStringList &files);
-    void setSearchEngines(const ZStrMap &engines);
+    QColor getBkColor() const;
+    QFont getIdxFont() const;
+    QFont getOCRFont() const;
+    QColor getFrameColor() const;
+    QStringList getIgnoredFiles() const;
+    void setIgnoredFiles(const QStringList &files) const;
+    void setSearchEngines(const ZStrMap &engines) const;
     ZStrMap getSearchEngines() const;
-    QString getOCRLanguage();
-    QString getTranSourceLanguage();
-    QString getTranDestLanguage();
-    void updateTranslatorLanguages();
+    QString getOCRLanguage() const;
+    QString getTranSourceLanguage() const;
+    QString getTranDestLanguage() const;
+    void updateTranslatorLanguages() const;
 
 Q_SIGNALS:
     void getTablesDescription();
@@ -48,19 +48,19 @@ public Q_SLOTS:
     void idxFontDlg();
     void ocrFontDlg();
     void frameColorDlg();
-    void updateBkColor(const QColor &c);
-    void updateIdxFont(const QFont &f);
-    void updateOCRFont(const QFont &f);
-    void updateFrameColor(const QColor &c);
+    void updateBkColor(const QColor &c) const;
+    void updateIdxFont(const QFont &f) const;
+    void updateOCRFont(const QFont &f) const;
+    void updateFrameColor(const QColor &c) const;
     void dynAdd();
     void dynEdit();
     void openRar(); 
     void addSearchEngine();
-    void delSearchEngine();
-    void setDefaultSearch();
-    void updateSQLFields(bool checked);
+    void delSearchEngine() const;
+    void setDefaultSearch() const;
+    void updateSQLFields(bool checked) const;
     void ocrDatapathDlg();
-    void updateOCRLanguages();
+    void updateOCRLanguages() const;
 
 private:
     Q_DISABLE_COPY(ZSettingsDialog)

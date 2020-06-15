@@ -175,11 +175,10 @@ static const std::array<double,Blitz::SincFilter+1> filterSupport = {
 };
 
 inline double J1(double x){
-    double p;
-    double q;
     auto ip = J1Pone.crbegin();
     auto iq = J1Qone.crbegin();
-    p=*ip; q=*iq;
+    double p=*ip;
+    double q=*iq;
     for(; ip!=J1Pone.crend(); ++ip, ++iq){
         p=p*x*x+*ip;
         q=q*x*x+*iq;
@@ -188,11 +187,10 @@ inline double J1(double x){
 }
 
 inline double P1(double x){
-    double p;
-    double q;
     auto ip = P1Pone.crbegin();
     auto iq = P1Qone.crbegin();
-    p=*ip; q=*iq;
+    double p=*ip;
+    double q=*iq;
     for(; ip!=P1Pone.crend(); ++ip, ++iq){
         p=p*(8.0/x)*(8.0/x)+*ip;
         q=q*(8.0/x)*(8.0/x)+*iq;
@@ -201,11 +199,10 @@ inline double P1(double x){
 }
 
 inline double Q1(double x){
-    double p;
-    double q;
     auto ip = Q1Pone.crbegin();
     auto iq = Q1Qone.crbegin();
-    p=*ip; q=*iq;
+    double p=*ip;
+    double q=*iq;
     for(; ip!=Q1Pone.crend(); ++ip, ++iq){
         p=p*(8.0/x)*(8.0/x)+*ip;
         q=q*(8.0/x)*(8.0/x)+*iq;
@@ -214,16 +211,14 @@ inline double Q1(double x){
 }
 
 inline double BesselOrderOne(double x){
-    double p;
-    double q;
     if(x == 0.0)
         return(0.0);
-    p = x;
+    double p = x;
     if(x < 0.0)
         x = (-x);
     if(x < 8.0)
         return(p*J1(x));
-    q = std::sqrt(2.0/(MagickPI*x))*
+    double q = std::sqrt(2.0/(MagickPI*x))*
         (P1(x)*(1.0/std::sqrt(2.0)*(std::sin(x)-std::cos(x))) -
          8.0/x*Q1(x)*(-1.0/std::sqrt(2.0)*(std::sin(x)+std::cos(x))));
     if (p < 0.0)
@@ -390,7 +385,7 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
     QRgb *destData = reinterpret_cast<QRgb *>(destImg->bits());
     int sw = srcImg->width();
     int dw = destImg->width();
-    QRgb pixel;
+    QRgb pixel = 0;
 
     double scale = blur*qMax(1.0/x_factor, 1.0);
     double support = scale*fSupport;
@@ -405,7 +400,7 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
         unsigned int start = static_cast<uint>(qRound(qMax(center-support+halfPixel, 0.0)));
         unsigned int stop = static_cast<uint>(qRound(qMin(center+support+halfPixel, static_cast<double>(srcImg->width()))));
         double density=0.0;
-        unsigned int n;
+        unsigned int n = 0;
 
         for(n=0; n < (stop-start); ++n){
             contribution[n].pixel = start+n;
@@ -524,7 +519,7 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
     QRgb *destData = reinterpret_cast<QRgb *>(destImg->bits());
     int sw = srcImg->width();
     int dw = destImg->width();
-    QRgb pixel;
+    QRgb pixel = 0;
 
     double scale = blur*qMax(1.0/y_factor, 1.0);
     double support = scale*fSupport;
@@ -539,7 +534,7 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
         unsigned int start = static_cast<uint>(qRound(qMax(center-support+halfPixel, 0.0)));
         unsigned int stop = static_cast<uint>(qRound(qMin(center+support+halfPixel, static_cast<double>(srcImg->height()))));
         double density=0.0;
-        unsigned int n;
+        unsigned int n = 0;
 
         for(n=0; n < (stop-start); ++n){
             contribution[n].pixel = start+n;

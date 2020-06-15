@@ -49,8 +49,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     if (cnt<2) cnt=2;
     m_cacheLoaders.reserve(cnt);
     for (int i=0;i<cnt;i++) {
-        auto th = new QThread();
-        auto ld = new ZMangaLoader();
+        auto *th = new QThread();
+        auto *ld = new ZMangaLoader();
 
         connect(ld,&ZMangaLoader::gotPage,this,&ZMangaView::cacheGotPage,Qt::QueuedConnection);
         connect(ld,&ZMangaLoader::gotError,this,&ZMangaView::cacheGotError,Qt::QueuedConnection);
@@ -110,7 +110,7 @@ void ZMangaView::setZoomMode(int mode)
     redrawPage();
 }
 
-int ZMangaView::getPageCount()
+int ZMangaView::getPageCount() const
 {
     return m_privPageCount;
 }
@@ -168,8 +168,8 @@ void ZMangaView::displayCurrentPage()
             p = m_iCacheImages.value(m_currentPage);
         }
         if (m_rotation!=0) {
-            QMatrix mr;
-            mr.rotate(m_rotation*ZDefaults::angle_90deg);
+            QTransform mr;
+            mr.rotateRadians(m_rotation*M_PI_2);
             p = p.transformed(mr,Qt::SmoothTransformation);
         }
         if (!m_cropRect.isNull()) {
@@ -547,7 +547,7 @@ void ZMangaView::keyPressEvent(QKeyEvent *event)
 
 void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
 {
-    auto mwnd = qobject_cast<ZMainWindow *>(window());
+    auto *mwnd = qobject_cast<ZMainWindow *>(window());
     if (mwnd==nullptr) return;
 
     QMenu cm(this);
@@ -555,7 +555,7 @@ void ZMangaView::contextMenuEvent(QContextMenuEvent *event)
     mwnd->addContextMenuItems(&cm);
 
     cm.addSeparator();
-    auto nt = new QAction(QIcon(QSL(":/16/view-refresh")),tr("Redraw page"),nullptr);
+    auto *nt = new QAction(QIcon(QSL(":/16/view-refresh")),tr("Redraw page"),nullptr);
     connect(nt,&QAction::triggered,this,&ZMangaView::redrawPage);
     cm.addAction(nt);
     if (!m_cropRect.isNull()) {
@@ -643,7 +643,7 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                                                    Qt::FastTransformation);
 
                     if (zF->global()->getUseFineRendering()) {
-                        Blitz::ScaleFilterType filter;
+                        Blitz::ScaleFilterType filter = Blitz::UndefinedFilter;
                         if (targetSize.width()>m_curUnscaledPixmap.width()) {
                             filter = zF->global()->getUpscaleFilter();
                         } else {
@@ -705,7 +705,7 @@ ZExportWork ZMangaView::exportMangaPage(const ZExportWork& item)
     QString fname = item.dir.filePath(QSL("%1.%2")
                                          .arg(item.idx+1,item.filenameLength,ZDefaults::exportFilenameNumWidth,QChar('0'))
                                          .arg(format.toLower()));
-    auto zl = new ZMangaLoader();
+    auto *zl = new ZMangaLoader();
     connect(zl,&ZMangaLoader::gotError,[](const QString&msg){
         Q_UNUSED(msg)
         exportFileError++;
@@ -748,7 +748,7 @@ void ZMangaView::exportPagesCtx()
 
     int cnt = m_exportDialog.getPagesCount();
 
-    auto dlg = new QProgressDialog(this);
+    auto *dlg = new QProgressDialog(this);
     dlg->setWindowModality(Qt::WindowModal);
     dlg->setAutoClose(false);
     dlg->setWindowTitle(tr("Exporting pages..."));
@@ -766,7 +766,7 @@ void ZMangaView::exportPagesCtx()
 
     QFuture<ZExportWork> saveMap = QtConcurrent::mapped(nums,exportMangaPage);
 
-    auto mapWatcher = new QFutureWatcher<void>();
+    auto *mapWatcher = new QFutureWatcher<void>();
 
     connect(mapWatcher,&QFutureWatcher<void>::progressValueChanged,
             dlg,&QProgressDialog::setValue,Qt::QueuedConnection);
@@ -827,7 +827,7 @@ void ZMangaView::setZoomAny(const QString &proc)
     m_zoomAny = -1; // original zoom
     QString s = proc;
     s.remove(QRegExp(QSL("[^0123456789]")));
-    bool okconv;
+    bool okconv = false;
     if (!s.isEmpty()) {
         m_zoomAny = s.toInt(&okconv);
         if (!okconv)
@@ -841,7 +841,7 @@ void ZMangaView::viewRotateCCW()
     m_rotation--;
     if (m_rotation<0) m_rotation = 3;
     displayCurrentPage();
-    Q_EMIT rotationUpdated(m_rotation*ZDefaults::angle_90deg);
+    Q_EMIT rotationUpdated(m_rotation*M_PI_2);
 }
 
 void ZMangaView::viewRotateCW()
@@ -849,7 +849,7 @@ void ZMangaView::viewRotateCW()
     m_rotation++;
     if (m_rotation>3) m_rotation = 0;
     displayCurrentPage();
-    Q_EMIT rotationUpdated(m_rotation*ZDefaults::angle_90deg);
+    Q_EMIT rotationUpdated(m_rotation*M_PI_2);
 }
 
 void ZMangaView::loaderMsg(const QString &msg)
@@ -946,7 +946,7 @@ void ZMangaView::cacheFillNearest()
     }
 }
 
-ZIntVector ZMangaView::cacheGetActivePages()
+ZIntVector ZMangaView::cacheGetActivePages() const
 {
     ZIntVector l;
     l.reserve(zF->global()->getCacheWidth()*2+1);

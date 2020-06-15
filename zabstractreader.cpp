@@ -66,7 +66,7 @@ QString ZAbstractReader::getInternalPath(int idx)
 
 void ZAbstractReader::postMessage(const QString &msg)
 {
-    auto loader = qobject_cast<ZMangaLoader *>(parent());
+    auto *loader = qobject_cast<ZMangaLoader *>(parent());
     if (loader)
         loader->postMessage(msg);
 }

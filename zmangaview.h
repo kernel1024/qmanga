@@ -71,7 +71,7 @@ private:
 
     void cacheDropUnusable();
     void cacheFillNearest();
-    ZIntVector cacheGetActivePages();
+    ZIntVector cacheGetActivePages() const;
     void displayCurrentPage();
     void cacheGetPage(int num);   
     static ZExportWork exportMangaPage(const ZExportWork &item);
@@ -79,7 +79,7 @@ private:
 public:
     explicit ZMangaView(QWidget *parent = nullptr);
     ~ZMangaView() override;
-    int getPageCount();
+    int getPageCount() const;
     void getPage(int num);
     void setMouseMode(ZMangaView::MouseMode mode);
     QString getOpenedFile() const;

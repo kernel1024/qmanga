@@ -133,7 +133,7 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 {
     QMenu cm(this);
 
-    QAction *ac;
+    QAction *ac = nullptr;
 
     ac = new QAction(QIcon(QSL(":/16/edit-cut")),tr("Cut"),nullptr);
     connect(ac,&QAction::triggered,ui->editor,&QPlainTextEdit::cut);
@@ -229,7 +229,7 @@ void ZOCREditor::showDictToolTip(const QString &html)
     qDebug() << html;
     ui->status->setText(tr("Ready"));
 
-    auto t = new QLabel(html);
+    auto *t = new QLabel(html);
     t->setOpenExternalLinks(false);
     t->setTextInteractionFlags(Qt::LinksAccessibleByMouse | Qt::TextSelectableByMouse);
     t->setMaximumSize(ZDefaults::maxDictTooltipSize);

@@ -169,7 +169,7 @@ bool QxtToolTipPrivate::eventFilter(QObject* object, QEvent* event)
         case QEvent::KeyRelease:
         {
             // accept only modifiers
-            const auto keyEvent = dynamic_cast<QKeyEvent*>(event);
+            const auto *keyEvent = dynamic_cast<QKeyEvent*>(event);
             const int key = keyEvent->key();
             const Qt::KeyboardModifiers mods = keyEvent->modifiers();
             if ((mods & Qt::KeyboardModifierMask) != 0U ||

@@ -100,7 +100,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         ZSQLMangaEntry t = m_list.at(idx);
         int col = index.column();
         QString tmp;
-        int i;
+        int i = 0;
         int maxLen = 0;
         switch (col) {
             case ZDefaults::columnName:
@@ -339,7 +339,7 @@ int ZMangaTableModel::columnCount(const QModelIndex &parent) const
 
 QVariant ZMangaTableModel::data(const QModelIndex &index, int role) const
 {
-    auto model = qobject_cast<ZMangaModel *>(sourceModel());
+    auto *model = qobject_cast<ZMangaModel *>(sourceModel());
     return model->data(mapToSource(index),role,true);
 }
 

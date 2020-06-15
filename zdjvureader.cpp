@@ -21,7 +21,7 @@ bool ZDjVuReader::openFile()
     if (isOpened())
         return false;
 
-    int numPages;
+    int numPages = 0;
     if (!zF->djvuController()->loadDjVu(getFileName(), numPages)) {
         qWarning() << tr("Unable to load file ") << getFileName();
         return false;
@@ -278,7 +278,7 @@ ddjvu_document_t *ZDjVuController::getDocument(const QString& filename)
 
 void ZDjVuController::handle_ddjvu_messages ( ddjvu_context_t * ctx, bool wait )
 {
-    const ddjvu_message_t *msg;
+    const ddjvu_message_t *msg = nullptr;
     if ( wait )
         ddjvu_message_wait ( ctx );
     while ( ( msg = ddjvu_message_peek ( ctx ) ) )

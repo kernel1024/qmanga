@@ -235,7 +235,7 @@ void ZDB::checkConfigOpts(QSqlDatabase &db, bool silent)
         return;
     }
     if (qr.next()) {
-        bool okconv;
+        bool okconv = false;
         int ftlen = qr.value(0).toInt(&okconv);
         if (!okconv || (ftlen>2)) {
             if (!silent)
@@ -434,9 +434,9 @@ void ZDB::sqlGetAlbums()
 
     QSqlQuery qr(QSL("SELECT id, parent, name FROM `albums` ORDER BY name ASC"),db);
     while (qr.next()) {
-        bool ok1;
+        bool ok1 = false;
         int id = qr.value(0).toInt(&ok1);
-        bool ok2;
+        bool ok2 = false;
         int parent = qr.value(1).toInt(&ok2);
         if (ok1 && ok2)
             result << ZAlbumEntry(id,parent,qr.value(2).toString());
@@ -898,7 +898,7 @@ int ZDB::sqlFindAndAddAlbum(const QString &name, const QString &parent, bool cre
         return -1;
     }
 
-    bool ok;
+    bool ok = false;
     int ialbum = qr.lastInsertId().toInt(&ok);
     if (!ok) {
         ialbum = -1;

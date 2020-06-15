@@ -71,27 +71,27 @@ ZSettingsDialog::~ZSettingsDialog()
     delete ui;
 }
 
-QColor ZSettingsDialog::getBkColor()
+QColor ZSettingsDialog::getBkColor() const
 {
     return ui->frameBkColor->palette().brush(QPalette::Window).color();
 }
 
-QColor ZSettingsDialog::getFrameColor()
+QColor ZSettingsDialog::getFrameColor() const
 {
     return ui->frameFrameColor->palette().brush(QPalette::Window).color();
 }
 
-QFont ZSettingsDialog::getIdxFont()
+QFont ZSettingsDialog::getIdxFont() const
 {
     return ui->labelIdxFont->font();
 }
 
-QFont ZSettingsDialog::getOCRFont()
+QFont ZSettingsDialog::getOCRFont() const
 {
     return ui->labelOCRFont->font();
 }
 
-QStringList ZSettingsDialog::getIgnoredFiles()
+QStringList ZSettingsDialog::getIgnoredFiles() const
 {
     QStringList res;
     res.reserve(ui->listIgnoredFiles->count());
@@ -100,23 +100,23 @@ QStringList ZSettingsDialog::getIgnoredFiles()
     return res;
 }
 
-void ZSettingsDialog::setIgnoredFiles(const QStringList& files)
+void ZSettingsDialog::setIgnoredFiles(const QStringList& files) const
 {
     ui->listIgnoredFiles->clear();
     for(const QString& fname : files) {
         QFileInfo fi(fname);
-        auto li = new QListWidgetItem(fi.fileName());
+        auto *li = new QListWidgetItem(fi.fileName());
         li->setData(Qt::UserRole,fname);
         li->setToolTip(fname);
         ui->listIgnoredFiles->addItem(li);
     }
 }
 
-void ZSettingsDialog::setSearchEngines(const ZStrMap &engines)
+void ZSettingsDialog::setSearchEngines(const ZStrMap &engines) const
 {
     ui->listSearch->clear();
     for (auto it = engines.constKeyValueBegin(), end = engines.constKeyValueEnd(); it != end; ++it) {
-        auto li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
+        auto *li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
                                       arg((*it).first,(*it).second,
                                           (*it).first==zF->global()->getDefaultSearchEngine() ? tr("(default)") : QString()));
         li->setData(Qt::UserRole,(*it).first);
@@ -137,22 +137,22 @@ ZStrMap ZSettingsDialog::getSearchEngines() const
 
 }
 
-QString ZSettingsDialog::getOCRLanguage()
+QString ZSettingsDialog::getOCRLanguage() const
 {
     return ui->comboOCRLanguage->currentData().toString();
 }
 
-QString ZSettingsDialog::getTranSourceLanguage()
+QString ZSettingsDialog::getTranSourceLanguage() const
 {
     return ui->comboLangSource->currentData().toString();
 }
 
-QString ZSettingsDialog::getTranDestLanguage()
+QString ZSettingsDialog::getTranDestLanguage() const
 {
     return ui->comboLangDest->currentData().toString();
 }
 
-void ZSettingsDialog::updateOCRLanguages()
+void ZSettingsDialog::updateOCRLanguages() const
 {
 #ifdef WITH_OCR
     ui->comboOCRLanguage->clear();
@@ -178,7 +178,7 @@ void ZSettingsDialog::updateOCRLanguages()
 #endif
 }
 
-void ZSettingsDialog::updateTranslatorLanguages()
+void ZSettingsDialog::updateTranslatorLanguages() const
 {
 #ifndef Q_OS_WIN
     ui->comboLangSource->clear();
@@ -217,7 +217,7 @@ void ZSettingsDialog::addSearchEngine()
             QMessageBox::warning(this,tr("QManga"),tr("Unable to add two or more engines with same names.\n"
                                                       "Use another name for new engine."));
         } else {
-            auto li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
+            auto *li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
                                           arg(data[tr("Menu title")],
                                           data[tr("Url template")],
                     data[tr("Menu title")]==zF->global()->getDefaultSearchEngine() ? tr("(default)") : QString()));
@@ -228,7 +228,7 @@ void ZSettingsDialog::addSearchEngine()
     }
 }
 
-void ZSettingsDialog::delSearchEngine()
+void ZSettingsDialog::delSearchEngine() const
 {
     const QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
     for (QListWidgetItem* i : dl) {
@@ -237,7 +237,7 @@ void ZSettingsDialog::delSearchEngine()
     }
 }
 
-void ZSettingsDialog::setDefaultSearch()
+void ZSettingsDialog::setDefaultSearch() const
 {
     QList<QListWidgetItem *> dl = ui->listSearch->selectedItems();
     if (dl.isEmpty()) return;
@@ -247,7 +247,7 @@ void ZSettingsDialog::setDefaultSearch()
     setSearchEngines(getSearchEngines());
 }
 
-void ZSettingsDialog::updateSQLFields(bool checked)
+void ZSettingsDialog::updateSQLFields(bool checked) const
 {
     Q_UNUSED(checked)
 
@@ -270,7 +270,7 @@ void ZSettingsDialog::ocrDatapathDlg()
 
 void ZSettingsDialog::delListWidgetItem()
 {
-    const auto btn = sender();
+    auto *const btn = sender();
     if (btn==nullptr) return;
     QListWidget* list = nullptr;
     if (btn->objectName()==ui->btnDeleteBookmark->objectName()) {
@@ -298,7 +298,7 @@ void ZSettingsDialog::bkColorDlg()
 
 void ZSettingsDialog::idxFontDlg()
 {
-    bool ok;
+    bool ok = false;
     QFont f = QFontDialog::getFont(&ok,getIdxFont(),this);
     if (!ok) return;
     updateIdxFont(f);
@@ -306,7 +306,7 @@ void ZSettingsDialog::idxFontDlg()
 
 void ZSettingsDialog::ocrFontDlg()
 {
-    bool ok;
+    bool ok = false;
     QFont f = QFontDialog::getFont(&ok,getOCRFont(),this);
     if (!ok) return;
     updateOCRFont(f);
@@ -319,27 +319,27 @@ void ZSettingsDialog::frameColorDlg()
     updateFrameColor(c);
 }
 
-void ZSettingsDialog::updateBkColor(const QColor &c)
+void ZSettingsDialog::updateBkColor(const QColor &c) const
 {
     QPalette p = ui->frameBkColor->palette();
     p.setBrush(QPalette::Window,QBrush(c));
     ui->frameBkColor->setPalette(p);
 }
 
-void ZSettingsDialog::updateFrameColor(const QColor &c)
+void ZSettingsDialog::updateFrameColor(const QColor &c) const
 {
     QPalette p = ui->frameFrameColor->palette();
     p.setBrush(QPalette::Window,QBrush(c));
     ui->frameFrameColor->setPalette(p);
 }
 
-void ZSettingsDialog::updateIdxFont(const QFont &f)
+void ZSettingsDialog::updateIdxFont(const QFont &f) const
 {
     ui->labelIdxFont->setFont(f);
     ui->labelIdxFont->setText(QSL("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
-void ZSettingsDialog::updateOCRFont(const QFont &f)
+void ZSettingsDialog::updateOCRFont(const QFont &f) const
 {
     ui->labelOCRFont->setFont(f);
     ui->labelOCRFont->setText(QSL("%1, %2").arg(f.family()).arg(f.pointSize()));
@@ -359,7 +359,7 @@ void ZSettingsDialog::dynAdd()
     Q_EMIT getTablesDescription();
 
     if (dlg.exec()==QDialog::Accepted) {
-        auto li = new QListWidgetItem(QSL("%1 [ %2 ]").
+        auto *li = new QListWidgetItem(QSL("%1 [ %2 ]").
                                       arg(dlg.getDlgEdit1(),
                                           dlg.getDlgEdit2()));
         li->setData(Qt::UserRole,dlg.getDlgEdit1());

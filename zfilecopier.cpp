@@ -31,6 +31,7 @@ ZFileCopier::ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
 void ZFileCopier::start()
 {
     QStringList errors;
+    errors.reserve(m_srcList.count());
     m_abort = false;
     int cnt = 0;
 
@@ -41,7 +42,7 @@ void ZFileCopier::start()
         Q_EMIT progressSetLabelText(tr("Copying %1...").arg(fi.fileName()));
         Q_EMIT progressSetValue(0);
         QApplication::processEvents();
-        bool res;
+        bool res = false;
         if (fi.isDir()) {
             res = copyDir(fi);
         } else {

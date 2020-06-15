@@ -51,7 +51,7 @@ int ZPdfReader::zlibInflate(const char* src, int srcSize,
                                      uchar *dst, int dstSize)
 {
     z_stream strm;
-    int ret;
+    int ret = 0;
 
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
@@ -146,7 +146,7 @@ bool ZPdfReader::openFile()
         }
     }
 
-    int numPages;
+    int numPages = 0;
     if ((mode==Z::pdfAutodetect && m_images.count()==m_doc->getNumPages()) ||
             (mode==Z::pdfImageCatalog && m_images.count()>0)) {
         m_useImageCatalog = true;
@@ -193,7 +193,7 @@ void ZPdfReader::closeFile()
 
 void popplerSplashCleanup(void *info)
 {
-    auto bitmap = reinterpret_cast<SplashBitmap *>(info);
+    auto *bitmap = reinterpret_cast<SplashBitmap *>(info);
     delete bitmap;
 }
 
@@ -354,7 +354,7 @@ ZPdfController::ZPdfController(QObject *parent)
 #else
     globalParams = std::make_unique<GlobalParams>();
 #endif
-    const auto textEncoding = "UTF-8";
+    const auto *const textEncoding = "UTF-8";
     globalParams->setTextEncoding(const_cast<char *>(textEncoding));
 #endif
 }

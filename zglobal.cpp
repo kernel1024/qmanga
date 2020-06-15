@@ -264,9 +264,9 @@ QColor ZGlobal::getForegroundColor() const
     constexpr qreal greenLuma = 0.5870;
     constexpr qreal blueLuma = 0.1140;
     constexpr qreal halfLuma = 0.5;
-    qreal r;
-    qreal g;
-    qreal b;
+    qreal r = 0.0;
+    qreal g = 0.0;
+    qreal b = 0.0;
     d->m_backgroundColor.getRgbF(&r,&g,&b);
     qreal br = r*redLuma+g*greenLuma+b*blueLuma;
     if (br>halfLuma)
@@ -348,7 +348,7 @@ void ZGlobal::settingsDlg()
         QString st = (*bIt).second;
         if (st.split('\n').count()>0)
             st = st.split('\n').at(0);
-        auto li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*bIt).first,
+        auto *li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*bIt).first,
                                                            (*bIt).second));
         li->setData(Qt::UserRole,(*bIt).first);
         li->setData(Qt::UserRole+1,(*bIt).second);
@@ -356,7 +356,7 @@ void ZGlobal::settingsDlg()
     }
     ZStrMap albums = d->m_db->getDynAlbums();
     for (auto tIt = albums.constKeyValueBegin(), end = albums.constKeyValueEnd(); tIt!=end; ++tIt) {
-        auto li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*tIt).first,
+        auto *li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*tIt).first,
                                                            (*tIt).second));
         li->setData(Qt::UserRole,(*tIt).first);
         li->setData(Qt::UserRole+1,(*tIt).second);

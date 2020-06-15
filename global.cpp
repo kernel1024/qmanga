@@ -297,7 +297,7 @@ int ZGenericFuncs::compareWithNumerics(const QString &ref1, const QString &ref2)
     //    QStringList r2nums = ref2.split(QRegExp("\\D+"),QString::SkipEmptyParts);
     int mlen = qMin(r1nums.count(),r2nums.count());
     for (int i=0;i<mlen;i++) {
-        bool okconv;
+        bool okconv = false;
         int r1n = r1nums.at(i).toInt(&okconv);
         if (!okconv) break;
         int r2n = r2nums.at(i).toInt(&okconv);
@@ -339,19 +339,19 @@ QString ZGenericFuncs::detectMIME(const QString& filename)
 QString ZGenericFuncs::detectMIME(const QByteArray &buf)
 {
     static const QHash<QPair<int, QByteArray>, QString> magicList = {
-        { { 0, QByteArrayLiteral("\x50\x4b\x03\x04") }, "application/zip" },
-        { { 0, QByteArrayLiteral("\x52\x61\x72\x21") }, "application/rar" },
-        { { 0, QByteArrayLiteral("\x25\x50\x44\x46") }, "application/pdf" },
-        { { 0, QByteArrayLiteral("\xFF\xD8\xFF\xDB") }, "image/jpeg" },
-        { { 6, QByteArrayLiteral("\x4A\x46\x49\x46") }, "image/jpeg" },
-        { { 6, QByteArrayLiteral("\x45\x78\x69\x66") }, "image/jpeg" },
-        { { 0, QByteArrayLiteral("\x89\x50\x4E\x47") }, "image/png" },
-        { { 0, QByteArrayLiteral("\x47\x49\x46\x38\x37\x61") }, "image/gif" },
-        { { 0, QByteArrayLiteral("\x47\x49\x46\x38\x39\x61") }, "image/gif" },
-        { { 0, QByteArrayLiteral("\x49\x49\x2A\x00") }, "image/tiff" },
-        { { 0, QByteArrayLiteral("\x4D\x4D\x00\x2A") }, "image/tiff" },
-        { { 0, QByteArrayLiteral("\x42\x4D") }, "image/bmp" },
-        { { 12, QByteArrayLiteral("\x44\x4A\x56") }, "image/vnd.djvu"}
+        { { 0, QBAL("\x50\x4b\x03\x04") }, "application/zip" },
+        { { 0, QBAL("\x52\x61\x72\x21") }, "application/rar" },
+        { { 0, QBAL("\x25\x50\x44\x46") }, "application/pdf" },
+        { { 0, QBAL("\xFF\xD8\xFF\xDB") }, "image/jpeg" },
+        { { 6, QBAL("\x4A\x46\x49\x46") }, "image/jpeg" },
+        { { 6, QBAL("\x45\x78\x69\x66") }, "image/jpeg" },
+        { { 0, QBAL("\x89\x50\x4E\x47") }, "image/png" },
+        { { 0, QBAL("\x47\x49\x46\x38\x37\x61") }, "image/gif" },
+        { { 0, QBAL("\x47\x49\x46\x38\x39\x61") }, "image/gif" },
+        { { 0, QBAL("\x49\x49\x2A\x00") }, "image/tiff" },
+        { { 0, QBAL("\x4D\x4D\x00\x2A") }, "image/tiff" },
+        { { 0, QBAL("\x42\x4D") }, "image/bmp" },
+        { { 12, QBAL("\x44\x4A\x56") }, "image/vnd.djvu"}
     };
 
     for (auto it = magicList.constKeyValueBegin(), end = magicList.constKeyValueEnd(); it != end; ++it) {
@@ -406,8 +406,8 @@ QFileInfoList ZGenericFuncs::filterSupportedImgFiles(const QFileInfoList& entryL
 
 #ifdef WITH_OCR
 PIX* ZGenericFuncs::Image2PIX(const QImage &qImage) {
-    PIX * pixs;
-    l_uint32 *lines;
+    PIX * pixs = nullptr;
+    l_uint32 *lines = nullptr;
 
     QImage img = qImage.rgbSwapped();
     int width = img.width();
@@ -421,7 +421,7 @@ PIX* ZGenericFuncs::Image2PIX(const QImage &qImage) {
     l_uint32 *datas = pixs->data;
 
     for (int y = 0; y < height; y++) {
-        lines = datas + y * wpl;
+        lines = datas + y * wpl; // NOLINT
         memcpy(lines,img.scanLine(y),static_cast<uint>(img.bytesPerLine()));
     }
     return pixEndianByteSwapNew(pixs);
