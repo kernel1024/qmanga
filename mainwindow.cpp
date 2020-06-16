@@ -30,7 +30,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
 
     ui->menuBookmarks->setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
 
-    m_indexerMsgBox.setWindowTitle(tr("QManga"));
+    m_indexerMsgBox.setWindowTitle(QGuiApplication::applicationDisplayName());
 
     m_lblSearchStatus = new QLabel(tr("Ready"));
     m_lblAverageSizes = new QLabel();
@@ -90,14 +90,13 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->btnFSCheck,&QPushButton::clicked,this,&ZMainWindow::fsCheckAvailability);
     connect(ui->btnFSDelete,&QPushButton::clicked,this,&ZMainWindow::fsDelFiles);
     connect(ui->btnFSFind,&QPushButton::clicked,this,&ZMainWindow::fsFindNewFiles);
-    connect(m_zoomGroup,qOverload<int>(&QButtonGroup::buttonClicked),this,[this](int mode){
+    connect(m_zoomGroup,&QButtonGroup::idClicked,this,[this](int mode){
         ui->comboZoom->setEnabled(mode==ZMangaView::zmOriginal);
         ui->mangaView->setZoomMode(mode);
     });
 
     connect(ui->scrollArea,&ZScrollArea::sizeChanged,ui->mangaView,&ZMangaView::ownerResized);
-    connect(ui->comboZoom,qOverload<const QString &>(&QComboBox::currentIndexChanged),
-            ui->mangaView,&ZMangaView::setZoomAny);
+    connect(ui->comboZoom,&QComboBox::currentIndexChanged,ui->mangaView,&ZMangaView::setZoomAny);
     connect(ui->spinPosition,&QSpinBox::editingFinished,this,&ZMainWindow::pageNumEdited);
     connect(ui->comboMouseMode,qOverload<int>(&QComboBox::currentIndexChanged),
             this,&ZMainWindow::changeMouseMode);
@@ -144,8 +143,9 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
 
 #ifdef WITH_OCR
     if (!zF->isOCRReady()) {
-        QMessageBox::critical(nullptr,tr("QManga"),tr("Could not initialize Tesseract. \n"
-                                                      "Maybe language training data is not installed."));
+        QMessageBox::critical(nullptr,QGuiApplication::applicationDisplayName(),
+                              tr("Could not initialize Tesseract. \n"
+                                 "Maybe language training data is not installed."));
     }
 #endif
 }
@@ -291,7 +291,8 @@ void ZMainWindow::openAux()
 void ZMainWindow::openClipboard()
 {
     if (!QApplication::clipboard()->mimeData()->hasImage()) {
-        QMessageBox::warning(this,tr("QManga"),tr("Clipboard is empty or contains incompatible data."));
+        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
+                             tr("Clipboard is empty or contains incompatible data."));
         return;
     }
 
@@ -366,14 +367,10 @@ void ZMainWindow::switchFullscreen()
     updateControlsVisibility();
     int m = 2;
     if (m_fullScreen) m = 0;
-    if (ui->centralWidget != nullptr) {
-        ui->centralWidget->layout()->setMargin(m);
+    if (ui->centralWidget != nullptr)
         ui->centralWidget->layout()->setContentsMargins(m,m,m,m);
-    }
-    if (ui->tabWidget->currentWidget()!=nullptr) {
-        ui->tabWidget->currentWidget()->layout()->setMargin(m);
+    if (ui->tabWidget->currentWidget()!=nullptr)
         ui->tabWidget->currentWidget()->layout()->setContentsMargins(m,m,m,m);
-    }
     if (m_fullScreen) {
         showFullScreen();
     } else {
@@ -528,7 +525,7 @@ void ZMainWindow::createBookmark()
             zF->global()->addBookmark(t,QSL("%1\n%2").arg(dlg.getDlgEdit2()).arg(ui->mangaView->getCurrentPage()));
             updateBookmarks();
         } else {
-            QMessageBox::warning(this,tr("QManga"),
+            QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
                                  tr("Unable to add bookmark (frame is empty or duplicate title). Try again."));
         }
     }
@@ -550,7 +547,8 @@ void ZMainWindow::openBookmark()
     }
     QFileInfo fi(f);
     if (!fi.isReadable()) {
-        QMessageBox::warning(this,tr("QManga"),tr("Unable to open file %1").arg(f));
+        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
+                             tr("Unable to open file %1").arg(f));
         return;
     }
 
@@ -565,7 +563,7 @@ void ZMainWindow::openSearchTab()
 
 void ZMainWindow::helpAbout()
 {
-    QMessageBox::about(this, tr("QManga"),
+    QMessageBox::about(this, QGuiApplication::applicationDisplayName(),
                        tr("Manga reader with MySQL indexer.\n\nLicensed under GPL v3 license.\n\n"
                           "Author: kernelonline.\n"
                           "App icon (Alien9) designer: EXO.\n"
@@ -710,7 +708,8 @@ void ZMainWindow::fsResultsCtxApplyAlbum()
     if (ac==nullptr) return;
     QString s = ac->data().toString();
     if (s.isEmpty()) {
-        QMessageBox::warning(this,tr("QManga"),tr("Unable to apply album name"));
+        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
+                             tr("Unable to apply album name"));
         return;
     }
     QVector<int> idxs;

@@ -64,6 +64,9 @@ void ZGenericFuncs::initialize()
 #ifdef WITH_OCR
     initializeOCR();
 #endif
+    QGuiApplication::setApplicationDisplayName(QSL("QManga"));
+    QCoreApplication::setOrganizationName(QSL("kernel1024"));
+    QCoreApplication::setApplicationName(QSL("qmanga"));
 
     qInstallMessageHandler(ZGenericFuncs::stdConsoleOutput);
     qRegisterMetaType<ZIntVector>("ZIntVector");
@@ -72,7 +75,6 @@ void ZGenericFuncs::initialize()
     qRegisterMetaType<ZAlbumVector>("ZAlbumVector");
     qRegisterMetaType<QUuid>("QUuid");
     qRegisterMetaType<Z::Ordering>("Z::Ordering");
-    qRegisterMetaType<ZExportWork>("ZExportWork");
     qRegisterMetaTypeStreamOperators<ZStrMap>("ZStrMap");
 #ifdef WITH_DJVU
     qRegisterMetaType<ZDjVuDocument>("ZDjVuDocument");
@@ -543,32 +545,6 @@ const QHash<Z::Ordering, QString> &ZGenericFuncs::getSortMenu()
 }
 
 // ZGenericFuncs -----------------------
-
-ZExportWork::ZExportWork(const ZExportWork &other)
-{
-    dir = other.dir;
-    format = other.format;
-    sourceFile = other.sourceFile;
-    filenameLength = other.filenameLength;
-    quality = other.quality;
-    idx = other.idx;
-}
-
-ZExportWork::ZExportWork(int aIdx, const QDir &aDir, const QString &aSourceFile,
-                         const QString &aFormat, int aFilenameLength, int aQuality)
-{
-    dir = aDir;
-    format = aFormat;
-    sourceFile = aSourceFile;
-    filenameLength = aFilenameLength;
-    quality = aQuality;
-    idx = aIdx;
-}
-
-bool ZExportWork::isValid() const
-{
-    return (idx>=0 && !sourceFile.isEmpty());
-}
 
 ZAlbumEntry::ZAlbumEntry(const ZAlbumEntry &other)
 {

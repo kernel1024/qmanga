@@ -75,7 +75,7 @@ void ZGlobal::checkSQLProblems(QWidget *parent)
     mbox.setInformativeText(tr("Please read warnings text in details below.\n"
                                "This list will be cleaned after QManga restart."));
     mbox.setDetailedText(text);
-    mbox.setWindowTitle(tr("QManga"));
+    mbox.setWindowTitle(QGuiApplication::applicationDisplayName());
     mbox.exec();
 }
 
@@ -84,7 +84,7 @@ void ZGlobal::loadSettings()
     Q_D(ZGlobal);
     if (!d->m_mainWindow) return;
 
-    QSettings settings(QSL("kernel1024"), QSL("qmanga"));
+    QSettings settings;
     settings.beginGroup(QSL("MainWindow"));
     d->m_cacheWidth = settings.value(QSL("cacheWidth"),ZDefaults::cacheWidth).toInt();
     d->m_downscaleFilter = static_cast<Blitz::ScaleFilterType>(
@@ -131,7 +131,7 @@ void ZGlobal::loadSettings()
     bool showMaximized = settings.value(QSL("maximized"),false).toBool();
 
     d->m_bookmarks = settings.value(QSL("bookmarks")).value<ZStrMap>();
-    ZStrMap albums = settings.value(QSL("dynAlbums")).value<ZStrMap>();
+    auto albums = settings.value(QSL("dynAlbums")).value<ZStrMap>();
     Q_EMIT dbSetDynAlbums(albums);
 
     settings.endGroup();
@@ -156,7 +156,7 @@ void ZGlobal::loadSettings()
 void ZGlobal::saveSettings()
 {
     Q_D(const ZGlobal);
-    QSettings settings(QSL("kernel1024"), QSL("qmanga"));
+    QSettings settings;
     settings.beginGroup(QSL("MainWindow"));
     settings.remove(QString());
     settings.setValue(QSL("cacheWidth"),d->m_cacheWidth);
@@ -440,8 +440,9 @@ void ZGlobal::settingsDlg()
         settingsOCR.endGroup();
 
         if (needRestart) {
-            QMessageBox::information(nullptr,tr("QManga"),tr("OCR datapath changed.\n"
-                                                             "The application needs to be restarted to apply these settings."));
+            QMessageBox::information(nullptr,QGuiApplication::applicationDisplayName(),
+                                     tr("OCR datapath changed.\n"
+                                        "The application needs to be restarted to apply these settings."));
         }
 #endif
     }
@@ -761,44 +762,4 @@ QStringList ZGlobal::getLanguageCodes() const
 {
     Q_D(const ZGlobal);
     return d->m_langSortedBCP47List.values();
-}
-
-ZFileEntry::ZFileEntry(const ZFileEntry &other)
-{
-    name = other.name;
-    idx = other.idx;
-}
-
-ZFileEntry::ZFileEntry(const QString &aName, int aIdx)
-{
-    name = aName;
-    idx = aIdx;
-}
-
-bool ZFileEntry::operator ==(const ZFileEntry &ref) const
-{
-    return (name==ref.name);
-}
-
-bool ZFileEntry::operator !=(const ZFileEntry &ref) const
-{
-    return (name!=ref.name);
-}
-
-bool ZFileEntry::operator <(const ZFileEntry &ref) const
-{
-    QFileInfo fi1(name);
-    QFileInfo fi2(ref.name);
-    if (fi1.path()==fi2.path())
-        return (zF->compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
-    return (zF->compareWithNumerics(fi1.path(),fi2.path())<0);
-}
-
-bool ZFileEntry::operator >(const ZFileEntry &ref) const
-{
-    QFileInfo fi1(name);
-    QFileInfo fi2(ref.name);
-    if (fi1.path()==fi2.path())
-        return (zF->compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())>0);
-    return (zF->compareWithNumerics(fi1.path(),fi2.path())>0);
 }

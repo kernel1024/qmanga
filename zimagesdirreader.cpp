@@ -20,7 +20,7 @@ bool ZImagesDirReader::openFile()
                                      QStringList(QSL("*")),
                                      QDir::Readable | QDir::Files));
     for (int i=0;i<fl.count();i++)
-        addSortEntry(ZFileEntry(fl.at(i).absoluteFilePath(),i));
+        addSortEntry(fl.at(i).absoluteFilePath(),i);
 
     performListSort();
     setOpenFileSuccess();

@@ -267,7 +267,7 @@ void ZSearchTab::ctxChangeRenderer()
     if (ok) {
         Q_EMIT dbSetPreferredRendering(m.filename,mode);
     } else {
-        QMessageBox::warning(this,tr("QManga"),
+        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
                              tr("Unable to update preferred rendering."));
     }
 
@@ -374,7 +374,7 @@ void ZSearchTab::ctxOpenDir()
 {
     const QFileInfoList fl = getSelectedMangaEntries(true);
     if (fl.isEmpty()) {
-        QMessageBox::warning(this,tr("QManga"),
+        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
                              tr("Error while searching file path for some files."));
         return;
     }
@@ -387,7 +387,7 @@ void ZSearchTab::ctxXdgOpen()
 {
     const QFileInfoList fl = getSelectedMangaEntries(true);
     if (fl.isEmpty()) {
-        QMessageBox::warning(this,tr("QManga"),
+        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
                              tr("Error while searching file path for some files."));
         return;
     }
@@ -822,7 +822,7 @@ void ZSearchTab::imagesAddDir()
         files << i.absoluteFilePath();
 
     if (files.isEmpty()) {
-        QMessageBox::warning(this,tr("QManga"),
+        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
                              tr("Supported image files not found in specified directory."));
         return;
     }
@@ -914,12 +914,13 @@ void ZSearchTab::dbFilesLoaded(int count, qint64 elapsed)
 
 void ZSearchTab::dbErrorMsg(const QString &msg)
 {
-    QMessageBox::critical(this,tr("QManga"),msg);
+    QMessageBox::critical(this,QGuiApplication::applicationDisplayName(),msg);
 }
 
 void ZSearchTab::dbNeedTableCreation()
 {
-    if (QMessageBox::question(this,tr("QManga"),tr("Database is empty. Recreate tables and structures?"),
+    if (QMessageBox::question(this,QGuiApplication::applicationDisplayName(),
+                              tr("Database is empty. Recreate tables and structures?"),
                               QMessageBox::Yes,QMessageBox::No)==QMessageBox::Yes)
         Q_EMIT dbCreateTables();
 }

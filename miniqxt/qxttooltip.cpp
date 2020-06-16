@@ -70,7 +70,8 @@ QxtToolTipPrivate::QxtToolTipPrivate(QWidget *parent) : QWidget(parent, FLAGS)
     vbox = new QVBoxLayout(this);
     setPalette(QToolTip::palette());
     setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, nullptr, this) / maxOpacity);
-    layout()->setMargin(style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, nullptr, this));
+    int margin = style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, nullptr, this);
+    layout()->setContentsMargins(margin, margin, margin, margin);
     QApplication::instance()->installEventFilter(this);
 }
 
@@ -169,7 +170,7 @@ bool QxtToolTipPrivate::eventFilter(QObject* object, QEvent* event)
         case QEvent::KeyRelease:
         {
             // accept only modifiers
-            const auto *keyEvent = dynamic_cast<QKeyEvent*>(event);
+            auto * const keyEvent = dynamic_cast<QKeyEvent*>(event);
             const int key = keyEvent->key();
             const Qt::KeyboardModifiers mods = keyEvent->modifiers();
             if ((mods & Qt::KeyboardModifierMask) != 0U ||
@@ -224,8 +225,8 @@ QPoint QxtToolTipPrivate::calculatePos(QScreen *scr, QPoint eventPos) const
 {
     QRect screen = scr->availableGeometry();
     const QPoint posMargin(2,16);
-    constexpr int horizontalOffset = 4;
-    constexpr int verticalOffset = 24;
+    const int horizontalOffset = 4;
+    const int verticalOffset = 24;
 
     QPoint p = eventPos + posMargin;
     QSize s = sizeHint();
@@ -255,16 +256,6 @@ void QxtToolTip::show(QPoint pos, QWidget* tooltip, QWidget* parent, QRect rect,
 void QxtToolTip::hide()
 {
     QxtToolTipPrivate::instance()->hide();
-}
-
-int QxtToolTip::margin()
-{
-    return QxtToolTipPrivate::instance()->layout()->margin();
-}
-
-void QxtToolTip::setMargin(int margin)
-{
-    QxtToolTipPrivate::instance()->layout()->setMargin(margin);
 }
 
 qreal QxtToolTip::opacity()

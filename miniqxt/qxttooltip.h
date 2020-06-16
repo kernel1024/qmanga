@@ -44,9 +44,6 @@ public:
                      QRect rect = QRect(), bool allowMouseEnter = false, bool forceReplace = false);
     static void hide();
 
-    static int margin();
-    static void setMargin(int margin);
-
     static qreal opacity();
     static void setOpacity(qreal level);
 };

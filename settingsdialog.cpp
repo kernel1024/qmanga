@@ -214,8 +214,9 @@ void ZSettingsDialog::addSearchEngine()
         data = dlg.getInputData();
 
         if (getSearchEngines().keys().contains(data[tr("Menu title")])) {
-            QMessageBox::warning(this,tr("QManga"),tr("Unable to add two or more engines with same names.\n"
-                                                      "Use another name for new engine."));
+            QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
+                                 tr("Unable to add two or more engines with same names.\n"
+                                    "Use another name for new engine."));
         } else {
             auto *li = new QListWidgetItem(QSL("%1 [ %2 ] %3").
                                           arg(data[tr("Menu title")],

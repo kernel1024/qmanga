@@ -47,7 +47,7 @@ bool ZRarReader::openFile()
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         fi.setFile(fname);
         if (!zF->supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
-        addSortEntry(ZFileEntry(fname,cnt));
+        addSortEntry(fname,cnt);
         cnt++;
     }
 

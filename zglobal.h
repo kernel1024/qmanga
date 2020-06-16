@@ -102,19 +102,4 @@ Q_SIGNALS:
 
 };
 
-class ZFileEntry {
-public:
-    QString name;
-    int idx { -1 };
-    ZFileEntry() = default;
-    ~ZFileEntry() = default;
-    ZFileEntry(const ZFileEntry& other);
-    ZFileEntry(const QString &aName, int aIdx);
-    ZFileEntry &operator=(const ZFileEntry& other) = default;
-    bool operator==(const ZFileEntry& ref) const;
-    bool operator!=(const ZFileEntry& ref) const;
-    bool operator<(const ZFileEntry& ref) const;
-    bool operator>(const ZFileEntry& ref) const;
-};
-
 #endif // ZGLOBAL_H

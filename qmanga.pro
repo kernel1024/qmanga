@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets sql concurrent
+QT       += core gui widgets sql
 
 !win32 {
     QT += dbus
@@ -14,8 +14,8 @@ TEMPLATE = app
 
 # warn on *any* usage of deprecated APIs
 DEFINES += QT_DEPRECATED_WARNINGS
-# ... and just fail to compile if APIs deprecated in Qt <= 5.11 are used
-DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x050B00
+# ... and just fail to compile if APIs deprecated in Qt <= 5.15 are used
+DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x050F00
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -83,9 +83,9 @@ FORMS    += \
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig c++14
+CONFIG += warn_on link_pkgconfig c++17
 
-LIBS += -lz
+LIBS += -lz -ltbb
 
 !win32 {
     packagesExist(libzip) {

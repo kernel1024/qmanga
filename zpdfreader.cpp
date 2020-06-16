@@ -13,13 +13,6 @@
 #include <poppler/PDFDoc.h>
 #include <poppler/Error.h>
 
-#include <poppler/cpp/poppler-version.h>
-#if POPPLER_VERSION_MAJOR==0
-    #if POPPLER_VERSION_MINOR<83
-        #define ZPDF_PRE083_API 1
-    #endif
-#endif
-
 #endif
 
 extern "C" {
@@ -160,10 +153,8 @@ bool ZPdfReader::openFile()
 
     constexpr int pageCounterWidth = 6;
     constexpr int pageCounterBase = 10;
-    for (int i=0;i<numPages;i++) {
-        addSortEntry(ZFileEntry(QSL("%1").arg(i,pageCounterWidth,
-                                                         pageCounterBase,QChar('0')),i));
-    }
+    for (int i=0;i<numPages;i++)
+        addSortEntry(QSL("%1").arg(i,pageCounterWidth,pageCounterBase,QChar('0')),i);
 
     performListSort();
     setOpenFileSuccess();
@@ -349,22 +340,10 @@ ZPdfController::ZPdfController(QObject *parent)
     : QObject(parent)
 {
 #ifdef WITH_POPPLER
-#ifdef ZPDF_PRE083_API
-    globalParams = new GlobalParams();
-#else
     globalParams = std::make_unique<GlobalParams>();
-#endif
     const auto *const textEncoding = "UTF-8";
     globalParams->setTextEncoding(const_cast<char *>(textEncoding));
 #endif
 }
 
-ZPdfController::~ZPdfController()
-{
-#ifdef WITH_POPPLER
-#ifdef ZPDF_PRE083_API
-    delete globalParams;
-    globalParams = nullptr;
-#endif
-#endif
-}
+ZPdfController::~ZPdfController() = default;

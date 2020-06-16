@@ -5,15 +5,16 @@
 #include <QByteArray>
 #include "zglobal.h"
 
+using ZFileEntry = QPair<QString, int>;
+
 class ZAbstractReader : public QObject
 {
     Q_OBJECT
 protected:
     void postMessage(const QString& msg);
     void performListSort();
-    void addSortEntry(const ZFileEntry& entry);
+    void addSortEntry(const QString& name, int idx);
     int getSortEntryIdx(int num) const;
-    QString getSortEntryName(int num) const;
     void setOpenFileSuccess();
 
 public:
@@ -23,7 +24,7 @@ public:
     int getPageCount();
     bool isOpened() const;
     QString getFileName() const;
-    QString getInternalPath(int idx);
+    QString getSortEntryName(int num) const;
 
     virtual bool openFile() = 0;
     virtual void closeFile();
@@ -35,7 +36,7 @@ private:
     bool m_opened { false };
     int m_pageCount { -1 };
     QString m_fileName;
-    QList<ZFileEntry> m_sortList;
+    QVector<ZFileEntry> m_sortList;
 
     Q_DISABLE_COPY(ZAbstractReader)
 

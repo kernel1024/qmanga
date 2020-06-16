@@ -30,8 +30,7 @@ bool ZDjVuReader::openFile()
     constexpr int pageCounterWidth = 6;
     constexpr int pageCounterBase = 10;
     for (int i=0;i<numPages;i++) {
-        addSortEntry(ZFileEntry(QSL("%1")
-                                .arg(i,pageCounterWidth,pageCounterBase,QChar('0')),i));
+        addSortEntry(QSL("%1").arg(i,pageCounterWidth,pageCounterBase,QChar('0')),i);
     }
 
     performListSort();

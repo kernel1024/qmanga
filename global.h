@@ -168,23 +168,6 @@ public:
     void delJob();
 };
 
-class ZExportWork {
-public:
-    int filenameLength { 0 };
-    int quality { 0 };
-    int idx { -1 };
-    QDir dir;
-    QString format;
-    QString sourceFile;
-    ZExportWork() = default;
-    ~ZExportWork() = default;
-    ZExportWork(const ZExportWork& other);
-    ZExportWork(int aIdx, const QDir& aDir, const QString& aSourceFile, const QString& aFormat,
-                int aFilenameLength, int aQuality);
-    ZExportWork &operator=(const ZExportWork& other) = default;
-    bool isValid() const;
-};
-
 using ZIntVector = QVector<int>;
 using ZStrHash = QHash<QString,QString>;
 using ZSQLMangaVector = QVector<ZSQLMangaEntry>;

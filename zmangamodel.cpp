@@ -88,7 +88,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         return rp;
     }
 
-    if (role == Qt::TextColorRole) {
+    if (role == Qt::ForegroundRole) {
         return zF->global()->getForegroundColor();
     }
 

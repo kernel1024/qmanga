@@ -74,7 +74,6 @@ private:
     ZIntVector cacheGetActivePages() const;
     void displayCurrentPage();
     void cacheGetPage(int num);   
-    static ZExportWork exportMangaPage(const ZExportWork &item);
 
 public:
     explicit ZMangaView(QWidget *parent = nullptr);
@@ -126,7 +125,7 @@ public Q_SLOTS:
     void navLast();
 
     void setZoomDynamic(bool state);
-    void setZoomAny(const QString &proc);
+    void setZoomAny(int comboIdx);
 
     void viewRotateCCW();
     void viewRotateCW();

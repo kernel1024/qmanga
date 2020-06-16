@@ -53,17 +53,6 @@ void ZAbstractReader::closeFile()
     m_sortList.clear();
 }
 
-QString ZAbstractReader::getInternalPath(int idx)
-{
-    if (!m_opened)
-        return QString();
-
-    if (idx>=0 && idx<m_sortList.count())
-        return m_sortList.at(idx).name;
-
-    return QString();
-}
-
 void ZAbstractReader::postMessage(const QString &msg)
 {
     auto *loader = qobject_cast<ZMangaLoader *>(parent());
@@ -71,20 +60,26 @@ void ZAbstractReader::postMessage(const QString &msg)
         loader->postMessage(msg);
 }
 
-void ZAbstractReader::performListSort()
+void ZAbstractReader::addSortEntry(const QString &name, int idx)
 {
-    std::sort(m_sortList.begin(),m_sortList.end());
+    m_sortList.append(qMakePair(name,idx));
 }
 
-void ZAbstractReader::addSortEntry(const ZFileEntry &entry)
+void ZAbstractReader::performListSort()
 {
-    m_sortList << entry;
+    std::sort(m_sortList.begin(),m_sortList.end(),[](const ZFileEntry &f1, const ZFileEntry &f2){
+        QFileInfo fi1(f1.first);
+        QFileInfo fi2(f2.first);
+        if (fi1.path()==fi2.path())
+            return (zF->compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
+        return (zF->compareWithNumerics(fi1.path(),fi2.path())<0);
+    });
 }
 
 int ZAbstractReader::getSortEntryIdx(int num) const
 {
     if (num>=0 && num<m_sortList.count())
-        return m_sortList.at(num).idx;
+        return m_sortList.at(num).second;
 
     return -1;
 }
@@ -92,7 +87,7 @@ int ZAbstractReader::getSortEntryIdx(int num) const
 QString ZAbstractReader::getSortEntryName(int num) const
 {
     if (num>=0 && num<m_sortList.count())
-        return m_sortList.at(num).name;
+        return m_sortList.at(num).first;
 
     return QString();
 }

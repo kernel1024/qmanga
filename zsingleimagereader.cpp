@@ -29,7 +29,7 @@ bool ZSingleImageReader::openFile()
             return false;
     }
 
-    addSortEntry(ZFileEntry(fileName,0));
+    addSortEntry(fileName,0);
     performListSort();
     setOpenFileSuccess();
     return true;
