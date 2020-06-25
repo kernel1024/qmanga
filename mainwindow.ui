@@ -914,8 +914,8 @@
      <string>&amp;View</string>
     </property>
     <addaction name="actionFullscreen"/>
-    <addaction name="separator"/>
     <addaction name="actionMinimize"/>
+    <addaction name="actionHideToolbar"/>
     <addaction name="separator"/>
     <addaction name="actionShowOCR"/>
    </widget>
@@ -1063,6 +1063,14 @@
   <action name="actionShowOCR">
    <property name="text">
     <string>&amp;Show OCR window</string>
+   </property>
+  </action>
+  <action name="actionHideToolbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Hide toolbar</string>
    </property>
   </action>
  </widget>

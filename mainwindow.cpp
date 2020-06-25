@@ -69,6 +69,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->actionAbout,&QAction::triggered,this,&ZMainWindow::helpAbout);
     connect(ui->actionFullscreen,&QAction::triggered,this,&ZMainWindow::switchFullscreen);
     connect(ui->actionMinimize,&QAction::triggered,this,&ZMainWindow::showMinimized);
+    connect(ui->actionHideToolbar,&QAction::triggered,this,&ZMainWindow::updateControlsVisibility);
     connect(ui->actionSaveSettings,&QAction::triggered,zF->global(),&ZGlobal::saveSettings);
     connect(ui->actionShowOCR,&QAction::triggered,zF->global()->ocrEditor(),&ZOCREditor::show);
 
@@ -400,7 +401,7 @@ void ZMainWindow::updateControlsVisibility()
     statusBar()->setVisible(state);
     menuBar()->setVisible(state);
     ui->tabWidget->tabBar()->setVisible(state);
-    ui->toolbar->setVisible(state);
+    ui->toolbar->setVisible(state && !ui->actionHideToolbar->isChecked());
 }
 
 void ZMainWindow::viewerKeyPressed(int key)

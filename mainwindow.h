@@ -61,7 +61,6 @@ private:
     QButtonGroup* m_zoomGroup;
 
     void openAuxFile(const QString& filename);
-    void updateControlsVisibility();
 
 protected:
     void closeEvent(QCloseEvent * event) override;
@@ -80,6 +79,7 @@ public Q_SLOTS:
     void pageNumEdited();
     void switchFullscreen();
     void switchFullscreenControls();
+    void updateControlsVisibility();
     void viewerKeyPressed(int key);
     void updateViewer();
     void rotationUpdated(double angle);
