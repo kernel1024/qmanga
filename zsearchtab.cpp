@@ -380,7 +380,7 @@ void ZSearchTab::ctxOpenDir()
     }
 
     for (const auto &i : fl)
-        QDesktopServices::openUrl(QUrl::fromLocalFile(i.path()));
+        zF->showInGraphicalShell(i.filePath());
 }
 
 void ZSearchTab::ctxXdgOpen()

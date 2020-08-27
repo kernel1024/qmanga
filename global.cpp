@@ -7,6 +7,7 @@
 #include <QSettings>
 #include <QAtomicInteger>
 #include <QPointer>
+#include <QDesktopServices>
 #include <iostream>
 #include <clocale>
 #include <QDebug>
@@ -326,6 +327,47 @@ QStringList ZGenericFuncs::getOpenFileNamesD ( QWidget * parent, const QString &
 QString	ZGenericFuncs::getExistingDirectoryD ( QWidget * parent, const QString & caption, const QString & dir, QFileDialog::Options options )
 {
     return QFileDialog::getExistingDirectory(parent,caption,dir,options);
+}
+
+void ZGenericFuncs::showInGraphicalShell(const QString &pathIn)
+{
+    const QFileInfo fileInfo(pathIn);
+    bool success = false;
+
+#ifdef Q_OS_WIN
+    const QString app = QStandardPaths::findExecutable(QSL("explorer.exe"));
+    if (app.isEmpty()) {
+        QDesktopServices::openUrl(pathIn);
+        return;
+    }
+    QStringList param;
+    if (!fileInfo.isDir())
+        param += QLatin1String("/select,");
+    param += QDir::toNativeSeparators(fileInfo.canonicalFilePath());
+    success = QProcess::startDetached(app, param));
+#else
+    QString app;
+    QStringList browserArgs;
+    if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains(QSL("KDE"),Qt::CaseInsensitive)) {
+        app = QStandardPaths::findExecutable(QSL("dolphin"));
+        if (!fileInfo.isDir())
+            browserArgs += QSL("--select");
+        browserArgs += pathIn;
+    } else if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains(QSL("Gnome"),Qt::CaseInsensitive)) {
+        app = QStandardPaths::findExecutable(QSL("nautilus"));
+        if (!fileInfo.isDir())
+            browserArgs += QSL("-s");
+        browserArgs += pathIn;
+    }
+    QProcess browserProc;
+    if (!app.isEmpty()) {
+        success = browserProc.startDetached(app,browserArgs);
+        const QString error = QString::fromLocal8Bit(browserProc.readAllStandardError());
+        success = success && error.isEmpty();
+    }
+#endif
+    if (!success)
+        QDesktopServices::openUrl(pathIn);
 }
 
 QString ZGenericFuncs::detectMIME(const QString& filename)

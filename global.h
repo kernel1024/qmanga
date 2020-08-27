@@ -220,6 +220,7 @@ public:
     QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
                               Blitz::ScaleFilterType filter = Blitz::LanczosFilter, int page = -1,
                               const int *currentPage = nullptr);
+    void showInGraphicalShell(const QString &pathIn);
 
 #ifdef WITH_OCR
 #ifdef Q_OS_WIN
