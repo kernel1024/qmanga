@@ -67,6 +67,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->actionSettings,&QAction::triggered,zF->global(),&ZGlobal::settingsDlg);
     connect(ui->actionAddBookmark,&QAction::triggered,this,&ZMainWindow::createBookmark);
     connect(ui->actionAbout,&QAction::triggered,this,&ZMainWindow::helpAbout);
+    connect(ui->actionAboutQt,&QAction::triggered,qApp,&QApplication::aboutQt);
     connect(ui->actionFullscreen,&QAction::triggered,this,&ZMainWindow::switchFullscreen);
     connect(ui->actionMinimize,&QAction::triggered,this,&ZMainWindow::showMinimized);
     connect(ui->actionHideToolbar,&QAction::triggered,this,&ZMainWindow::updateControlsVisibility);

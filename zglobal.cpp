@@ -260,6 +260,15 @@ void ZGlobal::addFineRenderTime(qint64 msec)
 QColor ZGlobal::getForegroundColor() const
 {
     Q_D(const ZGlobal);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    constexpr float redLuma = 0.2989;
+    constexpr float greenLuma = 0.5870;
+    constexpr float blueLuma = 0.1140;
+    constexpr float halfLuma = 0.5;
+    float r = 0.0;
+    float g = 0.0;
+    float b = 0.0;
+#else
     constexpr qreal redLuma = 0.2989;
     constexpr qreal greenLuma = 0.5870;
     constexpr qreal blueLuma = 0.1140;
@@ -267,6 +276,7 @@ QColor ZGlobal::getForegroundColor() const
     qreal r = 0.0;
     qreal g = 0.0;
     qreal b = 0.0;
+#endif
     d->m_backgroundColor.getRgbF(&r,&g,&b);
     qreal br = r*redLuma+g*greenLuma+b*blueLuma;
     if (br>halfLuma)

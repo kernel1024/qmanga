@@ -1,6 +1,4 @@
 #include <QMutex>
-#include <QTextCodec>
-#include <QTextEncoder>
 #include <QBuffer>
 #include <QDir>
 #include <QApplication>
@@ -8,6 +6,7 @@
 #include <QAtomicInteger>
 #include <QPointer>
 #include <QDesktopServices>
+#include <QRegularExpression>
 #include <iostream>
 #include <clocale>
 #include <QDebug>
@@ -76,7 +75,11 @@ void ZGenericFuncs::initialize()
     qRegisterMetaType<ZAlbumVector>("ZAlbumVector");
     qRegisterMetaType<QUuid>("QUuid");
     qRegisterMetaType<Z::Ordering>("Z::Ordering");
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    qRegisterMetaType<ZStrMap>("ZStrMap");
+#else
     qRegisterMetaTypeStreamOperators<ZStrMap>("ZStrMap");
+#endif
 #ifdef WITH_DJVU
     qRegisterMetaType<ZDjVuDocument>("ZDjVuDocument");
 #endif
@@ -117,7 +120,7 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
 
     if (filename.startsWith(QSL("#DYN#"))) {
         QString fname(filename);
-        fname.remove(QRegExp(QSL("^#DYN#")));
+        fname.remove(QRegularExpression(QSL("^#DYN#")));
         if (createReader)
             return new ZImagesDirReader(parent,fname);
 

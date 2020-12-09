@@ -103,8 +103,18 @@ bool ZPdfReader::openFile()
 
         for (int pageNum=1;pageNum<=m_doc->getNumPages();pageNum++) {
             Dict *dict = m_doc->getPage(pageNum)->getResourceDict();
+            if (dict == nullptr) {
+                mode = Z::pdfPageRenderer;
+                m_images.clear();
+                break;
+            }
             if (dict->lookup("XObject").isDict()) {
                 Dict *xolist = dict->lookup("XObject").getDict();
+                if (xolist == nullptr) {
+                    mode = Z::pdfPageRenderer;
+                    m_images.clear();
+                    break;
+                }
 
                 for (int xo_idx=0;xo_idx<xolist->getLength();xo_idx++) {
                     Object stype;

@@ -95,28 +95,12 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(this,&ZSearchTab::dbSetPreferredRendering,zF->global()->db(),&ZDB::sqlSetPreferredRendering,
             Qt::QueuedConnection);
 
-    auto *sLoaded = new QState();
-    auto *sLoading = new QState();
-    sLoading->addTransition(zF->global()->db(),&ZDB::filesLoaded,sLoaded);
-    sLoaded->addTransition(this,&ZSearchTab::dbGetFiles,sLoading);
-    sLoading->assignProperty(ui->srcAddBtn,"enabled",false);
-    sLoading->assignProperty(ui->srcAddDirBtn,"enabled",false);
-    sLoading->assignProperty(ui->srcDelBtn,"enabled",false);
-    sLoading->assignProperty(ui->srcEditBtn,"enabled",false);
-    sLoading->assignProperty(ui->srcEdit,"enabled",false);
-    sLoading->assignProperty(ui->srcAlbums,"enabled",false);
-    sLoading->assignProperty(ui->srcLoading,"visible",true);
-    sLoaded->assignProperty(ui->srcAddBtn,"enabled",true);
-    sLoaded->assignProperty(ui->srcAddDirBtn,"enabled",true);
-    sLoaded->assignProperty(ui->srcDelBtn,"enabled",true);
-    sLoaded->assignProperty(ui->srcEditBtn,"enabled",true);
-    sLoaded->assignProperty(ui->srcEdit,"enabled",true);
-    sLoaded->assignProperty(ui->srcAlbums,"enabled",true);
-    sLoaded->assignProperty(ui->srcLoading,"visible",false);
-    m_loadingState.addState(sLoading);
-    m_loadingState.addState(sLoaded);
-    m_loadingState.setInitialState(sLoaded);
-    m_loadingState.start();
+    connect(zF->global()->db(),&ZDB::filesLoaded,this,[this](){
+        updateLoadingState(lsLoaded);
+    },Qt::QueuedConnection);
+    connect(this,&ZSearchTab::dbGetFiles,this,[this](){
+        updateLoadingState(lsLoading);
+    },Qt::QueuedConnection);
 
     auto *aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
     m_tableModel = new ZMangaTableModel(this,ui->srcTable);
@@ -148,12 +132,26 @@ ZSearchTab::~ZSearchTab()
     delete ui;
 }
 
+void ZSearchTab::updateLoadingState(ZSearchTab::LoadingState state)
+{
+    m_loadingState = state;
+    const bool loaded = (m_loadingState == lsLoaded);
+
+    ui->srcAddBtn->setEnabled(loaded);
+    ui->srcAddDirBtn->setEnabled(loaded);
+    ui->srcDelBtn->setEnabled(loaded);
+    ui->srcEditBtn->setEnabled(loaded);
+    ui->srcEdit->setEnabled(loaded);
+    ui->srcAlbums->setEnabled(loaded);
+    ui->srcLoading->setVisible(!loaded);
+}
+
 void ZSearchTab::updateSplitters()
 {
     QList<int> widths;
     ui->splitter->setCollapsible(0,true);
     widths << ZDefaults::albumListWidth;
-    widths << width()-widths[0];
+    widths << width()-widths.first();
     ui->splitter->setSizes(widths);
 }
 

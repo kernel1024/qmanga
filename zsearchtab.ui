@@ -58,7 +58,11 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <widget class="QLineEdit" name="srcEdit"/>
+          <widget class="QLineEdit" name="srcEdit">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The boolean full-text search capability supports the following operators:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;+&lt;/span&gt; A leading or trailing plus sign indicates that this word must be present in each row that is returned.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;-&lt;/span&gt; A leading or trailing minus sign indicates that this word must not be present in any of the rows that are returned.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;~&lt;/span&gt; A leading tilde acts as a negation operator, causing the word's contribution to the row's relevance to be negative.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;*&lt;/span&gt; The asterisk serves as the truncation (or wildcard) operator. Unlike the other operators, it is appended to the word to be affected.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;&amp;quot;&lt;/span&gt; A phrase that is enclosed within double quote (&amp;quot;) characters matches only rows that contain the phrase literally, as it was typed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="srcEditBtn">

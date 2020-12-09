@@ -8,7 +8,6 @@
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QSettings>
-#include <QStateMachine>
 
 #include "global.h"
 #include "zglobal.h"
@@ -22,6 +21,12 @@ class ZSearchTab : public QWidget
 {
     Q_OBJECT
 public:
+    enum LoadingState {
+        lsLoading,
+        lsLoaded
+    };
+    Q_ENUM(LoadingState)
+
     explicit ZSearchTab(QWidget *parent = nullptr);
     ~ZSearchTab() override;
 
@@ -38,7 +43,7 @@ private:
     Qt::SortOrder m_savedOrderingDirection { Qt::AscendingOrder };
     Z::Ordering m_defaultOrdering { Z::ordName };
     Qt::SortOrder m_defaultOrderingDirection { Qt::AscendingOrder };
-    QStateMachine m_loadingState;
+    LoadingState m_loadingState { lsLoading };
     QString m_descTemplate;
     QStringList m_cachedAlbums;
     QPointer<ZMangaModel> m_model;
@@ -57,6 +62,7 @@ private:
     QListView::ViewMode getListViewMode() const;
     void setListViewOptions(QListView::ViewMode mode, int iconSize);
     void setDescText(const QString& text = QString());
+    void updateLoadingState(ZSearchTab::LoadingState state);
 
 public Q_SLOTS:
     void albumClicked(QTreeWidgetItem *item, int column);

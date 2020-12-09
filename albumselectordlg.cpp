@@ -1,4 +1,5 @@
 #include <QLineEdit>
+#include <QRegularExpression>
 
 #include "albumselectordlg.h"
 #include "ui_albumselectordlg.h"
@@ -19,7 +20,7 @@ ZAlbumSelectorDlg::ZAlbumSelectorDlg(QWidget *parent, const QStringList &albums,
     ui->listAlbums->clear();
     ui->listAlbums->addItems(albums);
     ui->listAlbums->lineEdit()->setText(suggest);
-    int idx = albums.indexOf(QRegExp(suggest,Qt::CaseInsensitive));
+    int idx = albums.indexOf(QRegularExpression(suggest));
     if (idx>=0)
         ui->listAlbums->setCurrentIndex(idx);
 }

@@ -11,6 +11,7 @@
 #include <QSqlField>
 #include <QVariant>
 #include <QElapsedTimer>
+#include <QRegularExpression>
 #include <QDebug>
 #include "zdb.h"
 
@@ -55,10 +56,11 @@ Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order)
     order = Qt::AscendingOrder;
     const QString qr = m_dynAlbums.value(name,QString());
     if (!qr.isEmpty()) {
-        QRegExp rx(QSL(R"(ORDER\sBY\s(\S+)\s(ASC|DESC)?)"),Qt::CaseInsensitive);
-        if (rx.indexIn(qr)>=0) {
-            QString col = rx.cap(1).trimmed();
-            QString ord = rx.cap(2).trimmed();
+        QRegularExpression rx(QSL(R"(ORDER\sBY\s(\S+)\s(ASC|DESC)?)"));
+        QRegularExpressionMatch mrx = rx.match(qr);
+        if (mrx.hasMatch()) {
+            QString col = mrx.captured(1).trimmed();
+            QString ord = mrx.captured(2).trimmed();
 
             if (!ord.isEmpty() &&
                     (ord.compare(QSL("DESC"),Qt::CaseInsensitive)==0))
@@ -564,7 +566,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     QString fname(fileName);
     bool dynManga = fname.startsWith(QSL("#DYN#"));
     if (dynManga)
-        fname.remove(QRegExp(QSL("^#DYN#")));
+        fname.remove(QRegularExpression(QSL("^#DYN#")));
 
     QSqlQuery qr(db);
     qr.prepare(QSL("SELECT name FROM files WHERE (filename=?)"));
@@ -656,7 +658,7 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     bool dynManga = false;
     QString fname = fileName;
     if (fname.startsWith(QSL("#DYN#"))) {
-        fname.remove(QRegExp(QSL("^#DYN#")));
+        fname.remove(QRegularExpression(QSL("^#DYN#")));
         dynManga = true;
     }
 
@@ -1266,7 +1268,7 @@ QString ZDB::prepareSearchQuery(const QString &search)
 {
     static const QStringList operators({QSL(" +"), QSL(" ~"), QSL(" -"), QSL("* "), QSL("\"")});
     QString msearch = search;
-    if (search.contains(QRegExp(QSL("\\s")))) {
+    if (search.contains(QRegularExpression(QSL("\\s")))) {
         bool haveops = false;
         for (const auto &i : operators) {
             if (msearch.contains(i)) {
@@ -1275,7 +1277,7 @@ QString ZDB::prepareSearchQuery(const QString &search)
             }
         }
         if (!haveops) {
-            msearch.replace(QRegExp(QSL("\\s+")),QSL("* +"));
+            msearch.replace(QRegularExpression(QSL("\\s+")),QSL("* +"));
             msearch.prepend(QChar('+'));
             msearch.append(QChar('*'));
         }
