@@ -13,8 +13,7 @@
     <method name="setDestLang">
       <arg name="lang" type="s" direction="in"/>
     </method>
-    <method name="startTranslation">
-      <arg name="deleteAfter" type="b" direction="in"/>
+    <method name="translateAndQuit">
     </method>
     <method name="startAuxTranslation">
       <arg name="text" type="s" direction="in"/>
