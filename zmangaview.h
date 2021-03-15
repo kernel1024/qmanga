@@ -8,7 +8,7 @@
 #include <QThreadPool>
 
 #include "global.h"
-#include "zabstractreader.h"
+#include "readers/zabstractreader.h"
 #include "zmangaloader.h"
 #include "zexportdialog.h"
 

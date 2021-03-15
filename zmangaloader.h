@@ -2,7 +2,7 @@
 #define ZMANGACACHE_H
 
 #include "global.h"
-#include "zabstractreader.h"
+#include "readers/zabstractreader.h"
 
 class ZLoaderHelper;
 

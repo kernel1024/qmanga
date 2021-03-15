@@ -21,54 +21,54 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     zglobalprivate.cpp \
     zmangaview.cpp \
-    zabstractreader.cpp \
     zglobal.cpp \
-    zzipreader.cpp \
     zscrollarea.cpp \
     settingsdialog.cpp \
     bookmarkdlg.cpp \
     global.cpp \
     zmangamodel.cpp \
     zsearchtab.cpp \
-    zrarreader.cpp \
-    zpdfreader.cpp \
     albumselectordlg.cpp \
     zdb.cpp \
     zmangaloader.cpp \
     ocreditor.cpp \
-    zsingleimagereader.cpp \
     zexportdialog.cpp \
-    zimagesdirreader.cpp \
     zfilecopier.cpp \
     scalefilter.cpp \
     multiinputdialog.cpp \
-    zdjvureader.cpp
+    readers/zdjvureader.cpp \
+    readers/zabstractreader.cpp \
+    readers/zzipreader.cpp \
+    readers/zrarreader.cpp \
+    readers/zpdfreader.cpp \
+    readers/zsingleimagereader.cpp \
+    readers/zimagesdirreader.cpp
 
 HEADERS  += mainwindow.h \
     zglobalprivate.h \
     zmangaview.h \
-    zabstractreader.h \
     zglobal.h \
-    zzipreader.h \
     zscrollarea.h \
     settingsdialog.h \
     bookmarkdlg.h \
     global.h \
     zmangamodel.h \
     zsearchtab.h \
-    zrarreader.h \
-    zpdfreader.h \
     albumselectordlg.h \
     zdb.h \
     zmangaloader.h \
     ocreditor.h \
-    zsingleimagereader.h \
     zexportdialog.h \
-    zimagesdirreader.h \
     zfilecopier.h \
     scalefilter.h \
     multiinputdialog.h \
-    zdjvureader.h
+    readers/zdjvureader.h \
+    readers/zabstractreader.h \
+    readers/zzipreader.h \
+    readers/zrarreader.h \
+    readers/zpdfreader.h \
+    readers/zsingleimagereader.h \
+    readers/zimagesdirreader.h
 
 FORMS    += \
     settingsdialog.ui \

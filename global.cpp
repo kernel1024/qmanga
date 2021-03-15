@@ -13,13 +13,13 @@
 
 #include "zmangaloader.h"
 #include "global.h"
-#include "zabstractreader.h"
-#include "zzipreader.h"
-#include "zrarreader.h"
-#include "zpdfreader.h"
-#include "zdjvureader.h"
-#include "zimagesdirreader.h"
-#include "zsingleimagereader.h"
+#include "readers/zabstractreader.h"
+#include "readers/zzipreader.h"
+#include "readers/zrarreader.h"
+#include "readers/zpdfreader.h"
+#include "readers/zdjvureader.h"
+#include "readers/zimagesdirreader.h"
+#include "readers/zsingleimagereader.h"
 #include "zglobal.h"
 #include "zmangaview.h"
 #include "scalefilter.h"
@@ -46,7 +46,7 @@ ZGenericFuncs *ZGenericFuncs::instance()
             return inst.data();
         }
 
-        qCritical() << "Accessing to zF after destruction!!!";
+        qFatal("Accessing to zF after destruction!!!");
         return nullptr;
     }
 

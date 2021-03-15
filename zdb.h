@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QSqlDatabase>
-#include "zabstractreader.h"
+#include "readers/zabstractreader.h"
 #include "global.h"
 
 constexpr int dynamicAlbumParent = -2;
