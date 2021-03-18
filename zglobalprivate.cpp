@@ -6,7 +6,8 @@ ZGlobalPrivate::ZGlobalPrivate(QObject *parent)
       m_db(new ZDB()),
       fsWatcher(new QFileSystemWatcher(this)),
       m_ocrEditor(nullptr),
-      m_threadDB(new QThread())
+      m_threadDB(new QThread()),
+      m_txtController(new ZTextDocumentController(this))
 {
 
 }

@@ -21,6 +21,8 @@
 #include "zglobal.h"
 #include "mainwindow.h"
 
+// TODO: Force zoom 1:1 for text documents
+
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
 {

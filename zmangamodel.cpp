@@ -10,15 +10,15 @@
 
 namespace ZDefaults {
 constexpr int ModelSortRole = Qt::UserRole + 1;
-constexpr int columnName = 0;
-constexpr int columnAlbum = 1;
-constexpr int columnPagesCount = 2;
-constexpr int columnFileSize = 3;
-constexpr int columnAddDate = 4;
-constexpr int columnFileDate = 5;
-constexpr int columnMagic = 6;
-constexpr int columnsCount = 7;
-constexpr double textWidthFactor = 3.5;
+const int columnName = 0;
+const int columnAlbum = 1;
+const int columnPagesCount = 2;
+const int columnFileSize = 3;
+const int columnAddDate = 4;
+const int columnFileDate = 5;
+const int columnMagic = 6;
+const int columnsCount = 7;
+const double textWidthFactor = 3.5;
 }
 
 ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView) :
@@ -72,7 +72,10 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         if (p.isNull())
             p = QImage(QSL(":/32/edit-delete"));
 
-        p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
+        // BUG: smooth crashes - Qt 6.0.1 bug
+        // TODO: use our fast smooth transformation for all QImage::scaled(smooth) calls
+        p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::FastTransformation);
+
         if (p.height()<rp.height()) {
             cp.drawImage(0,(rp.height()-p.height())/2,p);
         } else {

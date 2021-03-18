@@ -72,15 +72,15 @@ ImageMagick Studio.
 
 namespace BlitzScaleFilter{
 
-constexpr double MagickEpsilon = 1.0e-6;
-constexpr double MagickPI = 3.14159265358979323846264338327950288419716939937510;
+const double MagickEpsilon = 1.0e-6;
+const double MagickPI = 3.14159265358979323846264338327950288419716939937510;
 
 using ContributionInfo = struct{
     double weight;
     unsigned int pixel;
 };
 
-constexpr int checkEventsFreq = 25;
+const int checkEventsFreq = 25;
 
 bool horizontalFilter(const QImage *srcImg, QImage *destImg,
                       double x_factor, double blur,

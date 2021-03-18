@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets sql
+QT       += core gui widgets sql xml
 
 !win32 {
     QT += dbus
@@ -19,6 +19,10 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x050F00
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+    readers/textdoc/zabstracttextdocument.cpp \
+    readers/textdoc/zepubdocument.cpp \
+    readers/textdoc/ztxtdocument.cpp \
+    readers/ztextreader.cpp \
     zglobalprivate.cpp \
     zmangaview.cpp \
     zglobal.cpp \
@@ -42,9 +46,14 @@ SOURCES += main.cpp\
     readers/zrarreader.cpp \
     readers/zpdfreader.cpp \
     readers/zsingleimagereader.cpp \
-    readers/zimagesdirreader.cpp
+    readers/zimagesdirreader.cpp \
+    ztextdocumentcontroller.cpp
 
 HEADERS  += mainwindow.h \
+    readers/textdoc/zabstracttextdocument.h \
+    readers/textdoc/zepubdocument.h \
+    readers/textdoc/ztxtdocument.h \
+    readers/ztextreader.h \
     zglobalprivate.h \
     zmangaview.h \
     zglobal.h \
@@ -68,7 +77,8 @@ HEADERS  += mainwindow.h \
     readers/zrarreader.h \
     readers/zpdfreader.h \
     readers/zsingleimagereader.h \
-    readers/zimagesdirreader.h
+    readers/zimagesdirreader.h \
+    ztextdocumentcontroller.h
 
 FORMS    += \
     settingsdialog.ui \
@@ -94,6 +104,12 @@ LIBS += -lz -ltbb
         error("Dependency error: libzip not found.")
     }
 
+    packagesExist(icu-uc icu-i18n) {
+        PKGCONFIG += icu-uc icu-i18n
+    } else {
+        error("Dependency error: icu not found.");
+    }
+
     packagesExist(poppler-cpp) {
         packagesExist(poppler) {
             CONFIG += use_poppler
@@ -117,6 +133,18 @@ LIBS += -lz -ltbb
         message("Using DjVuLibre:      NO")
     }
 
+    exists(/usr/lib/libepub.so) {
+        CONFIG += use_epub
+        message("Using libepub:        YES")
+    } else {
+        exists(/usr/local/lib/libepub.so) {
+            CONFIG += use_epub
+            message("Using libepub:        YES")
+        } else {
+            message("Using libepub:        NO")
+        }
+    }
+
     use_poppler {
         DEFINES += WITH_POPPLER=1
         PKGCONFIG += poppler-cpp poppler
@@ -134,13 +162,18 @@ LIBS += -lz -ltbb
         PKGCONFIG += ddjvuapi
     }
 
+    use_epub {
+        DEFINES += WITH_EPUB=1
+        LIBS += -lepub
+    }
+
     DBUS_INTERFACES = org.kernel1024.jpreader.auxtranslator.xml \
         org.kernel1024.jpreader.browsercontroller.xml \
         org.qjrad.dictionary.xml
 }
 
 win32 {
-    PKGCONFIG += libzip
+    PKGCONFIG += libzip icu-uc icu-i18n
 
     DEFINES += WITH_POPPLER=1
     PKGCONFIG += poppler
@@ -152,6 +185,9 @@ win32 {
 
     DEFINES += WITH_DJVU=1
     PKGCONFIG += ddjvuapi
+
+    DEFINES += WITH_EPUB=1
+    LIBS += -lepub
 
     RC_FILE = qmanga.rc
 }

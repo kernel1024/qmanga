@@ -18,7 +18,7 @@ protected:
     void setOpenFileSuccess();
 
 public:
-    explicit ZAbstractReader(QObject *parent, const QString &filename);
+    ZAbstractReader(QObject *parent, const QString &filename);
     ~ZAbstractReader() override;
     bool openFile(const QString &filename);
     int getPageCount();
@@ -31,6 +31,7 @@ public:
     virtual QByteArray loadPage(int num) = 0;
     virtual QImage loadPageImage(int num) = 0;
     virtual QString getMagic() = 0;
+    virtual bool isPageDataSupported();
 
 private:
     bool m_opened { false };

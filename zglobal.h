@@ -4,12 +4,14 @@
 #include <QObject>
 #include <QMap>
 #include <QSettings>
+#include <QPageSize>
 #include "global.h"
 #include "ocreditor.h"
 
 class ZMangaModel;
 class ZMainWindow;
 class ZDB;
+class ZTextDocumentController;
 
 class ZGlobalPrivate;
 
@@ -36,6 +38,7 @@ public:
     qint64 getAvgFineRenderTime() const;
     ZDB *db() const;
     ZOCREditor *ocrEditor();
+    ZTextDocumentController *txtController();
 
     // settings management
     Blitz::ScaleFilterType getDownscaleFilter() const;
@@ -51,6 +54,7 @@ public:
     int getDetectedDelta() const;
     void setDetectedDelta(int value);
     int getScrollFactor() const;
+    int getTextDocMargin() const;
     qreal getDpiX() const;
     qreal getDpiY() const;
     qreal getForceDPI() const;
@@ -69,8 +73,10 @@ public:
     QColor getForegroundColor() const;
     QColor getBackgroundColor() const;
     QColor getFrameColor() const;
+    QColor getTextDocBkColor() const;
     QFont getIdxFont() const;
     QFont getOcrFont() const;
+    QFont getTextDocFont() const;
     QString getRarCmd() const;
     void setDefaultSearchEngine(const QString &value);
     QStringList getNewlyAddedFiles() const;
@@ -78,6 +84,7 @@ public:
     ZStrMap getBookmarks() const;
     void addBookmark(const QString& title, const QString& filename);
     ZStrMap getCtxSearchEngines() const;
+    QPageSize getTextDocPageSize() const;
 
 public Q_SLOTS:
     void settingsDlg();

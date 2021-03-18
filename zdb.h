@@ -7,13 +7,12 @@
 #include "readers/zabstractreader.h"
 #include "global.h"
 
-constexpr int dynamicAlbumParent = -2;
-
 class ZDB : public QObject
 {
     Q_OBJECT
-private:
     Q_DISABLE_COPY(ZDB)
+private:
+    static inline const int dynamicAlbumParent { -2 };
 
     bool m_wasCanceled;
     QString m_dbHost;
@@ -51,6 +50,8 @@ public:
     QStringList sqlGetIgnoredFiles() const;
     Z::PDFRendering getPreferredRendering(const QString& filename) const;
     Z::Ordering getDynAlbumOrdering(const QString &album, Qt::SortOrder &order) const;
+    static bool isDynamicAlbumParent(int parentId);
+    static int getDynamicAlbumParent();
 
 Q_SIGNALS:
     void errorMsg(const QString& msg);

@@ -7,10 +7,12 @@
 #include <QList>
 #include <QFileSystemWatcher>
 #include <QMutex>
+#include <QPageSize>
 #include <QScopedPointer>
 #include "global.h"
 #include "scalefilter.h"
 #include "zglobal.h"
+#include "ztextdocumentcontroller.h"
 
 class ZMainWindow;
 
@@ -33,6 +35,7 @@ public:
     int m_scrollDelta { ZDefaults::scrollDelta };
     int m_detectedDelta { ZDefaults::scrollDelta };
     int m_scrollFactor { ZDefaults::scrollFactor };
+    int m_textDocMargin { ZDefaults::textDocMargin };
     qreal m_dpiX { ZDefaults::standardDPI };
     qreal m_dpiY { ZDefaults::standardDPI };
     qreal m_forceDPI { ZDefaults::forceDPI };
@@ -54,8 +57,11 @@ public:
 
     QColor m_backgroundColor;
     QColor m_frameColor;
+    QColor m_textDocBkColor;
     QFont m_idxFont;
     QFont m_ocrFont;
+    QFont m_textDocFont;
+    QPageSize m_textDocPageSize;
     QMutex m_fineRenderMutex;
 
     QHash<QString,QStringList> m_dirWatchList;
@@ -71,6 +77,7 @@ public:
     QScopedPointer<QFileSystemWatcher, QScopedPointerDeleteLater> fsWatcher;
     QScopedPointer<ZOCREditor, QScopedPointerDeleteLater> m_ocrEditor;
     QScopedPointer<QThread, QScopedPointerDeleteLater> m_threadDB;
+    QScopedPointer<ZTextDocumentController, QScopedPointerDeleteLater> m_txtController;
 
     QPointer<ZMainWindow> m_mainWindow;
 

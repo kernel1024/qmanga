@@ -53,6 +53,11 @@ void ZAbstractReader::closeFile()
     m_sortList.clear();
 }
 
+bool ZAbstractReader::isPageDataSupported()
+{
+    return true;
+}
+
 void ZAbstractReader::postMessage(const QString &msg)
 {
     auto *loader = qobject_cast<ZMangaLoader *>(parent());

@@ -23,8 +23,8 @@
 #include "ui_zsearchtab.h"
 
 namespace ZDefaults {
-constexpr int stackIcons = 0;
-constexpr int stackTable = 1;
+const int stackIcons = 0;
+const int stackTable = 1;
 }
 
 ZSearchTab::ZSearchTab(QWidget *parent) :
@@ -878,11 +878,11 @@ void ZSearchTab::dbAlbumsListReady(const ZAlbumVector &albums)
         if (album.parent>=0 && items.contains(album.parent)) {
             items[album.parent]->addChild(items.value(album.id));
 
-        } else if (album.parent == dynamicAlbumParent) {
+        } else if (ZDB::isDynamicAlbumParent(album.parent)) {
             if (!dynRoot) {
                 dynRoot = new QTreeWidgetItem();
                 dynRoot->setText(0,tr("Dynamic albums"));
-                dynRoot->setData(0,Qt::UserRole,dynamicAlbumParent);
+                dynRoot->setData(0,Qt::UserRole,ZDB::getDynamicAlbumParent());
             }
             dynRoot->addChild(items.value(album.id));
 

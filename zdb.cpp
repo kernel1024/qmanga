@@ -82,6 +82,16 @@ Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order)
     return Z::ordUndefined;
 }
 
+bool ZDB::isDynamicAlbumParent(int parentId)
+{
+    return (parentId == dynamicAlbumParent);
+}
+
+int ZDB::getDynamicAlbumParent()
+{
+    return dynamicAlbumParent;
+}
+
 ZStrHash ZDB::getConfigProblems() const
 {
     return m_problems;
@@ -467,15 +477,15 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search)
     QElapsedTimer tmr;
     tmr.start();
 
-    constexpr int fldName = 0;
-    constexpr int fldPagesCount = 3;
-    constexpr int fldFileSize = 4;
-    constexpr int fldFileMagic = 5;
-    constexpr int fldFileDate = 6;
-    constexpr int fldFileAdded = 7;
-    constexpr int fldID = 8;
-    constexpr int fldAlbumName = 9;
-    constexpr int fldPreferredRendering = 10;
+    const int fldName = 0;
+    const int fldPagesCount = 3;
+    const int fldFileSize = 4;
+    const int fldFileMagic = 5;
+    const int fldFileDate = 6;
+    const int fldFileAdded = 7;
+    const int fldID = 8;
+    const int fldAlbumName = 9;
+    const int fldPreferredRendering = 10;
     QString tqr = QSL("SELECT files.name, filename, cover, pagesCount, fileSize, "
                                  "fileMagic, fileDT, addingDT, files.id, albums.name, "
                                  "files.preferredRendering "
@@ -1090,15 +1100,15 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
         QByteArray pba = createMangaPreview(za,0);
 
-        constexpr int fldName = 0;
-        constexpr int fldFilename = 1;
-        constexpr int fldAlbum = 2;
-        constexpr int fldCover = 3;
-        constexpr int fldPagesCount = 4;
-        constexpr int fldFileSize = 5;
-        constexpr int fldFileMagic = 6;
-        constexpr int fldFileDate = 7;
-        constexpr int fldFileAdded = 8;
+        const int fldName = 0;
+        const int fldFilename = 1;
+        const int fldAlbum = 2;
+        const int fldCover = 3;
+        const int fldPagesCount = 4;
+        const int fldFileSize = 5;
+        const int fldFileMagic = 6;
+        const int fldFileDate = 7;
+        const int fldFileAdded = 8;
         qr.prepare(QSL("INSERT INTO files (name, filename, album, cover, "
                                   "pagesCount, fileSize, fileMagic, fileDT, addingDT) "
                                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"));
@@ -1154,8 +1164,14 @@ QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
     while (idx<za->getPageCount()) {
         p = QImage();
         pb = za->loadPage(idx);
-        if (p.loadFromData(pb)) {
-            break;
+        if (!pb.isEmpty()) {
+            if (p.loadFromData(pb)) {
+                break;
+            }
+        } else {
+            p = za->loadPageImage(idx);
+            if (!p.isNull())
+                break;
         }
         idx++;
     }
@@ -1229,15 +1245,15 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
     // add dynamic album to base
     int cnt = 0;
-    constexpr int fldName = 0;
-    constexpr int fldFilename = 1;
-    constexpr int fldAlbum = 2;
-    constexpr int fldCover = 3;
-    constexpr int fldPagesCount = 4;
-    constexpr int fldFileSize = 5;
-    constexpr int fldFileMagic = 6;
-    constexpr int fldFileDate = 7;
-    constexpr int fldFileAdded = 8;
+    const int fldName = 0;
+    const int fldFilename = 1;
+    const int fldAlbum = 2;
+    const int fldCover = 3;
+    const int fldPagesCount = 4;
+    const int fldFileSize = 5;
+    const int fldFileMagic = 6;
+    const int fldFileDate = 7;
+    const int fldFileAdded = 8;
     qr.prepare(QSL("INSERT INTO files (name, filename, album, cover, pagesCount, "
                               "fileSize, fileMagic, fileDT, addingDT) VALUES "
                               "(?, ?, ?, ?, ?, ?, ?, ?, ?)"));

@@ -1,16 +1,8 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
-#include <QWidget>
 #include <QDialog>
-#include <QComboBox>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QLineEdit>
-#include <QListWidget>
-#include <QRadioButton>
-#include <QCheckBox>
-#include <QLabel>
+#include <QPageSize>
 
 #include "zglobal.h"
 
@@ -26,10 +18,12 @@ public:
 
     explicit ZSettingsDialog(QWidget *parent = nullptr);
     ~ZSettingsDialog() override;
-    QColor getBkColor() const;
     QFont getIdxFont() const;
     QFont getOCRFont() const;
+    QFont getTextDocFont() const;
+    QColor getBkColor() const;
     QColor getFrameColor() const;
+    QColor getTextDocBkColor() const;
     QStringList getIgnoredFiles() const;
     void setIgnoredFiles(const QStringList &files) const;
     void setSearchEngines(const ZStrMap &engines) const;
@@ -38,20 +32,26 @@ public:
     QString getTranSourceLanguage() const;
     QString getTranDestLanguage() const;
     void updateTranslatorLanguages() const;
+    QPageSize getTextDocPageSize() const;
+    void setTextDocPageSize(const QPageSize& size) const;
 
 Q_SIGNALS:
     void getTablesDescription();
 
 public Q_SLOTS:
     void delListWidgetItem();
-    void bkColorDlg();
     void idxFontDlg();
     void ocrFontDlg();
+    void textDocFontDlg();
+    void bkColorDlg();
     void frameColorDlg();
-    void updateBkColor(const QColor &c) const;
+    void textDocBkColorDlg();
     void updateIdxFont(const QFont &f) const;
     void updateOCRFont(const QFont &f) const;
+    void updateTextDocFont(const QFont &f) const;
+    void updateBkColor(const QColor &c) const;
     void updateFrameColor(const QColor &c) const;
+    void updateTextDocBkColor(const QColor &c) const;
     void dynAdd();
     void dynEdit();
     void openRar(); 
@@ -61,6 +61,7 @@ public Q_SLOTS:
     void updateSQLFields(bool checked) const;
     void ocrDatapathDlg();
     void updateOCRLanguages() const;
+    void updateTextPageSizes(int idx) const;
 
 private:
     Q_DISABLE_COPY(ZSettingsDialog)

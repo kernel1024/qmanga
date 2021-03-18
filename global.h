@@ -25,37 +25,38 @@
 #define zF (ZGenericFuncs::instance())
 
 namespace ZDefaults {
-constexpr int oneMinuteMS = 60000;
-constexpr int oneSecondMS = 1000;
-constexpr int resizeTimerInitialMS = 500;
-constexpr int resizeTimerDiffMS = 200;
-constexpr int maxImageFileSize = 150*1024*1024;
-constexpr int minPreviewSize = 16;
-constexpr int maxPreviewSize = 500;
-constexpr int previewSize = 128;
-constexpr int albumListWidth = 90;
-constexpr int previewWidthMargin = 25;
-constexpr int maxDescriptionStringLength = 80;
-constexpr int avgSizeSamplesCount = 10;
-constexpr int exportFilenameNumWidth = 10;
-constexpr int ocrSquareMinimumSize = 20;
-constexpr int errorPageLoadMsgVerticalMargin = 5;
-constexpr int fileScannerStaticPercentage = 25;
-constexpr int maxSQLUpdateStringListSize = 64;
-constexpr int magnifySize = 150;
-constexpr int scrollDelta = 120;
-constexpr int scrollFactor = 5;
-constexpr int cacheWidth = 6;
-constexpr int magicBlockSize = 1024;
-constexpr double previewProps = 364.0/257.0; // B4 paper proportions
-constexpr double oneSecondMSf = 1000.0;
-constexpr double dynamicZoomUpScale = 3.0;
-constexpr double searchScrollFactor = 0.1;
-constexpr double resizeBlur = 1.0;
-constexpr double forceDPI = -1.0;
-constexpr double standardDPI = 75.0;
-constexpr QSize maxDictTooltipSize = QSize(350,350);
-constexpr qint64 copyBlockSize = 2*1024*1024L;
+const int oneMinuteMS = 60000;
+const int oneSecondMS = 1000;
+const int resizeTimerInitialMS = 500;
+const int resizeTimerDiffMS = 200;
+const int maxImageFileSize = 150*1024*1024;
+const int minPreviewSize = 16;
+const int maxPreviewSize = 500;
+const int previewSize = 128;
+const int albumListWidth = 90;
+const int previewWidthMargin = 25;
+const int maxDescriptionStringLength = 80;
+const int avgSizeSamplesCount = 10;
+const int exportFilenameNumWidth = 10;
+const int ocrSquareMinimumSize = 20;
+const int errorPageLoadMsgVerticalMargin = 5;
+const int fileScannerStaticPercentage = 25;
+const int maxSQLUpdateStringListSize = 64;
+const int magnifySize = 150;
+const int scrollDelta = 120;
+const int scrollFactor = 5;
+const int cacheWidth = 6;
+const int magicBlockSize = 1024;
+const int textDocMargin = 20;
+const double previewProps = 364.0/257.0; // B4 paper proportions
+const double oneSecondMSf = 1000.0;
+const double dynamicZoomUpScale = 3.0;
+const double searchScrollFactor = 0.1;
+const double resizeBlur = 1.0;
+const double forceDPI = -1.0;
+const double standardDPI = 75.0;
+const QSize maxDictTooltipSize = QSize(350,350);
+const qint64 copyBlockSize = 2*1024*1024L;
 }
 
 class ZAbstractReader;
@@ -217,6 +218,8 @@ public:
                                                                            QFileDialog::DontUseNativeDialog);
     QString detectMIME(const QString &filename);
     QString detectMIME(const QByteArray &buf);
+    QString detectEncodingName(const QByteArray &content);
+    QString detectDecodeToUnicode(const QByteArray &content);
     QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
                               Blitz::ScaleFilterType filter = Blitz::LanczosFilter, int page = -1,
                               const int *currentPage = nullptr);

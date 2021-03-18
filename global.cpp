@@ -9,10 +9,21 @@
 #include <QRegularExpression>
 #include <iostream>
 #include <clocale>
+#include <vector>
 #include <QDebug>
+
+#include <unicode/utypes.h>
+#include <unicode/localpointer.h>
+#include <unicode/uenum.h>
+#include <unicode/ucsdet.h>
+#include <unicode/ucnv.h>
 
 #include "zmangaloader.h"
 #include "global.h"
+#include "zglobal.h"
+#include "zmangaview.h"
+#include "scalefilter.h"
+
 #include "readers/zabstractreader.h"
 #include "readers/zzipreader.h"
 #include "readers/zrarreader.h"
@@ -20,9 +31,7 @@
 #include "readers/zdjvureader.h"
 #include "readers/zimagesdirreader.h"
 #include "readers/zsingleimagereader.h"
-#include "zglobal.h"
-#include "zmangaview.h"
-#include "scalefilter.h"
+#include "readers/ztextreader.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -46,7 +55,7 @@ ZGenericFuncs *ZGenericFuncs::instance()
             return inst.data();
         }
 
-        qFatal("Accessing to zF after destruction!!!");
+        qFatal("Accessing to zF after destruction!!!"); // NOLINT
         return nullptr;
     }
 
@@ -129,9 +138,14 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
 
     QFileInfo fi(filename);
     if (!fi.exists()) return nullptr;
-
     QString mime = detectMIME(filename).toLower();
-    if (mime.contains(QSL("application/zip"),Qt::CaseInsensitive)) {
+
+    // First try text reader on any file. Text docs doesn't have correct MIME most of time.
+    if (ZTextReader::preloadFile(filename,createReader)) {
+        if (createReader)
+            return new ZTextReader(parent,filename);
+
+    } else if (mime.contains(QSL("application/zip"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZZipReader(parent,filename);
 
@@ -407,6 +421,55 @@ QString ZGenericFuncs::detectMIME(const QByteArray &buf)
             return (*it).second;
     }
     return QSL("text/plain");
+}
+
+QString ZGenericFuncs::detectEncodingName(const QByteArray& content)
+{
+    QString res;
+    QByteArray icu_enc;
+    UErrorCode status = U_ZERO_ERROR;
+    UCharsetDetector* csd = ucsdet_open(&status);
+    ucsdet_setText(csd, content.constData(), content.length(), &status);
+    const UCharsetMatch *ucm = ucsdet_detect(csd, &status);
+    if (U_SUCCESS(status) && (ucm != nullptr)) {
+        const char* cname = ucsdet_getName(ucm,&status);
+        if (U_SUCCESS(status))
+            icu_enc = QByteArray(cname);
+    }
+    if (!icu_enc.isEmpty())
+        res = QString::fromUtf8(icu_enc);
+    ucsdet_close(csd);
+
+    return res;
+}
+
+QString ZGenericFuncs::detectDecodeToUnicode(const QByteArray& content)
+{
+    if (content.isEmpty())
+        return QString();
+
+    UErrorCode status = U_ZERO_ERROR;
+    UConverter *conv = nullptr;
+
+    auto cleanup = qScopeGuard([&conv]{
+        if (conv)
+            ucnv_close(conv);
+    });
+
+    const QString encoding = detectEncodingName(content);
+    if (encoding.isEmpty())
+        return QString::fromUtf8(content); // fallback
+
+    conv = ucnv_open(encoding.toUtf8().constData(),&status);
+    if (!U_SUCCESS(status) && (conv == nullptr))
+        return QString::fromUtf8(content);
+
+    std::vector<UChar> targetBuf(content.length() / static_cast<uint8_t>(ucnv_getMinCharSize(conv)));
+    int len = ucnv_toUChars(conv,&targetBuf[0],targetBuf.size(),content.constData(),content.length(),&status);
+    if (!U_SUCCESS(status))
+        return QString::fromUtf8(content);
+
+    return QString::fromUtf16(&targetBuf[0],len);
 }
 
 QImage ZGenericFuncs::resizeImage(const QImage& src, const QSize& targetSize, bool forceFilter,

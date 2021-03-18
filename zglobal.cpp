@@ -128,6 +128,29 @@ void ZGlobal::loadSettings()
     if (!d->m_frameColor.isValid())
         d->m_frameColor = QColor(Qt::lightGray);
 
+    d->m_textDocMargin = settings.value(QSL("textDocMargin"),ZDefaults::textDocMargin).toInt();
+    d->m_textDocBkColor = QColor(settings.value(QSL("textDocBkColor"),
+                                                QApplication::palette("QWidget").base().color().name()).toString());
+    if (!d->m_textDocFont.fromString(settings.value(QSL("textDocFont"),QString()).toString()))
+        d->m_textDocFont = QApplication::font("QTextEdit");
+    if (!d->m_textDocBkColor.isValid())
+        d->m_textDocBkColor = QApplication::palette("QWidget").base().color();
+
+    int psId = settings.value(QSL("textDocPageSize_id"),-1).toInt();
+    if ((psId >= 0) && (psId < static_cast<int>(QPageSize::PageSizeId::LastPageSize))) {
+        auto id = static_cast<QPageSize::PageSizeId>(psId);
+        if (id == QPageSize::PageSizeId::Custom) {
+            int w = settings.value(QSL("textDocPageSize_width"),0).toInt();
+            int h = settings.value(QSL("textDocPageSize_height"),0).toInt();
+            if ((w > 0) && (h > 0))
+                d->m_textDocPageSize = QPageSize(QSize(w,h),QString(),QPageSize::ExactMatch);
+        } else {
+            d->m_textDocPageSize = QPageSize(id);
+        }
+    }
+    if (!d->m_textDocPageSize.isValid())
+        d->m_textDocPageSize = QPageSize(QPageSize::A5); // default
+
     bool showMaximized = settings.value(QSL("maximized"),false).toBool();
 
     d->m_bookmarks = settings.value(QSL("bookmarks")).value<ZStrMap>();
@@ -189,6 +212,12 @@ void ZGlobal::saveSettings()
     settings.setValue(QSL("ctxSearchEngines"),QVariant::fromValue(d->m_ctxSearchEngines));
     settings.setValue(QSL("tranSourceLanguage"),d->m_tranSourceLang);
     settings.setValue(QSL("tranDestLanguage"),d->m_tranDestLang);
+    settings.setValue(QSL("textDocMargin"),d->m_textDocMargin);
+    settings.setValue(QSL("textDocBkColor"),d->m_textDocBkColor.name());
+    settings.setValue(QSL("textDocFont"),d->m_textDocFont.toString());
+    settings.setValue(QSL("textDocPageSize_id"),d->m_textDocPageSize.id());
+    settings.setValue(QSL("textDocPageSize_width"),d->m_textDocPageSize.sizePoints().width());
+    settings.setValue(QSL("textDocPageSize_height"),d->m_textDocPageSize.sizePoints().height());
 
     if (d->m_mainWindow)
         settings.setValue(QSL("maximized"),d->m_mainWindow->isMaximized());
@@ -261,18 +290,18 @@ QColor ZGlobal::getForegroundColor() const
 {
     Q_D(const ZGlobal);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    constexpr float redLuma = 0.2989;
-    constexpr float greenLuma = 0.5870;
-    constexpr float blueLuma = 0.1140;
-    constexpr float halfLuma = 0.5;
+    const float redLuma = 0.2989;
+    const float greenLuma = 0.5870;
+    const float blueLuma = 0.1140;
+    const float halfLuma = 0.5;
     float r = 0.0;
     float g = 0.0;
     float b = 0.0;
 #else
-    constexpr qreal redLuma = 0.2989;
-    constexpr qreal greenLuma = 0.5870;
-    constexpr qreal blueLuma = 0.1140;
-    constexpr qreal halfLuma = 0.5;
+    const qreal redLuma = 0.2989;
+    const qreal greenLuma = 0.5870;
+    const qreal blueLuma = 0.1140;
+    const qreal halfLuma = 0.5;
     qreal r = 0.0;
     qreal g = 0.0;
     qreal b = 0.0;
@@ -326,6 +355,7 @@ void ZGlobal::settingsDlg()
     dlg.ui->spinScrollDelta->setValue(d->m_scrollDelta);
     dlg.ui->spinScrollFactor->setValue(d->m_scrollFactor);
     dlg.ui->spinSearchScrollFactor->setValue(d->m_searchScrollFactor);
+    dlg.ui->spinTextMargin->setValue(d->m_textDocMargin);
     dlg.ui->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(d->m_detectedDelta));
     if (d->m_cachePixmaps) {
         dlg.ui->rbCachePixmaps->setChecked(true);
@@ -338,10 +368,13 @@ void ZGlobal::settingsDlg()
         dlg.ui->rbSQLite->setChecked(true);
     }
     dlg.ui->checkFineRendering->setChecked(d->m_useFineRendering);
-    dlg.updateBkColor(d->m_backgroundColor);
     dlg.updateIdxFont(d->m_idxFont);
     dlg.updateOCRFont(d->m_ocrFont);
+    dlg.updateTextDocFont(d->m_textDocFont);
+    dlg.updateBkColor(d->m_backgroundColor);
     dlg.updateFrameColor(d->m_frameColor);
+    dlg.updateTextDocBkColor(d->m_textDocBkColor);
+    dlg.setTextDocPageSize(d->m_textDocPageSize);
     dlg.ui->checkFSWatcher->setChecked(d->m_filesystemWatcher);
     dlg.ui->comboUpscaleFilter->setCurrentIndex(static_cast<int>(d->m_upscaleFilter));
     dlg.ui->comboDownscaleFilter->setCurrentIndex(static_cast<int>(d->m_downscaleFilter));
@@ -393,10 +426,14 @@ void ZGlobal::settingsDlg()
         d->m_scrollDelta=dlg.ui->spinScrollDelta->value();
         d->m_scrollFactor=dlg.ui->spinScrollFactor->value();
         d->m_searchScrollFactor=dlg.ui->spinSearchScrollFactor->value();
+        d->m_textDocMargin=dlg.ui->spinTextMargin->value();
         d->m_backgroundColor=dlg.getBkColor();
         d->m_frameColor=dlg.getFrameColor();
+        d->m_textDocBkColor=dlg.getTextDocBkColor();
         d->m_idxFont=dlg.getIdxFont();
         d->m_ocrFont=dlg.getOCRFont();
+        d->m_textDocFont=dlg.getTextDocFont();
+        d->m_textDocPageSize=dlg.getTextDocPageSize();
         d->m_cachePixmaps=dlg.ui->rbCachePixmaps->isChecked();
         d->m_useFineRendering=dlg.ui->checkFineRendering->isChecked();
         d->m_filesystemWatcher=dlg.ui->checkFSWatcher->isChecked();
@@ -542,6 +579,12 @@ int ZGlobal::getScrollFactor() const
     return d->m_scrollFactor;
 }
 
+int ZGlobal::getTextDocMargin() const
+{
+    Q_D(const ZGlobal);
+    return d->m_textDocMargin;
+}
+
 int ZGlobal::getDetectedDelta() const
 {
     Q_D(const ZGlobal);
@@ -674,6 +717,12 @@ QColor ZGlobal::getFrameColor() const
     return d->m_frameColor;
 }
 
+QColor ZGlobal::getTextDocBkColor() const
+{
+    Q_D(const ZGlobal);
+    return d->m_textDocBkColor;
+}
+
 QFont ZGlobal::getIdxFont() const
 {
     Q_D(const ZGlobal);
@@ -684,6 +733,12 @@ QFont ZGlobal::getOcrFont() const
 {
     Q_D(const ZGlobal);
     return d->m_ocrFont;
+}
+
+QFont ZGlobal::getTextDocFont() const
+{
+    Q_D(const ZGlobal);
+    return d->m_textDocFont;
 }
 
 QString ZGlobal::getRarCmd() const
@@ -728,6 +783,12 @@ ZStrMap ZGlobal::getCtxSearchEngines() const
     return d->m_ctxSearchEngines;
 }
 
+QPageSize ZGlobal::getTextDocPageSize() const
+{
+    Q_D(const ZGlobal);
+    return d->m_textDocPageSize;
+}
+
 ZDB *ZGlobal::db() const
 {
     Q_D(const ZGlobal);
@@ -741,6 +802,12 @@ ZOCREditor *ZGlobal::ocrEditor()
         d->m_ocrEditor.reset(new ZOCREditor(d->m_mainWindow));
 
     return d->m_ocrEditor.data();
+}
+
+ZTextDocumentController *ZGlobal::txtController()
+{
+    Q_D(ZGlobal);
+    return d->m_txtController.data();
 }
 
 void ZGlobal::setDPI(qreal x, qreal y)

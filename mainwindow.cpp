@@ -159,10 +159,10 @@ ZMainWindow::~ZMainWindow()
 
 void ZMainWindow::centerWindow(bool moveWindow)
 {
-    constexpr int initialHeightFrac = 80;
-    constexpr int initialWidthFrac = 135;
-    constexpr int maxWidth = 1000;
-    constexpr int maxWidthFrac = 80;
+    const int initialHeightFrac = 80;
+    const int initialWidthFrac = 135;
+    const int maxWidth = 1000;
+    const int maxWidthFrac = 80;
 
     QScreen *screen = nullptr;
 

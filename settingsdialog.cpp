@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QFileInfoList>
 #include <QMessageBox>
+#include <QPageSize>
 
 #include "settingsdialog.h"
 #include "bookmarkdlg.h"
@@ -26,10 +27,12 @@ ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
 #endif
 
     connect(ui->btnDeleteBookmark,&QPushButton::clicked,this,&ZSettingsDialog::delListWidgetItem);
-    connect(ui->btnBkColor,&QPushButton::clicked,this,&ZSettingsDialog::bkColorDlg);
     connect(ui->btnFontIndexer,&QPushButton::clicked,this,&ZSettingsDialog::idxFontDlg);
     connect(ui->btnFontOCR,&QPushButton::clicked,this,&ZSettingsDialog::ocrFontDlg);
+    connect(ui->btnFontText,&QPushButton::clicked,this,&ZSettingsDialog::textDocFontDlg);
+    connect(ui->btnBkColor,&QPushButton::clicked,this,&ZSettingsDialog::bkColorDlg);
     connect(ui->btnFrameColor,&QPushButton::clicked,this,&ZSettingsDialog::frameColorDlg);
+    connect(ui->btnTextBkColor,&QPushButton::clicked,this,&ZSettingsDialog::textDocBkColorDlg);
     connect(ui->btnRar,&QToolButton::clicked,this,&ZSettingsDialog::openRar);
 
     connect(ui->btnDynAdd,&QPushButton::clicked,this,&ZSettingsDialog::dynAdd);
@@ -46,6 +49,8 @@ ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
 
     connect(ui->btnOCRDatapath, &QPushButton::clicked, this, &ZSettingsDialog::ocrDatapathDlg);
 
+    connect(ui->comboTextPageSize, &QComboBox::currentIndexChanged, this, &ZSettingsDialog::updateTextPageSizes);
+
 #ifndef WITH_OCR
     ui->groupTesseract->setEnabled(false);
 #else
@@ -61,9 +66,18 @@ ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
     updateSQLFields(false);
 
     updateBkColor(QApplication::palette("QWidget").dark().color());
+    updateTextDocBkColor(QApplication::palette("QWidget").base().color());
     updateFrameColor(QColor(Qt::lightGray));
     updateIdxFont(QApplication::font("QListView"));
     updateOCRFont(QApplication::font("QPlainTextView"));
+    updateTextDocFont(QApplication::font("QTextEdit"));
+
+    for (auto i=0; i<static_cast<int>(QPageSize::PageSizeId::LastPageSize); i++) {
+        const QPageSize ps(static_cast<QPageSize::PageSizeId>(i));
+        if (!ps.isValid()) continue;
+        if (ps.name().isEmpty()) continue;
+        ui->comboTextPageSize->addItem(ps.name(),static_cast<int>(ps.id()));
+    }
 }
 
 ZSettingsDialog::~ZSettingsDialog()
@@ -81,6 +95,11 @@ QColor ZSettingsDialog::getFrameColor() const
     return ui->frameFrameColor->palette().brush(QPalette::Window).color();
 }
 
+QColor ZSettingsDialog::getTextDocBkColor() const
+{
+    return ui->frameTextBkColor->palette().brush(QPalette::Window).color();
+}
+
 QFont ZSettingsDialog::getIdxFont() const
 {
     return ui->labelIdxFont->font();
@@ -89,6 +108,11 @@ QFont ZSettingsDialog::getIdxFont() const
 QFont ZSettingsDialog::getOCRFont() const
 {
     return ui->labelOCRFont->font();
+}
+
+QFont ZSettingsDialog::getTextDocFont() const
+{
+    return ui->labelTextFont->font();
 }
 
 QStringList ZSettingsDialog::getIgnoredFiles() const
@@ -176,6 +200,56 @@ void ZSettingsDialog::updateOCRLanguages() const
         }
     }
 #endif
+}
+
+void ZSettingsDialog::updateTextPageSizes(int idx) const
+{
+    bool ok = false;
+    auto id = static_cast<QPageSize::PageSizeId>(ui->comboTextPageSize->itemData(idx).toInt(&ok));
+    if (!ok) return;
+
+    QPageSize ps;
+    if (id == QPageSize::PageSizeId::Custom) {
+        ps = QPageSize(QSize(ui->spinTextWidth->value(),
+                             ui->spinTextHeight->value()),QString(),QPageSize::ExactMatch);
+    } else {
+        ps = QPageSize(id);
+    }
+    if (!ps.isValid()) return;
+
+    ui->spinTextWidth->setEnabled(id == QPageSize::PageSizeId::Custom);
+    ui->spinTextHeight->setEnabled(id == QPageSize::PageSizeId::Custom);
+
+    ui->spinTextWidth->setValue(ps.sizePoints().width());
+    ui->spinTextHeight->setValue(ps.sizePoints().height());
+}
+
+QPageSize ZSettingsDialog::getTextDocPageSize() const
+{
+    bool ok = false;
+    auto id = static_cast<QPageSize::PageSizeId>(ui->comboTextPageSize->currentData().toInt(&ok));
+
+    if (!ok)
+        return QPageSize();
+
+    if (id != QPageSize::PageSizeId::Custom)
+        return QPageSize(id);
+
+    return QPageSize(QSize(ui->spinTextWidth->value(),
+                           ui->spinTextHeight->value()),QString(),QPageSize::ExactMatch);
+}
+
+void ZSettingsDialog::setTextDocPageSize(const QPageSize &size) const
+{
+    int idx = ui->comboTextPageSize->findData(static_cast<int>(size.id()));
+    if (idx<0 || idx>=ui->comboTextPageSize->count())
+        idx = 0;
+
+    if (size.id() == QPageSize::PageSizeId::Custom) {
+        ui->spinTextWidth->setValue(size.sizePoints().width());
+        ui->spinTextHeight->setValue(size.sizePoints().height());
+    }
+    ui->comboTextPageSize->setCurrentIndex(idx);
 }
 
 void ZSettingsDialog::updateTranslatorLanguages() const
@@ -313,11 +387,26 @@ void ZSettingsDialog::ocrFontDlg()
     updateOCRFont(f);
 }
 
+void ZSettingsDialog::textDocFontDlg()
+{
+    bool ok = false;
+    QFont f = QFontDialog::getFont(&ok,getTextDocFont(),this);
+    if (!ok) return;
+    updateTextDocFont(f);
+}
+
 void ZSettingsDialog::frameColorDlg()
 {
     QColor c = QColorDialog::getColor(getFrameColor(),this);
     if (!c.isValid()) return;
     updateFrameColor(c);
+}
+
+void ZSettingsDialog::textDocBkColorDlg()
+{
+    QColor c = QColorDialog::getColor(getTextDocBkColor(),this);
+    if (!c.isValid()) return;
+    updateTextDocBkColor(c);
 }
 
 void ZSettingsDialog::updateBkColor(const QColor &c) const
@@ -334,6 +423,13 @@ void ZSettingsDialog::updateFrameColor(const QColor &c) const
     ui->frameFrameColor->setPalette(p);
 }
 
+void ZSettingsDialog::updateTextDocBkColor(const QColor &c) const
+{
+    QPalette p = ui->frameTextBkColor->palette();
+    p.setBrush(QPalette::Window,QBrush(c));
+    ui->frameTextBkColor->setPalette(p);
+}
+
 void ZSettingsDialog::updateIdxFont(const QFont &f) const
 {
     ui->labelIdxFont->setFont(f);
@@ -344,6 +440,12 @@ void ZSettingsDialog::updateOCRFont(const QFont &f) const
 {
     ui->labelOCRFont->setFont(f);
     ui->labelOCRFont->setText(QSL("%1, %2").arg(f.family()).arg(f.pointSize()));
+}
+
+void ZSettingsDialog::updateTextDocFont(const QFont &f) const
+{
+    ui->labelTextFont->setFont(f);
+    ui->labelTextFont->setText(QSL("%1, %2").arg(f.family()).arg(f.pointSize()));
 }
 
 void ZSettingsDialog::dynAdd()

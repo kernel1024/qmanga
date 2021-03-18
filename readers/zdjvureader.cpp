@@ -10,10 +10,7 @@ ZDjVuReader::ZDjVuReader(QObject *parent, const QString &filename)
 {
 }
 
-ZDjVuReader::~ZDjVuReader()
-{
-    closeFile();
-}
+ZDjVuReader::~ZDjVuReader() = default;
 
 bool ZDjVuReader::openFile()
 {
@@ -27,8 +24,8 @@ bool ZDjVuReader::openFile()
         return false;
     }
 
-    constexpr int pageCounterWidth = 6;
-    constexpr int pageCounterBase = 10;
+    const int pageCounterWidth = 6;
+    const int pageCounterBase = 10;
     for (int i=0;i<numPages;i++) {
         addSortEntry(QSL("%1").arg(i,pageCounterWidth,pageCounterBase,QChar('0')),i);
     }
