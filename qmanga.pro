@@ -38,7 +38,7 @@ SOURCES += main.cpp\
     ocreditor.cpp \
     zexportdialog.cpp \
     zfilecopier.cpp \
-    scalefilter.cpp \
+    imagescale/scalefilter.cpp \
     multiinputdialog.cpp \
     readers/zdjvureader.cpp \
     readers/zabstractreader.cpp \
@@ -69,7 +69,7 @@ HEADERS  += mainwindow.h \
     ocreditor.h \
     zexportdialog.h \
     zfilecopier.h \
-    scalefilter.h \
+    imagescale/scalefilter.h \
     multiinputdialog.h \
     readers/zdjvureader.h \
     readers/zabstractreader.h \

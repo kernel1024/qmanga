@@ -18,7 +18,7 @@
 #include <leptonica/allheaders.h>
 #endif // WITH_OCR
 
-#include "scalefilter.h"
+#include "imagescale/scalefilter.h"
 
 #define QSL QStringLiteral // NOLINT
 #define QBAL QByteArrayLiteral // NOLINT

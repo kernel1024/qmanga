@@ -18,6 +18,7 @@ ui_*.h
 qrc_*.cpp
 Debug/
 Release/
+build-*
 *.log
 .*.stash
 moc_*.h

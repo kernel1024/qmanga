@@ -10,7 +10,7 @@
 #include <QPageSize>
 #include <QScopedPointer>
 #include "global.h"
-#include "scalefilter.h"
+#include "imagescale/scalefilter.h"
 #include "zglobal.h"
 #include "ztextdocumentcontroller.h"
 

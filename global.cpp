@@ -22,7 +22,7 @@
 #include "global.h"
 #include "zglobal.h"
 #include "zmangaview.h"
-#include "scalefilter.h"
+#include "imagescale/scalefilter.h"
 
 #include "readers/zabstractreader.h"
 #include "readers/zzipreader.h"
