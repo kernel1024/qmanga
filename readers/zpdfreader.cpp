@@ -30,9 +30,6 @@ extern "C" {
 ZPdfReader::ZPdfReader(QObject *parent, const QString &filename) :
     ZAbstractReader(parent,filename)
 {
-#ifdef WITH_POPPLER
-    m_doc = nullptr;
-#endif
 }
 
 ZPdfReader::~ZPdfReader() = default;
@@ -178,8 +175,10 @@ void ZPdfReader::closeFile()
         return;
 
 #ifdef WITH_POPPLER
+#ifdef ZPDF_PRE2103_API
     delete m_doc;
     m_doc = nullptr;
+#endif
 #endif
 
     m_images.clear();
@@ -212,11 +211,7 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
         Goffset sz = p.size;
         buf->resize(static_cast<int>(sz));
         str->setPos(p.pos);
-#ifdef JPDF_PRE073_API
-        str->doGetChars(static_cast<int>(sz),reinterpret_cast<Guchar *>(buf->data()));
-#else
         str->doGetChars(static_cast<int>(sz),reinterpret_cast<uchar*>(buf->data()));
-#endif
         if (p.format == Z::imgDCT) {
             if (preferImage) {
                 img->loadFromData(*buf);
@@ -261,7 +256,11 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
         splashOutputDev.setFontAntialias(true);
         splashOutputDev.setVectorAntialias(true);
         splashOutputDev.setFreeTypeHinting(true, false);
+#ifdef ZPDF_PRE2103_API
         splashOutputDev.startDoc(m_doc);
+#else
+        splashOutputDev.startDoc(m_doc.get());
+#endif
         m_doc->displayPageSlice(&splashOutputDev, idx + 1,
                               xdpi, ydpi, 0,
                               false, true, false,

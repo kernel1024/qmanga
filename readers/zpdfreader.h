@@ -3,7 +3,15 @@
 
 #ifdef WITH_POPPLER
 #include <poppler/PDFDoc.h>
+
+#include <poppler/cpp/poppler-version.h>
+#if POPPLER_VERSION_MAJOR==21
+    #if POPPLER_VERSION_MINOR<3
+        #define ZPDF_PRE2103_API 1
+    #endif
 #endif
+
+#endif // WITH_POPPLER
 
 #include <QMutex>
 #include "zabstractreader.h"
@@ -47,7 +55,13 @@ private:
     int zlibInflate(const char *src, int srcSize, uchar *dst, int dstSize);
 
 #ifdef WITH_POPPLER
-    PDFDoc* m_doc;
+
+#ifdef ZPDF_PRE2103_API
+    PDFDoc* m_doc { nullptr };
+#else
+    std::unique_ptr<PDFDoc> m_doc;
+#endif
+
     void loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage);
 #endif
 

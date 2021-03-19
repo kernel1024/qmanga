@@ -72,9 +72,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         if (p.isNull())
             p = QImage(QSL(":/32/edit-delete"));
 
-        // BUG: smooth crashes - Qt 6.0.1 bug
-        // TODO: use our fast smooth transformation for all QImage::scaled(smooth) calls
-        p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::FastTransformation);
+        p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
 
         if (p.height()<rp.height()) {
             cp.drawImage(0,(rp.height()-p.height())/2,p);
