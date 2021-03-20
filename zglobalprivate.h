@@ -23,8 +23,9 @@ public:
     explicit ZGlobalPrivate(QObject *parent = nullptr);
     ~ZGlobalPrivate() override;
 
-    Blitz::ScaleFilterType m_downscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
     Blitz::ScaleFilterType m_upscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
+    Blitz::ScaleFilterType m_downscaleFilter { Blitz::ScaleFilterType::UndefinedFilter };
+    Blitz::ScaleFilterType m_downscaleSearchTabFilter { Blitz::ScaleFilterType::UndefinedFilter };
     Z::PDFRendering m_pdfRendering { Z::pdfAutodetect };
     Z::DBMS m_dbEngine { Z::dbmsSQLite };
     bool m_cachePixmaps { false };

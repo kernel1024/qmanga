@@ -87,10 +87,12 @@ void ZGlobal::loadSettings()
     QSettings settings;
     settings.beginGroup(QSL("MainWindow"));
     d->m_cacheWidth = settings.value(QSL("cacheWidth"),ZDefaults::cacheWidth).toInt();
-    d->m_downscaleFilter = static_cast<Blitz::ScaleFilterType>(
-                          settings.value(QSL("downscaleFilter"),Blitz::LanczosFilter).toInt());
     d->m_upscaleFilter = static_cast<Blitz::ScaleFilterType>(
-                        settings.value(QSL("upscaleFilter"),Blitz::MitchellFilter).toInt());
+                settings.value(QSL("upscaleFilter"),Blitz::MitchellFilter).toInt());
+    d->m_downscaleFilter = static_cast<Blitz::ScaleFilterType>(
+                settings.value(QSL("downscaleFilter"),Blitz::LanczosFilter).toInt());
+    d->m_downscaleSearchTabFilter = static_cast<Blitz::ScaleFilterType>(
+                settings.value(QSL("downscaleSearchTabFilter"),Blitz::LanczosFilter).toInt());
     d->m_dbUser = settings.value(QSL("mysqlUser"),QString()).toString();
     d->m_dbPass = settings.value(QSL("mysqlPassword"),QString()).toString();
     d->m_dbBase = settings.value(QSL("mysqlBase"),QSL("qmanga")).toString();
@@ -105,14 +107,14 @@ void ZGlobal::loadSettings()
     d->m_scrollFactor = settings.value(QSL("scrollFactor"),ZDefaults::scrollFactor).toInt();
     d->m_searchScrollFactor = settings.value(QSL("searchScrollFactor"),ZDefaults::searchScrollFactor).toDouble();
     d->m_pdfRendering = static_cast<Z::PDFRendering>(
-                       settings.value(QSL("pdfRendering"),
-                                      Z::pdfAutodetect).toInt());
+                settings.value(QSL("pdfRendering"),
+                               Z::pdfAutodetect).toInt());
     d->m_dbEngine = static_cast<Z::DBMS>(settings.value(QSL("dbEngine"),Z::dbmsSQLite).toInt());
     d->m_forceDPI = settings.value(QSL("forceDPI"),ZDefaults::forceDPI).toDouble();
     d->m_backgroundColor = QColor(settings.value(QSL("backgroundColor"),
-                                            QSL("#303030")).toString());
+                                                 QSL("#303030")).toString());
     d->m_frameColor = QColor(settings.value(QSL("frameColor"),
-                                       QColor(Qt::lightGray).name()).toString());
+                                            QColor(Qt::lightGray).name()).toString());
     d->m_cachePixmaps = settings.value(QSL("cachePixmaps"),false).toBool();
     d->m_useFineRendering = settings.value(QSL("fineRendering"),true).toBool();
     d->m_filesystemWatcher = settings.value(QSL("filesystemWatcher"),false).toBool();
@@ -183,8 +185,9 @@ void ZGlobal::saveSettings()
     settings.beginGroup(QSL("MainWindow"));
     settings.remove(QString());
     settings.setValue(QSL("cacheWidth"),d->m_cacheWidth);
-    settings.setValue(QSL("downscaleFilter"),static_cast<int>(d->m_downscaleFilter));
     settings.setValue(QSL("upscaleFilter"),static_cast<int>(d->m_upscaleFilter));
+    settings.setValue(QSL("downscaleFilter"),static_cast<int>(d->m_downscaleFilter));
+    settings.setValue(QSL("downscaleSearchTabFilter"),static_cast<int>(d->m_downscaleSearchTabFilter));
     settings.setValue(QSL("mysqlUser"),d->m_dbUser);
     settings.setValue(QSL("mysqlPassword"),d->m_dbPass);
     settings.setValue(QSL("mysqlBase"),d->m_dbBase);
@@ -378,6 +381,7 @@ void ZGlobal::settingsDlg()
     dlg.ui->checkFSWatcher->setChecked(d->m_filesystemWatcher);
     dlg.ui->comboUpscaleFilter->setCurrentIndex(static_cast<int>(d->m_upscaleFilter));
     dlg.ui->comboDownscaleFilter->setCurrentIndex(static_cast<int>(d->m_downscaleFilter));
+    dlg.ui->comboDownscaleSearchTabFilter->setCurrentIndex(static_cast<int>(d->m_downscaleSearchTabFilter));
     dlg.ui->comboPDFRenderMode->setCurrentIndex(static_cast<int>(d->m_pdfRendering));
     dlg.ui->spinPDFDPI->setEnabled(d->m_forceDPI>0.0);
     dlg.ui->checkPDFDPI->setChecked(d->m_forceDPI>0.0);
@@ -439,6 +443,7 @@ void ZGlobal::settingsDlg()
         d->m_filesystemWatcher=dlg.ui->checkFSWatcher->isChecked();
         d->m_upscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg.ui->comboUpscaleFilter->currentIndex());
         d->m_downscaleFilter=static_cast<Blitz::ScaleFilterType>(dlg.ui->comboDownscaleFilter->currentIndex());
+        d->m_downscaleSearchTabFilter=static_cast<Blitz::ScaleFilterType>(dlg.ui->comboDownscaleSearchTabFilter->currentIndex());
         d->m_pdfRendering = static_cast<Z::PDFRendering>(dlg.ui->comboPDFRenderMode->currentIndex());
         d->m_ctxSearchEngines=dlg.getSearchEngines();
 
@@ -649,6 +654,12 @@ Blitz::ScaleFilterType ZGlobal::getDownscaleFilter() const
 {
     Q_D(const ZGlobal);
     return d->m_downscaleFilter;
+}
+
+Blitz::ScaleFilterType ZGlobal::getDownscaleSearchTabFilter() const
+{
+    Q_D(const ZGlobal);
+    return d->m_downscaleSearchTabFilter;
 }
 
 QString ZGlobal::getDefaultSearchEngine() const

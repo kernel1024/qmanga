@@ -29,10 +29,7 @@ const int oneMinuteMS = 60000;
 const int oneSecondMS = 1000;
 const int resizeTimerInitialMS = 500;
 const int resizeTimerDiffMS = 200;
-const int maxImageFileSize = 150*1024*1024;
-const int minPreviewSize = 16;
-const int maxPreviewSize = 500;
-const int previewSize = 128;
+constexpr int maxImageFileSize = 150*1024*1024;
 const int albumListWidth = 90;
 const int previewWidthMargin = 25;
 const int maxDescriptionStringLength = 80;
@@ -48,15 +45,18 @@ const int scrollFactor = 5;
 const int cacheWidth = 6;
 const int magicBlockSize = 1024;
 const int textDocMargin = 20;
-const double previewProps = 364.0/257.0; // B4 paper proportions
+constexpr double previewProps = 364.0/257.0; // B4 paper proportions
 const double oneSecondMSf = 1000.0;
 const double dynamicZoomUpScale = 3.0;
 const double searchScrollFactor = 0.1;
 const double resizeBlur = 1.0;
 const double forceDPI = -1.0;
 const double standardDPI = 75.0;
-const QSize maxDictTooltipSize = QSize(350,350);
-const qint64 copyBlockSize = 2*1024*1024L;
+constexpr QSize maxDictTooltipSize = QSize(350,350);
+constexpr QSize minPreviewSize = QSize(16,qRound(16*ZDefaults::previewProps));
+constexpr QSize maxPreviewSize = QSize(512,qRound(512*ZDefaults::previewProps));
+constexpr QSize previewSize = QSize(128,qRound(128*ZDefaults::previewProps));
+constexpr qint64 copyBlockSize = 2*1024*1024L;
 }
 
 class ZAbstractReader;

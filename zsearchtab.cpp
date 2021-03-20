@@ -45,9 +45,9 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     ui->srcEdit->setCompleter(completer);
     ui->srcEdit->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    ui->srcIconSize->setMinimum(ZDefaults::minPreviewSize);
-    ui->srcIconSize->setMaximum(ZDefaults::maxPreviewSize);
-    ui->srcIconSize->setValue(ZDefaults::previewSize);
+    ui->srcIconSize->setMinimum(ZDefaults::minPreviewSize.width());
+    ui->srcIconSize->setMaximum(ZDefaults::maxPreviewSize.width());
+    ui->srcIconSize->setValue(ZDefaults::previewSize.width());
     ui->srcList->setGridSize(gridSize(ui->srcIconSize->value()));
     ui->srcList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->srcModeIcon->setChecked(ui->srcStack->currentIndex()==ZDefaults::stackIcons);
@@ -102,7 +102,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
         updateLoadingState(lsLoading);
     },Qt::QueuedConnection);
 
-    auto *aModel = new ZMangaModel(this,ui->srcIconSize,ui->srcTable);
+    auto *aModel = new ZMangaModel(this,ui->srcTable);
     m_tableModel = new ZMangaTableModel(this,ui->srcTable);
     m_iconModel = new ZMangaIconModel(this,ui->srcList);
     m_tableModel->setSourceModel(aModel);
@@ -479,6 +479,16 @@ int ZSearchTab::getIconSize() const
     return ui->srcIconSize->value();
 }
 
+QSize ZSearchTab::getPreferredCoverSize() const
+{
+    QFontMetrics fm(ui->srcTable->font());
+
+    if (getListViewMode() == QListView::ListMode)
+        return QSize(fm.height() * 2, fm.height() * 2);
+
+    return QSize(getIconSize(), qRound(getIconSize() * ZDefaults::previewProps));
+}
+
 QListView::ViewMode ZSearchTab::getListViewMode() const
 {
     if (ui->srcStack->currentIndex()==ZDefaults::stackIcons)
@@ -666,7 +676,7 @@ void ZSearchTab::albumClicked(QTreeWidgetItem *item, int column)
     }
 
     Q_UNUSED(column)
-    Q_EMIT dbGetFiles(album,QString());
+    Q_EMIT dbGetFiles(album,QString(),getPreferredCoverSize());
 }
 
 void ZSearchTab::mangaSearch()
@@ -682,7 +692,7 @@ void ZSearchTab::mangaSearch()
 
     m_searchHistoryModel->appendHistoryItem(s);
 
-    Q_EMIT dbGetFiles(QString(),s);
+    Q_EMIT dbGetFiles(QString(),s,getPreferredCoverSize());
 }
 
 void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelIndex &previous)

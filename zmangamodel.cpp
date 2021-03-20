@@ -7,6 +7,7 @@
 #include <QApplication>
 
 #include "zmangamodel.h"
+#include "zsearchtab.h"
 
 namespace ZDefaults {
 constexpr int ModelSortRole = Qt::UserRole + 1;
@@ -21,11 +22,10 @@ const int columnsCount = 7;
 const double textWidthFactor = 3.5;
 }
 
-ZMangaModel::ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView) :
+ZMangaModel::ZMangaModel(QObject *parent, QTableView *tableView) :
     QAbstractTableModel(parent)
 {
-    m_pixmapSize = aPixmapSize;
-    m_view = aView;
+    m_tableView = tableView;
 }
 
 ZMangaModel::~ZMangaModel()
@@ -50,29 +50,34 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
 {
     const QChar zeroWidthSpace(0x200b);
 
-    if (zF->global()==nullptr) return QVariant();
-    if (!checkIndex(index,CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
+    auto *searchTab = qobject_cast<ZSearchTab *>(parent());
+    if ((searchTab == nullptr) || m_tableView.isNull()) return QVariant();
+    if (zF->global() == nullptr) return QVariant();
+    if (!checkIndex(index, CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
         return QVariant();
 
     int idx = index.row();
 
-    QFontMetrics fm(m_view->font());
+    QFontMetrics fm(m_tableView->font());
     if (role == Qt::DecorationRole && index.column()==0) {
+        const ZSQLMangaEntry itm = m_list.at(idx);
+
         QPixmap rp;
         if (listMode) {
             rp = QPixmap(fm.height()*2,fm.height()*2);
         } else {
-            rp = QPixmap(m_pixmapSize->value(),qRound(m_pixmapSize->value()*ZDefaults::previewProps));
+            const QSize pSize = searchTab->getPreferredCoverSize();
+            rp = QPixmap(pSize.width(),qRound(pSize.width()*ZDefaults::previewProps));
         }
         QPainter cp(&rp);
-        cp.fillRect(0,0,rp.width(),rp.height(),m_view->palette().base());
+        cp.fillRect(0,0,rp.width(),rp.height(),m_tableView->palette().base());
 
-        ZSQLMangaEntry itm = m_list.at(idx);
         QImage p = itm.cover;
         if (p.isNull())
             p = QImage(QSL(":/32/edit-delete"));
 
-        p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
+        if (p.size() != rp.size())
+            p = p.scaled(rp.size(),Qt::KeepAspectRatio,Qt::FastTransformation);
 
         if (p.height()<rp.height()) {
             cp.drawImage(0,(rp.height()-p.height())/2,p);
@@ -102,7 +107,6 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
         int col = index.column();
         QString tmp;
         int i = 0;
-        int maxLen = 0;
         switch (col) {
             case ZDefaults::columnName:
                 // insert zero-width spaces for word-wrap
@@ -113,13 +117,6 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
                         tmp.insert(i,zeroWidthSpace);
                     i--;
                 }
-                // QTBUG-16134 changes workaround - elided text is too big
-                maxLen = qRound(ZDefaults::textWidthFactor * m_pixmapSize->value() / fm.averageCharWidth());
-                if (!listMode && tmp.length()>maxLen) {
-                    tmp.truncate(maxLen);
-                    tmp.append(QSL("..."));
-                }
-                // -----
                 return tmp;
             case ZDefaults::columnAlbum: return t.album;
             case ZDefaults::columnPagesCount: return QSL("%1").arg(t.pagesCount);

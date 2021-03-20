@@ -10,6 +10,7 @@
 #include <QHeaderView>
 #include <QTableView>
 #include <QTreeWidget>
+#include <QPointer>
 #include "global.h"
 #include "zglobal.h"
 #include "zdb.h"
@@ -20,7 +21,7 @@ class ZMangaModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    ZMangaModel(QObject *parent, QSlider *aPixmapSize, QTableView *aView);
+    ZMangaModel(QObject *parent, QTableView *tableView);
     ~ZMangaModel() override;
 
     Qt::ItemFlags flags(const QModelIndex & index) const override;
@@ -39,8 +40,7 @@ public Q_SLOTS:
     void addItem(const ZSQLMangaEntry& file);
 
 private:
-    QSlider *m_pixmapSize { nullptr };
-    QTableView *m_view { nullptr };
+    QPointer<QTableView> m_tableView;
     ZSQLMangaVector m_list;
 
     Q_DISABLE_COPY(ZMangaModel)

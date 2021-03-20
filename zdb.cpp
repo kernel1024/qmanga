@@ -469,7 +469,7 @@ void ZDB::sqlGetAlbums()
     Q_EMIT gotAlbums(result);
 }
 
-void ZDB::sqlGetFiles(const QString &album, const QString &search)
+void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& preferredCoverSize)
 {
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
@@ -548,17 +548,26 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search)
             int prefRendering = qr.value(fldPreferredRendering).toInt();
             m_preferredRendering[fileName] = prefRendering;
 
-            Q_EMIT gotFile(ZSQLMangaEntry(qr.value(fldName).toString(),
-                                       fileName,
-                                       qr.value(fldAlbumName).toString(),
-                                       p,
-                                       qr.value(fldPagesCount).toInt(),
-                                       qr.value(fldFileSize).toInt(),
-                                       qr.value(fldFileMagic).toString(),
-                                       qr.value(fldFileDate).toDateTime(),
-                                       qr.value(fldFileAdded).toDateTime(),
-                                       qr.value(fldID).toInt(),
-                                       static_cast<Z::PDFRendering>(prefRendering)));
+            const ZSQLMangaEntry entry(ZSQLMangaEntry(qr.value(fldName).toString(),
+                                                      fileName,
+                                                      qr.value(fldAlbumName).toString(),
+                                                      p,
+                                                      qr.value(fldPagesCount).toInt(),
+                                                      qr.value(fldFileSize).toInt(),
+                                                      qr.value(fldFileMagic).toString(),
+                                                      qr.value(fldFileDate).toDateTime(),
+                                                      qr.value(fldFileAdded).toDateTime(),
+                                                      qr.value(fldID).toInt(),
+                                                      static_cast<Z::PDFRendering>(prefRendering)));
+
+            m_resamplersPool.start([this,entry,preferredCoverSize](){
+                const QImage res = zF->resizeImage(entry.cover,preferredCoverSize,true,zF->global()->getDownscaleSearchTabFilter());
+                ZSQLMangaEntry e = entry;
+                if (!res.isNull())
+                    e.cover = res;
+                Q_EMIT gotFile(e);
+            });
+
             QApplication::processEvents();
             idx++;
         }
@@ -1176,8 +1185,7 @@ QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
         idx++;
     }
     if (!p.isNull()) {
-        p = p.scaled(ZDefaults::maxPreviewSize,ZDefaults::maxPreviewSize,
-                     Qt::KeepAspectRatio,Qt::SmoothTransformation);
+        p = zF->resizeImage(p,ZDefaults::maxPreviewSize,true,zF->global()->getDownscaleSearchTabFilter());
         QBuffer buf(&pba);
         buf.open(QIODevice::WriteOnly);
         p.save(&buf, "JPG");
@@ -1234,8 +1242,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     QByteArray pba;
     pba.clear();
     if (!p.isNull()) {
-        p = p.scaled(ZDefaults::maxPreviewSize,ZDefaults::maxPreviewSize,
-                     Qt::KeepAspectRatio,Qt::SmoothTransformation);
+        p = zF->resizeImage(p,ZDefaults::maxPreviewSize,true,zF->global()->getDownscaleSearchTabFilter());
         QBuffer buf(&pba);
         buf.open(QIODevice::WriteOnly);
         p.save(&buf, "JPG");

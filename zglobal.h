@@ -41,8 +41,9 @@ public:
     ZTextDocumentController *txtController();
 
     // settings management
-    Blitz::ScaleFilterType getDownscaleFilter() const;
     Blitz::ScaleFilterType getUpscaleFilter() const;
+    Blitz::ScaleFilterType getDownscaleFilter() const;
+    Blitz::ScaleFilterType getDownscaleSearchTabFilter() const;
     Z::PDFRendering getPdfRendering() const;
     Z::DBMS getDbEngine() const;
     bool getCachePixmaps() const;

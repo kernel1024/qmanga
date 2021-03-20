@@ -33,6 +33,7 @@ public:
     void updateAlbumsList();
     void updateFocus();
     QStringList getAlbums();
+    QSize getPreferredCoverSize() const;
     void applySortOrder(Z::Ordering order, Qt::SortOrder direction);
 
 private:
@@ -113,7 +114,7 @@ Q_SIGNALS:
     void dbGetAlbums();
     void dbCreateTables();
     void dbAddFiles(const QStringList& aFiles, const QString& album);
-    void dbGetFiles(const QString& album, const QString& search);
+    void dbGetFiles(const QString& album, const QString& search, const QSize& preferredCoverSize);
     void dbDelFiles(const ZIntVector& dbids, bool fullDelete);
     void dbDeleteAlbum(const QString& album);
     void dbAddAlbum(const QString& album, const QString& parent);

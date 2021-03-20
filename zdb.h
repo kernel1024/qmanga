@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QSqlDatabase>
+#include <QThreadPool>
 #include "readers/zabstractreader.h"
 #include "global.h"
 
@@ -24,6 +25,7 @@ private:
     ZStrMap m_dynAlbums;
     ZStrHash m_problems;
     QHash<QString,int> m_preferredRendering;
+    QThreadPool m_resamplersPool;
 
     bool sqlCheckBasePriv(QSqlDatabase &db, bool silent);
     bool checkTablesParams(QSqlDatabase &db);
@@ -83,7 +85,7 @@ public Q_SLOTS:
     void sqlDelFiles(const ZIntVector& dbids, bool fullDelete);
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
-    void sqlGetFiles(const QString& album, const QString& search);
+    void sqlGetFiles(const QString& album, const QString& search, const QSize &preferredCoverSize);
     void sqlChangeFilePreview(const QString& fileName, int pageNum);
     void sqlRescanIndexedDirs();
     void sqlUpdateFileStats(const QString& fileName);
