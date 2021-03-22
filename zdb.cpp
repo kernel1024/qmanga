@@ -12,6 +12,7 @@
 #include <QVariant>
 #include <QElapsedTimer>
 #include <QRegularExpression>
+#include <QCache>
 #include <QDebug>
 #include "zdb.h"
 
@@ -561,18 +562,51 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
                                                       static_cast<Z::PDFRendering>(prefRendering)));
 
             m_resamplersPool.start([this,entry,preferredCoverSize](){
-                const QImage res = zF->resizeImage(entry.cover,preferredCoverSize,true,zF->global()->getDownscaleSearchTabFilter());
+                static QCache<QString, QPair<QSize,QImage> > imgCache;
+                static QMutex cacheMutex;
+
+                if (imgCache.maxCost() != zF->global()->getMaxCoverCacheSize())
+                    imgCache.setMaxCost(zF->global()->getMaxCoverCacheSize());
+
+                {
+                    QMutexLocker mlock(&cacheMutex);
+
+                    const auto *cached = imgCache.object(entry.filename);
+                    if (cached) {
+                        if (cached->first == preferredCoverSize) {
+                            const QImage res(cached->second);
+                            ZSQLMangaEntry e = entry;
+                            if (!res.isNull())
+                                e.cover = res;
+                            Q_EMIT gotFile(e);
+                            return;
+                        } else {
+                            imgCache.remove(entry.filename);
+                        }
+                    }
+                }
+
+                const QImage res = zF->resizeImage(entry.cover,preferredCoverSize,true,
+                                                   zF->global()->getDownscaleSearchTabFilter());
+
+                {
+                    QMutexLocker mlock(&cacheMutex);
+                    imgCache.insert(entry.filename,
+                                    new QPair<QSize,QImage>(preferredCoverSize, res),
+                                    res.sizeInBytes());
+                }
+
                 ZSQLMangaEntry e = entry;
                 if (!res.isNull())
                     e.cover = res;
                 Q_EMIT gotFile(e);
             });
 
-            QApplication::processEvents();
             idx++;
         }
-    } else
+    } else {
         qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
+    }
     sqlCloseBase(db);
     Q_EMIT filesLoaded(idx,tmr.elapsed());
 }

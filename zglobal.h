@@ -56,6 +56,7 @@ public:
     void setDetectedDelta(int value);
     int getScrollFactor() const;
     int getTextDocMargin() const;
+    int getMaxCoverCacheSize() const;
     qreal getDpiX() const;
     qreal getDpiY() const;
     qreal getForceDPI() const;

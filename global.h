@@ -30,6 +30,7 @@ const int oneSecondMS = 1000;
 const int resizeTimerInitialMS = 500;
 const int resizeTimerDiffMS = 200;
 constexpr int maxImageFileSize = 150*1024*1024;
+constexpr int maxCoverCacheSize = 100*1024*1024; // TODO: configure this
 const int albumListWidth = 90;
 const int previewWidthMargin = 25;
 const int maxDescriptionStringLength = 80;

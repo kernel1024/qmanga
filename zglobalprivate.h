@@ -37,6 +37,7 @@ public:
     int m_detectedDelta { ZDefaults::scrollDelta };
     int m_scrollFactor { ZDefaults::scrollFactor };
     int m_textDocMargin { ZDefaults::textDocMargin };
+    int m_maxCoverCacheSize { ZDefaults::maxCoverCacheSize };
     qreal m_dpiX { ZDefaults::standardDPI };
     qreal m_dpiY { ZDefaults::standardDPI };
     qreal m_forceDPI { ZDefaults::forceDPI };

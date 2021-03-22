@@ -590,6 +590,12 @@ int ZGlobal::getTextDocMargin() const
     return d->m_textDocMargin;
 }
 
+int ZGlobal::getMaxCoverCacheSize() const
+{
+    Q_D(const ZGlobal);
+    return d->m_maxCoverCacheSize;
+}
+
 int ZGlobal::getDetectedDelta() const
 {
     Q_D(const ZGlobal);
