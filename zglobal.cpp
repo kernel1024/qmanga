@@ -130,6 +130,8 @@ void ZGlobal::loadSettings()
     if (!d->m_frameColor.isValid())
         d->m_frameColor = QColor(Qt::lightGray);
 
+    d->m_maxCoverCacheSize = settings.value(QSL("maxCoverCacheSize"),ZDefaults::maxCoverCacheSize).toInt();
+
     d->m_textDocMargin = settings.value(QSL("textDocMargin"),ZDefaults::textDocMargin).toInt();
     d->m_textDocBkColor = QColor(settings.value(QSL("textDocBkColor"),
                                                 QApplication::palette("QWidget").base().color().name()).toString());
@@ -215,6 +217,7 @@ void ZGlobal::saveSettings()
     settings.setValue(QSL("ctxSearchEngines"),QVariant::fromValue(d->m_ctxSearchEngines));
     settings.setValue(QSL("tranSourceLanguage"),d->m_tranSourceLang);
     settings.setValue(QSL("tranDestLanguage"),d->m_tranDestLang);
+    settings.setValue(QSL("maxCoverCacheSize"),d->m_maxCoverCacheSize);
     settings.setValue(QSL("textDocMargin"),d->m_textDocMargin);
     settings.setValue(QSL("textDocBkColor"),d->m_textDocBkColor.name());
     settings.setValue(QSL("textDocFont"),d->m_textDocFont.toString());
@@ -359,6 +362,7 @@ void ZGlobal::settingsDlg()
     dlg.ui->spinScrollFactor->setValue(d->m_scrollFactor);
     dlg.ui->spinSearchScrollFactor->setValue(d->m_searchScrollFactor);
     dlg.ui->spinTextMargin->setValue(d->m_textDocMargin);
+    dlg.ui->spinCoverCacheSize->setValue(d->m_maxCoverCacheSize / ZDefaults::oneMegabyte);
     dlg.ui->labelDetectedDelta->setText(tr("Detected delta per one scroll event: %1 deg").arg(d->m_detectedDelta));
     if (d->m_cachePixmaps) {
         dlg.ui->rbCachePixmaps->setChecked(true);
@@ -392,14 +396,20 @@ void ZGlobal::settingsDlg()
     }
 
     for (auto bIt=d->m_bookmarks.constKeyValueBegin(), end=d->m_bookmarks.constKeyValueEnd(); bIt!=end; ++bIt) {
-        QString st = (*bIt).second;
-        if (st.split('\n').count()>0)
-            st = st.split('\n').at(0);
-        auto *li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*bIt).first,
-                                                           (*bIt).second));
-        li->setData(Qt::UserRole,(*bIt).first);
-        li->setData(Qt::UserRole+1,(*bIt).second);
-        dlg.ui->listBookmarks->addItem(li);
+        const QStringList stl = (*bIt).second.split('\n');
+        if (!stl.isEmpty()) {
+            QString s = stl.first();
+            if (stl.count()>1) {
+                bool okconv = false;
+                int page = stl.last().toInt(&okconv);
+                if (okconv)
+                    s += QSL(" %1").arg(page + 1);
+            }
+            auto *li = new QListWidgetItem(QSL("%1 [ %2 ]").arg((*bIt).first,s));
+            li->setData(Qt::UserRole,(*bIt).first);
+            li->setData(Qt::UserRole+1,(*bIt).second);
+            dlg.ui->listBookmarks->addItem(li);
+        }
     }
     ZStrMap albums = d->m_db->getDynAlbums();
     for (auto tIt = albums.constKeyValueBegin(), end = albums.constKeyValueEnd(); tIt!=end; ++tIt) {
@@ -446,6 +456,7 @@ void ZGlobal::settingsDlg()
         d->m_downscaleSearchTabFilter=static_cast<Blitz::ScaleFilterType>(dlg.ui->comboDownscaleSearchTabFilter->currentIndex());
         d->m_pdfRendering = static_cast<Z::PDFRendering>(dlg.ui->comboPDFRenderMode->currentIndex());
         d->m_ctxSearchEngines=dlg.getSearchEngines();
+        d->m_maxCoverCacheSize = dlg.ui->spinCoverCacheSize->value() * ZDefaults::oneMegabyte;
 
 #ifndef Q_OS_WIN
         d->m_tranSourceLang=dlg.getTranSourceLanguage();

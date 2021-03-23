@@ -27,10 +27,11 @@
 namespace ZDefaults {
 const int oneMinuteMS = 60000;
 const int oneSecondMS = 1000;
+constexpr int oneMegabyte = 1024*1024;
 const int resizeTimerInitialMS = 500;
 const int resizeTimerDiffMS = 200;
-constexpr int maxImageFileSize = 150*1024*1024;
-constexpr int maxCoverCacheSize = 100*1024*1024; // TODO: configure this
+constexpr int maxImageFileSize = 150*oneMegabyte;
+constexpr int maxCoverCacheSize = 128*oneMegabyte;
 const int albumListWidth = 90;
 const int previewWidthMargin = 25;
 const int maxDescriptionStringLength = 80;
@@ -57,7 +58,7 @@ constexpr QSize maxDictTooltipSize = QSize(350,350);
 constexpr QSize minPreviewSize = QSize(16,qRound(16*ZDefaults::previewProps));
 constexpr QSize maxPreviewSize = QSize(512,qRound(512*ZDefaults::previewProps));
 constexpr QSize previewSize = QSize(128,qRound(128*ZDefaults::previewProps));
-constexpr qint64 copyBlockSize = 2*1024*1024L;
+constexpr qint64 copyBlockSize = 2L*oneMegabyte;
 }
 
 class ZAbstractReader;

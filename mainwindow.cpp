@@ -492,11 +492,10 @@ void ZMainWindow::updateBookmarks()
     for (auto it = bookmarks.constKeyValueBegin(), end = bookmarks.constKeyValueEnd();
          it != end; ++it) {
         QAction* a = ui->menuBookmarks->addAction((*it).first,this,&ZMainWindow::openBookmark);
-        QString st = (*it).second;
+        const QString st = (*it).second;
         a->setData(st);
-        if (st.split('\n').count()>0)
-            st = st.split('\n').at(0);
-        a->setStatusTip(st);
+        const QStringList stl = st.split('\n');
+        a->setStatusTip(stl.first());
     }
 }
 
@@ -535,27 +534,27 @@ void ZMainWindow::createBookmark()
 
 void ZMainWindow::openBookmark()
 {
-    auto *a = qobject_cast<QAction *>(sender());
-    if (a==nullptr) return;
+    auto *ac = qobject_cast<QAction *>(sender());
+    if (ac==nullptr) return;
 
-    QString f = a->data().toString();
-    QStringList sl = a->data().toString().split('\n');
+    const QStringList stl = ac->data().toString().split('\n');
+
     int page = 0;
-    if (sl.count()>1) {
-        f = sl.at(0);
+    const QString filename = stl.first();
+    if (stl.count()>1) {
         bool okconv = false;
-        page = sl.at(1).toInt(&okconv);
+        page = stl.last().toInt(&okconv);
         if (!okconv) page = 0;
     }
-    QFileInfo fi(f);
+    QFileInfo fi(filename);
     if (!fi.isReadable()) {
         QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
-                             tr("Unable to open file %1").arg(f));
+                             tr("Unable to open file %1").arg(filename));
         return;
     }
 
     ui->tabWidget->setCurrentIndex(0);
-    ui->mangaView->openFileEx(f,page);
+    ui->mangaView->openFileEx(filename,page);
 }
 
 void ZMainWindow::openSearchTab()

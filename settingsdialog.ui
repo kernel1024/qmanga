@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>848</width>
-    <height>590</height>
+    <width>915</width>
+    <height>529</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -414,6 +414,9 @@
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="suffix">
+                 <string> pages</string>
                 </property>
                 <property name="minimum">
                  <number>2</number>
@@ -1037,10 +1040,10 @@ one per page, with supported format. Use rendering mode as fallback.</string>
          <item row="1" column="1" colspan="2">
           <widget class="QGroupBox" name="groupBox_9">
            <property name="title">
-            <string>Search tab scrolling</string>
+            <string>Search tab</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
+           <layout class="QFormLayout" name="formLayout_4">
+            <item row="0" column="0">
              <widget class="QLabel" name="label">
               <property name="text">
                <string>Scro&amp;ll step factor</string>
@@ -1050,7 +1053,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
               </property>
              </widget>
             </item>
-            <item>
+            <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="spinSearchScrollFactor">
               <property name="decimals">
                <number>2</number>
@@ -1063,6 +1066,35 @@ one per page, with supported format. Use rendering mode as fallback.</string>
               </property>
               <property name="singleStep">
                <double>0.010000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_24">
+              <property name="text">
+               <string>Cover cache size</string>
+              </property>
+              <property name="buddy">
+               <cstring>spinCoverCacheSize</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QSpinBox" name="spinCoverCacheSize">
+              <property name="suffix">
+               <string> Mb</string>
+              </property>
+              <property name="minimum">
+               <number>16</number>
+              </property>
+              <property name="maximum">
+               <number>32768</number>
+              </property>
+              <property name="stepType">
+               <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+              </property>
+              <property name="value">
+               <number>16</number>
               </property>
              </widget>
             </item>
@@ -1514,6 +1546,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
   <tabstop>checkPDFDPI</tabstop>
   <tabstop>spinPDFDPI</tabstop>
   <tabstop>spinSearchScrollFactor</tabstop>
+  <tabstop>spinCoverCacheSize</tabstop>
   <tabstop>editOCRDatapath</tabstop>
   <tabstop>btnOCRDatapath</tabstop>
   <tabstop>comboOCRLanguage</tabstop>
