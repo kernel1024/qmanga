@@ -30,7 +30,7 @@ private:
     bool sqlCheckBasePriv(QSqlDatabase &db, bool silent);
     bool checkTablesParams(QSqlDatabase &db);
     void checkConfigOpts(QSqlDatabase &db, bool silent);
-    QSqlDatabase sqlOpenBase();
+    QSqlDatabase sqlOpenBase(bool silent = false);
     void sqlCloseBase(QSqlDatabase &db);
     void sqlUpdateIgnoredFiles(QSqlDatabase &db);
     QByteArray createMangaPreview(ZAbstractReader *za, int pageNum);

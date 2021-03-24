@@ -497,7 +497,6 @@ bool BlitzScaleFilter::horizontalFilter(const QImage *srcImg,
                                          static_cast<int>(a));
         }
         if (x%checkEventsFreq == 0) {
-            QApplication::processEvents();
             if (currentPage!=nullptr && *currentPage!=page)
                 return(false);
         }
@@ -631,7 +630,6 @@ bool BlitzScaleFilter::verticalFilter(const QImage *srcImg,
                                          static_cast<int>(a));
         }
         if (y%checkEventsFreq == 0) {
-            QApplication::processEvents();
             if (currentPage!=nullptr && *currentPage!=page)
                 return(false);
         }

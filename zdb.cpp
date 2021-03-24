@@ -365,7 +365,7 @@ void ZDB::sqlCreateTables()
     sqlCloseBase(db);
 }
 
-QSqlDatabase ZDB::sqlOpenBase()
+QSqlDatabase ZDB::sqlOpenBase(bool silent)
 {
     QSqlDatabase db;
 
@@ -375,8 +375,10 @@ QSqlDatabase ZDB::sqlOpenBase()
         db = QSqlDatabase::addDatabase(QSL("QMYSQL"),QUuid::createUuid().toString());
         if (!db.isValid()) {
             db = QSqlDatabase();
-            Q_EMIT errorMsg(tr("Unable to create MySQL driver instance."));
-            m_problems[tr("Connection")] = tr("Unable to create MySQL driver instance.");
+            if (!silent) {
+                Q_EMIT errorMsg(tr("Unable to create MySQL driver instance."));
+                m_problems[tr("Connection")] = tr("Unable to create MySQL driver instance.");
+            }
             return db;
         }
 
@@ -389,8 +391,10 @@ QSqlDatabase ZDB::sqlOpenBase()
         db = QSqlDatabase::addDatabase(QSL("QSQLITE"),QUuid::createUuid().toString());
         if (!db.isValid()) {
             db = QSqlDatabase();
-            Q_EMIT errorMsg(tr("Unable to create SQLite driver instance."));
-            m_problems[tr("Connection")] = tr("Unable to create SQLite driver instance.");
+            if (!silent) {
+                Q_EMIT errorMsg(tr("Unable to create SQLite driver instance."));
+                m_problems[tr("Connection")] = tr("Unable to create SQLite driver instance.");
+            }
             return db;
         }
 
@@ -399,9 +403,11 @@ QSqlDatabase ZDB::sqlOpenBase()
         if (!dbDir.exists()) {
             if (!dbDir.mkpath(dir)) {
                 db = QSqlDatabase();
-                Q_EMIT errorMsg(tr("Unable to create SQLite database file. Check file permissions.\n%1")
-                              .arg(dir));
-                m_problems[tr("Connection")] = tr("Unable to create SQLite database file.");
+                if (!silent) {
+                    Q_EMIT errorMsg(tr("Unable to create SQLite database file. Check file permissions.\n%1")
+                                    .arg(dir));
+                    m_problems[tr("Connection")] = tr("Unable to create SQLite database file.");
+                }
                 return db;
             }
         }
@@ -414,10 +420,12 @@ QSqlDatabase ZDB::sqlOpenBase()
 
     if (!db.open()) {
         db = QSqlDatabase();
-        Q_EMIT errorMsg(tr("Unable to open database connection. Check connection info.\n%1\n%2")
-                      .arg(db.lastError().driverText(),db.lastError().databaseText()));
-        m_problems[tr("Connection")] = tr("Unable to connect to database.\n"
+        if (!silent) {
+            Q_EMIT errorMsg(tr("Unable to open database connection. Check connection info.\n%1\n%2")
+                            .arg(db.lastError().driverText(),db.lastError().databaseText()));
+            m_problems[tr("Connection")] = tr("Unable to connect to database.\n"
                                         "Check credentials and SQL server running.");
+        }
     }
 
     return db;
@@ -580,9 +588,9 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
                                 e.cover = res;
                             Q_EMIT gotFile(e);
                             return;
-                        } else {
-                            imgCache.remove(entry.filename);
                         }
+
+                        imgCache.remove(entry.filename);
                     }
                 }
 
@@ -608,6 +616,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
         qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
     }
     sqlCloseBase(db);
+    m_resamplersPool.waitForDone();
     Q_EMIT filesLoaded(idx,tmr.elapsed());
 }
 
@@ -1086,6 +1095,8 @@ void ZDB::sqlGetTablesDescription()
 
 void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 {
+    const int threadPoolWaitTimeoutMS = 250;
+
     if (album.isEmpty()) {
         Q_EMIT errorMsg(tr("Album name cannot be empty"));
         return;
@@ -1108,10 +1119,6 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         return;
     }
 
-    QSqlDatabase db = sqlOpenBase();
-    if (!db.isValid()) return;
-    QSqlQuery qr(db);
-
     m_wasCanceled = false;
 
     QElapsedTimer tmr;
@@ -1119,80 +1126,101 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
     Q_EMIT showProgressDialog(true);
 
-    int cnt = 0;
-    for (int i=0;i<files.count();i++) {
-        QFileInfo fi(files.at(i));
+    QAtomicInteger<int> addedCount(0);
+    QAtomicInteger<bool> stopAdding(false);
+
+    const int totalCount = files.count();
+
+    for (const auto& filename : qAsConst(files)) {
+        const QFileInfo fi(filename);
         if (!fi.isReadable()) {
-            qWarning() << "skipping" << files.at(i) << "as unreadable";
+            qWarning() << "Skipping " << filename << " as unreadable ";
             continue;
         }
 
-        bool mimeOk = false;
-        ZAbstractReader* za = zF->readerFactory(this,files.at(i),&mimeOk,true);
-        if (za == nullptr) {
-            qWarning() << files.at(i) << "File format not supported.";
-            continue;
-        }
-
-        if (!za->openFile()) {
-            qWarning() << files.at(i) << "Unable to open file.";
-            za->setParent(nullptr);
-            delete za;
-            continue;
-        }
-
-        QByteArray pba = createMangaPreview(za,0);
-
-        const int fldName = 0;
-        const int fldFilename = 1;
-        const int fldAlbum = 2;
-        const int fldCover = 3;
-        const int fldPagesCount = 4;
-        const int fldFileSize = 5;
-        const int fldFileMagic = 6;
-        const int fldFileDate = 7;
-        const int fldFileAdded = 8;
-        qr.prepare(QSL("INSERT INTO files (name, filename, album, cover, "
-                                  "pagesCount, fileSize, fileMagic, fileDT, addingDT) "
-                                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"));
-        qr.bindValue(fldName,fi.completeBaseName());
-        qr.bindValue(fldFilename,files.at(i));
-        qr.bindValue(fldAlbum,ialbum);
-        qr.bindValue(fldCover,pba);
-        qr.bindValue(fldPagesCount,za->getPageCount());
-        qr.bindValue(fldFileSize,fi.size());
-        qr.bindValue(fldFileMagic,za->getMagic());
-        qr.bindValue(fldFileDate,fi.birthTime());
-        qr.bindValue(fldFileAdded,QDateTime::currentDateTime());
-        if (!qr.exec()) {
-            qWarning() << files.at(i) << "unable to add" <<
-                        qr.lastError().databaseText() << qr.lastError().driverText();
-        } else {
-            cnt++;
-        }
-        pba.clear();
-        za->closeFile();
-        za->setParent(nullptr);
-        delete za;
-
-        QString s = fi.fileName();
-        if (s.length()>ZDefaults::maxDescriptionStringLength) {
-            s.truncate(ZDefaults::maxDescriptionStringLength);
-            s.append(QSL("..."));
-        }
-        Q_EMIT showProgressState(100*i/files.count(),s);
-        QApplication::processEvents();
-
-        if (m_wasCanceled) {
-            m_wasCanceled = false;
+        if (stopAdding)
             break;
+
+        m_resamplersPool.start([this,fi,&addedCount,&stopAdding,totalCount,ialbum](){
+            bool mimeOk = false;
+
+            QScopedPointer<ZAbstractReader> za(zF->readerFactory(nullptr,fi.filePath(),&mimeOk,true));
+            if (za.isNull()) {
+                qWarning() << "File format not supported: " << fi.filePath();
+                return;
+            }
+
+            if (!za->openFile()) {
+                qWarning() << "Unable to open file: " << fi.filePath();
+                return;
+            }
+
+            const QByteArray pba = createMangaPreview(za.data(),0);
+            const int pageCount = za->getPageCount();
+            const QString magic = za->getMagic();
+
+            za->closeFile();
+
+            if (stopAdding)
+                return;
+
+            QSqlDatabase db = sqlOpenBase(true);
+            if (!db.isValid())
+                return;
+
+            QSqlQuery qr(db);
+
+            const int fldName = 0;
+            const int fldFilename = 1;
+            const int fldAlbum = 2;
+            const int fldCover = 3;
+            const int fldPagesCount = 4;
+            const int fldFileSize = 5;
+            const int fldFileMagic = 6;
+            const int fldFileDate = 7;
+            const int fldFileAdded = 8;
+            qr.prepare(QSL("INSERT INTO files (name, filename, album, cover, "
+                                          "pagesCount, fileSize, fileMagic, fileDT, addingDT) "
+                                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"));
+            qr.bindValue(fldName,fi.completeBaseName());
+            qr.bindValue(fldFilename,fi.filePath());
+            qr.bindValue(fldAlbum,ialbum);
+            qr.bindValue(fldCover,pba);
+            qr.bindValue(fldPagesCount,pageCount);
+            qr.bindValue(fldFileSize,fi.size());
+            qr.bindValue(fldFileMagic,magic);
+            qr.bindValue(fldFileDate,fi.birthTime());
+            qr.bindValue(fldFileAdded,QDateTime::currentDateTime());
+            if (!qr.exec()) {
+                qWarning() << fi.filePath() << " unable to add " <<
+                              qr.lastError().databaseText() << qr.lastError().driverText();
+            } else {
+                addedCount++;
+            }
+            sqlCloseBase(db);
+
+            QString s = fi.fileName();
+            if (s.length()>ZDefaults::maxDescriptionStringLength) {
+                s.truncate(ZDefaults::maxDescriptionStringLength);
+                s.append(QSL("..."));
+            }
+            Q_EMIT showProgressState(100*addedCount/totalCount,s);
+        });
+    }
+
+    while (m_resamplersPool.activeThreadCount() > 0) {
+        if (m_wasCanceled) {
+            stopAdding = true;
+            m_resamplersPool.clear();
+            m_wasCanceled = false;
         }
+        m_resamplersPool.waitForDone(threadPoolWaitTimeoutMS);
         QApplication::processEvents();
     }
+
     Q_EMIT showProgressDialog(false);
-    sqlCloseBase(db);
     sqlRescanIndexedDirs();
-    Q_EMIT filesAdded(cnt,files.count(),tmr.elapsed());
+    Q_EMIT filesAdded(addedCount,files.count(),tmr.elapsed());
     Q_EMIT albumsListUpdated();
 }
 
