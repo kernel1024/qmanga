@@ -3,23 +3,31 @@
 
 #include <QObject>
 #include <QFileInfo>
+#include <QDir>
+#include <QAtomicInteger>
 #include <QProgressDialog>
+#include <QPointer>
 
 class ZFileCopier : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY(ZFileCopier)
 private:
+    bool m_abort { false };
+    QPointer<QProgressDialog> m_dialog;
+    QAtomicInteger<int> m_filesCount;
+    QAtomicInteger<int> m_filesCopied;
     QFileInfoList m_srcList;
-    QProgressDialog *m_dialog;
     QString m_dstDir;
-    bool m_abort;
+    QStringList m_errors;
 
-    bool copyDir(const QFileInfo &src);
-    bool copyFile(const QFileInfo &src, const QString& dst = QString());
+    static bool copyFileByInfo(const QFileInfo &src, const QString& dst, QPointer<ZFileCopier> context);
+    static int fileInfoGetCount(const QFileInfoList& list, QDir::Filters filter);
+    void addFilesCount(int count);
 
 public:
-    explicit ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
-                         const QString& dstDir, QObject *parent = nullptr);
+    ZFileCopier(QObject *parent, const QFileInfoList& srcList, QProgressDialog *dialog,
+                const QString& dstDir);
 
 Q_SIGNALS:
     void progressSetMaximum(int max);

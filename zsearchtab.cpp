@@ -427,8 +427,8 @@ void ZSearchTab::ctxFileCopy()
     QFileInfoList fl = getSelectedMangaEntries(true);
     if (fl.isEmpty()) return;
 
-    QString dst = zF->getExistingDirectoryD(this,tr("Copy selected manga to..."),
-                                            zF->global()->getSavedAuxSaveDir());
+    const QString dst = zF->getExistingDirectoryD(this,tr("Copy selected manga to..."),
+                                                  zF->global()->getSavedAuxSaveDir());
     if (dst.isEmpty()) return;
     zF->global()->setSavedAuxSaveDir(dst);
 
@@ -436,7 +436,7 @@ void ZSearchTab::ctxFileCopy()
     dlg->setWindowModality(Qt::WindowModal);
     dlg->setWindowTitle(tr("Copying manga files..."));
 
-    auto *zfc = new ZFileCopier(fl,dlg,dst);
+    auto *zfc = new ZFileCopier(nullptr,fl,dlg,dst);
     auto *zfc_thread = new QThread();
 
     connect(zfc,&ZFileCopier::errorMsg,this,&ZSearchTab::dbErrorMsg,Qt::QueuedConnection);

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <QByteArray>
 #include <QApplication>
 #include <QFile>
@@ -6,13 +7,13 @@
 #include "zfilecopier.h"
 #include "global.h"
 
-ZFileCopier::ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
-                         const QString &dstDir, QObject *parent) : QObject(parent)
+ZFileCopier::ZFileCopier(QObject *parent, const QFileInfoList& srcList, QProgressDialog *dialog,
+                         const QString &dstDir)
+    : QObject(parent),
+      m_dialog(dialog),
+      m_srcList(srcList),
+      m_dstDir(dstDir)
 {
-    m_dialog = dialog;
-    m_srcList = srcList;
-    m_dstDir = dstDir;
-    m_abort = false;
 
     m_dialog->setAttribute(Qt::WA_DeleteOnClose);
     m_dialog->setAutoClose(false);
@@ -30,44 +31,42 @@ ZFileCopier::ZFileCopier(const QFileInfoList& srcList, QProgressDialog *dialog,
 
 void ZFileCopier::start()
 {
-    QStringList errors;
-    errors.reserve(m_srcList.count());
+    m_filesCount = 0;
+    m_filesCopied = 0;
+    m_errors.clear();
+    m_errors.reserve(m_srcList.count());
     m_abort = false;
-    int cnt = 0;
 
     Q_EMIT progressShow();
-    Q_EMIT progressSetMaximum(m_srcList.count());
-    QApplication::processEvents();
-    for (const QFileInfo& fi : qAsConst(m_srcList)) {
-        Q_EMIT progressSetLabelText(tr("Copying %1...").arg(fi.fileName()));
-        Q_EMIT progressSetValue(0);
-        QApplication::processEvents();
-        bool res = false;
-        if (fi.isDir()) {
-            res = copyDir(fi);
-        } else {
-            res = copyFile(fi);
+    addFilesCount(ZFileCopier::fileInfoGetCount(m_srcList,QDir::Files));
+
+    QThread *th = QThread::create([this](){
+        for (const QFileInfo& fi : qAsConst(m_srcList)) {
+            if (!ZFileCopier::copyFileByInfo(fi,m_dstDir,this)) {
+                m_errors.append(fi.fileName());
+            }
+
+            if (m_abort)
+                break;
         }
 
-        if (!res) {
-            errors << fi.fileName();
-        } else {
-            cnt++;
-        }
+        QMetaObject::invokeMethod(this,[this](){
+            Q_EMIT progressClose();
 
-        if (m_abort)
-            break;
-    }
+            if (m_abort) {
+                Q_EMIT errorMsg(tr("Copying aborted, %1 files was copied.").arg(m_filesCopied));
+            } else if (!m_errors.empty()) {
+                Q_EMIT errorMsg(tr("Failed to copy %1 entries:\n%2")
+                                .arg(m_errors.count())
+                                .arg(m_errors.join('\n')));
+            }
+            Q_EMIT finished();
+        },Qt::QueuedConnection);
+    });
+    connect(th,&QThread::finished,th,&QThread::deleteLater);
 
-    if (m_abort) {
-        Q_EMIT errorMsg(tr("Copying aborted, %1 files was copied.").arg(cnt));
-    } else if (!errors.empty()) {
-        Q_EMIT errorMsg(tr("Failed to copy %1 entries:\n%2").arg(errors.count()).arg(errors.join('\n')));
-    }
-
-    Q_EMIT progressClose();
-    QApplication::processEvents();
-    Q_EMIT finished();
+    th->setObjectName(QSL("FCOPY_worker"));
+    th->start();
 }
 
 void ZFileCopier::abort()
@@ -75,86 +74,124 @@ void ZFileCopier::abort()
     m_abort = true;
 }
 
-bool ZFileCopier::copyDir(const QFileInfo &src)
+bool ZFileCopier::copyFileByInfo(const QFileInfo &src, const QString &dst, QPointer<ZFileCopier> context)
 {
-    // copy without subdirs - for image catalog manga entries
-    QDir ddir(m_dstDir);
-    if (!ddir.mkdir(src.fileName()))
+    if (context.isNull())
         return false;
 
-    ddir.setPath(ddir.absoluteFilePath(src.fileName()));
-    if (!ddir.exists())
+    QDir destDir(dst);
+    if (!destDir.exists())
         return false;
 
-    QDir sdir(src.filePath());
-    if (!sdir.isReadable())
-        return false;
+    if (src.isDir()) {
+        if (!destDir.exists(src.fileName())) {
+            if (!destDir.mkdir(src.fileName()))
+                return false;
+        }
 
-    const QFileInfoList fl = zF->filterSupportedImgFiles(
-                                 sdir.entryInfoList(QStringList(QSL("*")),
-                                                    QDir::Readable | QDir::Files));
-
-    Q_EMIT progressSetMaximum(fl.count());
-    QApplication::processEvents();
-    for (int i=0;i<fl.count();i++) {
-        if (!copyFile(fl.at(i),ddir.absolutePath()))
+        QDir sourceDir(src.filePath());
+        if (!sourceDir.isReadable())
             return false;
 
-        Q_EMIT progressSetValue(i);
-        QApplication::processEvents();
+        const QFileInfoList fl = sourceDir.entryInfoList({ QSL("*") },
+                                                         QDir::Readable | QDir::Files | QDir::AllDirs |
+                                                         QDir::NoDotAndDotDot | QDir::NoSymLinks);
+        if (context) {
+            QMetaObject::invokeMethod(context,[context,fl](){
+                context->addFilesCount(ZFileCopier::fileInfoGetCount(fl,QDir::Files));
+            },Qt::QueuedConnection);
+        }
+
+        for (const auto &fi : fl) {
+            if (!copyFileByInfo(fi,destDir.filePath(src.fileName()),context) && (!context.isNull()))
+                context->m_errors.append(fi.fileName());
+        }
+
+        return true;
     }
 
+    if (src.isFile()) {
+        QFile fsrc(src.filePath());
+        if (!fsrc.open(QIODevice::ReadOnly))
+            return false;
+
+        QFile fdst(destDir.filePath(src.fileName()));
+        if (!fdst.open(QIODevice::WriteOnly)) {
+            fsrc.close();
+            return false;
+        }
+
+        const QString onlyName = src.fileName();
+        if (context) {
+            QMetaObject::invokeMethod(context,[context,onlyName](){
+                Q_EMIT context->progressSetLabelText(tr("Copying %1...").arg(onlyName));
+            },Qt::QueuedConnection);
+        }
+
+        qint64 pos = 0;
+        QByteArray buf;
+        qint64 written = 0;
+        do {
+            buf = fsrc.read(ZDefaults::copyBlockSize);
+            written = fdst.write(buf);
+            if (written>=0) {
+                pos += written;
+            }
+        } while (!buf.isEmpty() && written>0 && !context.isNull() && !context->m_abort);
+
+        fsrc.close();
+        fdst.close();
+
+        if (written<0 || context.isNull() || context->m_abort) { // write error
+            fdst.remove();
+            return false;
+        }
+
+        if (context) {
+            QMetaObject::invokeMethod(context,[context](){
+                context->m_filesCopied++;
+                Q_EMIT context->progressSetValue(context->m_filesCopied);
+            },Qt::QueuedConnection);
+        }
+    }
+
+    // Links and other stuff? Just skip them.
     return true;
 }
 
-bool ZFileCopier::copyFile(const QFileInfo &src, const QString &dst)
+int ZFileCopier::fileInfoGetCount(const QFileInfoList &list, QDir::Filters filter)
 {
-    QFile fsrc(src.filePath());
-    if (!fsrc.open(QIODevice::ReadOnly)) return false;
-
-    QDir ddir(m_dstDir);
-    bool ui = true;
-    if (!dst.isEmpty()) {
-        ddir.setPath(dst);
-        ui = false;
-    }
-
-    if (!ddir.exists()) {
-        fsrc.close();
-        return false;
-    }
-    QString dfname =  ddir.absoluteFilePath(src.fileName());
-    QFile fdst(dfname);
-    if (!fdst.open(QIODevice::WriteOnly)) {
-        fsrc.close();
-        return false;
-    }
-
-    Q_EMIT progressSetMaximum(100);
-    QApplication::processEvents();
-    qint64 sz = fsrc.size();
-    qint64 pos = 0;
-    QByteArray buf;
-    qint64 written = 0;
-    do {
-        buf = fsrc.read(ZDefaults::copyBlockSize);
-        written = fdst.write(buf);
-        if (written>=0 && ui) {
-            pos += written;
-            Q_EMIT progressSetValue(static_cast<int>(100*pos/sz));
-            QApplication::processEvents();
+    int res = 0;
+    for (const auto &fi : list) {
+        if (((filter & QDir::AllDirs) > 0) && fi.isDir()) {
+            res++;
+            continue;
         }
-    } while(!buf.isEmpty() && written>0 && !m_abort);
 
-    fsrc.close();
-    fdst.close();
-    Q_EMIT progressSetValue(100);
-    QApplication::processEvents();
+        if (((filter & QDir::NoSymLinks) > 0) && fi.isSymbolicLink()) continue;
+        if (((filter & QDir::NoDot) > 0) && (fi.fileName() == QSL("."))) continue;
+        if (((filter & QDir::NoDotDot) > 0) && (fi.fileName() == QSL(".."))) continue;
 
-    if (written<0 || m_abort) { // write error
-        fdst.remove();
-        return false;
+        if ((filter & QDir::PermissionMask) > 0) {
+            if (((filter & QDir::Executable) > 0) && !fi.isExecutable()) continue;
+            if (((filter & QDir::Writable) > 0) && !fi.isReadable()) continue;
+            if (((filter & QDir::Readable) > 0) && !fi.isWritable()) continue;
+        }
+
+        if (((filter & QDir::Files) > 0) && fi.isFile()) {
+            res++;
+            continue;
+        }
+        if (((filter & QDir::Dirs) > 0) && fi.isDir()) {
+            res++;
+            continue;
+        }
     }
+    return res;
+}
 
-    return true;
+void ZFileCopier::addFilesCount(int count)
+{
+    m_filesCount += count;
+    Q_EMIT progressSetMaximum(m_filesCount);
 }
