@@ -1,5 +1,6 @@
 #include <QDebug>
 #include "zmangaloader.h"
+#include "readers/ztextreader.h"
 
 ZMangaLoader::ZMangaLoader(QObject *parent) :
     QObject(parent)
@@ -15,6 +16,11 @@ ZMangaLoader::~ZMangaLoader()
 void ZMangaLoader::postMessage(const QString &msg)
 {
     Q_EMIT auxMessage(msg);
+}
+
+bool ZMangaLoader::isTextReader() const
+{
+    return m_textReader;
 }
 
 void ZMangaLoader::openFile(const QString &filename, int preferred)
@@ -42,6 +48,7 @@ void ZMangaLoader::openFile(const QString &filename, int preferred)
         return;
     }
     m_reader = za;
+    m_textReader = (qobject_cast<ZTextReader *>(za) != nullptr);
     int pagecnt = m_reader->getPageCount();
     Q_EMIT gotPageCount(pagecnt,preferred);
 }
@@ -64,4 +71,5 @@ void ZMangaLoader::closeFile()
         delete m_reader;
     }
     m_reader = nullptr;
+    m_textReader = false;
 }

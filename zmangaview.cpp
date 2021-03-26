@@ -21,8 +21,6 @@
 #include "zglobal.h"
 #include "mainwindow.h"
 
-// TODO: Force zoom 1:1 for text documents
-
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
 {
@@ -601,6 +599,10 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
     // Draw current page
     m_curPixmap = QImage();
 
+    const bool isText = (!m_cacheLoaders.isEmpty()
+                         && (!m_cacheLoaders.first().loader.isNull())
+                         && (m_cacheLoaders.first().loader->isTextReader()));
+
     if (!m_curUnscaledPixmap.isNull()) {
         QSize scrollerSize = m_scroller->viewport()->size() - QSize(4,4);
         QSize targetSize = m_curUnscaledPixmap.size();
@@ -612,28 +614,30 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
             double myAspect = static_cast<double>(width()) /
                               static_cast<double>(height());
 
-            switch (m_zoomMode) {
-                case zmFit:
-                    if ( pixAspect > myAspect ) { // the image is wider than widget -> resize by width
+            if (!isText) {
+                switch (m_zoomMode) {
+                    case zmFit:
+                        if ( pixAspect > myAspect ) { // the image is wider than widget -> resize by width
+                            targetSize = QSize(scrollerSize.width(),
+                                               qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
+                        } else {
+                            targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
+                                               scrollerSize.height());
+                        }
+                        break;
+                    case zmWidth:
                         targetSize = QSize(scrollerSize.width(),
                                            qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
-                    } else {
+                        break;
+                    case zmHeight:
                         targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
                                            scrollerSize.height());
-                    }
-                    break;
-                case zmWidth:
-                    targetSize = QSize(scrollerSize.width(),
-                                       qRound((static_cast<double>(scrollerSize.width()))/pixAspect));
-                    break;
-                case zmHeight:
-                    targetSize = QSize(qRound((static_cast<double>(scrollerSize.height()))*pixAspect),
-                                       scrollerSize.height());
-                    break;
-                case zmOriginal:
-                    if (m_zoomAny>0)
-                        targetSize = m_curUnscaledPixmap.size()*(static_cast<double>(m_zoomAny)/100.0);
-                    break;
+                        break;
+                    case zmOriginal:
+                        if (m_zoomAny>0)
+                            targetSize = m_curUnscaledPixmap.size()*(static_cast<double>(m_zoomAny)/100.0);
+                        break;
+                }
             }
 
             if (targetSize!=m_curUnscaledPixmap.size()) {

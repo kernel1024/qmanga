@@ -13,6 +13,7 @@ public:
     explicit ZMangaLoader(QObject *parent = nullptr);
     ~ZMangaLoader() override;
     void postMessage(const QString& msg);
+    bool isTextReader() const;
 
 Q_SIGNALS:
     void gotPage(const QByteArray& page, const QImage& pageImage, int num,
@@ -28,6 +29,7 @@ public Q_SLOTS:
     void closeFile();
 
 private:
+    bool m_textReader { false };
     ZAbstractReader* m_reader { nullptr };
     QUuid m_threadID;
 

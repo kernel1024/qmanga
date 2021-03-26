@@ -4,6 +4,7 @@ Checks:          '-*,bugprone-*,cppcoreguidelines-*,misc-*,performance-*,readabi
 -cppcoreguidelines-pro-type-reinterpret-cast,
 -cppcoreguidelines-pro-type-const-cast,
 -cppcoreguidelines-owning-memory,
+-misc-no-recursion,
 -modernize-return-braced-init-list,
 -modernize-use-trailing-return-type,
 -readability-convert-member-functions-to-static'

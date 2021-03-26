@@ -7,6 +7,7 @@
 
 #include "textdoc/ztxtdocument.h"
 #include "textdoc/zepubdocument.h"
+#include "textdoc/zfb2document.h"
 
 ZTextReader::ZTextReader(QObject *parent, const QString &filename)
     : ZAbstractReader(parent,filename)
@@ -18,6 +19,8 @@ bool ZTextReader::preloadFile(const QString &filename, bool preserveDocument)
     static QMutex mutex;
     QMutexLocker locker(&mutex); // parser mutex
 
+    static const QStringList fb2Suffixes({ QSL("fb2"), QSL("fb"), QSL("fb2.zip"), QSL("fb.zip") });
+
     if (zF->global()->txtController()->contains(filename))
         return true;
 
@@ -26,6 +29,8 @@ bool ZTextReader::preloadFile(const QString &filename, bool preserveDocument)
 
     if (fi.suffix().compare(QSL("txt"),Qt::CaseInsensitive) == 0) {
         doc = new ZTxtDocument(nullptr,filename);
+    } else if (fb2Suffixes.contains(fi.completeSuffix(),Qt::CaseInsensitive)) {
+        doc = new ZFB2Document(nullptr,filename);
 #ifdef WITH_EPUB
     } else if (fi.suffix().compare(QSL("epub"),Qt::CaseInsensitive) == 0) {
         doc = new ZEpubDocument(nullptr,filename);

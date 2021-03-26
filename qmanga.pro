@@ -21,6 +21,7 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     readers/textdoc/zabstracttextdocument.cpp \
     readers/textdoc/zepubdocument.cpp \
+    readers/textdoc/zfb2document.cpp \
     readers/textdoc/ztxtdocument.cpp \
     readers/ztextreader.cpp \
     zglobalprivate.cpp \
@@ -52,6 +53,7 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     readers/textdoc/zabstracttextdocument.h \
     readers/textdoc/zepubdocument.h \
+    readers/textdoc/zfb2document.h \
     readers/textdoc/ztxtdocument.h \
     readers/ztextreader.h \
     zglobalprivate.h \
