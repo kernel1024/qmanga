@@ -12,7 +12,6 @@
 #include <QVariant>
 #include <QElapsedTimer>
 #include <QRegularExpression>
-#include <QCache>
 #include <QDebug>
 #include "zdb.h"
 
@@ -104,6 +103,14 @@ void ZDB::setCredentials(const QString &host, const QString &base, const QString
     m_dbBase = base;
     m_dbUser = user;
     m_dbPass = password;
+}
+
+void ZDB::setCoverCacheSize(int size)
+{
+    QMutexLocker locker(&m_coverCacheMutex);
+
+    if (m_coverCache.maxCost() != size)
+        m_coverCache.setMaxCost(size);
 }
 
 void ZDB::setDynAlbums(const ZStrMap &albums)
@@ -557,6 +564,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
             int prefRendering = qr.value(fldPreferredRendering).toInt();
             m_preferredRendering[fileName] = prefRendering;
 
+            idx++;
             const ZSQLMangaEntry entry(ZSQLMangaEntry(qr.value(fldName).toString(),
                                                       fileName,
                                                       qr.value(fldAlbumName).toString(),
@@ -569,54 +577,51 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
                                                       qr.value(fldID).toInt(),
                                                       static_cast<Z::PDFRendering>(prefRendering)));
 
-            m_resamplersPool.start([this,entry,preferredCoverSize](){
-                static QCache<QString, QPair<QSize,QImage> > imgCache;
-                static QMutex cacheMutex;
+            {
+                QMutexLocker mlock(&m_coverCacheMutex);
 
-                if (imgCache.maxCost() != zF->global()->getMaxCoverCacheSize())
-                    imgCache.setMaxCost(zF->global()->getMaxCoverCacheSize());
+                const auto *cached = m_coverCache.object(entry.filename);
+                if (cached && (cached->first == preferredCoverSize)) {
+                    const QImage res(cached->second);
+                    ZSQLMangaEntry e = entry;
+                    if (!res.isNull()) {
+                        e.cover = res;
 
-                {
-                    QMutexLocker mlock(&cacheMutex);
-
-                    const auto *cached = imgCache.object(entry.filename);
-                    if (cached) {
-                        if (cached->first == preferredCoverSize) {
-                            const QImage res(cached->second);
-                            ZSQLMangaEntry e = entry;
-                            if (!res.isNull())
-                                e.cover = res;
-                            Q_EMIT gotFile(e);
-                            return;
-                        }
-
-                        imgCache.remove(entry.filename);
+                        Q_EMIT gotFile(e);
+                        continue;
                     }
                 }
+            }
 
-                const QImage res = zF->resizeImage(entry.cover,preferredCoverSize,true,
-                                                   zF->global()->getDownscaleSearchTabFilter());
-
-                {
-                    QMutexLocker mlock(&cacheMutex);
-                    imgCache.insert(entry.filename,
-                                    new QPair<QSize,QImage>(preferredCoverSize, res),
-                                    res.sizeInBytes());
-                }
-
+            m_fastResamplersPool.start([this,entry,preferredCoverSize](){
+                const QImage res = entry.cover.scaled(preferredCoverSize,Qt::KeepAspectRatio,
+                                                      Qt::FastTransformation);
                 ZSQLMangaEntry e = entry;
                 if (!res.isNull())
                     e.cover = res;
-                Q_EMIT gotFile(e);
-            });
 
-            idx++;
+                Q_EMIT gotFile(e);
+
+                m_searchResamplersPool.start([this,entry,preferredCoverSize](){
+                    const QImage res = zF->resizeImage(entry.cover,preferredCoverSize,true,
+                                                       zF->global()->getDownscaleSearchTabFilter());
+                    if (!res.isNull()) {
+                        QMutexLocker mlock(&m_coverCacheMutex);
+                        m_coverCache.insert(entry.filename,
+                                            new QPair<QSize,QImage>(preferredCoverSize, res),
+                                            res.sizeInBytes());
+                        QMetaObject::invokeMethod(this,[this,entry,res](){
+                            Q_EMIT gotResampledCover(entry.dbid,res);
+                        },Qt::QueuedConnection);
+                    }
+                });
+            });
         }
     } else {
         qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
     }
     sqlCloseBase(db);
-    m_resamplersPool.waitForDone();
+    m_fastResamplersPool.waitForDone();
     Q_EMIT filesLoaded(idx,tmr.elapsed());
 }
 
@@ -1141,7 +1146,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         if (stopAdding)
             break;
 
-        m_resamplersPool.start([this,fi,&addedCount,&stopAdding,totalCount,ialbum](){
+        m_sourceResamplersPool.start([this,fi,&addedCount,&stopAdding,totalCount,ialbum](){
             bool mimeOk = false;
 
             QScopedPointer<ZAbstractReader> za(zF->readerFactory(nullptr,fi.filePath(),&mimeOk,true));
@@ -1208,13 +1213,13 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         });
     }
 
-    while (m_resamplersPool.activeThreadCount() > 0) {
+    while (m_sourceResamplersPool.activeThreadCount() > 0) {
         if (m_wasCanceled) {
             stopAdding = true;
-            m_resamplersPool.clear();
+            m_sourceResamplersPool.clear();
             m_wasCanceled = false;
         }
-        m_resamplersPool.waitForDone(threadPoolWaitTimeoutMS);
+        m_sourceResamplersPool.waitForDone(threadPoolWaitTimeoutMS);
         QApplication::processEvents();
     }
 

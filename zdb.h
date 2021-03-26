@@ -5,6 +5,8 @@
 #include <QString>
 #include <QSqlDatabase>
 #include <QThreadPool>
+#include <QCache>
+#include <QMutex>
 #include "readers/zabstractreader.h"
 #include "global.h"
 
@@ -25,7 +27,11 @@ private:
     ZStrMap m_dynAlbums;
     ZStrHash m_problems;
     QHash<QString,int> m_preferredRendering;
-    QThreadPool m_resamplersPool;
+    QThreadPool m_sourceResamplersPool;
+    QThreadPool m_searchResamplersPool;
+    QThreadPool m_fastResamplersPool;
+    QCache<QString, QPair<QSize,QImage> > m_coverCache;
+    QMutex m_coverCacheMutex;
 
     bool sqlCheckBasePriv(QSqlDatabase &db, bool silent);
     bool checkTablesParams(QSqlDatabase &db);
@@ -65,6 +71,7 @@ Q_SIGNALS:
     void showProgressState(int value, const QString& msg);
     void gotAlbums(const ZAlbumVector& albums);
     void gotFile(const ZSQLMangaEntry& file);
+    void gotResampledCover(int dbid, const QImage& cover);
     void filesLoaded(int count, qint64 elapsed);
     void deleteItemsFromModel(const ZIntVector& dbids);
     void updateWatchDirList(const QStringList& dirs);
@@ -74,6 +81,7 @@ Q_SIGNALS:
 public Q_SLOTS:
     void setCredentials(const QString &host, const QString& base,
                         const QString& user, const QString& password);
+    void setCoverCacheSize(int size);
     void setDynAlbums(const ZStrMap &albums);
     void sqlCheckBase();
     void sqlCreateTables();

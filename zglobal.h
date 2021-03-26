@@ -56,7 +56,6 @@ public:
     void setDetectedDelta(int value);
     int getScrollFactor() const;
     int getTextDocMargin() const;
-    int getMaxCoverCacheSize() const;
     qreal getDpiX() const;
     qreal getDpiY() const;
     qreal getForceDPI() const;
@@ -105,6 +104,7 @@ Q_SIGNALS:
     void fsFilesAdded();
     void dbSetDynAlbums(const ZStrMap& albums);
     void dbSetIgnoredFiles(const QStringList& files);
+    void dbSetCoverCacheSize(int size);
     void auxMessage(const QString& msg);
     void loadSearchTabSettings(QSettings *settings);
     void saveSearchTabSettings(QSettings *settings);

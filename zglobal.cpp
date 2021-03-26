@@ -40,6 +40,9 @@ ZGlobal::ZGlobal(QObject *parent) :
     connect(this,&ZGlobal::dbSetDynAlbums,d->m_db.data(),&ZDB::setDynAlbums,Qt::QueuedConnection);
     connect(this,&ZGlobal::dbSetIgnoredFiles,
             d->m_db.data(),&ZDB::sqlSetIgnoredFiles,Qt::QueuedConnection);
+    connect(this,&ZGlobal::dbSetCoverCacheSize,
+            d->m_db.data(),&ZDB::setCoverCacheSize,Qt::QueuedConnection);
+
     d->m_db->moveToThread(d->m_threadDB.data());
     connect(d->m_threadDB.data(),&QThread::finished,d->m_db.data(),&QObject::deleteLater,Qt::QueuedConnection);
     connect(d->m_threadDB.data(),&QThread::finished,d->m_threadDB.data(),&QObject::deleteLater,Qt::QueuedConnection);
@@ -178,6 +181,7 @@ void ZGlobal::loadSettings()
     ocrEditor()->setEditorFont(d->m_ocrFont);
 
     checkSQLProblems(d->m_mainWindow);
+    Q_EMIT dbSetCoverCacheSize(d->m_maxCoverCacheSize);
 }
 
 void ZGlobal::saveSettings()
@@ -493,6 +497,7 @@ void ZGlobal::settingsDlg()
         if (d->m_filesystemWatcher)
             Q_EMIT dbRescanIndexedDirs();
         ocrEditor()->setEditorFont(d->m_ocrFont);
+        Q_EMIT dbSetCoverCacheSize(d->m_maxCoverCacheSize);
 
 #ifdef WITH_OCR
         bool needRestart = (dlg.ui->editOCRDatapath->text() != zF->ocrGetDatapath());
@@ -599,12 +604,6 @@ int ZGlobal::getTextDocMargin() const
 {
     Q_D(const ZGlobal);
     return d->m_textDocMargin;
-}
-
-int ZGlobal::getMaxCoverCacheSize() const
-{
-    Q_D(const ZGlobal);
-    return d->m_maxCoverCacheSize;
 }
 
 int ZGlobal::getDetectedDelta() const

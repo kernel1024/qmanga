@@ -25,7 +25,6 @@ public:
     ~ZMangaModel() override;
 
     Qt::ItemFlags flags(const QModelIndex & index) const override;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole, bool listMode = false) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     int rowCount( const QModelIndex & parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent) const override;
@@ -38,6 +37,7 @@ public Q_SLOTS:
     void deleteAllItems();
     void deleteItems(const ZIntVector& dbids);
     void addItem(const ZSQLMangaEntry& file);
+    void updateCover(int dbid, const QImage& cover);
 
 private:
     QPointer<QTableView> m_tableView;
@@ -52,7 +52,6 @@ public:
     ZMangaTableModel(QObject *parent, QTableView *aView);
     ~ZMangaTableModel() override = default;
     int columnCount(const QModelIndex &parent) const override;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
 
 private:
     QTableView *m_view { nullptr };

@@ -118,6 +118,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
             this,&ZSearchTab::mangaSelectionChanged);
 
     connect(zF->global()->db(),&ZDB::gotFile,aModel,&ZMangaModel::addItem,Qt::QueuedConnection);
+    connect(zF->global()->db(),&ZDB::gotResampledCover,aModel,&ZMangaModel::updateCover,Qt::QueuedConnection);
     connect(zF->global()->db(),&ZDB::deleteItemsFromModel,aModel,&ZMangaModel::deleteItems,Qt::QueuedConnection);
     m_model = aModel;
 

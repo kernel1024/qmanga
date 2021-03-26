@@ -19,7 +19,6 @@ const int columnAddDate = 4;
 const int columnFileDate = 5;
 const int columnMagic = 6;
 const int columnsCount = 7;
-const double textWidthFactor = 3.5;
 }
 
 ZMangaModel::ZMangaModel(QObject *parent, QTableView *tableView) :
@@ -43,11 +42,6 @@ Qt::ItemFlags ZMangaModel::flags(const QModelIndex &index) const
 
 QVariant ZMangaModel::data(const QModelIndex &index, int role) const
 {
-    return data(index,role,false);
-}
-
-QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) const
-{
     const QChar zeroWidthSpace(0x200b);
 
     auto *searchTab = qobject_cast<ZSearchTab *>(parent());
@@ -58,17 +52,10 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role, bool listMode) co
 
     int idx = index.row();
 
-    QFontMetrics fm(m_tableView->font());
     if (role == Qt::DecorationRole && index.column()==0) {
         const ZSQLMangaEntry itm = m_list.at(idx);
 
-        QPixmap rp;
-        if (listMode) {
-            rp = QPixmap(fm.height()*2,fm.height()*2);
-        } else {
-            const QSize pSize = searchTab->getPreferredCoverSize();
-            rp = QPixmap(pSize.width(),qRound(pSize.width()*ZDefaults::previewProps));
-        }
+        QPixmap rp(searchTab->getPreferredCoverSize());
         QPainter cp(&rp);
         cp.fillRect(0,0,rp.width(),rp.height(),m_tableView->palette().base());
 
@@ -227,6 +214,14 @@ void ZMangaModel::addItem(const ZSQLMangaEntry &file)
     endInsertRows();
 }
 
+void ZMangaModel::updateCover(int dbid, const QImage &cover)
+{
+    int idx = m_list.indexOf(ZSQLMangaEntry(dbid));
+    if (idx<0) return;
+
+    m_list[idx].cover = cover;
+}
+
 ZMangaSearchHistoryModel::ZMangaSearchHistoryModel(QObject *parent)
     : QAbstractListModel(parent)
 {
@@ -333,12 +328,6 @@ int ZMangaTableModel::columnCount(const QModelIndex &parent) const
         }
     }
     return ZDefaults::columnsCount;
-}
-
-QVariant ZMangaTableModel::data(const QModelIndex &index, int role) const
-{
-    auto *model = qobject_cast<ZMangaModel *>(sourceModel());
-    return model->data(mapToSource(index),role,true);
 }
 
 ZMangaIconModel::ZMangaIconModel(QObject *parent, ZMangaListView *aView)
