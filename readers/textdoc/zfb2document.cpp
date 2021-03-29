@@ -879,7 +879,8 @@ bool ZFB2Document::convertTable(const QDomElement &element)
                 table->appendRows(1);
             } else {
                 QTextTableFormat tableFormat;
-                tableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_None);
+                tableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
+                tableFormat.setBorderCollapse(true);
                 table = mCursor->insertTable(1, 1, tableFormat);
             }
 
@@ -933,8 +934,6 @@ bool ZFB2Document::convertTableCellHelper(const QDomElement &element, QTextTable
     int row = table.rows() - 1;
 
     int colspan = qMax(element.attribute(QSL("colspan")).toInt(), 1);
-    // TODO: rowspan
-    // int rowspan = qMax(element.attribute(QSL("rowspan")).toInt(), 1);
 
     int columnsToAppend = column + colspan - table.columns();
     if (columnsToAppend > 0) {
