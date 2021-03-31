@@ -691,6 +691,9 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     delete za;
 
     sqlCloseBase(db);
+
+    QMutexLocker mlock(&m_coverCacheMutex);
+    m_coverCache.remove(fname);
 }
 
 void ZDB::sqlRescanIndexedDirs()

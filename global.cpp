@@ -149,7 +149,13 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
     if (ZTextReader::preloadFile(filename,createReader)) {
         if (createReader)
             return new ZTextReader(parent,filename);
+#ifdef WITH_POPPLER
+    } else if (mime.contains(QSL("application/pdf"),Qt::CaseInsensitive) ||
+               ZPdfReader::preloadFile(filename,createReader)) {
+        if (createReader)
+            return new ZPdfReader(parent,filename);
 
+#endif
     } else if (mime.contains(QSL("application/zip"),Qt::CaseInsensitive)) {
         if (createReader)
             return new ZZipReader(parent,filename);
@@ -159,13 +165,6 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
         if (createReader)
             return new ZRarReader(parent,filename);
 
-#ifdef WITH_POPPLER
-    } else if (mime.contains(QSL("application/pdf"),Qt::CaseInsensitive) ||
-               ZPdfReader::preloadFile(filename,createReader)) {
-        if (createReader)
-            return new ZPdfReader(parent,filename);
-
-#endif
 #ifdef WITH_DJVU
     } else if (mime.contains(QSL("image/vnd.djvu"),Qt::CaseInsensitive)) {
         if (createReader)

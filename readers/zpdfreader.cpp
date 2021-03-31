@@ -73,6 +73,7 @@ bool ZPdfReader::openFile()
     QMutexLocker locker(&m_indexerMutex);
 
     m_useImageCatalog = false;
+    m_officeDoc = false;
     m_images.clear();
 
 #ifdef WITH_POPPLER
@@ -80,8 +81,11 @@ bool ZPdfReader::openFile()
         return false;
 
     QString fileName = zF->pdfController()->getConvertedDocumentPDF(getFileName());
-    if (fileName.isEmpty())
+    if (fileName.isEmpty()) {
         fileName = getFileName();
+    } else {
+        m_officeDoc = true;
+    }
 
     QFileInfo fi(fileName);
     if (!fi.isFile() || !fi.isReadable()) {
@@ -188,6 +192,7 @@ void ZPdfReader::closeFile()
 
     m_images.clear();
     m_useImageCatalog = false;
+    m_officeDoc = false;
     ZAbstractReader::closeFile();
 }
 
@@ -316,6 +321,9 @@ QImage ZPdfReader::loadPageImage(int num)
 
 QString ZPdfReader::getMagic()
 {
+    if (m_officeDoc)
+        return QSL("DOCS");
+
     return QSL("PDF");
 }
 
@@ -333,7 +341,7 @@ bool ZPdfReader::preloadFile(const QString &filename, bool preserveDocument)
         return true;
 
     QFileInfo fi(filename);
-    if (!officeFormats.contains(fi.suffix()))
+    if (!officeFormats.contains(fi.suffix(),Qt::CaseInsensitive))
         return false;
 
     const QString exec = zF->global()->getOfficeCmd();

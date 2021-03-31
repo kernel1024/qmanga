@@ -55,6 +55,7 @@ private:
     bool m_useImageCatalog { false };
     QMutex m_indexerMutex;
     QList<ZPDFImg> m_images;
+    bool m_officeDoc { false };
     int zlibInflate(const char *src, int srcSize, uchar *dst, int dstSize);
 
 #ifdef WITH_POPPLER
