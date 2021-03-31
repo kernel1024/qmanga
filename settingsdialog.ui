@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>915</width>
+    <width>849</width>
     <height>529</height>
    </rect>
   </property>
@@ -908,85 +908,134 @@ one per page, with supported format. Use rendering mode as fallback.</string>
            <property name="title">
             <string>Text documents</string>
            </property>
-           <layout class="QFormLayout" name="formLayout_3">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_20">
-              <property name="text">
-               <string>Page size</string>
-              </property>
-              <property name="buddy">
-               <cstring>comboTextPageSize</cstring>
+           <layout class="QVBoxLayout" name="verticalLayout_16">
+            <item>
+             <layout class="QFormLayout" name="formLayout_3">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_20">
+                <property name="text">
+                 <string>Page size</string>
+                </property>
+                <property name="buddy">
+                 <cstring>comboTextPageSize</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="comboTextPageSize"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_21">
+                <property name="text">
+                 <string>Width</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinTextWidth</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="spinTextWidth">
+                <property name="suffix">
+                 <string> pt</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>99999</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_22">
+                <property name="text">
+                 <string>Height</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinTextHeight</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QSpinBox" name="spinTextHeight">
+                <property name="suffix">
+                 <string> pt</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>99999</number>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_23">
+                <property name="text">
+                 <string>Margin</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinTextMargin</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QSpinBox" name="spinTextMargin">
+                <property name="suffix">
+                 <string> px</string>
+                </property>
+                <property name="maximum">
+                 <number>99999</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QComboBox" name="comboTextPageSize"/>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_21">
-              <property name="text">
-               <string>Width</string>
-              </property>
-              <property name="buddy">
-               <cstring>spinTextWidth</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QSpinBox" name="spinTextWidth">
-              <property name="suffix">
-               <string> pt</string>
-              </property>
-              <property name="minimum">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <number>99999</number>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_22">
-              <property name="text">
-               <string>Height</string>
-              </property>
-              <property name="buddy">
-               <cstring>spinTextHeight</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QSpinBox" name="spinTextHeight">
-              <property name="suffix">
-               <string> pt</string>
-              </property>
-              <property name="minimum">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <number>99999</number>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_23">
-              <property name="text">
-               <string>Margin</string>
-              </property>
-              <property name="buddy">
-               <cstring>spinTextMargin</cstring>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QSpinBox" name="spinTextMargin">
-              <property name="suffix">
-               <string> px</string>
-              </property>
-              <property name="maximum">
-               <number>99999</number>
-              </property>
-             </widget>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_15">
+              <item>
+               <widget class="QLabel" name="label_25">
+                <property name="text">
+                 <string>Libreoffice binary for convert docs to PDF</string>
+                </property>
+                <property name="buddy">
+                 <cstring>editRar</cstring>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <widget class="QLineEdit" name="editOffice">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="placeholderText">
+                   <string>soffice</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="btnOffice">
+                  <property name="text">
+                   <string>...</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
@@ -1543,6 +1592,8 @@ one per page, with supported format. Use rendering mode as fallback.</string>
   <tabstop>spinTextWidth</tabstop>
   <tabstop>spinTextHeight</tabstop>
   <tabstop>spinTextMargin</tabstop>
+  <tabstop>editOffice</tabstop>
+  <tabstop>btnOffice</tabstop>
   <tabstop>checkPDFDPI</tabstop>
   <tabstop>spinPDFDPI</tabstop>
   <tabstop>spinSearchScrollFactor</tabstop>

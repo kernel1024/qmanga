@@ -189,6 +189,7 @@ public:
     void initialize();
     ZDjVuController* djvuController() const;
     ZGlobal* global() const;
+    ZPdfController* pdfController() const;
     static const QHash<Z::Ordering, QString> &getHeaderColumns();
     static const QHash<Z::Ordering, QString> &getSqlColumns();
     static const QHash<Z::Ordering, QString> &getSortMenu();

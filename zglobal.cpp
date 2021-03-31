@@ -101,6 +101,7 @@ void ZGlobal::loadSettings()
     d->m_dbBase = settings.value(QSL("mysqlBase"),QSL("qmanga")).toString();
     d->m_dbHost = settings.value(QSL("mysqlHost"),QSL("localhost")).toString();
     d->m_rarCmd = settings.value(QSL("rarCmd"),QString()).toString();
+    d->m_officeCmd = settings.value(QSL("officeCmd"),QSL("soffice")).toString();
     d->m_savedAuxOpenDir = settings.value(QSL("savedAuxOpenDir"),QString()).toString();
     d->m_savedIndexOpenDir = settings.value(QSL("savedIndexOpenDir"),QString()).toString();
     d->m_savedAuxSaveDir = settings.value(QSL("savedAuxSaveDir"),QString()).toString();
@@ -199,6 +200,7 @@ void ZGlobal::saveSettings()
     settings.setValue(QSL("mysqlBase"),d->m_dbBase);
     settings.setValue(QSL("mysqlHost"),d->m_dbHost);
     settings.setValue(QSL("rarCmd"),d->m_rarCmd);
+    settings.setValue(QSL("officeCmd"),d->m_officeCmd);
     settings.setValue(QSL("savedAuxOpenDir"),d->m_savedAuxOpenDir);
     settings.setValue(QSL("savedAuxSaveDir"),d->m_savedAuxSaveDir);
     settings.setValue(QSL("savedIndexOpenDir"),d->m_savedIndexOpenDir);
@@ -359,6 +361,7 @@ void ZGlobal::settingsDlg()
     dlg.ui->editMySqlBase->setText(d->m_dbBase);
     dlg.ui->editMySqlHost->setText(d->m_dbHost);
     dlg.ui->editRar->setText(d->m_rarCmd);
+    dlg.ui->editOffice->setText(d->m_officeCmd);
     dlg.ui->spinCacheWidth->setValue(d->m_cacheWidth);
     dlg.ui->spinMagnify->setValue(d->m_magnifySize);
     dlg.ui->spinBlur->setValue(d->m_resizeBlur);
@@ -438,6 +441,7 @@ void ZGlobal::settingsDlg()
         d->m_dbBase=dlg.ui->editMySqlBase->text();
         d->m_dbHost=dlg.ui->editMySqlHost->text();
         d->m_rarCmd=dlg.ui->editRar->text();
+        d->m_officeCmd=dlg.ui->editOffice->text();
         d->m_cacheWidth=dlg.ui->spinCacheWidth->value();
         d->m_magnifySize=dlg.ui->spinMagnify->value();
         d->m_resizeBlur=dlg.ui->spinBlur->value();
@@ -772,6 +776,12 @@ QString ZGlobal::getRarCmd() const
 {
     Q_D(const ZGlobal);
     return d->m_rarCmd;
+}
+
+QString ZGlobal::getOfficeCmd() const
+{
+    Q_D(const ZGlobal);
+    return d->m_officeCmd;
 }
 
 void ZGlobal::setDefaultSearchEngine(const QString &value)

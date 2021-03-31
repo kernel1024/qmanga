@@ -56,6 +56,7 @@ public:
     QString m_savedIndexOpenDir;
     QString m_savedAuxSaveDir;
     QString m_rarCmd;
+    QString m_officeCmd;
 
     QColor m_backgroundColor;
     QColor m_frameColor;

@@ -116,6 +116,11 @@ ZGlobal *ZGenericFuncs::global() const
     return m_zg.data();
 }
 
+ZPdfController *ZGenericFuncs::pdfController() const
+{
+    return m_pdfController.data();
+}
+
 ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
                                bool onlyArchives, bool createReader)
 {
@@ -155,7 +160,8 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
             return new ZRarReader(parent,filename);
 
 #ifdef WITH_POPPLER
-    } else if (mime.contains(QSL("application/pdf"),Qt::CaseInsensitive)) {
+    } else if (mime.contains(QSL("application/pdf"),Qt::CaseInsensitive) ||
+               ZPdfReader::preloadFile(filename,createReader)) {
         if (createReader)
             return new ZPdfReader(parent,filename);
 

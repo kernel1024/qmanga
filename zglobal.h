@@ -79,6 +79,7 @@ public:
     QFont getOcrFont() const;
     QFont getTextDocFont() const;
     QString getRarCmd() const;
+    QString getOfficeCmd() const;
     void setDefaultSearchEngine(const QString &value);
     QStringList getNewlyAddedFiles() const;
     void removeFileFromNewlyAdded(const QString &filename);

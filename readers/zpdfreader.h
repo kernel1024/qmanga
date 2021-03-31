@@ -39,6 +39,7 @@ public:
 class ZPdfReader : public ZAbstractReader
 {
     Q_OBJECT
+    Q_DISABLE_COPY(ZPdfReader)
 public:
     ZPdfReader(QObject *parent, const QString &filename);
     ~ZPdfReader() override;
@@ -47,6 +48,8 @@ public:
     QByteArray loadPage(int num) override;
     QImage loadPageImage(int num) override;
     QString getMagic() override;
+
+    static bool preloadFile(const QString &filename, bool preserveDocument);
 
 private:
     bool m_useImageCatalog { false };
@@ -64,17 +67,22 @@ private:
 
     void loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage);
 #endif
-
-    Q_DISABLE_COPY(ZPdfReader)
-
 };
 
 class ZPdfController : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY(ZPdfController)
+private:
+    QHash<QString,QString> m_officeDocs;
+    void cleanTmpFiles();
+
 public:
     ZPdfController(QObject *parent = nullptr);
     ~ZPdfController() override;
+
+    QString getConvertedDocumentPDF(const QString& sourceFilename) const;
+    void addConvertedDocumentPDF(const QString& sourceFilename, const QString& pdfFile);
 };
 
 #endif // ZPDFREADER_H

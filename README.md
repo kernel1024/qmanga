@@ -1,7 +1,7 @@
 # qmanga
 Manga and book reader written with Qt.
 
-Multithreaded manga viewer with fast bookshelf support. ZIP, RAR, PDF, DJVU packed files with original images or scanned pages supported. Text book formats also supported: TXT, EPUB, FB2.
+Multithreaded manga viewer with fast bookshelf support. ZIP, RAR, PDF, DJVU packed files with original images or scanned pages supported. Text book formats also supported: TXT, EPUB, FB2. Supported office documents: RTF, DOC, DOCX, XLS, XLSX, PPT, PPTX, WPS, ODT, ODS, ODP via LibreOffice converter to PDF format.
 
 ### Requirements:
 * Qt 5.15+ (gui, widgets, dbus (for linux), sql, xml) with C++17 support

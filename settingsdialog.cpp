@@ -34,6 +34,7 @@ ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
     connect(ui->btnFrameColor,&QPushButton::clicked,this,&ZSettingsDialog::frameColorDlg);
     connect(ui->btnTextBkColor,&QPushButton::clicked,this,&ZSettingsDialog::textDocBkColorDlg);
     connect(ui->btnRar,&QToolButton::clicked,this,&ZSettingsDialog::openRar);
+    connect(ui->btnOffice,&QToolButton::clicked,this,&ZSettingsDialog::openOffice);
 
     connect(ui->btnDynAdd,&QPushButton::clicked,this,&ZSettingsDialog::dynAdd);
     connect(ui->btnDynEdit,&QPushButton::clicked,this,&ZSettingsDialog::dynEdit);
@@ -496,7 +497,20 @@ void ZSettingsDialog::openRar()
 #ifdef Q_OS_WIN
     filter = tr("Executable files (*.exe)");
 #endif
-    QString filename = zF->getOpenFileNameD(this,tr("Select console RAR binary"),zF->global()->getSavedAuxOpenDir(),filter);
+    const QString filename = zF->getOpenFileNameD(this,tr("Select console RAR binary"),
+                                                  zF->global()->getSavedAuxOpenDir(),filter);
     if (!filename.isEmpty())
         ui->editRar->setText(filename);
+}
+
+void ZSettingsDialog::openOffice()
+{
+    QString filter = QSL("*");
+#ifdef Q_OS_WIN
+    filter = tr("Executable files (*.exe)");
+#endif
+    QString filename = zF->getOpenFileNameD(this,tr("Select LibreOffice headless converter binary"),
+                                            zF->global()->getSavedAuxOpenDir(),filter);
+    if (!filename.isEmpty())
+        ui->editOffice->setText(filename);
 }

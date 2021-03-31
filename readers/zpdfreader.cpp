@@ -20,6 +20,8 @@ extern "C" {
 }
 
 #include <memory>
+#include <algorithm>
+#include <execution>
 #include <QBuffer>
 #include <QMutexLocker>
 #include <QDebug>
@@ -77,7 +79,10 @@ bool ZPdfReader::openFile()
     if (isOpened() || globalParams==nullptr)
         return false;
 
-    QString fileName = getFileName();
+    QString fileName = zF->pdfController()->getConvertedDocumentPDF(getFileName());
+    if (fileName.isEmpty())
+        fileName = getFileName();
+
     QFileInfo fi(fileName);
     if (!fi.isFile() || !fi.isReadable()) {
         return false;
@@ -314,6 +319,49 @@ QString ZPdfReader::getMagic()
     return QSL("PDF");
 }
 
+bool ZPdfReader::preloadFile(const QString &filename, bool preserveDocument)
+{
+    static QMutex mutex;
+    QMutexLocker locker(&mutex); // parser mutex
+
+    static const QStringList officeFormats({ QSL("wpd"), QSL("wps"),  QSL("rtf"),
+                                             QSL("doc"), QSL("docx"), QSL("odt"),
+                                             QSL("xls"), QSL("xlsx"), QSL("ods"),
+                                             QSL("ppt"), QSL("pptx"), QSL("odp")});
+
+    if (!(zF->pdfController()->getConvertedDocumentPDF(filename).isEmpty()))
+        return true;
+
+    QFileInfo fi(filename);
+    if (!officeFormats.contains(fi.suffix()))
+        return false;
+
+    const QString exec = zF->global()->getOfficeCmd();
+
+    QDir tempDir = QDir::temp();
+    const QStringList args({ QSL("--headless"), QSL("--convert-to"), QSL("pdf"),
+                           filename, QSL("--outdir"), tempDir.absolutePath() });
+
+    QProcess conv;
+    conv.start(exec,args);
+    conv.waitForFinished(ZDefaults::oneMinuteMS);
+
+    if (conv.exitStatus() != QProcess::NormalExit)
+        return false;
+
+    const QString destFilename = tempDir.absoluteFilePath(QSL("%1.%2").arg(fi.completeBaseName(),QSL("pdf")));
+    QFile fout(destFilename);
+    if (!fout.exists())
+        return false;
+
+    if (preserveDocument) {
+        zF->pdfController()->addConvertedDocumentPDF(filename,destFilename);
+    } else {
+        fout.remove();
+    }
+    return true;
+}
+
 ZPDFImg::ZPDFImg(const ZPDFImg &other)
 {
     pos = other.pos;
@@ -342,6 +390,16 @@ bool ZPDFImg::operator!=(const ZPDFImg &ref) const
     return (pos!=ref.pos || size!=ref.size || format!=ref.format);
 }
 
+void ZPdfController::cleanTmpFiles()
+{
+    std::for_each(std::execution::par, m_officeDocs.constKeyValueBegin(), m_officeDocs.constKeyValueEnd(),
+                  [](const auto& file){
+        QFile f(file.second);
+        f.remove();
+    });
+    m_officeDocs.clear();
+}
+
 ZPdfController::ZPdfController(QObject *parent)
     : QObject(parent)
 {
@@ -352,4 +410,17 @@ ZPdfController::ZPdfController(QObject *parent)
 #endif
 }
 
-ZPdfController::~ZPdfController() = default;
+ZPdfController::~ZPdfController()
+{
+    cleanTmpFiles();
+}
+
+QString ZPdfController::getConvertedDocumentPDF(const QString &sourceFilename) const
+{
+    return m_officeDocs.value(sourceFilename);
+}
+
+void ZPdfController::addConvertedDocumentPDF(const QString &sourceFilename, const QString &pdfFile)
+{
+    m_officeDocs.insert(sourceFilename,pdfFile);
+}

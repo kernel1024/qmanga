@@ -55,6 +55,7 @@ public Q_SLOTS:
     void dynAdd();
     void dynEdit();
     void openRar(); 
+    void openOffice();
     void addSearchEngine();
     void delSearchEngine() const;
     void setDefaultSearch() const;
