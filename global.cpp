@@ -373,9 +373,10 @@ void ZGenericFuncs::showInGraphicalShell(const QString &pathIn)
     QStringList browserArgs;
     if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains(QSL("KDE"),Qt::CaseInsensitive)) {
         app = QStandardPaths::findExecutable(QSL("dolphin"));
-        if (!fileInfo.isDir())
+        /* if (!fileInfo.isDir())
             browserArgs += QSL("--select");
-        browserArgs += pathIn;
+        browserArgs += pathIn; */ // KDE bug: --select broken as of dolphin 20.12, opens file with default action.
+        browserArgs += fileInfo.absolutePath();
     } else if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains(QSL("Gnome"),Qt::CaseInsensitive)) {
         app = QStandardPaths::findExecutable(QSL("nautilus"));
         if (!fileInfo.isDir())
