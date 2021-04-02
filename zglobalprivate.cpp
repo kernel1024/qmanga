@@ -9,7 +9,6 @@ ZGlobalPrivate::ZGlobalPrivate(QObject *parent)
       m_threadDB(new QThread()),
       m_txtController(new ZTextDocumentController(this))
 {
-
 }
 
 ZGlobalPrivate::~ZGlobalPrivate() = default;

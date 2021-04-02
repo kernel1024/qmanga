@@ -29,7 +29,8 @@ void ZMangaLoader::openFile(const QString &filename, int preferred)
         closeFile();
 
     bool mimeOk = false;
-    ZAbstractReader* za = zF->readerFactory(this,filename,&mimeOk,false);
+    ZAbstractReader* za = zF->readerFactory(this,filename,&mimeOk,Z::rffAll,
+                                            Z::rfmCreateReader);
     if ((za == nullptr) && (!mimeOk)) {
         Q_EMIT closeFileRequest();
         Q_EMIT gotError(tr("File format not supported."));

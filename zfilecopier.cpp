@@ -64,7 +64,6 @@ void ZFileCopier::start()
         },Qt::QueuedConnection);
     });
     connect(th,&QThread::finished,th,&QThread::deleteLater);
-
     th->setObjectName(QSL("FCOPY_worker"));
     th->start();
 }

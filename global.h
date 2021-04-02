@@ -40,6 +40,7 @@ const int exportFilenameNumWidth = 10;
 const int ocrSquareMinimumSize = 20;
 const int errorPageLoadMsgVerticalMargin = 5;
 const int fileScannerStaticPercentage = 25;
+const int fileScannerStaticPercentage2 = 75;
 const int maxSQLUpdateStringListSize = 64;
 const int magnifySize = 150;
 const int scrollDelta = 120;
@@ -105,6 +106,18 @@ enum PDFImageFormat {
 Q_ENUM_NS(PDFImageFormat)
 
 static const int maxOrdering = 7;
+
+enum ReaderFactoryFiltering {
+    rffAll = 0,
+    rffSkipSingleImageReader = 1
+};
+Q_ENUM_NS(ReaderFactoryFiltering)
+
+enum ReaderFactoryMode {
+    rfmMIMECheckOnly = 0,
+    rfmCreateReader = 1
+};
+Q_ENUM_NS(ReaderFactoryMode)
 
 }
 
@@ -195,7 +208,7 @@ public:
     static const QHash<Z::Ordering, QString> &getSortMenu();
 
     ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
-                                          bool onlyArchives, bool createReader = true);
+                                          Z::ReaderFactoryFiltering filter, Z::ReaderFactoryMode mode);
     QStringList supportedImg();
     QString formatSize(qint64 size);
     QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode = Qt::ElideRight);

@@ -122,11 +122,11 @@ ZPdfController *ZGenericFuncs::pdfController() const
 }
 
 ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
-                               bool onlyArchives, bool createReader)
+                                              Z::ReaderFactoryFiltering filter, Z::ReaderFactoryMode mode)
 {
     *mimeOk = true;
-    if (filename.startsWith(QSL(":CLIP:")) && !onlyArchives) {
-        if (createReader)
+    if (filename.startsWith(QSL(":CLIP:")) && (filter != Z::rffSkipSingleImageReader)) {
+        if (mode == Z::rfmCreateReader)
             return new ZSingleImageReader(parent,filename);
 
         return nullptr;
@@ -135,7 +135,7 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
     if (filename.startsWith(QSL("#DYN#"))) {
         QString fname(filename);
         fname.remove(QRegularExpression(QSL("^#DYN#")));
-        if (createReader)
+        if (mode == Z::rfmCreateReader)
             return new ZImagesDirReader(parent,fname);
 
         return nullptr;
@@ -143,36 +143,36 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
 
     QFileInfo fi(filename);
     if (!fi.exists()) return nullptr;
-    QString mime = detectMIME(filename).toLower();
+    const QString mime = detectMIME(filename).toLower();
 
     // First try text reader on any file. Text docs doesn't have correct MIME most of time.
-    if (ZTextReader::preloadFile(filename,createReader)) {
-        if (createReader)
+    if (ZTextReader::preloadFile(filename,(mode == Z::rfmCreateReader))) {
+        if (mode == Z::rfmCreateReader)
             return new ZTextReader(parent,filename);
 #ifdef WITH_POPPLER
     } else if (mime.contains(QSL("application/pdf"),Qt::CaseInsensitive) ||
-               ZPdfReader::preloadFile(filename,createReader)) {
-        if (createReader)
+               ZPdfReader::preloadFile(filename,(mode == Z::rfmCreateReader))) {
+        if (mode == Z::rfmCreateReader)
             return new ZPdfReader(parent,filename);
 
 #endif
     } else if (mime.contains(QSL("application/zip"),Qt::CaseInsensitive)) {
-        if (createReader)
+        if (mode == Z::rfmCreateReader)
             return new ZZipReader(parent,filename);
 
     } else if (mime.contains(QSL("application/x-rar"),Qt::CaseInsensitive) ||
                mime.contains(QSL("application/rar"),Qt::CaseInsensitive)) {
-        if (createReader)
+        if (mode == Z::rfmCreateReader)
             return new ZRarReader(parent,filename);
 
 #ifdef WITH_DJVU
     } else if (mime.contains(QSL("image/vnd.djvu"),Qt::CaseInsensitive)) {
-        if (createReader)
+        if (mode == Z::rfmCreateReader)
             return new ZDjVuReader(parent,filename);
 
 #endif
-    } else if (mime.contains(QSL("image/"),Qt::CaseInsensitive) && !onlyArchives) {
-        if (createReader)
+    } else if (mime.contains(QSL("image/"),Qt::CaseInsensitive) && (filter != Z::rffSkipSingleImageReader)) {
+        if (mode == Z::rfmCreateReader)
             return new ZSingleImageReader(parent,filename);
 
     } else {

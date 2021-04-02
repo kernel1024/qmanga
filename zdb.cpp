@@ -658,7 +658,8 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     }
 
     bool mimeOk = false;
-    ZAbstractReader* za = zF->readerFactory(this,fileName,&mimeOk,true);
+    ZAbstractReader* za = zF->readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
+                                            Z::rfmCreateReader);
     if (za == nullptr) {
         qWarning() << fname << "File format not supported";
         Q_EMIT errorMsg(tr("%1 file format not supported.").arg(fname));
@@ -739,7 +740,8 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     }
 
     bool mimeOk = false;
-    ZAbstractReader* za = zF->readerFactory(this,fileName,&mimeOk,true);
+    ZAbstractReader* za = zF->readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
+                                            Z::rfmCreateReader);
     if (za == nullptr) {
         qWarning() << fname << "File format not supported.";
         return;
@@ -857,8 +859,9 @@ void ZDB::sqlSearchMissingManga()
     if (qr.exec()) {
         while (qr.next())
             foundFiles << qr.value(0).toString();
-    } else
+    } else {
         qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
+    }
 
     qr.prepare(QSL("DROP TABLE `tmp_exfiles`"));
     if (!qr.exec())
@@ -1152,7 +1155,9 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         m_sourceResamplersPool.start([this,fi,&addedCount,&stopAdding,totalCount,ialbum](){
             bool mimeOk = false;
 
-            QScopedPointer<ZAbstractReader> za(zF->readerFactory(nullptr,fi.filePath(),&mimeOk,true));
+            QScopedPointer<ZAbstractReader> za(zF->readerFactory(nullptr,fi.filePath(),&mimeOk,
+                                                                 Z::rffSkipSingleImageReader,
+                                                                 Z::rfmCreateReader));
             if (za.isNull()) {
                 qWarning() << "File format not supported: " << fi.filePath();
                 return;

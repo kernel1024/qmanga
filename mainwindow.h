@@ -23,6 +23,8 @@ public:
     ZFSFile(const ZFSFile& other);
     ZFSFile(const QString &aName, const QString &aFileName, const QString &aAlbum);
     ZFSFile &operator=(const ZFSFile& other) = default;
+    bool operator==(const ZFSFile& ref) const;
+    bool operator!=(const ZFSFile& ref) const;
 };
 
 namespace Ui {
@@ -49,7 +51,6 @@ private:
     bool m_fullScreenControls { false };
     bool m_savedMaximized { false };
     QVector<ZFSFile> m_fsScannedFiles;
-    QMutex m_fsAddFilesMutex;
     QRect m_savedGeometry;
     QMessageBox m_indexerMsgBox;
 

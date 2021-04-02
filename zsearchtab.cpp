@@ -449,6 +449,7 @@ void ZSearchTab::ctxFileCopy()
     connect(zfc_thread,&QThread::finished,zfc_thread,&QObject::deleteLater);
 
     zfc->moveToThread(zfc_thread);
+    zfc_thread->setObjectName(QSL("FCOPY_main"));
     zfc_thread->start();
 }
 

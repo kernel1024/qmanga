@@ -1,3 +1,7 @@
+#include <cmath>
+#include <algorithm>
+#include <execution>
+
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QStatusBar>
@@ -12,7 +16,6 @@
 #include <QWindow>
 #include <QKeySequence>
 #include <QDebug>
-#include <cmath>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -644,20 +647,48 @@ void ZMainWindow::fsDelFiles()
 
 void ZMainWindow::fsNewFilesAdded()
 {
-    m_fsAddFilesMutex.lock();
-    ui->fsResults->clear();
-    m_fsScannedFiles.clear();
-    const QStringList f = zF->global()->getNewlyAddedFiles();
+    static QAtomicInteger<bool> isWorking(false);
 
-    for (const auto &i : f) {
-        QFileInfo fi(i);
-        bool mimeOk = false;
-        zF->readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
-        if (mimeOk)
-            m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
-    }
-    fsUpdateFileList();
-    m_fsAddFilesMutex.unlock();
+    if (isWorking) return;
+
+    QThread *th = QThread::create([this](){
+        isWorking = true;
+        QVector<ZFSFile> scannedFiles;
+        QMutex vectorMutex;
+
+        QStringList files = zF->global()->getNewlyAddedFiles();
+        while (!files.isEmpty()) {
+            std::for_each(std::execution::par,files.constBegin(),files.constEnd(),[&scannedFiles,&vectorMutex]
+                          (const QString &fileName){
+                QFileInfo fi(fileName);
+                bool mimeOk = false;
+                zF->readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
+                                  Z::rfmMIMECheckOnly);
+                if (mimeOk) {
+                    QMutexLocker locker(&vectorMutex);
+                    scannedFiles.append(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName()));
+                }
+            });
+
+            files.clear();
+            for (const auto& fileName : zF->global()->getNewlyAddedFiles()) {
+                QFileInfo fi(fileName);
+                if (!scannedFiles.contains(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName())))
+                    files.append(fileName);
+            }
+        }
+        isWorking = false;
+
+        QMetaObject::invokeMethod(this,[this,scannedFiles](){
+            ui->fsResults->clear();
+            m_fsScannedFiles = scannedFiles;
+            fsUpdateFileList();
+        },Qt::QueuedConnection);
+    });
+
+    connect(th,&QThread::finished,th,&QThread::deleteLater);
+    th->setObjectName(QSL("INOTIFY_worker"));
+    th->start();
 }
 
 void ZMainWindow::fsUpdateFileList()
@@ -737,15 +768,42 @@ void ZMainWindow::fsFindNewFiles()
 
 void ZMainWindow::fsFoundNewFiles(const QStringList &files)
 {
-    for (const QString& filename : files) {
-        QFileInfo fi(filename);
-        bool mimeOk = false;
-        zF->readerFactory(this,fi.absoluteFilePath(),&mimeOk,true,false);
-        if (mimeOk)
-            m_fsScannedFiles << ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName());
-    }
-    fsUpdateFileList();
-    ui->searchTab->dbShowProgressDialog(false);
+    static QAtomicInteger<bool> isWorking(false);
+
+    if (isWorking) return;
+
+    ui->searchTab->dbShowProgressState(ZDefaults::fileScannerStaticPercentage2,
+                                       tr("%1 files found. Parsing and checking supported formats...")
+                                       .arg(files.count()));
+
+    QThread *th = QThread::create([this,files](){
+        isWorking = true;
+        QVector<ZFSFile> scannedFiles;
+        QMutex vectorMutex;
+        std::for_each(std::execution::par,files.constBegin(),files.constEnd(),[&scannedFiles,&vectorMutex]
+                      (const QString &fileName){
+            QFileInfo fi(fileName);
+            bool mimeOk = false;
+            zF->readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
+                              Z::rfmMIMECheckOnly);
+            if (mimeOk) {
+                QMutexLocker locker(&vectorMutex);
+                scannedFiles.append(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName()));
+            }
+        });
+        isWorking = false;
+
+        QMetaObject::invokeMethod(this,[this,scannedFiles](){
+            ui->fsResults->clear();
+            m_fsScannedFiles = scannedFiles;
+            fsUpdateFileList();
+            ui->searchTab->dbShowProgressDialog(false);
+        },Qt::QueuedConnection);
+    });
+
+    connect(th,&QThread::finished,th,&QThread::deleteLater);
+    th->setObjectName(QSL("NEWSCAN_worker"));
+    th->start();
 }
 
 void ZMainWindow::fsAddIgnoredFiles()
@@ -791,4 +849,16 @@ ZFSFile::ZFSFile(const QString &aName, const QString &aFileName, const QString &
     name = aName;
     fileName = aFileName;
     album = aAlbum;
+}
+
+bool ZFSFile::operator==(const ZFSFile &ref) const
+{
+    return ((name == ref.name) &&
+            (fileName == ref.fileName) &&
+            (album == ref.album));
+}
+
+bool ZFSFile::operator!=(const ZFSFile &ref) const
+{
+    return !operator==(ref);
 }

@@ -72,6 +72,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
         m_cacheLoaders << h;
 
         ld->moveToThread(th);
+        th->setObjectName(QSL("MLoader#%1").arg(i));
         th->start();
     }
 }
@@ -788,6 +789,8 @@ void ZMangaView::exportPagesCtx()
             dlg->deleteLater();
         });
     });
+    connect(th,&QThread::finished,th,&QThread::deleteLater);
+    th->setObjectName(QSL("Export_wrk"));
     th->start();
 }
 

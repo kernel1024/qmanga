@@ -47,6 +47,7 @@ ZGlobal::ZGlobal(QObject *parent) :
     connect(d->m_threadDB.data(),&QThread::finished,d->m_db.data(),&QObject::deleteLater,Qt::QueuedConnection);
     connect(d->m_threadDB.data(),&QThread::finished,d->m_threadDB.data(),&QObject::deleteLater,Qt::QueuedConnection);
 
+    d->m_threadDB->setObjectName(QSL("DB_main"));
     d->m_threadDB->start();
 }
 

@@ -330,19 +330,27 @@ QString ZPdfReader::getMagic()
 bool ZPdfReader::preloadFile(const QString &filename, bool preserveDocument)
 {
     static QMutex mutex;
-    QMutexLocker locker(&mutex); // parser mutex
 
     static const QStringList officeFormats({ QSL("wpd"), QSL("wps"),  QSL("rtf"),
                                              QSL("doc"), QSL("docx"), QSL("odt"),
                                              QSL("xls"), QSL("xlsx"), QSL("ods"),
                                              QSL("ppt"), QSL("pptx"), QSL("odp")});
 
-    if (!(zF->pdfController()->getConvertedDocumentPDF(filename).isEmpty()))
-        return true;
 
     QFileInfo fi(filename);
-    if (!officeFormats.contains(fi.suffix(),Qt::CaseInsensitive))
+    if (!officeFormats.contains(fi.suffix(),Qt::CaseInsensitive)
+            || !fi.isReadable()
+            || !fi.isFile()) {
         return false;
+    }
+
+    if (!preserveDocument) // without reader, converted file not needed yet
+        return true;
+
+    QMutexLocker locker(&mutex); // parser mutex, LibreOffice converter is single threaded
+
+    if (!(zF->pdfController()->getConvertedDocumentPDF(filename).isEmpty()))
+        return true;
 
     const QString exec = zF->global()->getOfficeCmd();
 
@@ -362,11 +370,7 @@ bool ZPdfReader::preloadFile(const QString &filename, bool preserveDocument)
     if (!fout.exists())
         return false;
 
-    if (preserveDocument) {
-        zF->pdfController()->addConvertedDocumentPDF(filename,destFilename);
-    } else {
-        fout.remove();
-    }
+    zF->pdfController()->addConvertedDocumentPDF(filename,destFilename);
     return true;
 }
 
