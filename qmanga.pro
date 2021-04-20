@@ -99,6 +99,8 @@ CONFIG += warn_on link_pkgconfig c++17
 
 LIBS += -lz -ltbb
 
+message("Using Qt:            " $$QT_VERSION)
+
 !win32 {
     packagesExist(libzip) {
         PKGCONFIG += libzip
