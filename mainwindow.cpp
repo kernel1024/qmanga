@@ -66,6 +66,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->actionExit,&QAction::triggered,this,&ZMainWindow::close);
     connect(ui->actionOpen,&QAction::triggered,this,&ZMainWindow::openAux);
     connect(ui->actionOpenClipboard,&QAction::triggered,this,&ZMainWindow::openClipboard);
+    connect(ui->actionOpenImagesDir,&QAction::triggered,this,&ZMainWindow::openAuxImagesDir);
     connect(ui->actionClose,&QAction::triggered,this,&ZMainWindow::closeManga);
     connect(ui->actionSettings,&QAction::triggered,zF->global(),&ZGlobal::settingsDlg);
     connect(ui->actionAddBookmark,&QAction::triggered,this,&ZMainWindow::createBookmark);
@@ -288,9 +289,22 @@ void ZMainWindow::closeEvent(QCloseEvent *event)
 
 void ZMainWindow::openAux()
 {
-    QString filename = zF->getOpenFileNameD(this,tr("Open manga or image"),zF->global()->getSavedAuxOpenDir());
+    const QString filename = zF->getOpenFileNameD(this,tr("Open manga or image"),zF->global()->getSavedAuxOpenDir());
     if (!filename.isEmpty())
         openAuxFile(filename);
+}
+
+void ZMainWindow::openAuxImagesDir()
+{
+    QString fi = zF->getExistingDirectoryD(this,tr("Open images from directory as manga"),
+                                           zF->global()->getSavedIndexOpenDir());
+    if (fi.isEmpty()) return;
+    zF->global()->setSavedIndexOpenDir(fi);
+
+    fi.prepend(QSL("#DYN#"));
+
+    ui->tabWidget->setCurrentIndex(0);
+    ui->mangaView->openFile(fi);
 }
 
 void ZMainWindow::openClipboard()

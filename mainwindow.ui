@@ -889,6 +889,7 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="actionOpenClipboard"/>
+    <addaction name="actionOpenImagesDir"/>
     <addaction name="actionClose"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
@@ -935,7 +936,7 @@
     <string>&amp;Open...</string>
    </property>
    <property name="statusTip">
-    <string>Open manga in ZIP/RAR/PDF file or single image file</string>
+    <string>Open manga in ZIP/RAR/PDF/document file or single image file</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -1077,6 +1078,17 @@
   <action name="actionAboutQt">
    <property name="text">
     <string>About Qt...</string>
+   </property>
+  </action>
+  <action name="actionOpenImagesDir">
+   <property name="icon">
+    <iconset theme="document-open-folder"/>
+   </property>
+   <property name="text">
+    <string>Open as Images Directory...</string>
+   </property>
+   <property name="statusTip">
+    <string>Open directory with images as manga</string>
    </property>
   </action>
  </widget>

@@ -73,6 +73,7 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void openAux();
+    void openAuxImagesDir();
     void openClipboard();
     void openFromIndex(const QString &filename);
     void closeManga();
