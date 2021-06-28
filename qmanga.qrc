@@ -57,5 +57,6 @@
         <file alias="transform-move">img/16x16/transform-move.png</file>
         <file alias="go-previous-view-page">img/16x16/go-previous-view-page.png</file>
         <file alias="document-new">img/16x16/document-new.png</file>
+        <file alias="window-new">img/16x16/window-new.png</file>
     </qresource>
 </RCC>

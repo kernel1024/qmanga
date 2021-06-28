@@ -68,6 +68,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->actionOpenClipboard,&QAction::triggered,this,&ZMainWindow::openClipboard);
     connect(ui->actionOpenImagesDir,&QAction::triggered,this,&ZMainWindow::openAuxImagesDir);
     connect(ui->actionClose,&QAction::triggered,this,&ZMainWindow::closeManga);
+    connect(ui->actionNewWindow,&QAction::triggered,this,&ZMainWindow::newWindow);
     connect(ui->actionSettings,&QAction::triggered,zF->global(),&ZGlobal::settingsDlg);
     connect(ui->actionAddBookmark,&QAction::triggered,this,&ZMainWindow::createBookmark);
     connect(ui->actionAbout,&QAction::triggered,this,&ZMainWindow::helpAbout);
@@ -337,6 +338,14 @@ void ZMainWindow::closeManga()
 {
     ui->mangaView->closeFile();
     ui->spinPosition->hide();
+}
+
+void ZMainWindow::newWindow()
+{
+    QProcess p;
+    p.setProgram(qApp->applicationFilePath());
+    p.setWorkingDirectory(QDir::currentPath());
+    p.startDetached();
 }
 
 void ZMainWindow::dispPage(int num, const QString &msg)

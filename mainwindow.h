@@ -77,6 +77,7 @@ public Q_SLOTS:
     void openClipboard();
     void openFromIndex(const QString &filename);
     void closeManga();
+    void newWindow();
     void dispPage(int num, const QString &msg);
     void pageNumEdited();
     void switchFullscreen();

@@ -892,6 +892,8 @@
     <addaction name="actionOpenImagesDir"/>
     <addaction name="actionClose"/>
     <addaction name="separator"/>
+    <addaction name="actionNewWindow"/>
+    <addaction name="separator"/>
     <addaction name="actionSettings"/>
     <addaction name="actionSaveSettings"/>
     <addaction name="separator"/>
@@ -1082,13 +1084,23 @@
   </action>
   <action name="actionOpenImagesDir">
    <property name="icon">
-    <iconset theme="document-open-folder"/>
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/document-open-folder</normaloff>:/16/document-open-folder</iconset>
    </property>
    <property name="text">
     <string>Open as Images Directory...</string>
    </property>
    <property name="statusTip">
     <string>Open directory with images as manga</string>
+   </property>
+  </action>
+  <action name="actionNewWindow">
+   <property name="icon">
+    <iconset resource="qmanga.qrc">
+     <normaloff>:/16/window-new</normaloff>:/16/window-new</iconset>
+   </property>
+   <property name="text">
+    <string>New window</string>
    </property>
   </action>
  </widget>
