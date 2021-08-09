@@ -60,6 +60,7 @@ constexpr QSize minPreviewSize = QSize(16,qRound(16*ZDefaults::previewProps));
 constexpr QSize maxPreviewSize = QSize(512,qRound(512*ZDefaults::previewProps));
 constexpr QSize previewSize = QSize(128,qRound(128*ZDefaults::previewProps));
 constexpr qint64 copyBlockSize = 2L*oneMegabyte;
+const QByteArray coverBase64Header = QBAL("B64#");
 }
 
 class ZAbstractReader;

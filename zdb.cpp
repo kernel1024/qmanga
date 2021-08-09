@@ -14,19 +14,13 @@
 #include <QRegularExpression>
 #include <QDebug>
 #include "zdb.h"
+#include "global.h"
 
 ZDB::ZDB(QObject *parent) :
     QObject(parent)
 {
     m_dbHost = QSL("localhost");
     m_dbBase = QSL("qmanga");
-    m_dbUser = QString();
-    m_dbPass = QString();
-    m_wasCanceled = false;
-    m_indexedDirs.clear();
-    m_problems.clear();
-    m_ignoredFiles.clear();
-    m_preferredRendering.clear();
 }
 
 int ZDB::getAlbumsCount()
@@ -115,7 +109,6 @@ void ZDB::setCoverCacheSize(int size)
 
 void ZDB::setDynAlbums(const ZStrMap &albums)
 {
-    m_dynAlbums.clear();
     m_dynAlbums = albums;
 }
 
@@ -551,8 +544,11 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
         while (qr.next()) {
             QImage p = QImage();
             QByteArray ba = qr.value(2).toByteArray();
-            if (!ba.isEmpty())
+            if (!ba.isEmpty()) {
+                if (ba.startsWith(ZDefaults::coverBase64Header))
+                    ba = QByteArray::fromBase64(ba.mid(ZDefaults::coverBase64Header.size()));
                 p.loadFromData(ba);
+            }
 
             QString fileName = qr.value(1).toString();
 
@@ -676,7 +672,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
         return;
     }
 
-    QByteArray pba = createMangaPreview(za,pageNum);
+    const QByteArray pba = createMangaPreview(za,pageNum);
     qr.prepare(QSL("UPDATE files SET cover=? WHERE (filename=?)"));
     qr.bindValue(0,pba);
     qr.bindValue(1,fname);
@@ -686,7 +682,6 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
         qWarning() << msg;
         Q_EMIT errorMsg(msg);
     }
-    pba.clear();
     za->closeFile();
     za->setParent(nullptr);
     delete za;
@@ -1240,7 +1235,6 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
 {
     QByteArray pba;
-    pba.clear();
 
     int idx = pageNum;
     QImage p = QImage();
@@ -1267,7 +1261,7 @@ QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
         buf.close();
         p = QImage();
     }
-    pb.clear();
+    pba = ZDefaults::coverBase64Header + pba.toBase64();
 
     return pba;
 }
@@ -1315,7 +1309,6 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     }
 
     QByteArray pba;
-    pba.clear();
     if (!p.isNull()) {
         p = zF->resizeImage(p,ZDefaults::maxPreviewSize,true,zF->global()->getDownscaleSearchTabFilter());
         QBuffer buf(&pba);
@@ -1324,6 +1317,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
         buf.close();
         p = QImage();
     }
+    pba = ZDefaults::coverBase64Header + pba.toBase64();
 
     // add dynamic album to base
     int cnt = 0;
@@ -1354,7 +1348,6 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     } else {
         cnt++;
     }
-    pba.clear();
 
     sqlCloseBase(db);
     sqlRescanIndexedDirs();

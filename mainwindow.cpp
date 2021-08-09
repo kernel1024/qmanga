@@ -528,7 +528,6 @@ void ZMainWindow::updateBookmarks()
 void ZMainWindow::updateTitle()
 {
     QString t;
-    t.clear();
     const QString openedFile = ui->mangaView->getOpenedFile();
     if (!openedFile.isEmpty()) {
         QFileInfo fi(openedFile);
@@ -631,7 +630,6 @@ void ZMainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
 void ZMainWindow::fsAddFiles()
 {
     QHash<QString,QStringList> fl;
-    fl.clear();
     for (const auto &i : qAsConst(m_fsScannedFiles)) {
         fl[i.album].append(i.fileName);
         zF->global()->removeFileFromNewlyAdded(i.fileName);

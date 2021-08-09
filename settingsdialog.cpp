@@ -153,7 +153,6 @@ void ZSettingsDialog::setSearchEngines(const ZStrMap &engines) const
 ZStrMap ZSettingsDialog::getSearchEngines() const
 {
     ZStrMap engines;
-    engines.clear();
     for (int i=0; i<ui->listSearch->count(); i++) {
         engines[ui->listSearch->item(i)->data(Qt::UserRole).toString()] =
                 ui->listSearch->item(i)->data(Qt::UserRole+1).toString();

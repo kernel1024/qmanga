@@ -17,7 +17,7 @@ class ZDB : public QObject
 private:
     static inline const int dynamicAlbumParent { -2 };
 
-    bool m_wasCanceled;
+    bool m_wasCanceled { false };
     QString m_dbHost;
     QString m_dbBase;
     QString m_dbUser;
