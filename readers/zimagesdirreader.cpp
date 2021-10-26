@@ -15,7 +15,7 @@ bool ZImagesDirReader::openFile()
 
     QDir d(getFileName());
     if (!d.isReadable()) return false;
-    const QFileInfoList fl = zF->filterSupportedImgFiles(
+    const QFileInfoList fl = ZGenericFuncs::filterSupportedImgFiles(
                                  d.entryInfoList(
                                      QStringList(QSL("*")),
                                      QDir::Readable | QDir::Files));
@@ -41,7 +41,7 @@ QByteArray ZImagesDirReader::loadPage(int num)
 
     QDir d(getFileName());
     if (!d.isReadable()) return res;
-    const QFileInfoList fl = zF->filterSupportedImgFiles(
+    const QFileInfoList fl = ZGenericFuncs::filterSupportedImgFiles(
                                  d.entryInfoList(
                                      QStringList(QSL("*")),
                                      QDir::Readable | QDir::Files));

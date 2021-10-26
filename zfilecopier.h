@@ -21,7 +21,7 @@ private:
     QString m_dstDir;
     QStringList m_errors;
 
-    static bool copyFileByInfo(const QFileInfo &src, const QString& dst, QPointer<ZFileCopier> context);
+    static bool copyFileByInfo(const QFileInfo &src, const QString& dst, const QPointer<ZFileCopier> &context);
     static int fileInfoGetCount(const QFileInfoList& list, QDir::Filters filter);
     void addFilesCount(int count);
 

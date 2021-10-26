@@ -379,7 +379,7 @@ void ZSearchTab::ctxOpenDir()
     }
 
     for (const auto &i : fl)
-        zF->showInGraphicalShell(i.filePath());
+        ZGenericFuncs::showInGraphicalShell(i.filePath());
 }
 
 void ZSearchTab::ctxXdgOpen()
@@ -428,8 +428,8 @@ void ZSearchTab::ctxFileCopy()
     QFileInfoList fl = getSelectedMangaEntries(true);
     if (fl.isEmpty()) return;
 
-    const QString dst = zF->getExistingDirectoryD(this,tr("Copy selected manga to..."),
-                                                  zF->global()->getSavedAuxSaveDir());
+    const QString dst = ZGenericFuncs::getExistingDirectoryD(this,tr("Copy selected manga to..."),
+                                                             zF->global()->getSavedAuxSaveDir());
     if (dst.isEmpty()) return;
     zF->global()->setSavedAuxSaveDir(dst);
 
@@ -718,12 +718,12 @@ void ZSearchTab::mangaSelectionChanged(const QModelIndex &current, const QModelI
     QFileInfo fi(m.filename);
 
     QString msg = QString(m_descTemplate)
-                  .arg(zF->elideString(m.name,ZDefaults::maxDescriptionStringLength,Qt::ElideMiddle))
+                  .arg(ZGenericFuncs::elideString(m.name,ZDefaults::maxDescriptionStringLength,Qt::ElideMiddle))
                   .arg(m.pagesCount)
-                  .arg(zF->formatSize(m.fileSize),m.album,m.fileMagic,
+                  .arg(ZGenericFuncs::formatSize(m.fileSize),m.album,m.fileMagic,
                        m.fileDT.toString(QSL("yyyy-MM-dd")),
                        m.addingDT.toString(QSL("yyyy-MM-dd")),
-                       zF->elideString(fi.path(),ZDefaults::maxDescriptionStringLength,Qt::ElideMiddle));
+                       ZGenericFuncs::elideString(fi.path(),ZDefaults::maxDescriptionStringLength,Qt::ElideMiddle));
 
     setDescText(msg);
 }
@@ -748,7 +748,8 @@ void ZSearchTab::mangaOpen(const QModelIndex &index)
 
 void ZSearchTab::mangaAdd()
 {
-    QStringList fl = zF->getOpenFileNamesD(this,tr("Add manga to index"),zF->global()->getSavedIndexOpenDir());
+    QStringList fl = ZGenericFuncs::getOpenFileNamesD(this,tr("Add manga to index"),
+                                                      zF->global()->getSavedIndexOpenDir());
     if (fl.isEmpty()) return;
     fl.removeDuplicates();
     QFileInfo fi(fl.first());
@@ -764,8 +765,8 @@ void ZSearchTab::mangaAdd()
 
 void ZSearchTab::mangaAddDir()
 {
-    QString fi = zF->getExistingDirectoryD(this,tr("Add manga to index from directory"),
-                                           zF->global()->getSavedIndexOpenDir());
+    QString fi = ZGenericFuncs::getExistingDirectoryD(this,tr("Add manga to index from directory"),
+                                                      zF->global()->getSavedIndexOpenDir());
     if (fi.isEmpty()) return;
     zF->global()->setSavedIndexOpenDir(fi);
 
@@ -817,13 +818,13 @@ void ZSearchTab::mangaDel()
 
 void ZSearchTab::imagesAddDir()
 {
-    QString fi = zF->getExistingDirectoryD(this,tr("Compose images from directory as manga"),
-                                           zF->global()->getSavedIndexOpenDir());
+    QString fi = ZGenericFuncs::getExistingDirectoryD(this,tr("Compose images from directory as manga"),
+                                                      zF->global()->getSavedIndexOpenDir());
     if (fi.isEmpty()) return;
     zF->global()->setSavedIndexOpenDir(fi);
 
     QDir d(fi);
-    const QFileInfoList fl = zF->filterSupportedImgFiles(
+    const QFileInfoList fl = ZGenericFuncs::filterSupportedImgFiles(
                                  d.entryInfoList(QStringList(QSL("*")),
                                                  QDir::Files | QDir::Readable));
     QStringList files;

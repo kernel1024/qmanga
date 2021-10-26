@@ -99,6 +99,9 @@ CONFIG += warn_on link_pkgconfig c++17
 
 LIBS += -lz -ltbb
 
+# for deprecations in GCC 11-12 without oneTBB
+DEFINES += TBB_SUPPRESS_DEPRECATED_MESSAGES
+
 message("Using Qt:            " $$QT_VERSION)
 
 !win32 {

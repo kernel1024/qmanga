@@ -107,7 +107,7 @@ QVariant ZMangaModel::data(const QModelIndex &index, int role) const
                 return tmp;
             case ZDefaults::columnAlbum: return t.album;
             case ZDefaults::columnPagesCount: return QSL("%1").arg(t.pagesCount);
-            case ZDefaults::columnFileSize: return zF->formatSize(t.fileSize);
+            case ZDefaults::columnFileSize: return ZGenericFuncs::formatSize(t.fileSize);
             case ZDefaults::columnAddDate: return t.addingDT.toString(QSL("yyyy-MM-dd"));
             case ZDefaults::columnFileDate: return t.fileDT.toString(QSL("yyyy-MM-dd"));
             case ZDefaults::columnMagic: return t.fileMagic;

@@ -48,7 +48,7 @@ public:
 ZFB2Document::ZFB2Document(QObject* parent, const QString &fileName)
     : ZAbstractTextDocument(parent)
 {
-    const QString mime = zF->detectMIME(fileName);
+    const QString mime = ZGenericFuncs::detectMIME(fileName);
     const QStringList validSuffixes({ QSL("fb"), QSL("fb2") });
     QByteArray fb2data;
 
@@ -120,7 +120,7 @@ bool ZFB2Document::fb2Convert(const QByteArray &data)
 
     QDomDocument document;
     QString errorMsg;
-    if (!document.setContent(zF->detectDecodeToUnicode(data),true,&errorMsg)) {
+    if (!document.setContent(ZGenericFuncs::detectDecodeToUnicode(data),true,&errorMsg)) {
         qCritical() << "Invalid XML FB2 structure, unable to load XML. " << errorMsg;
         return false;
     }

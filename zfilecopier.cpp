@@ -73,7 +73,8 @@ void ZFileCopier::abort()
     m_abort = true;
 }
 
-bool ZFileCopier::copyFileByInfo(const QFileInfo &src, const QString &dst, QPointer<ZFileCopier> context)
+bool ZFileCopier::copyFileByInfo(const QFileInfo &src, const QString &dst,
+                                 const QPointer<ZFileCopier> &context)
 {
     if (context.isNull())
         return false;

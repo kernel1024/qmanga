@@ -55,7 +55,7 @@ ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
 #ifndef WITH_OCR
     ui->groupTesseract->setEnabled(false);
 #else
-    ui->editOCRDatapath->setText(zF->ocrGetDatapath());
+    ui->editOCRDatapath->setText(ZGenericFuncs::ocrGetDatapath());
     updateOCRLanguages();
 #endif
 
@@ -180,7 +180,7 @@ void ZSettingsDialog::updateOCRLanguages() const
 {
 #ifdef WITH_OCR
     ui->comboOCRLanguage->clear();
-    QString selectedLang = zF->ocrGetActiveLanguage();
+    QString selectedLang = ZGenericFuncs::ocrGetActiveLanguage();
 
     QDir datapath(ui->editOCRDatapath->text());
     if (datapath.isReadable()) {
@@ -336,7 +336,8 @@ void ZSettingsDialog::updateSQLFields(bool checked) const
 void ZSettingsDialog::ocrDatapathDlg()
 {
 #ifdef WITH_OCR
-    QString datapath = zF->getExistingDirectoryD(this,tr("Tesseract datapath"),ui->editOCRDatapath->text());
+    QString datapath = ZGenericFuncs::getExistingDirectoryD(this,tr("Tesseract datapath"),
+                                                            ui->editOCRDatapath->text());
     if (!datapath.isEmpty())
         ui->editOCRDatapath->setText(datapath);
     updateOCRLanguages();
@@ -496,8 +497,8 @@ void ZSettingsDialog::openRar()
 #ifdef Q_OS_WIN
     filter = tr("Executable files (*.exe)");
 #endif
-    const QString filename = zF->getOpenFileNameD(this,tr("Select console RAR binary"),
-                                                  zF->global()->getSavedAuxOpenDir(),filter);
+    const QString filename = ZGenericFuncs::getOpenFileNameD(this,tr("Select console RAR binary"),
+                                                             zF->global()->getSavedAuxOpenDir(),filter);
     if (!filename.isEmpty())
         ui->editRar->setText(filename);
 }
@@ -508,8 +509,8 @@ void ZSettingsDialog::openOffice()
 #ifdef Q_OS_WIN
     filter = tr("Executable files (*.exe)");
 #endif
-    QString filename = zF->getOpenFileNameD(this,tr("Select LibreOffice headless converter binary"),
-                                            zF->global()->getSavedAuxOpenDir(),filter);
+    QString filename = ZGenericFuncs::getOpenFileNameD(this,tr("Select LibreOffice headless converter binary"),
+                                                       zF->global()->getSavedAuxOpenDir(),filter);
     if (!filename.isEmpty())
         ui->editOffice->setText(filename);
 }

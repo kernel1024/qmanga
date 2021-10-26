@@ -336,8 +336,8 @@ void ZMangaView::paintEvent(QPaintEvent *event)
                     if (cutBox.top()<baseRect.top()) cutBox.moveTop(baseRect.top());
                     if (cutBox.bottom()>baseRect.bottom()) cutBox.moveBottom(baseRect.bottom());
                     QImage zoomed = m_curUnscaledPixmap.copy(cutBox);
-                    zoomed = zF->resizeImage(zoomed,zoomed.size()*ZDefaults::dynamicZoomUpScale,
-                                             true,zF->global()->getUpscaleFilter());
+                    zoomed = ZGenericFuncs::resizeImage(zoomed,zoomed.size()*ZDefaults::dynamicZoomUpScale,
+                                                        true,zF->global()->getUpscaleFilter());
                     baseRect = QRect(QPoint(m_zoomPos.x()-zoomed.width()/2,m_zoomPos.y()-zoomed.height()/2),
                                      zoomed.size());
                     if (baseRect.left()<0) baseRect.moveLeft(0);
@@ -663,8 +663,8 @@ void ZMangaView::redrawPageEx(const QImage& scaled, int page)
                                 QElapsedTimer timer;
                                 timer.start();
 
-                                QImage res = zF->resizeImage(image,targetSize,true,filter,
-                                                             page,&m_currentPage);
+                                QImage res = ZGenericFuncs::resizeImage(image,targetSize,true,filter,
+                                                                        page,&m_currentPage);
 
                                 if (!res.isNull()) {
                                     qint64 elapsed = timer.elapsed();

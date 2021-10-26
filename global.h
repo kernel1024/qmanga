@@ -142,9 +142,9 @@ public:
     ZSQLMangaEntry(const ZSQLMangaEntry& other);
     explicit ZSQLMangaEntry(int aDbid);
     ZSQLMangaEntry(const QString& aName, const QString& aFilename, const QString& aAlbum,
-                  const QImage &aCover, int aPagesCount, qint64 aFileSize,
-                  const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT,
-                  int aDbid, Z::PDFRendering aRendering);
+                   const QImage &aCover, int aPagesCount, qint64 aFileSize,
+                   const QString& aFileMagic, const QDateTime& aFileDT, const QDateTime& aAddingDT,
+                   int aDbid, Z::PDFRendering aRendering);
     ZSQLMangaEntry &operator=(const ZSQLMangaEntry& other) = default;
     bool operator==(const ZSQLMangaEntry& ref) const;
     bool operator!=(const ZSQLMangaEntry& ref) const;
@@ -204,50 +204,52 @@ public:
     ZDjVuController* djvuController() const;
     ZGlobal* global() const;
     ZPdfController* pdfController() const;
+
     static const QHash<Z::Ordering, QString> &getHeaderColumns();
     static const QHash<Z::Ordering, QString> &getSqlColumns();
     static const QHash<Z::Ordering, QString> &getSortMenu();
 
-    ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
+    static ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
                                           Z::ReaderFactoryFiltering filter, Z::ReaderFactoryMode mode);
-    QStringList supportedImg();
-    QString formatSize(qint64 size);
-    QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode = Qt::ElideRight);
-    QString escapeParam(const QString &param);
-    int compareWithNumerics(const QString &ref1, const QString &ref2);
-    QFileInfoList filterSupportedImgFiles(const QFileInfoList &entryList);
-    QString getOpenFileNameD ( QWidget * parent = nullptr,
+    static QStringList supportedImg();
+    static QString formatSize(qint64 size);
+    static QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode = Qt::ElideRight);
+    static QString escapeParam(const QString &param);
+    static int compareWithNumerics(const QString &ref1, const QString &ref2);
+    static QFileInfoList filterSupportedImgFiles(const QFileInfoList &entryList);
+    static QString getOpenFileNameD ( QWidget * parent = nullptr,
                                       const QString & caption = QString(),
                                       const QString & dir = QString(),
                                       const QString & filter = QString(),
                                       QString * selectedFilter = nullptr,
                                       QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-    QStringList getOpenFileNamesD ( QWidget * parent = nullptr,
+    static QStringList getOpenFileNamesD ( QWidget * parent = nullptr,
                                            const QString & caption = QString(),
                                            const QString & dir = QString(),
                                            const QString & filter = QString(),
                                            QString * selectedFilter = nullptr,
                                            QFileDialog::Options options = QFileDialog::DontUseNativeDialog );
-    QString	getExistingDirectoryD ( QWidget * parent = nullptr,
+    static QString	getExistingDirectoryD ( QWidget * parent = nullptr,
                                             const QString & caption = QString(),
                                             const QString & dir = QString(),
                                             QFileDialog::Options options = QFileDialog::ShowDirsOnly |
                                                                            QFileDialog::DontUseNativeDialog);
-    QString detectMIME(const QString &filename);
-    QString detectMIME(const QByteArray &buf);
-    QString detectEncodingName(const QByteArray &content);
-    QString detectDecodeToUnicode(const QByteArray &content);
-    QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
+    static QString detectMIME(const QString &filename);
+    static QString detectMIME(const QByteArray &buf);
+    static QString detectEncodingName(const QByteArray &content);
+    static QString detectDecodeToUnicode(const QByteArray &content);
+    static QImage resizeImage(const QImage &src, const QSize &targetSize, bool forceFilter = false,
                               Blitz::ScaleFilterType filter = Blitz::LanczosFilter, int page = -1,
                               const int *currentPage = nullptr);
-    void showInGraphicalShell(const QString &pathIn);
+    static void showInGraphicalShell(const QString &pathIn);
 
 #ifdef WITH_OCR
 #ifdef Q_OS_WIN
     QString getApplicationDirPath();
 #endif
-    QString ocrGetActiveLanguage();
-    QString ocrGetDatapath();
+    static QString ocrGetActiveLanguage();
+    static QString ocrGetDatapath();
+
     void initializeOCR();
     QString processImageWithOCR(const QImage& image);
     bool isOCRReady() const;
@@ -261,7 +263,7 @@ private:
 
 #ifdef WITH_OCR
     tesseract::TessBaseAPI* m_ocr { nullptr };
-    PIX* Image2PIX(const QImage& qImage);
+    static PIX* Image2PIX(const QImage& qImage);
 #endif
 
 };

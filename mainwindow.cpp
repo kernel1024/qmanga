@@ -290,15 +290,16 @@ void ZMainWindow::closeEvent(QCloseEvent *event)
 
 void ZMainWindow::openAux()
 {
-    const QString filename = zF->getOpenFileNameD(this,tr("Open manga or image"),zF->global()->getSavedAuxOpenDir());
+    const QString filename = ZGenericFuncs::getOpenFileNameD(this,tr("Open manga or image"),
+                                                             zF->global()->getSavedAuxOpenDir());
     if (!filename.isEmpty())
         openAuxFile(filename);
 }
 
 void ZMainWindow::openAuxImagesDir()
 {
-    QString fi = zF->getExistingDirectoryD(this,tr("Open images from directory as manga"),
-                                           zF->global()->getSavedIndexOpenDir());
+    QString fi = ZGenericFuncs::getExistingDirectoryD(this,tr("Open images from directory as manga"),
+                                                      zF->global()->getSavedIndexOpenDir());
     if (fi.isEmpty()) return;
     zF->global()->setSavedIndexOpenDir(fi);
 
@@ -322,7 +323,7 @@ void ZMainWindow::openClipboard()
     buf.open(QIODevice::WriteOnly);
     img.save(&buf,"BMP");
     buf.close();
-    QString bs = QSL(":CLIP:")+QString::fromLatin1(imgs.toBase64());
+    QString bs = QSL(":CLIP:%1").arg(QString::fromLatin1(imgs.toBase64()));
 
     ui->tabWidget->setCurrentIndex(0);
     ui->mangaView->openFile(bs);
@@ -620,7 +621,7 @@ void ZMainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
         m_lblAverageSizes->setText(tr("Avg size: %1x%2").arg(sz.width()).arg(sz.height()));
     } else {
         m_lblAverageSizes->setText(tr("Avg size: %1x%2, %3").arg(sz.width()).arg(sz.height())
-                                   .arg(zF->formatSize(fsz)));
+                                   .arg(ZGenericFuncs::formatSize(fsz)));
     }
 
     if (zF->global()->getAvgFineRenderTime()>0)
@@ -683,8 +684,8 @@ void ZMainWindow::fsNewFilesAdded()
                           (const QString &fileName){
                 QFileInfo fi(fileName);
                 bool mimeOk = false;
-                zF->readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
-                                  Z::rfmMIMECheckOnly);
+                ZGenericFuncs::readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
+                                             Z::rfmMIMECheckOnly);
                 if (mimeOk) {
                     QMutexLocker locker(&vectorMutex);
                     scannedFiles.append(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName()));
@@ -805,8 +806,8 @@ void ZMainWindow::fsFoundNewFiles(const QStringList &files)
                       (const QString &fileName){
             QFileInfo fi(fileName);
             bool mimeOk = false;
-            zF->readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
-                              Z::rfmMIMECheckOnly);
+            ZGenericFuncs::readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
+                                         Z::rfmMIMECheckOnly);
             if (mimeOk) {
                 QMutexLocker locker(&vectorMutex);
                 scannedFiles.append(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName()));

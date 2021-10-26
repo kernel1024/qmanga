@@ -76,8 +76,8 @@ void ZAbstractReader::performListSort()
         QFileInfo fi1(f1.first);
         QFileInfo fi2(f2.first);
         if (fi1.path()==fi2.path())
-            return (zF->compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
-        return (zF->compareWithNumerics(fi1.path(),fi2.path())<0);
+            return (ZGenericFuncs::compareWithNumerics(fi1.completeBaseName(),fi2.completeBaseName())<0);
+        return (ZGenericFuncs::compareWithNumerics(fi1.path(),fi2.path())<0);
     });
 }
 

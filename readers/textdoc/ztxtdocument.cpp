@@ -12,7 +12,7 @@ ZTxtDocument::ZTxtDocument(QObject *parent, const QString &fileName)
         return;
     }
 
-    const QString text = zF->detectDecodeToUnicode(f.readAll());
+    const QString text = ZGenericFuncs::detectDecodeToUnicode(f.readAll());
     f.close();
 
     setPlainText(text);

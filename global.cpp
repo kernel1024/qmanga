@@ -7,6 +7,9 @@
 #include <QPointer>
 #include <QDesktopServices>
 #include <QRegularExpression>
+#include <QStandardPaths>
+#include <QProcess>
+#include <QImageReader>
 #include <iostream>
 #include <clocale>
 #include <vector>
@@ -503,8 +506,20 @@ QImage ZGenericFuncs::resizeImage(const QImage& src, const QSize& targetSize, bo
 
 QStringList ZGenericFuncs::supportedImg()
 {
-    static const QStringList res { QSL("jpg"), QSL("jpeg"), QSL("jpe"), QSL("gif"), QSL("png"),
-                QSL("tiff"), QSL("tif"), QSL("bmp") };
+    static QMutex fmtMutex;
+    static QStringList res;
+
+    QMutexLocker locker(&fmtMutex);
+    if (!res.isEmpty()) return res;
+
+    const QStringList unwantedFormats({ QSL("cur"), QSL("ico"), QSL("icns") });
+    const QList<QByteArray> supportedFormats = QImageReader::supportedImageFormats();
+    res.reserve(supportedFormats.count());
+    for (const auto &fmt : supportedFormats) {
+        const QString sfmt = QString::fromUtf8(fmt);
+        if (!unwantedFormats.contains(sfmt,Qt::CaseInsensitive))
+            res.append(sfmt);
+    }
     return res;
 }
 
@@ -545,7 +560,7 @@ PIX* ZGenericFuncs::Image2PIX(const QImage &qImage) {
 
 QString ZGenericFuncs::processImageWithOCR(const QImage &image)
 {
-    m_ocr->SetImage(Image2PIX(image));
+    m_ocr->SetImage(ZGenericFuncs::Image2PIX(image));
     char* rtext = m_ocr->GetUTF8Text();
     QString s = QString::fromUtf8(rtext);
     delete[] rtext;

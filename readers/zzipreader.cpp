@@ -36,7 +36,7 @@ bool ZZipReader::openFile()
         QString fname = QString::fromUtf8(stat.name);
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         QFileInfo fi(fname);
-        if (!zF->supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
+        if (!ZGenericFuncs::supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
         addSortEntry(fname,static_cast<int>(idx));
         m_sizes[static_cast<int>(idx)] = static_cast<int>(stat.size);
     }

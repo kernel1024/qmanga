@@ -599,8 +599,8 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
                 Q_EMIT gotFile(e);
 
                 m_searchResamplersPool.start([this,entry,preferredCoverSize](){
-                    const QImage res = zF->resizeImage(entry.cover,preferredCoverSize,true,
-                                                       zF->global()->getDownscaleSearchTabFilter());
+                    const QImage res = ZGenericFuncs::resizeImage(entry.cover,preferredCoverSize,true,
+                                                                  zF->global()->getDownscaleSearchTabFilter());
                     if (!res.isNull()) {
                         QMutexLocker mlock(&m_coverCacheMutex);
                         m_coverCache.insert(entry.filename,
@@ -654,8 +654,8 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     }
 
     bool mimeOk = false;
-    ZAbstractReader* za = zF->readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
-                                            Z::rfmCreateReader);
+    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
+                                                       Z::rfmCreateReader);
     if (za == nullptr) {
         qWarning() << fname << "File format not supported";
         Q_EMIT errorMsg(tr("%1 file format not supported.").arg(fname));
@@ -735,8 +735,8 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     }
 
     bool mimeOk = false;
-    ZAbstractReader* za = zF->readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
-                                            Z::rfmCreateReader);
+    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
+                                                       Z::rfmCreateReader);
     if (za == nullptr) {
         qWarning() << fname << "File format not supported.";
         return;
@@ -1150,9 +1150,9 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         m_sourceResamplersPool.start([this,fi,&addedCount,&stopAdding,totalCount,ialbum](){
             bool mimeOk = false;
 
-            QScopedPointer<ZAbstractReader> za(zF->readerFactory(nullptr,fi.filePath(),&mimeOk,
-                                                                 Z::rffSkipSingleImageReader,
-                                                                 Z::rfmCreateReader));
+            QScopedPointer<ZAbstractReader> za(ZGenericFuncs::readerFactory(nullptr,fi.filePath(),&mimeOk,
+                                                                            Z::rffSkipSingleImageReader,
+                                                                            Z::rfmCreateReader));
             if (za.isNull()) {
                 qWarning() << "File format not supported: " << fi.filePath();
                 return;
@@ -1254,7 +1254,7 @@ QByteArray ZDB::createMangaPreview(ZAbstractReader* za, int pageNum)
         idx++;
     }
     if (!p.isNull()) {
-        p = zF->resizeImage(p,ZDefaults::maxPreviewSize,true,zF->global()->getDownscaleSearchTabFilter());
+        p = ZGenericFuncs::resizeImage(p,ZDefaults::maxPreviewSize,true,zF->global()->getDownscaleSearchTabFilter());
         QBuffer buf(&pba);
         buf.open(QIODevice::WriteOnly);
         p.save(&buf, "JPG");
@@ -1275,8 +1275,8 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
     }
 
     QDir d(dir);
-    const QFileInfoList fl = zF->filterSupportedImgFiles(d.entryInfoList(QStringList(QSL("*")),
-                                                                         QDir::Files | QDir::Readable));
+    const QFileInfoList fl = ZGenericFuncs::filterSupportedImgFiles(d.entryInfoList(QStringList(QSL("*")),
+                                                                                    QDir::Files | QDir::Readable));
     QStringList files;
     files.reserve(fl.count());
     for (const QFileInfo &fi : fl)
@@ -1310,7 +1310,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
     QByteArray pba;
     if (!p.isNull()) {
-        p = zF->resizeImage(p,ZDefaults::maxPreviewSize,true,zF->global()->getDownscaleSearchTabFilter());
+        p = ZGenericFuncs::resizeImage(p,ZDefaults::maxPreviewSize,true,zF->global()->getDownscaleSearchTabFilter());
         QBuffer buf(&pba);
         buf.open(QIODevice::WriteOnly);
         p.save(&buf, "JPG");
@@ -1373,7 +1373,7 @@ QString ZDB::prepareSearchQuery(const QString &search)
             msearch.append(QChar('*'));
         }
         return QSL("WHERE MATCH(files.name) AGAINST('%1' IN BOOLEAN MODE) ")
-                .arg(zF->escapeParam(msearch));
+                .arg(ZGenericFuncs::escapeParam(msearch));
     }
     return QString();
 }

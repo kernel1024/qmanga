@@ -46,7 +46,7 @@ bool ZRarReader::openFile()
         QString fname = QString::fromUtf8(rar.readLine()).trimmed();
         if (fname.endsWith('/') || fname.endsWith('\\')) continue;
         fi.setFile(fname);
-        if (!zF->supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
+        if (!ZGenericFuncs::supportedImg().contains(fi.suffix(),Qt::CaseInsensitive)) continue;
         addSortEntry(fname,cnt);
         cnt++;
     }
