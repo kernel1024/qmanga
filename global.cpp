@@ -98,9 +98,9 @@ void ZGenericFuncs::initialize()
 
 #ifdef Q_OS_WIN
     QDir appDir(getApplicationDirPath());
-    QApplication::addLibraryPath(appDir.absoluteFilePath("imageformats"));
+    QApplication::addLibraryPath(appDir.absoluteFilePath(QSL("imageformats")));
 
-    if (QApplication::arguments().contains("--debug"))
+    if (QApplication::arguments().contains(QSL("--debug")))
         AllocConsole();
 #endif
 
@@ -226,10 +226,10 @@ void ZGenericFuncs::stdConsoleOutput(QtMsgType type, const QMessageLogContext &c
 
 #ifdef Q_OS_WIN
         HANDLE con = GetStdHandle(STD_ERROR_HANDLE);
-        wchar_t* wmsg = new wchar_t[fmsg.length()];
+        auto* wmsg = new wchar_t[fmsg.length()];
         fmsg.toWCharArray(wmsg);
         DWORD wr = 0;
-        WriteConsoleW(con,wmsg,fmsg.length(),&wr,NULL);
+        WriteConsoleW(con,wmsg,fmsg.length(),&wr,nullptr);
         delete[] wmsg;
 #endif
         std::cerr << fmsg.toLocal8Bit().constData() << std::endl;
@@ -367,9 +367,9 @@ void ZGenericFuncs::showInGraphicalShell(const QString &pathIn)
     }
     QStringList param;
     if (!fileInfo.isDir())
-        param += QLatin1String("/select,");
+        param += QSL("/select,");
     param += QDir::toNativeSeparators(fileInfo.canonicalFilePath());
-    success = QProcess::startDetached(app, param));
+    success = QProcess::startDetached(app, param);
 #else
     QString app;
     QStringList browserArgs;

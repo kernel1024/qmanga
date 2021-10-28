@@ -245,7 +245,7 @@ public:
 
 #ifdef WITH_OCR
 #ifdef Q_OS_WIN
-    QString getApplicationDirPath();
+    static QString getApplicationDirPath();
 #endif
     static QString ocrGetActiveLanguage();
     static QString ocrGetDatapath();

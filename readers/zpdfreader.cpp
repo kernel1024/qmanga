@@ -24,6 +24,7 @@ extern "C" {
 #include <execution>
 #include <QBuffer>
 #include <QMutexLocker>
+#include <QProcess>
 #include <QDebug>
 #include "zpdfreader.h"
 #include "global.h"

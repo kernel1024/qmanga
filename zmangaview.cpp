@@ -127,8 +127,7 @@ void ZMangaView::getPage(int num)
         m_scroller->horizontalScrollBar()->setValue(0);
 
     cacheDropUnusable();
-    if ((zF->global()->getCachePixmaps() && m_iCacheImages.contains(m_currentPage)) ||
-            (!zF->global()->getCachePixmaps() && m_iCacheData.contains(m_currentPage)))
+    if (m_iCacheImages.contains(m_currentPage) || m_iCacheData.contains(m_currentPage))
         displayCurrentPage();
     cacheFillNearest();
 }
@@ -155,60 +154,63 @@ void ZMangaView::setScroller(QScrollArea *scroller)
 
 void ZMangaView::displayCurrentPage()
 {
-    if ((zF->global()->getCachePixmaps() && m_iCacheImages.contains(m_currentPage)) ||
-            (!zF->global()->getCachePixmaps() && m_iCacheData.contains(m_currentPage))) {
-        QImage p = QImage();
-        qint64 ffsz = 0;
-        if (!zF->global()->getCachePixmaps()) {
-            QByteArray img = m_iCacheData.value(m_currentPage);
-            ffsz = img.size();
-            if (!p.loadFromData(img))
-                p = QImage();
-            img.clear();
-        } else {
-            p = m_iCacheImages.value(m_currentPage);
-        }
-        if (m_rotation!=0) {
-            QTransform mr;
-            mr.rotateRadians(m_rotation*M_PI_2);
-            p = p.transformed(mr,Qt::SmoothTransformation);
-        }
-        if (!m_cropRect.isNull()) {
-            p = p.copy(m_cropRect);
-        }
+    QImage p;
+    qint64 ffsz = 0;
 
-        if (!p.isNull()) {
-            if (m_lastFileSizes.count()>ZDefaults::avgSizeSamplesCount)
-                m_lastFileSizes.removeFirst();
-            if (m_lastSizes.count()>ZDefaults::avgSizeSamplesCount)
-                m_lastSizes.removeFirst();
+    if (m_iCacheImages.contains(m_currentPage)) {
+        p = m_iCacheImages.value(m_currentPage);
 
-            m_lastFileSizes << static_cast<int>(ffsz);
-            m_lastSizes << p.size();
+    } else if (m_iCacheData.contains(m_currentPage)) {
+        QByteArray img = m_iCacheData.value(m_currentPage);
+        ffsz = img.size();
+        if (!p.loadFromData(img))
+            p = QImage();
+        img.clear();
 
-            if (m_lastFileSizes.count()>0 && m_lastSizes.count()>0) {
-                qint64 sum = 0;
-                for (const auto &i : qAsConst(m_lastFileSizes))
-                    sum += i;
-                sum = sum / m_lastFileSizes.count();
-                qint64 sumx = 0;
-                qint64 sumy = 0;
-                for (const auto &i : qAsConst(m_lastSizes)) {
-                    sumx += i.width();
-                    sumy += i.height();
-                }
-                sumx = sumx / m_lastSizes.count();
-                sumy = sumy / m_lastSizes.count();
-                Q_EMIT averageSizes(QSize(static_cast<int>(sumx),
-                                        static_cast<int>(sumy)),sum);
-            }
-        }
-
-        m_curUnscaledPixmap = p;
-        Q_EMIT loadedPage(m_currentPage,m_pathCache.value(m_currentPage));
-        setFocus();
-        redrawPage();
+    } else {
+        return;
     }
+
+    if (m_rotation!=0) {
+        QTransform mr;
+        mr.rotateRadians(m_rotation*M_PI_2);
+        p = p.transformed(mr,Qt::SmoothTransformation);
+    }
+    if (!m_cropRect.isNull()) {
+        p = p.copy(m_cropRect);
+    }
+
+    if (!p.isNull()) {
+        if (m_lastFileSizes.count()>ZDefaults::avgSizeSamplesCount)
+            m_lastFileSizes.removeFirst();
+        if (m_lastSizes.count()>ZDefaults::avgSizeSamplesCount)
+            m_lastSizes.removeFirst();
+
+        m_lastFileSizes << static_cast<int>(ffsz);
+        m_lastSizes << p.size();
+
+        if (m_lastFileSizes.count()>0 && m_lastSizes.count()>0) {
+            qint64 sum = 0;
+            for (const auto &i : qAsConst(m_lastFileSizes))
+                sum += i;
+            sum = sum / m_lastFileSizes.count();
+            qint64 sumx = 0;
+            qint64 sumy = 0;
+            for (const auto &i : qAsConst(m_lastSizes)) {
+                sumx += i.width();
+                sumy += i.height();
+            }
+            sumx = sumx / m_lastSizes.count();
+            sumy = sumy / m_lastSizes.count();
+            Q_EMIT averageSizes(QSize(static_cast<int>(sumx),
+                                      static_cast<int>(sumy)),sum);
+        }
+    }
+
+    m_curUnscaledPixmap = p;
+    Q_EMIT loadedPage(m_currentPage,m_pathCache.value(m_currentPage));
+    setFocus();
+    redrawPage();
 }
 
 void ZMangaView::openFile(const QString &filename)
@@ -873,14 +875,14 @@ void ZMangaView::cacheGotPage(const QByteArray &page, const QImage &pageImage, i
     if (m_processingPages.contains(num))
         m_processingPages.removeOne(num);
 
-    if ((zF->global()->getCachePixmaps() && m_iCacheImages.contains(num)) ||
-            (!zF->global()->getCachePixmaps() && m_iCacheData.contains(num))) return;
+    if ((!pageImage.isNull() && m_iCacheImages.contains(num)) ||
+            (!page.isEmpty() && m_iCacheData.contains(num))) return;
 
-    if (!zF->global()->getCachePixmaps()) {
+    if (!page.isEmpty())
         m_iCacheData[num]=page;
-    } else {
+    if (!pageImage.isNull())
         m_iCacheImages[num]=pageImage;
-    }
+
     m_pathCache[num]=internalPath;
 
     if (num==m_currentPage)
@@ -902,28 +904,20 @@ void ZMangaView::cacheGotError(const QString &msg)
 
 void ZMangaView::cacheDropUnusable()
 {
-    if (zF->global()->getCachePixmaps()) {
-        m_iCacheData.clear();
-    } else {
-        m_iCacheImages.clear();
-    }
-
     ZIntVector toCache = cacheGetActivePages();
-    QList<int> cached;
-    if (zF->global()->getCachePixmaps()) {
-        cached = m_iCacheImages.keys();
-    } else {
-        cached = m_iCacheData.keys();
+    for (auto it = m_iCacheImages.keyBegin(), end = m_iCacheImages.keyEnd(); it != end; ++it) {
+        const int num = *it;
+        if (!toCache.contains(num))
+            m_iCacheImages.remove(num);
+        if (m_pathCache.contains(num))
+            m_pathCache.remove(num);
     }
-    for (const auto &i : qAsConst(cached)) {
-        if (!toCache.contains(i)) {
-            if (zF->global()->getCachePixmaps()) {
-                m_iCacheImages.remove(i);
-            } else {
-                m_iCacheData.remove(i);
-            }
-            m_pathCache.remove(i);
-        }
+    for (auto it = m_iCacheData.keyBegin(), end = m_iCacheData.keyEnd(); it != end; ++it) {
+        const int num = *it;
+        if (!toCache.contains(num))
+            m_iCacheData.remove(num);
+        if (m_pathCache.contains(num))
+            m_pathCache.remove(num);
     }
 }
 
@@ -932,13 +926,7 @@ void ZMangaView::cacheFillNearest()
     ZIntVector toCache = cacheGetActivePages();
     int idx = 0;
     while (idx<toCache.count()) {
-        bool contains = false;
-        if (zF->global()->getCachePixmaps()) {
-            contains = m_iCacheImages.contains(toCache.at(idx));
-        } else {
-            contains = m_iCacheData.contains(toCache.at(idx));
-        }
-        if (contains) {
+        if (m_iCacheImages.contains(toCache.at(idx)) || m_iCacheData.contains(toCache.at(idx))) {
             toCache.removeAt(idx);
         } else {
             idx++;

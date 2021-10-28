@@ -193,9 +193,6 @@ win32 {
     DEFINES += WITH_DJVU=1
     PKGCONFIG += ddjvuapi
 
-    DEFINES += WITH_EPUB=1
-    LIBS += -lepub
-
     RC_FILE = qmanga.rc
 }
 

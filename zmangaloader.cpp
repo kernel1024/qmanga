@@ -57,7 +57,7 @@ void ZMangaLoader::openFile(const QString &filename, int preferred)
 void ZMangaLoader::getPage(int num, bool preferImage)
 {
     QString ipt = m_reader->getSortEntryName(num);
-    if (preferImage || !m_reader->isPageDataSupported()) {
+    if (!m_reader->isPageDataSupported() || preferImage) {
         Q_EMIT gotPage(QByteArray(),m_reader->loadPageImage(num),num,ipt,m_threadID);
     } else {
         Q_EMIT gotPage(m_reader->loadPage(num),QImage(),num,ipt,m_threadID);

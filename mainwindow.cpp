@@ -15,6 +15,7 @@
 #include <QScreen>
 #include <QWindow>
 #include <QKeySequence>
+#include <QProcess>
 #include <QDebug>
 
 #include "mainwindow.h"
