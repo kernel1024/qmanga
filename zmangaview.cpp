@@ -774,15 +774,17 @@ void ZMangaView::exportPagesCtx()
                 zl->getPage(pageNum,true);
             zl->closeFile();
             progress.fetchAndAddRelease(1);
-            QMetaObject::invokeMethod(dlg,[&progress,dlg]{
+            const int progressValue = progress.loadAcquire();
+            QMetaObject::invokeMethod(dlg,[progressValue,dlg]{
                 if (!dlg->wasCanceled())
-                    dlg->setValue(progress.loadAcquire());
+                    dlg->setValue(progressValue);
             },Qt::QueuedConnection);
         });
 
-        QMetaObject::invokeMethod(dlg,[dlg,&exportFileError]{
+        const int exportFileErrorValue = exportFileError.loadAcquire();
+        QMetaObject::invokeMethod(dlg,[dlg,exportFileErrorValue]{
             QString msg = tr("Pages export completed.");
-            if (exportFileError.loadAcquire()>0)
+            if (exportFileErrorValue>0)
                 msg = tr("Error caught while saving image. Cannot create file. Check your permissions.");
             if (dlg->wasCanceled())
                 msg = tr("Pages export aborted.");
