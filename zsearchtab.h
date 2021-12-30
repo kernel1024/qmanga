@@ -81,6 +81,7 @@ public Q_SLOTS:
     void sortingChanged(int logicalIndex, Qt::SortOrder order);
     void updateSplitters();
 
+    void ctxDescriptionMenu(const QPoint &pos);
     void ctxMenu(const QPoint &pos);
     void ctxAlbumMenu(const QPoint &pos);
     void ctxEditMenu(const QPoint &pos);

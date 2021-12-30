@@ -61,6 +61,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
     connect(ui->srcList,&QListView::customContextMenuRequested,this,&ZSearchTab::ctxMenu);
     connect(ui->srcTable,&QTableView::doubleClicked,this,&ZSearchTab::mangaOpen);
     connect(ui->srcTable,&QTableView::customContextMenuRequested,this,&ZSearchTab::ctxMenu);
+    connect(ui->srcDesc,&QLabel::customContextMenuRequested,this,&ZSearchTab::ctxDescriptionMenu);
     connect(ui->srcAddBtn,&QPushButton::clicked,this,&ZSearchTab::mangaAdd);
     connect(ui->srcAddDirBtn,&QPushButton::clicked,this,&ZSearchTab::mangaAddDir);
     connect(ui->srcAddImgDirBtn,&QPushButton::clicked,this,&ZSearchTab::imagesAddDir);
@@ -124,6 +125,7 @@ ZSearchTab::ZSearchTab(QWidget *parent) :
 
     ui->srcList->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->srcTable->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->srcDesc->setContextMenuPolicy(Qt::CustomContextMenu);
 
     updateSplitters();
 }
@@ -154,6 +156,21 @@ void ZSearchTab::updateSplitters()
     widths << ZDefaults::albumListWidth;
     widths << width()-widths.first();
     ui->splitter->setSizes(widths);
+}
+
+void ZSearchTab::ctxDescriptionMenu(const QPoint &pos)
+{
+    const QString text = ui->srcDesc->selectedText();
+    if (text.isEmpty()) return;
+
+    QMenu cm(ui->srcDesc);
+    QAction *ac = cm.addAction(QIcon::fromTheme(QSL("edit-copy")),tr("Copy"));
+    connect(ac,&QAction::triggered,this,[text](){
+        QClipboard *cl = QApplication::clipboard();
+        cl->clear();
+        cl->setText(text);
+    });
+    cm.exec(ui->srcDesc->mapToGlobal(pos));
 }
 
 void ZSearchTab::ctxMenu(const QPoint &pos)
