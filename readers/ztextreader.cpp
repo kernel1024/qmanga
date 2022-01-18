@@ -75,7 +75,7 @@ bool ZTextReader::openFile()
     const int pageCounterWidth = 6;
     const int pageCounterBase = 10;
     for (int i=0; i<m_doc->pageCount(); i++) {
-        addSortEntry(QSL("%1").arg(i,pageCounterWidth,pageCounterBase,QChar('0')),i);
+        addSortEntry(QSL("%1").arg(i,pageCounterWidth,pageCounterBase,QChar(u'0')),i);
     }
 
     performListSort();

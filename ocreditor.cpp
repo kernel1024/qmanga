@@ -245,7 +245,7 @@ void ZOCREditor::showSuggestedTranslation(const QString &link)
     QUrl url(link);
     QUrlQuery requ(url);
     QString word = requ.queryItemValue(QSL("word"));
-    if (word.startsWith('%')) {
+    if (word.startsWith(u'%')) {
         QByteArray bword = word.toLatin1();
         if (!bword.isNull() && !bword.isEmpty())
             word = QUrl::fromPercentEncoding(bword);

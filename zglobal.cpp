@@ -404,7 +404,7 @@ void ZGlobal::settingsDlg()
     }
 
     for (auto bIt=d->m_bookmarks.constKeyValueBegin(), end=d->m_bookmarks.constKeyValueEnd(); bIt!=end; ++bIt) {
-        const QStringList stl = (*bIt).second.split('\n');
+        const QStringList stl = (*bIt).second.split(u'\n');
         if (!stl.isEmpty()) {
             QString s = stl.first();
             if (stl.count()>1) {
@@ -556,7 +556,7 @@ void ZGlobal::initLanguagesList()
         QString name = QSL("%1 (%2)").arg(QLocale::languageToString(locale.language()),bcp);
 
         // filter out unsupported codes for dialects
-        if (bcp.contains('-') && !bcp.startsWith(QSL("zh"))) continue;
+        if (bcp.contains(u'-') && !bcp.startsWith(QSL("zh"))) continue;
 
         // replace C locale with English
         if (bcp == QSL("en"))

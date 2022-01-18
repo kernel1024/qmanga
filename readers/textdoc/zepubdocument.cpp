@@ -149,7 +149,7 @@ void ZEpubDocument::epubClean()
 void ZEpubDocument::setCurrentSubDocument(const QString &doc)
 {
     m_currentSubDocument.clear();
-    int index = doc.indexOf('/');
+    int index = doc.indexOf(u'/');
     if (index > 0) {
         m_currentSubDocument = QUrl::fromLocalFile(doc.left(index + 1));
     }

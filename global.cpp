@@ -198,7 +198,7 @@ void ZGenericFuncs::stdConsoleOutput(QtMsgType type, const QMessageLogContext &c
     if (category==QSL("default")) {
         category.clear();
     } else {
-        category.append(' ');
+        category.append(u' ');
     }
 
     switch (type) {
@@ -264,10 +264,10 @@ QString ZGenericFuncs::elideString(const QString& text, int maxlen, Qt::TextElid
 QString ZGenericFuncs::escapeParam(const QString &param)
 {
     QString res = param;
-    res.replace('\'',QSL("\\'"));
-    res.replace('"',QSL("\\\""));
-    res.replace(';',QString());
-    res.replace('%',QString());
+    res.replace(u'\'',QSL("\\'"));
+    res.replace(u'"',QSL("\\\""));
+    res.replace(u';',QString());
+    res.replace(u'%',QString());
     return res;
 }
 
@@ -409,19 +409,19 @@ QString ZGenericFuncs::detectMIME(const QString& filename)
 QString ZGenericFuncs::detectMIME(const QByteArray &buf)
 {
     static const QHash<QPair<int, QByteArray>, QString> magicList = {
-        { { 0, QBAL("\x50\x4b\x03\x04") }, "application/zip" },
-        { { 0, QBAL("\x52\x61\x72\x21") }, "application/rar" },
-        { { 0, QBAL("\x25\x50\x44\x46") }, "application/pdf" },
-        { { 0, QBAL("\xFF\xD8\xFF\xDB") }, "image/jpeg" },
-        { { 6, QBAL("\x4A\x46\x49\x46") }, "image/jpeg" },
-        { { 6, QBAL("\x45\x78\x69\x66") }, "image/jpeg" },
-        { { 0, QBAL("\x89\x50\x4E\x47") }, "image/png" },
-        { { 0, QBAL("\x47\x49\x46\x38\x37\x61") }, "image/gif" },
-        { { 0, QBAL("\x47\x49\x46\x38\x39\x61") }, "image/gif" },
-        { { 0, QBAL("\x49\x49\x2A\x00") }, "image/tiff" },
-        { { 0, QBAL("\x4D\x4D\x00\x2A") }, "image/tiff" },
-        { { 0, QBAL("\x42\x4D") }, "image/bmp" },
-        { { 12, QBAL("\x44\x4A\x56") }, "image/vnd.djvu"}
+        { { 0, QBAL("\x50\x4b\x03\x04") }, QSL("application/zip") },
+        { { 0, QBAL("\x52\x61\x72\x21") }, QSL("application/rar") },
+        { { 0, QBAL("\x25\x50\x44\x46") }, QSL("application/pdf") },
+        { { 0, QBAL("\xFF\xD8\xFF\xDB") }, QSL("image/jpeg") },
+        { { 6, QBAL("\x4A\x46\x49\x46") }, QSL("image/jpeg") },
+        { { 6, QBAL("\x45\x78\x69\x66") }, QSL("image/jpeg") },
+        { { 0, QBAL("\x89\x50\x4E\x47") }, QSL("image/png") },
+        { { 0, QBAL("\x47\x49\x46\x38\x37\x61") }, QSL("image/gif") },
+        { { 0, QBAL("\x47\x49\x46\x38\x39\x61") }, QSL("image/gif") },
+        { { 0, QBAL("\x49\x49\x2A\x00") }, QSL("image/tiff") },
+        { { 0, QBAL("\x4D\x4D\x00\x2A") }, QSL("image/tiff") },
+        { { 0, QBAL("\x42\x4D") }, QSL("image/bmp") },
+        { { 12, QBAL("\x44\x4A\x56") }, QSL("image/vnd.djvu") }
     };
 
     for (auto it = magicList.constKeyValueBegin(), end = magicList.constKeyValueEnd(); it != end; ++it) {

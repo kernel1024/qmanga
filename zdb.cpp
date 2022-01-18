@@ -1085,18 +1085,18 @@ void ZDB::sqlGetTablesDescription()
     QString s1(QSL("Field"));
     QString s2(QSL("Type"));
     res << QSL("Fields description:");
-    res << QSL("| ")+s1.leftJustified(nl,' ')+QSL(" | ")
-           +s2.leftJustified(tl,' ')+QSL(" |");
-    s1.fill('-',nl); s2.fill('-',tl);
+    res << QSL("| ")+s1.leftJustified(nl,u' ')+QSL(" | ")
+           +s2.leftJustified(tl,u' ')+QSL(" |");
+    s1.fill(u'-',nl); s2.fill(u'-',tl);
     res << QSL("+-")+s1+QSL("-+-")+s2+QSL("-+");
     res.reserve(names.count());
     for (int i=0;i<names.count();i++) {
         s1 = names.at(i);
         s2 = types.at(i);
-        res << QSL("| ")+s1.leftJustified(nl,' ')
-               +QSL(" | ")+s2.leftJustified(tl,' ')+QSL(" |");
+        res << QSL("| ")+s1.leftJustified(nl,u' ')
+               +QSL(" | ")+s2.leftJustified(tl,u' ')+QSL(" |");
     }
-    Q_EMIT gotTablesDescription(res.join('\n'));
+    Q_EMIT gotTablesDescription(res.join(u'\n'));
 }
 
 void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
@@ -1107,7 +1107,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         Q_EMIT errorMsg(tr("Album name cannot be empty"));
         return;
     }
-    if (album.startsWith('#') || album.startsWith('%')) {
+    if (album.startsWith(u'#') || album.startsWith(u'%')) {
         Q_EMIT errorMsg(tr("Reserved character in album name"));
         return;
     }
@@ -1369,8 +1369,8 @@ QString ZDB::prepareSearchQuery(const QString &search)
         }
         if (!haveops) {
             msearch.replace(QRegularExpression(QSL("\\s+")),QSL("* +"));
-            msearch.prepend(QChar('+'));
-            msearch.append(QChar('*'));
+            msearch.prepend(QChar(u'+'));
+            msearch.append(QChar(u'*'));
         }
         return QSL("WHERE MATCH(files.name) AGAINST('%1' IN BOOLEAN MODE) ")
                 .arg(ZGenericFuncs::escapeParam(msearch));
@@ -1442,8 +1442,8 @@ void ZDB::sqlDelFiles(const ZIntVector &dbids, bool fullDelete)
 void ZDB::sqlRenameAlbum(const QString &oldName, const QString &newName)
 {
     if (oldName==newName || oldName.isEmpty() || newName.isEmpty()) return;
-    if (newName.startsWith('#') || oldName.startsWith('#')) return;
-    if (newName.startsWith('%') || oldName.startsWith('%')) return;
+    if (newName.startsWith(u'#') || oldName.startsWith(u'#')) return;
+    if (newName.startsWith(u'%') || oldName.startsWith(u'%')) return;
 
     if (sqlFindAndAddAlbum(newName,QString(),false)>=0) {
         qWarning() << "Unable to rename album - name already exists.";

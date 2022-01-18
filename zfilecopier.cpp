@@ -58,7 +58,7 @@ void ZFileCopier::start()
             } else if (!m_errors.empty()) {
                 Q_EMIT errorMsg(tr("Failed to copy %1 entries:\n%2")
                                 .arg(m_errors.count())
-                                .arg(m_errors.join('\n')));
+                                .arg(m_errors.join(u'\n')));
             }
             Q_EMIT finished();
         },Qt::QueuedConnection);

@@ -456,7 +456,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                     cp.height()>ZDefaults::ocrSquareMinimumSize) {
                 QImage cpx = m_curUnscaledPixmap.copy(cp);
                 QString s = zF->processImageWithOCR(cpx);
-                QStringList sl = s.split('\n',Qt::SkipEmptyParts);
+                QStringList sl = s.split(u'\n',Qt::SkipEmptyParts);
                 int maxlen = 0;
                 for (const auto &i : qAsConst(sl)) {
                     if (i.length()>maxlen)
@@ -466,7 +466,7 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
                     QStringList sl2;
                     sl2.reserve(maxlen);
                     for (int i=0;i<maxlen;i++)
-                        sl2 << QString(sl.count(),QChar(' '));
+                        sl2 << QString(sl.count(),QChar(u' '));
                     for (int i=0;i<sl.count();i++) {
                         for (int j=0;j<sl.at(i).length();j++)
                             sl2[maxlen-j-1][i]=sl[i][j];
@@ -748,7 +748,7 @@ void ZMangaView::exportPagesCtx()
 
             QDir dir(exportDir);
             QString fname = dir.filePath(QSL("%1.%2")
-                                         .arg(pageNum+1,filenameLength,ZDefaults::exportFilenameNumWidth,QChar('0'))
+                                         .arg(pageNum+1,filenameLength,ZDefaults::exportFilenameNumWidth,QChar(u'0'))
                                          .arg(format.toLower()));
             QScopedPointer<ZMangaLoader> zl(new ZMangaLoader());
             connect(zl.data(),&ZMangaLoader::gotError,[&exportFileError](const QString&msg){

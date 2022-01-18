@@ -64,7 +64,7 @@ ZFB2Document::ZFB2Document(QObject* parent, const QString &fileName)
                     continue;
                 }
                 QString fname = QString::fromUtf8(stat.name);
-                if (fname.endsWith('/') || fname.endsWith('\\')) continue;
+                if (fname.endsWith(u'/') || fname.endsWith(u'\\')) continue;
 
                 QFileInfo fi(fname);
                 if (validSuffixes.contains(fi.suffix(),Qt::CaseInsensitive)) {
@@ -292,7 +292,7 @@ bool ZFB2Document::convertTitleInfo(const QDomElement &element)
             if (!convertTextNode(child, keywords))
                 return false;
 
-            mTitleInfo->mKeywords = keywords.split(QChar(' '), Qt::SkipEmptyParts);
+            mTitleInfo->mKeywords = keywords.split(QChar(u' '), Qt::SkipEmptyParts);
         } else if (child.tagName() == QSL("annotation")) {
             if (!convertAnnotation(child, mTitleInfo->mAnnotation))
                 return false;
@@ -604,7 +604,7 @@ bool ZFB2Document::convertImage(const QDomElement &element)
 {
     QString href = element.attributeNS(QSL("http://www.w3.org/1999/xlink"), QSL("href"));
 
-    if (href.startsWith(QChar('#')))
+    if (href.startsWith(QChar(u'#')))
         href = href.mid(1);
 
     const auto img = qvariant_cast<QImage>(resource(QTextDocument::ImageResource, QUrl(href)));

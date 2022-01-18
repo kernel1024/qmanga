@@ -522,7 +522,7 @@ void ZMainWindow::updateBookmarks()
         QAction* a = ui->menuBookmarks->addAction((*it).first,this,&ZMainWindow::openBookmark);
         const QString st = (*it).second;
         a->setData(st);
-        const QStringList stl = st.split('\n');
+        const QStringList stl = st.split(u'\n');
         a->setStatusTip(stl.first());
     }
 }
@@ -564,7 +564,7 @@ void ZMainWindow::openBookmark()
     auto *ac = qobject_cast<QAction *>(sender());
     if (ac==nullptr) return;
 
-    const QStringList stl = ac->data().toString().split('\n');
+    const QStringList stl = ac->data().toString().split(u'\n');
 
     int page = 0;
     const QString filename = stl.first();
