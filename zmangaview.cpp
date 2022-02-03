@@ -950,7 +950,7 @@ ZIntVector ZMangaView::cacheGetActivePages() const
 
     if (m_currentPage==-1) return l;
     if (m_privPageCount<=0) {
-        l << m_currentPage;
+        l.append(m_currentPage);
         return l;
     }
 
@@ -963,19 +963,20 @@ ZIntVector ZMangaView::cacheGetActivePages() const
         }
     }
 
-    l << m_currentPage; // load current page at first
+    l.append(m_currentPage); // load current page at first
 
     for (int i=0;i<cacheRadius;i++) {
-
-        if (!l.contains(i))
-            l << i; // first pages
-
-        if (!l.contains(m_privPageCount-i-1))
-            l << m_privPageCount-i-1;  // last pages
+        // first pages, then last pages
+        const QList<int> pageNums ({ i, m_privPageCount-i-1 });
+        for (const auto& num : pageNums) {
+            if (!l.contains(num) && (num>=0) && (num<m_privPageCount))
+                l.append(num);
+        }
     }
+    // pages around current page
     for (int i=(m_currentPage-cacheRadius);i<(m_currentPage+cacheRadius);i++) {
-        if (i>=0 && i<m_privPageCount && !l.contains(i)) // pages around current page
-            l << i;
+        if (i>=0 && i<m_privPageCount && !l.contains(i))
+            l.append(i);
     }
     return l;
 }
