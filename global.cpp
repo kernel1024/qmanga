@@ -549,7 +549,7 @@ PIX* ZGenericFuncs::Image2PIX(const QImage &qImage) {
     pixs = pixCreate(width, height, depth);
     pixSetWpl(pixs, wpl);
     pixSetColormap(pixs, nullptr);
-    l_uint32 *datas = pixs->data;
+    l_uint32 *datas = pixGetData(pixs);
 
     for (int y = 0; y < height; y++) {
         lines = datas + y * wpl; // NOLINT

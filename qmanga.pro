@@ -163,8 +163,7 @@ message("Using Qt:            " $$QT_VERSION)
     use_ocr {
         DEFINES += WITH_OCR=1
         QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
-        PKGCONFIG += tesseract
-        LIBS += -llept
+        PKGCONFIG += tesseract lept
     }
 
     use_djvu {
