@@ -10,6 +10,7 @@
 #include <QStandardPaths>
 #include <QProcess>
 #include <QImageReader>
+#include <QCryptographicHash>
 #include <iostream>
 #include <clocale>
 #include <vector>
@@ -20,6 +21,13 @@
 #include <unicode/uenum.h>
 #include <unicode/ucsdet.h>
 #include <unicode/ucnv.h>
+
+extern "C" {
+//#include <unistd.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/bio.h>
+}
 
 #include "zmangaloader.h"
 #include "global.h"
@@ -35,6 +43,10 @@
 #include "readers/zimagesdirreader.h"
 #include "readers/zsingleimagereader.h"
 #include "readers/ztextreader.h"
+
+#include "ocr/abstractocr.h"
+#include "ocr/tesseractocr.h"
+#include "ocr/googlevision.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -73,9 +85,8 @@ void ZGenericFuncs::initialize()
 #endif
     setlocale (LC_NUMERIC, "C");
 
-#ifdef WITH_OCR
-    initializeOCR();
-#endif
+    ZTesseractOCR::preinit();
+
     QGuiApplication::setApplicationDisplayName(QSL("QManga"));
     QCoreApplication::setOrganizationName(QSL("kernel1024"));
     QCoreApplication::setApplicationName(QSL("qmanga"));
@@ -535,83 +546,26 @@ QFileInfoList ZGenericFuncs::filterSupportedImgFiles(const QFileInfoList& entryL
     return res;
 }
 
-#ifdef WITH_OCR
-PIX* ZGenericFuncs::Image2PIX(const QImage &qImage) {
-    PIX * pixs = nullptr;
-    l_uint32 *lines = nullptr;
+ZAbstractOCR *ZGenericFuncs::ocr(QObject *parent)
+{
+    static ZAbstractOCR* m_ocr = nullptr;
 
-    QImage img = qImage.rgbSwapped();
-    int width = img.width();
-    int height = img.height();
-    int depth = img.depth();
-    int wpl = img.bytesPerLine() / 4;
-
-    pixs = pixCreate(width, height, depth);
-    pixSetWpl(pixs, wpl);
-    pixSetColormap(pixs, nullptr);
-    l_uint32 *datas = pixGetData(pixs);
-
-    for (int y = 0; y < height; y++) {
-        lines = datas + y * wpl; // NOLINT
-        memcpy(lines,img.scanLine(y),static_cast<uint>(img.bytesPerLine()));
+    ZAbstractOCR *ocr = nullptr;
+    if ((zF->global()->getOCREngine() == Z::ocrTesseract) && (qobject_cast<ZTesseractOCR *>(m_ocr) == nullptr)) {
+        ocr = new ZTesseractOCR(parent);
+    } else if ((zF->global()->getOCREngine() == Z::ocrGoogleVision) && (qobject_cast<ZGoogleVision *>(m_ocr) == nullptr)) {
+        ocr = new ZGoogleVision(parent);
     }
-    return pixEndianByteSwapNew(pixs);
+
+    if (ocr)
+        m_ocr = ocr;
+
+    return m_ocr;
 }
 
-QString ZGenericFuncs::processImageWithOCR(const QImage &image)
-{
-    m_ocr->SetImage(ZGenericFuncs::Image2PIX(image));
-    char* rtext = m_ocr->GetUTF8Text();
-    QString s = QString::fromUtf8(rtext);
-    delete[] rtext;
-    return s;
-}
-
-bool ZGenericFuncs::isOCRReady() const
-{
-    return (m_ocr!=nullptr);
-}
-
-QString ZGenericFuncs::ocrGetActiveLanguage()
-{
-    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
-    settings.beginGroup(QSL("Main"));
-    QString res = settings.value(QSL("activeLanguage"),QSL("jpn")).toString();
-    settings.endGroup();
-    return res;
-}
-
-QString ZGenericFuncs::ocrGetDatapath()
-{
-    QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
-    settings.beginGroup(QSL("Main"));
-#ifdef Q_OS_WIN
-    QDir appDir(getApplicationDirPath());
-    QString res = settings.value(QStringLiteral("datapath"),
-                                 appDir.absoluteFilePath(QStringLiteral("tessdata"))).toString();
-#else
-    QString res = settings.value(QSL("datapath"),
-                                 QSL("/usr/share/tessdata/")).toString();
-#endif
-    settings.endGroup();
-    return res;
-}
-
-void ZGenericFuncs::initializeOCR()
-{
-    m_ocr = new tesseract::TessBaseAPI();
-    QByteArray tesspath = ocrGetDatapath().toUtf8();
-
-    QString lang = ocrGetActiveLanguage();
-    if (lang.isEmpty() || (m_ocr->Init(tesspath.constData(),lang.toUtf8().constData())!=0)) {
-        qCritical() << "Could not initialize Tesseract. "
-                       "Maybe language training data is not installed.";
-    }
-}
-
-#ifdef Q_OS_WIN
 QString ZGenericFuncs::getApplicationDirPath()
 {
+#ifdef Q_OS_WIN
     static QString res {};
     if (!res.isEmpty())
         return res;
@@ -626,10 +580,50 @@ QString ZGenericFuncs::getApplicationDirPath()
     if (res.isEmpty())
         qFatal("Unable to determine executable path.");
     return res;
+#else // WIN32
+    return qApp->applicationDirPath();
+#endif
 }
-#endif // WIN32
 
-#endif // OCR
+QByteArray ZGenericFuncs::signSHA256withRSA(const QByteArray &data, const QByteArray &privateKey)
+{
+    QByteArray res;
+
+    int rc = 1;
+
+    QByteArray digest = QCryptographicHash::hash(data,QCryptographicHash::Sha256);
+
+    BIO *b = nullptr;
+    RSA *r = nullptr;
+
+    b = BIO_new_mem_buf(privateKey.constData(), privateKey.length());
+    if (nullptr == b) {
+        return res;
+    }
+    r = PEM_read_bio_RSAPrivateKey(b, nullptr, nullptr, nullptr);
+    if (nullptr == r) {
+        BIO_free(b);
+        return res;
+    }
+
+    QScopedPointer<unsigned char,QScopedPointerPodDeleter> sig(reinterpret_cast<unsigned char*>(malloc(RSA_size(r)))); // NOLINT
+    unsigned int sig_len = 0;
+
+    if (nullptr == sig) {
+        BIO_free(b);
+        RSA_free(r);
+        return res;
+    }
+
+    rc = RSA_sign(NID_sha256, reinterpret_cast<const unsigned char *>(digest.constData()),
+                  digest.length(), sig.data(), &sig_len, r);
+    if (1 == rc) {
+        res = QByteArray(reinterpret_cast<char *>(sig.data()),static_cast<int>(sig_len));
+    }
+    BIO_free(b);
+    RSA_free(r);
+    return res;
+}
 
 const QHash<Z::Ordering, QString> &ZGenericFuncs::getHeaderColumns()
 {

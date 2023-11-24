@@ -148,14 +148,6 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
         openAuxFile(fname);
 
     ui->btnZoomFit->click();
-
-#ifdef WITH_OCR
-    if (!zF->isOCRReady()) {
-        QMessageBox::critical(nullptr,QGuiApplication::applicationDisplayName(),
-                              tr("Could not initialize Tesseract. \n"
-                                 "Maybe language training data is not installed."));
-    }
-#endif
 }
 
 ZMainWindow::~ZMainWindow()

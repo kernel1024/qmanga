@@ -13,12 +13,8 @@
 #include <QThread>
 #include <QScopedPointer>
 
-#ifdef WITH_OCR
-#include <tesseract/baseapi.h>
-#include <leptonica/allheaders.h>
-#endif // WITH_OCR
-
 #include "imagescale/scalefilter.h"
+#include "ocr/abstractocr.h"
 
 #define QSL QStringLiteral // NOLINT
 #define QBAL QByteArrayLiteral // NOLINT
@@ -119,6 +115,12 @@ enum ReaderFactoryMode {
     rfmCreateReader = 1
 };
 Q_ENUM_NS(ReaderFactoryMode)
+
+enum OCREngine {
+    ocrTesseract = 0,
+    ocrGoogleVision = 1
+};
+Q_ENUM_NS(OCREngine)
 
 }
 
@@ -243,28 +245,17 @@ public:
                               const int *currentPage = nullptr);
     static void showInGraphicalShell(const QString &pathIn);
 
-#ifdef WITH_OCR
-#ifdef Q_OS_WIN
     static QString getApplicationDirPath();
-#endif
-    static QString ocrGetActiveLanguage();
-    static QString ocrGetDatapath();
+    static QByteArray signSHA256withRSA(const QByteArray &data, const QByteArray &privateKey);
 
-    void initializeOCR();
-    QString processImageWithOCR(const QImage& image);
-    bool isOCRReady() const;
-#endif
+    ZAbstractOCR *ocr(QObject *parent = nullptr);
+
 private:
     Q_DISABLE_COPY(ZGenericFuncs)
 
     QScopedPointer<ZGlobal> m_zg; // keep first!
     QScopedPointer<ZPdfController> m_pdfController;
     QScopedPointer<ZDjVuController> m_djvuController;
-
-#ifdef WITH_OCR
-    tesseract::TessBaseAPI* m_ocr { nullptr };
-    static PIX* Image2PIX(const QImage& qImage);
-#endif
 
 };
 

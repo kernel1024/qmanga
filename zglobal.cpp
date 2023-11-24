@@ -14,6 +14,7 @@
 #include "readers/zzipreader.h"
 #include "readers/zpdfreader.h"
 #include "readers/zdjvureader.h"
+#include "ocr/tesseractocr.h"
 #include "zglobalprivate.h"
 #include "ui_settingsdialog.h"
 
@@ -126,6 +127,10 @@ void ZGlobal::loadSettings()
     d->m_defaultSearchEngine = settings.value(QSL("defaultSearchEngine"),QString()).toString();
     d->m_ctxSearchEngines = settings.value(QSL("ctxSearchEngines")).value<ZStrMap>();
 
+    d->m_OCREngine = settings.value(QSL("OCREngine"), Z::ocrGoogleVision).value<Z::OCREngine>();
+    d->m_gcpKeyFile = settings.value(QSL("gcpKeyFile")).toString();
+    d->m_gcpApiKey = settings.value(QSL("gcpApiKey")).toString();
+
     if (!d->m_idxFont.fromString(settings.value(QSL("idxFont"),QString()).toString()))
         d->m_idxFont = QApplication::font("QListView");
     if (!d->m_ocrFont.fromString(settings.value(QSL("ocrFont"),QString()).toString()))
@@ -231,6 +236,9 @@ void ZGlobal::saveSettings()
     settings.setValue(QSL("textDocPageSize_id"),d->m_textDocPageSize.id());
     settings.setValue(QSL("textDocPageSize_width"),d->m_textDocPageSize.sizePoints().width());
     settings.setValue(QSL("textDocPageSize_height"),d->m_textDocPageSize.sizePoints().height());
+    settings.setValue(QSL("OCREngine"),d->m_OCREngine);
+    settings.setValue(QSL("gcpKeyFile"),d->m_gcpKeyFile);
+    settings.setValue(QSL("gcpApiKey"),d->m_gcpApiKey);
 
     if (d->m_mainWindow)
         settings.setValue(QSL("maximized"),d->m_mainWindow->isMaximized());
@@ -431,10 +439,18 @@ void ZGlobal::settingsDlg()
     dlg.setSearchEngines(d->m_ctxSearchEngines);
     dlg.updateSQLFields(false);
 
-#ifdef WITH_OCR
-    dlg.ui->editOCRDatapath->setText(zF->ocrGetDatapath());
+    switch (d->m_OCREngine) {
+        case Z::ocrTesseract:
+            dlg.ui->rbTesseract->setChecked(true);
+            break;
+        case Z::ocrGoogleVision:
+            dlg.ui->rbGoogleVision->setChecked(true);
+            break;
+    }
+    dlg.ui->editGCPKeyFile->setText(d->m_gcpKeyFile);
+    dlg.ui->editGCPApiKey->setText(d->m_gcpApiKey);
+    dlg.ui->editOCRDatapath->setText(ZTesseractOCR::tesseractDatapath());
     dlg.updateOCRLanguages();
-#endif
 
     if (dlg.exec()==QDialog::Accepted) {
         d->m_dbUser=dlg.ui->editMySqlLogin->text();
@@ -504,8 +520,16 @@ void ZGlobal::settingsDlg()
         ocrEditor()->setEditorFont(d->m_ocrFont);
         Q_EMIT dbSetCoverCacheSize(d->m_maxCoverCacheSize);
 
-#ifdef WITH_OCR
-        bool needRestart = (dlg.ui->editOCRDatapath->text() != zF->ocrGetDatapath());
+        if (dlg.ui->rbTesseract->isChecked()) {
+            d->m_OCREngine = Z::ocrTesseract;
+        } else if (dlg.ui->rbGoogleVision->isChecked()) {
+            d->m_OCREngine = Z::ocrGoogleVision;
+        }
+        d->m_gcpKeyFile = dlg.ui->editGCPKeyFile->text();
+        d->m_gcpApiKey = dlg.ui->editGCPApiKey->text();
+
+#ifdef WITH_TESSERACT
+        bool needRestart = (dlg.ui->editOCRDatapath->text() != ZTesseractOCR::tesseractDatapath());
         QSettings settingsOCR(QSL("kernel1024"), QSL("qmanga-ocr"));
         settingsOCR.beginGroup(QSL("Main"));
         settingsOCR.setValue(QSL("activeLanguage"), dlg.getOCRLanguage());
@@ -825,6 +849,24 @@ QPageSize ZGlobal::getTextDocPageSize() const
 {
     Q_D(const ZGlobal);
     return d->m_textDocPageSize;
+}
+
+Z::OCREngine ZGlobal::getOCREngine() const
+{
+    Q_D(const ZGlobal);
+    return d->m_OCREngine;
+}
+
+QString ZGlobal::getGCPKeyFile() const
+{
+    Q_D(const ZGlobal);
+    return d->m_gcpKeyFile;
+}
+
+QString ZGlobal::getGCPApiKey() const
+{
+    Q_D(const ZGlobal);
+    return d->m_gcpApiKey;
 }
 
 ZDB *ZGlobal::db() const

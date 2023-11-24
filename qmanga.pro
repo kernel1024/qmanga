@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets sql xml
+QT       += core gui widgets sql xml network
 
 !win32 {
     QT += dbus
@@ -22,6 +22,9 @@ DEFINES += QT_NO_CAST_FROM_ASCII
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+    ocr/abstractocr.cpp \
+    ocr/googlevision.cpp \
+    ocr/tesseractocr.cpp \
     readers/textdoc/zabstracttextdocument.cpp \
     readers/textdoc/zepubdocument.cpp \
     readers/textdoc/zfb2document.cpp \
@@ -54,6 +57,9 @@ SOURCES += main.cpp\
     ztextdocumentcontroller.cpp
 
 HEADERS  += mainwindow.h \
+    ocr/abstractocr.h \
+    ocr/googlevision.h \
+    ocr/tesseractocr.h \
     readers/textdoc/zabstracttextdocument.h \
     readers/textdoc/zepubdocument.h \
     readers/textdoc/zfb2document.h \
@@ -108,6 +114,8 @@ DEFINES += TBB_SUPPRESS_DEPRECATED_MESSAGES
 message("Using Qt:            " $$QT_VERSION)
 
 !win32 {
+    PKGCONFIG += openssl
+
     packagesExist(libzip) {
         PKGCONFIG += libzip
     } else {
@@ -161,7 +169,7 @@ message("Using Qt:            " $$QT_VERSION)
     }
 
     use_ocr {
-        DEFINES += WITH_OCR=1
+        DEFINES += WITH_TESSERACT=1
         QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
         PKGCONFIG += tesseract lept
     }
@@ -182,12 +190,12 @@ message("Using Qt:            " $$QT_VERSION)
 }
 
 win32 {
-    PKGCONFIG += libzip icu-uc icu-i18n
+    PKGCONFIG += libzip icu-uc icu-i18n openssl
 
     DEFINES += WITH_POPPLER=1
     PKGCONFIG += poppler
 
-    DEFINES += WITH_OCR=1
+    DEFINES += WITH_TESSERACT=1
     QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
     PKGCONFIG += tesseract
     LIBS += -llept

@@ -9,6 +9,7 @@
 
 #include "global.h"
 #include "readers/zabstractreader.h"
+#include "ocr/abstractocr.h"
 #include "zmangaloader.h"
 #include "zexportdialog.h"
 
@@ -51,6 +52,7 @@ private:
     QPoint m_cropPos;
     QRubberBand* m_copySelection { nullptr };
     QRubberBand* m_cropSelection { nullptr };
+    ZAbstractOCR *m_previousOCR { nullptr };
     QRect m_cropRect;
     QPointer<QScrollArea> m_scroller;
 
@@ -73,7 +75,8 @@ private:
     void cacheFillNearest();
     ZIntVector cacheGetActivePages() const;
     void displayCurrentPage();
-    void cacheGetPage(int num);   
+    void cacheGetPage(int num);
+    void handleOCRRequest(const QImage &image);
 
 public:
     explicit ZMangaView(QWidget *parent = nullptr);
@@ -129,6 +132,8 @@ public Q_SLOTS:
 
     void viewRotateCCW();
     void viewRotateCW();
+
+    void ocrFinished(const QString &text);
 
     void loaderMsg(const QString& msg);
 

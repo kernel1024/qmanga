@@ -28,6 +28,7 @@ public:
     Blitz::ScaleFilterType m_downscaleSearchTabFilter { Blitz::ScaleFilterType::UndefinedFilter };
     Z::PDFRendering m_pdfRendering { Z::pdfAutodetect };
     Z::DBMS m_dbEngine { Z::dbmsSQLite };
+    Z::OCREngine m_OCREngine{ Z::ocrGoogleVision };
     bool m_cachePixmaps { false };
     bool m_useFineRendering { true };
     bool m_filesystemWatcher { false };
@@ -57,6 +58,8 @@ public:
     QString m_savedAuxSaveDir;
     QString m_rarCmd;
     QString m_officeCmd;
+    QString m_gcpKeyFile;
+    QString m_gcpApiKey;
 
     QColor m_backgroundColor;
     QColor m_frameColor;

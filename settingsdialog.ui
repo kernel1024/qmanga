@@ -1169,155 +1169,213 @@ one per page, with supported format. Use rendering mode as fallback.</string>
      </widget>
      <widget class="QWidget" name="tab_7">
       <attribute name="title">
-       <string>Language</string>
+       <string>OCR</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_14">
+      <layout class="QHBoxLayout" name="horizontalLayout_15">
        <item>
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>138</height>
-          </size>
-         </property>
-        </spacer>
+        <layout class="QVBoxLayout" name="verticalLayout_18">
+         <item>
+          <widget class="QGroupBox" name="groupOCRSelector">
+           <property name="title">
+            <string>OCR engine</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_17">
+            <item>
+             <widget class="QRadioButton" name="rbTesseract">
+              <property name="text">
+               <string>Tesseract</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="rbGoogleVision">
+              <property name="text">
+               <string>Google Vision</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>47</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </item>
        <item>
-        <widget class="QLabel" name="label_18">
-         <property name="text">
-          <string>You will have to restart the program for the changes of Tesseract settings to take effect.</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupTesseract">
-         <property name="title">
-          <string>Tesseract</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>&amp;Training datapath</string>
-            </property>
-            <property name="buddy">
-             <cstring>editOCRDatapath</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="editOCRDatapath"/>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="btnOCRDatapath">
-            <property name="text">
-             <string>...</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_14">
-            <property name="text">
-             <string>Active &amp;language</string>
-            </property>
-            <property name="buddy">
-             <cstring>comboOCRLanguage</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QComboBox" name="comboOCRLanguage">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_7">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupTranslator">
-         <property name="title">
-          <string>Translator</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_3">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_16">
-            <property name="text">
-             <string>S&amp;ource language</string>
-            </property>
-            <property name="buddy">
-             <cstring>comboLangSource</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="comboLangSource">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_17">
-            <property name="text">
-             <string>&amp;Destination language</string>
-            </property>
-            <property name="buddy">
-             <cstring>comboLangDest</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QComboBox" name="comboLangDest">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_6">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>138</height>
-          </size>
-         </property>
-        </spacer>
+        <layout class="QVBoxLayout" name="verticalLayout_14">
+         <item>
+          <widget class="QGroupBox" name="groupTesseract">
+           <property name="title">
+            <string>Tesseract</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>&amp;Training datapath</string>
+              </property>
+              <property name="buddy">
+               <cstring>editOCRDatapath</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_14">
+              <property name="text">
+               <string>Active &amp;language</string>
+              </property>
+              <property name="buddy">
+               <cstring>comboOCRLanguage</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="editOCRDatapath"/>
+            </item>
+            <item row="1" column="2">
+             <widget class="QPushButton" name="btnOCRDatapath">
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="comboOCRLanguage">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="label_18">
+              <property name="text">
+               <string>You will have to restart the program for the changes of Tesseract settings to take effect.</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupGCP">
+           <property name="title">
+            <string>Google Cloud</string>
+           </property>
+           <layout class="QFormLayout" name="formLayout_5">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_26">
+              <property name="text">
+               <string>GCP service JSON key file</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_13">
+              <item>
+               <widget class="QLineEdit" name="editGCPKeyFile"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnGCPKeyFile">
+                <property name="text">
+                 <string>...</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_27">
+              <property name="text">
+               <string>GCP API key</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="editGCPApiKey"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupTranslator">
+           <property name="title">
+            <string>Translator</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_16">
+              <property name="text">
+               <string>S&amp;ource language</string>
+              </property>
+              <property name="buddy">
+               <cstring>comboLangSource</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="comboLangSource">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_17">
+              <property name="text">
+               <string>&amp;Destination language</string>
+              </property>
+              <property name="buddy">
+               <cstring>comboLangDest</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="comboLangDest">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>47</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -1598,9 +1656,14 @@ one per page, with supported format. Use rendering mode as fallback.</string>
   <tabstop>spinPDFDPI</tabstop>
   <tabstop>spinSearchScrollFactor</tabstop>
   <tabstop>spinCoverCacheSize</tabstop>
+  <tabstop>rbTesseract</tabstop>
+  <tabstop>rbGoogleVision</tabstop>
   <tabstop>editOCRDatapath</tabstop>
   <tabstop>btnOCRDatapath</tabstop>
   <tabstop>comboOCRLanguage</tabstop>
+  <tabstop>editGCPKeyFile</tabstop>
+  <tabstop>btnGCPKeyFile</tabstop>
+  <tabstop>editGCPApiKey</tabstop>
   <tabstop>comboLangSource</tabstop>
   <tabstop>comboLangDest</tabstop>
   <tabstop>listBookmarks</tabstop>
@@ -1627,8 +1690,8 @@ one per page, with supported format. Use rendering mode as fallback.</string>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>751</x>
-     <y>579</y>
+     <x>752</x>
+     <y>518</y>
     </hint>
     <hint type="destinationlabel">
      <x>342</x>
@@ -1643,8 +1706,8 @@ one per page, with supported format. Use rendering mode as fallback.</string>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>837</x>
-     <y>579</y>
+     <x>838</x>
+     <y>518</y>
     </hint>
     <hint type="destinationlabel">
      <x>252</x>
@@ -1659,12 +1722,12 @@ one per page, with supported format. Use rendering mode as fallback.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>133</x>
-     <y>426</y>
+     <x>157</x>
+     <y>390</y>
     </hint>
     <hint type="destinationlabel">
-     <x>303</x>
-     <y>459</y>
+     <x>298</x>
+     <y>422</y>
     </hint>
    </hints>
   </connection>

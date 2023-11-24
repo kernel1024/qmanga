@@ -61,6 +61,7 @@ public Q_SLOTS:
     void setDefaultSearch() const;
     void updateSQLFields(bool checked) const;
     void ocrDatapathDlg();
+    void gcpKeyFileDlg();
     void updateOCRLanguages() const;
     void updateTextPageSizes(int idx) const;
 

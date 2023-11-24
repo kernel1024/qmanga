@@ -20,6 +20,7 @@
 #include "zmangaview.h"
 #include "zglobal.h"
 #include "mainwindow.h"
+#include "ocr/abstractocr.h"
 
 ZMangaView::ZMangaView(QWidget *parent) :
     QWidget(parent)
@@ -384,10 +385,8 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
             // crop move in progress
             m_cropSelection->setGeometry(QRect(event->pos(),m_cropPos).normalized());
         } else if (m_mouseMode == mmOCR){
-#ifdef WITH_OCR
             // OCR move in progress
             m_copySelection->setGeometry(QRect(event->pos(),m_copyPos).normalized());
-#endif
         }
     } else {
         if ((QApplication::keyboardModifiers() & Qt::ControlModifier) == 0) {
@@ -407,12 +406,10 @@ void ZMangaView::mousePressEvent(QMouseEvent *event)
         event->accept();
     } else if (event->button()==Qt::LeftButton) {
         if (m_mouseMode == mmOCR) {
-#ifdef WITH_OCR
             // start OCR move
             m_copyPos = event->pos();
             m_copySelection->setGeometry(m_copyPos.x(),m_copyPos.y(),0,0);
             m_copySelection->show();
-#endif
         } else if (m_mouseMode == mmCrop && m_cropRect.isNull()) {
             // start crop move
             m_cropPos = event->pos();
@@ -436,9 +433,6 @@ void ZMangaView::mouseDoubleClickEvent(QMouseEvent *event)
 
 void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 {
-    Q_UNUSED(event)
-
-#ifdef WITH_OCR
     if (event->button()==Qt::LeftButton &&
             !m_copyPos.isNull() &&
             m_mouseMode == mmOCR) {
@@ -451,29 +445,9 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             cp.setWidth(cp.width()*m_curUnscaledPixmap.width()/m_curPixmap.width());
             cp.setHeight(cp.height()*m_curUnscaledPixmap.height()/m_curPixmap.height());
             cp = cp.intersected(m_curUnscaledPixmap.rect());
-            if (zF->isOCRReady() &&
-                    cp.width()>ZDefaults::ocrSquareMinimumSize &&
-                    cp.height()>ZDefaults::ocrSquareMinimumSize) {
-                QImage cpx = m_curUnscaledPixmap.copy(cp);
-                QString s = zF->processImageWithOCR(cpx);
-                QStringList sl = s.split(u'\n',Qt::SkipEmptyParts);
-                int maxlen = 0;
-                for (const auto &i : qAsConst(sl)) {
-                    if (i.length()>maxlen)
-                        maxlen = i.length();
-                }
-                if (maxlen<sl.count()) { // vertical kanji block, needs transpose
-                    QStringList sl2;
-                    sl2.reserve(maxlen);
-                    for (int i=0;i<maxlen;i++)
-                        sl2 << QString(sl.count(),QChar(u' '));
-                    for (int i=0;i<sl.count();i++) {
-                        for (int j=0;j<sl.at(i).length();j++)
-                            sl2[maxlen-j-1][i]=sl[i][j];
-                    }
-                    sl = sl2;
-                }
-                Q_EMIT addOCRText(sl);
+            if (cp.width() > ZDefaults::ocrSquareMinimumSize
+                && cp.height() > ZDefaults::ocrSquareMinimumSize) {
+                handleOCRRequest(m_curUnscaledPixmap.copy(cp));
             }
         }
     } else if (event->button()==Qt::LeftButton &&
@@ -495,9 +469,6 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
             Q_EMIT cropUpdated(m_cropRect);
         }
     }
-#else
-    Q_UNUSED(event)
-#endif
     m_dragPos = QPoint();
     m_copyPos = QPoint();
     m_cropPos = QPoint();
@@ -505,6 +476,32 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
     m_copySelection->setGeometry(QRect());
     m_cropSelection->hide();
     m_cropSelection->setGeometry(QRect());
+}
+
+void ZMangaView::handleOCRRequest(const QImage &image)
+{
+    auto *ocr = zF->ocr(this);
+    if ((ocr == nullptr) || (!(ocr->isReady()))) {
+        QMessageBox::critical(
+            nullptr,
+            QGuiApplication::applicationDisplayName(),
+            tr("Could not initialize any OCR backend. \n"
+               "Maybe language training data is not installed, or the credentials "
+               "for onlince serivces is invalid."));
+        return;
+    }
+
+    if (ocr != m_previousOCR) {
+        connect(ocr, &ZAbstractOCR::gotOCRResult, this, &ZMangaView::ocrFinished);
+        m_previousOCR = ocr;
+    }
+
+    ocr->processImage(image);
+}
+
+void ZMangaView::ocrFinished(const QString& text)
+{
+    Q_EMIT addOCRText(text.split(QChar(u'\n'),Qt::SkipEmptyParts));
 }
 
 void ZMangaView::keyPressEvent(QKeyEvent *event)

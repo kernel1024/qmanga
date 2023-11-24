@@ -87,6 +87,9 @@ public:
     void addBookmark(const QString& title, const QString& filename);
     ZStrMap getCtxSearchEngines() const;
     QPageSize getTextDocPageSize() const;
+    Z::OCREngine getOCREngine() const;
+    QString getGCPKeyFile() const;
+    QString getGCPApiKey() const;
 
 public Q_SLOTS:
     void settingsDlg();

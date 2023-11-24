@@ -13,6 +13,7 @@
 #include "zglobal.h"
 #include "global.h"
 #include "zdb.h"
+#include "ocr/tesseractocr.h"
 
 ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -49,13 +50,15 @@ ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
     connect(ui->rbSQLite, &QRadioButton::toggled, this, &ZSettingsDialog::updateSQLFields);
 
     connect(ui->btnOCRDatapath, &QPushButton::clicked, this, &ZSettingsDialog::ocrDatapathDlg);
+    connect(ui->btnGCPKeyFile, &QPushButton::clicked, this, &ZSettingsDialog::gcpKeyFileDlg);
 
     connect(ui->comboTextPageSize, &QComboBox::currentIndexChanged, this, &ZSettingsDialog::updateTextPageSizes);
 
-#ifndef WITH_OCR
+#ifndef WITH_TESSERACT
+    ui->rbTesseract->setEnabled(false);
     ui->groupTesseract->setEnabled(false);
 #else
-    ui->editOCRDatapath->setText(ZGenericFuncs::ocrGetDatapath());
+    ui->editOCRDatapath->setText(ZTesseractOCR::tesseractDatapath());
     updateOCRLanguages();
 #endif
 
@@ -178,9 +181,9 @@ QString ZSettingsDialog::getTranDestLanguage() const
 
 void ZSettingsDialog::updateOCRLanguages() const
 {
-#ifdef WITH_OCR
+#ifdef WITH_TESSERACT
     ui->comboOCRLanguage->clear();
-    QString selectedLang = ZGenericFuncs::ocrGetActiveLanguage();
+    QString selectedLang = ZTesseractOCR::tesseractGetActiveLanguage();
 
     QDir datapath(ui->editOCRDatapath->text());
     if (datapath.isReadable()) {
@@ -335,13 +338,20 @@ void ZSettingsDialog::updateSQLFields(bool checked) const
 
 void ZSettingsDialog::ocrDatapathDlg()
 {
-#ifdef WITH_OCR
-    QString datapath = ZGenericFuncs::getExistingDirectoryD(this,tr("Tesseract datapath"),
-                                                            ui->editOCRDatapath->text());
+    const QString datapath = ZGenericFuncs::getExistingDirectoryD(this,
+                                                                  tr("Tesseract datapath"),
+                                                                  ui->editOCRDatapath->text());
     if (!datapath.isEmpty())
         ui->editOCRDatapath->setText(datapath);
     updateOCRLanguages();
-#endif
+}
+
+void ZSettingsDialog::gcpKeyFileDlg()
+{
+    const QString file = ZGenericFuncs::getOpenFileNameD(this,tr("Select GCP service JSON key"),ui->editGCPKeyFile->text(),
+                                                         QSL("JSON GCP service access key (*.json)"));
+    if (!file.isEmpty())
+        ui->editGCPKeyFile->setText(file);
 }
 
 void ZSettingsDialog::delListWidgetItem()
