@@ -589,10 +589,42 @@ QByteArray ZGenericFuncs::signSHA256withRSA(const QByteArray &data, const QByteA
 {
     QByteArray res;
 
-    int rc = 1;
+#if OPENSSL_API_LEVEL >= 30000
+    BIO *b = nullptr;
+    struct evp_pkey_st* r = nullptr;
 
+    b = BIO_new_mem_buf(privateKey.constData(), privateKey.length());
+    if (nullptr == b) {
+        return res;
+    }
+    r = PEM_read_bio_PrivateKey(b, nullptr, nullptr, nullptr);
+    if (nullptr == r) {
+        BIO_free_all(b);
+        return res;
+    }
+
+    res.fill('\0',EVP_PKEY_size(r));
+    unsigned int len = 0;
+    struct evp_md_ctx_st * MD_ctx = EVP_MD_CTX_new();
+    if (!EVP_SignInit(MD_ctx, EVP_get_digestbyname(SN_sha256WithRSAEncryption)) ||
+        !EVP_SignUpdate(MD_ctx, data.constData(), data.length()) ||
+        EVP_SignFinal(MD_ctx, reinterpret_cast<unsigned char*>(res.data()), &len, r) == 0)
+    {
+        BIO_free_all(b);
+        EVP_PKEY_free(r);
+        EVP_MD_CTX_free(MD_ctx);
+        return res;
+    }
+    res.resize(len);
+
+    BIO_free_all(b);
+    EVP_PKEY_free(r);
+    EVP_MD_CTX_free(MD_ctx);
+
+#else
     QByteArray digest = QCryptographicHash::hash(data,QCryptographicHash::Sha256);
 
+    int rc = 1;
     BIO *b = nullptr;
     RSA *r = nullptr;
 
@@ -622,6 +654,8 @@ QByteArray ZGenericFuncs::signSHA256withRSA(const QByteArray &data, const QByteA
     }
     BIO_free(b);
     RSA_free(r);
+
+#endif
     return res;
 }
 
