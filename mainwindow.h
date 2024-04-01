@@ -9,23 +9,11 @@
 #include <QMutex>
 #include <QMessageBox>
 #include <QButtonGroup>
+#include <QPointer>
 
 #include "zmangaview.h"
 #include "zsearchtab.h"
-
-class ZFSFile {
-public:
-    QString name;
-    QString album;
-    QString fileName;
-    ZFSFile() = default;
-    ~ZFSFile() = default;
-    ZFSFile(const ZFSFile& other);
-    ZFSFile(const QString &aName, const QString &aFileName, const QString &aAlbum);
-    ZFSFile &operator=(const ZFSFile& other) = default;
-    bool operator==(const ZFSFile& ref) const;
-    bool operator!=(const ZFSFile& ref) const;
-};
+#include "zfilesystemscannermodel.h"
 
 namespace Ui {
 class ZMainWindow;
@@ -50,18 +38,19 @@ private:
     bool m_fullScreen { false };
     bool m_fullScreenControls { false };
     bool m_savedMaximized { false };
-    QVector<ZFSFile> m_fsScannedFiles;
     QRect m_savedGeometry;
     QMessageBox m_indexerMsgBox;
 
-    QLabel* m_lblSearchStatus;
-    QLabel* m_lblAverageSizes;
-    QLabel* m_lblRotation;
-    QLabel* m_lblCrop;
-    QLabel* m_lblAverageFineRender;
-    QButtonGroup* m_zoomGroup;
+    QPointer<QLabel> m_lblSearchStatus;
+    QPointer<QLabel> m_lblAverageSizes;
+    QPointer<QLabel> m_lblRotation;
+    QPointer<QLabel> m_lblCrop;
+    QPointer<QLabel> m_lblAverageFineRender;
+    QPointer<QButtonGroup> m_zoomGroup;
+    QPointer<ZFilesystemScannerModel> m_fsModel;
 
     void openAuxFile(const QString& filename);
+    void fsAddFilesWorker(const QStringList& auxList);
 
 protected:
     void closeEvent(QCloseEvent * event) override;
@@ -106,9 +95,6 @@ public Q_SLOTS:
     void fsCheckAvailability();
     void fsDelFiles();
     void fsNewFilesAdded();
-    void fsUpdateFileList();
-    void fsResultsMenuCtx(const QPoint& pos);
-    void fsResultsCtxApplyAlbum();
     void fsFindNewFiles();
     void fsFoundNewFiles(const QStringList& files);
     void fsAddIgnoredFiles();

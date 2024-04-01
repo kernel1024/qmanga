@@ -55,7 +55,11 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
 
     ui->comboMouseMode->setCurrentIndex(0);
 
-    ui->fsResults->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_fsModel = new ZFilesystemScannerModel(this);
+    ui->fsResults->setModel(m_fsModel);
+    auto *albumDelegate = new ZAlbumListDelegate(this);
+    albumDelegate->linkWidgets(ui->searchTab);
+    ui->fsResults->setItemDelegateForColumn(1, albumDelegate);
 
     m_zoomGroup = new QButtonGroup(this);
     m_zoomGroup->addButton(ui->btnZoomFit, ZMangaView::zmFit);
@@ -98,6 +102,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->btnFSCheck,&QPushButton::clicked,this,&ZMainWindow::fsCheckAvailability);
     connect(ui->btnFSDelete,&QPushButton::clicked,this,&ZMainWindow::fsDelFiles);
     connect(ui->btnFSFind,&QPushButton::clicked,this,&ZMainWindow::fsFindNewFiles);
+    connect(ui->btnFSIgnore,&QPushButton::clicked,this,&ZMainWindow::fsAddIgnoredFiles);
     connect(m_zoomGroup,&QButtonGroup::idClicked,this,[this](int mode){
         ui->comboZoom->setEnabled(mode==ZMangaView::zmOriginal);
         ui->mangaView->setZoomMode(mode);
@@ -118,9 +123,6 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->mangaView,&ZMangaView::rotationUpdated,this,&ZMainWindow::rotationUpdated);
     connect(ui->mangaView,&ZMangaView::cropUpdated,this,&ZMainWindow::cropUpdated);
     connect(ui->mangaView,&ZMangaView::backgroundUpdated,this,&ZMainWindow::viewerBackgroundUpdated);
-
-    connect(ui->fsResults,&QTableWidget::customContextMenuRequested,
-            this,&ZMainWindow::fsResultsMenuCtx);
 
     connect(zF->global(),&ZGlobal::auxMessage,this,&ZMainWindow::auxMessage);
     // Explicitly use DirectConnection for synchronous call
@@ -624,9 +626,9 @@ void ZMainWindow::msgFromMangaView(const QSize &sz, qint64 fsz)
 void ZMainWindow::fsAddFiles()
 {
     QHash<QString,QStringList> fl;
-    for (const auto &i : qAsConst(m_fsScannedFiles)) {
-        fl[i.album].append(i.fileName);
-        zF->global()->removeFileFromNewlyAdded(i.fileName);
+    for (const auto &item : m_fsModel->getFiles()) {
+        fl[item.album].append(item.fileName);
+        zF->global()->removeFileFromNewlyAdded(item.fileName);
     }
 
     for (auto it = fl.constKeyValueBegin(), end = fl.constKeyValueEnd(); it != end; ++it)
@@ -642,238 +644,112 @@ void ZMainWindow::fsCheckAvailability()
 
 void ZMainWindow::fsDelFiles()
 {
-    QVector<int> rows;
-    const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
-    rows.reserve(list.count());
-    for (const auto &i : list) {
-        int idx = i->row();
-        if (!rows.contains(idx))
-            rows << idx;
-    }
-    if (rows.isEmpty()) return;
-    QVector<ZFSFile> nl;
-    for (int i=0;i<m_fsScannedFiles.count();i++) {
-        if (!rows.contains(i))
-            nl << m_fsScannedFiles.at(i);
-    }
-    m_fsScannedFiles = nl;
-    fsUpdateFileList();
+    const QModelIndexList list = ui->fsResults->selectionModel()->selectedRows();
+    m_fsModel->removeFiles(list);
 }
 
 void ZMainWindow::fsNewFilesAdded()
 {
-    static QAtomicInteger<bool> isWorking(false);
-
-    if (isWorking) return;
-
-    QThread *th = QThread::create([this](){
-        isWorking = true;
-        QVector<ZFSFile> scannedFiles;
-        QMutex vectorMutex;
-
-        QStringList files = zF->global()->getNewlyAddedFiles();
-        while (!files.isEmpty()) {
-            std::for_each(std::execution::par,files.constBegin(),files.constEnd(),[&scannedFiles,&vectorMutex]
-                          (const QString &fileName){
-                QFileInfo fi(fileName);
-                bool mimeOk = false;
-                ZGenericFuncs::readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
-                                             Z::rfmMIMECheckOnly);
-                if (mimeOk) {
-                    QMutexLocker locker(&vectorMutex);
-                    scannedFiles.append(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName()));
-                }
-            });
-
-            files.clear();
-            for (const auto& fileName : zF->global()->getNewlyAddedFiles()) {
-                QFileInfo fi(fileName);
-                if (!scannedFiles.contains(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName())))
-                    files.append(fileName);
-            }
-        }
-        isWorking = false;
-
-        QMetaObject::invokeMethod(this,[this,scannedFiles](){
-            ui->fsResults->clear();
-            m_fsScannedFiles = scannedFiles;
-            fsUpdateFileList();
-        },Qt::QueuedConnection);
-    });
-
-    connect(th,&QThread::finished,th,&QThread::deleteLater);
-    th->setObjectName(QSL("INOTIFY_worker"));
-    th->start();
-}
-
-void ZMainWindow::fsUpdateFileList()
-{
-    QStringList h;
-    h << tr("File") << tr("Album");
-    ui->fsResults->setColumnCount(2);
-    ui->fsResults->setRowCount(m_fsScannedFiles.count());
-    ui->fsResults->setHorizontalHeaderLabels(h);
-    for (int i=0;i<m_fsScannedFiles.count();i++) {
-        ui->fsResults->setItem(i,0,new QTableWidgetItem(m_fsScannedFiles[i].name));
-        ui->fsResults->setItem(i,1,new QTableWidgetItem(m_fsScannedFiles[i].album));
-        QTableWidgetItem* w = ui->fsResults->item(i,0);
-        if (w!=nullptr)
-                w->setToolTip(m_fsScannedFiles[i].fileName);
-    }
-    ui->fsResults->setColumnWidth(0,ui->tabWidget->width()/2);
-}
-
-void ZMainWindow::fsResultsMenuCtx(const QPoint &pos)
-{
-    QMenu cm(this);
-    cm.setStyleSheet(QSL("QMenu { menu-scrollable: 1; }"));
-    QAction* ac = nullptr;
-    int cnt=0;
-    if (!ui->fsResults->selectedItems().isEmpty()) {
-        ac = new QAction(QIcon(QSL(":/16/dialog-cancel")),tr("Ignore these file(s)"),this);
-        connect(ac,&QAction::triggered,this,&ZMainWindow::fsAddIgnoredFiles);
-        cm.addAction(ac);
-        cm.addSeparator();
-        cnt++;
-    }
-    const QStringList albums = ui->searchTab->getAlbums();
-    for (const auto &i : albums) {
-        if (i.startsWith(QSL("#"))) continue;
-        ac = new QAction(i,nullptr);
-        connect(ac,&QAction::triggered,this,&ZMainWindow::fsResultsCtxApplyAlbum);
-        ac->setData(i);
-        cm.addAction(ac);
-        cnt++;
-    }
-    if (cnt>0)
-        cm.exec(ui->fsResults->mapToGlobal(pos));
-}
-
-void ZMainWindow::fsResultsCtxApplyAlbum()
-{
-    auto *ac = qobject_cast<QAction *>(sender());
-    if (ac==nullptr) return;
-    QString s = ac->data().toString();
-    if (s.isEmpty()) {
-        QMessageBox::warning(this,QGuiApplication::applicationDisplayName(),
-                             tr("Unable to apply album name"));
-        return;
-    }
-    QVector<int> idxs;
-    const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
-    idxs.reserve(list.count());
-    for (const auto &i : list)
-        idxs << i->row();
-
-    for (const auto &i : qAsConst(idxs))
-        m_fsScannedFiles[i].album = s;
-
-    fsUpdateFileList();
+    fsAddFilesWorker({ });
 }
 
 void ZMainWindow::fsFindNewFiles()
 {
-    m_fsScannedFiles.clear();
-    fsUpdateFileList();
+    m_fsModel->removeAllFiles();
     ui->searchTab->dbShowProgressDialogEx(true,tr("Scanning filesystem"));
     ui->searchTab->dbShowProgressState(ZDefaults::fileScannerStaticPercentage,
                                        tr("Scanning filesystem..."));
     Q_EMIT dbFindNewFiles();
 }
 
-void ZMainWindow::fsFoundNewFiles(const QStringList &files)
+void ZMainWindow::fsAddFilesWorker(const QStringList &auxList)
 {
     static QAtomicInteger<bool> isWorking(false);
 
-    if (isWorking) return;
+    if (isWorking)
+        return;
 
-    ui->searchTab->dbShowProgressState(ZDefaults::fileScannerStaticPercentage2,
-                                       tr("%1 files found. Parsing and checking supported formats...")
-                                       .arg(files.count()));
+    if (!auxList.isEmpty()) {
+        ui->searchTab->dbShowProgressState(
+            ZDefaults::fileScannerStaticPercentage2,
+            tr("%1 files found. Parsing and checking supported formats...").arg(auxList.count()));
+    }
 
-    QThread *th = QThread::create([this,files](){
+    QThread *th = QThread::create([this, auxList]() {
         isWorking = true;
-        QVector<ZFSFile> scannedFiles;
+        QList<ZFSFile> scannedFiles;
         QMutex vectorMutex;
-        std::for_each(std::execution::par,files.constBegin(),files.constEnd(),[&scannedFiles,&vectorMutex]
-                      (const QString &fileName){
-            QFileInfo fi(fileName);
-            bool mimeOk = false;
-            ZGenericFuncs::readerFactory(nullptr,fi.absoluteFilePath(),&mimeOk,Z::rffSkipSingleImageReader,
-                                         Z::rfmMIMECheckOnly);
-            if (mimeOk) {
-                QMutexLocker locker(&vectorMutex);
-                scannedFiles.append(ZFSFile(fi.fileName(),fi.absoluteFilePath(),fi.absoluteDir().dirName()));
+
+        QStringList files;
+        if (auxList.isEmpty()) {
+            files = zF->global()->getNewlyAddedFiles();
+        } else {
+            files = auxList;
+        }
+
+        while (!files.isEmpty()) {
+            std::for_each(std::execution::par,
+                          files.constBegin(),
+                          files.constEnd(),
+                          [&scannedFiles, &vectorMutex](const QString &fileName) {
+                              QFileInfo fi(fileName);
+                              bool mimeOk = false;
+                              ZGenericFuncs::readerFactory(nullptr,
+                                                           fi.absoluteFilePath(),
+                                                           &mimeOk,
+                                                           Z::rffSkipSingleImageReader,
+                                                           Z::rfmMIMECheckOnly);
+                              if (mimeOk) {
+                                  QMutexLocker locker(&vectorMutex);
+                                  scannedFiles.append(ZFSFile(fi.fileName(),
+                                                              fi.absoluteFilePath(),
+                                                              fi.absoluteDir().dirName()));
+                              }
+                          });
+
+            files.clear();
+            if (auxList.isEmpty()) { // this is background inotify worker
+                for (const auto &fileName : zF->global()->getNewlyAddedFiles()) {
+                    QFileInfo fi(fileName);
+                    if (!scannedFiles.contains(ZFSFile(fi.fileName(),
+                                                       fi.absoluteFilePath(),
+                                                       fi.absoluteDir().dirName())))
+                        files.append(fileName);
+                }
             }
-        });
+        }
         isWorking = false;
 
-        QMetaObject::invokeMethod(this,[this,scannedFiles](){
-            ui->fsResults->clear();
-            m_fsScannedFiles = scannedFiles;
-            fsUpdateFileList();
-            ui->searchTab->dbShowProgressDialog(false);
-        },Qt::QueuedConnection);
+        QMetaObject::invokeMethod(
+            this,
+            [this, scannedFiles, auxList]() {
+                m_fsModel->addFiles(scannedFiles);
+                ui->fsResults->resizeColumnsToContents();
+                if (!auxList.isEmpty())
+                    ui->searchTab->dbShowProgressDialog(false);
+            },
+            Qt::QueuedConnection);
     });
 
-    connect(th,&QThread::finished,th,&QThread::deleteLater);
-    th->setObjectName(QSL("NEWSCAN_worker"));
+    connect(th, &QThread::finished, th, &QThread::deleteLater);
+    th->setObjectName(QSL("FileScan_worker"));
     th->start();
+}
+
+void ZMainWindow::fsFoundNewFiles(const QStringList &files)
+{
+    fsAddFilesWorker(files);
 }
 
 void ZMainWindow::fsAddIgnoredFiles()
 {
-    QList<int> rows;
-    const QList<QTableWidgetItem *> list = ui->fsResults->selectedItems();
-    rows.reserve(list.count());
-    for (const auto &i : list) {
-        int idx = i->row();
-        if (!rows.contains(idx))
-            rows << idx;
-    }
-    if (rows.isEmpty()) return;
-    QVector<ZFSFile> nl;
-    QStringList sl;
-    for (int i=0;i<m_fsScannedFiles.count();i++) {
-        if (!rows.contains(i)) {
-            nl << m_fsScannedFiles.at(i);
-        } else {
-            sl << m_fsScannedFiles.at(i).fileName;
-        }
-    }
-    Q_EMIT dbAddIgnoredFiles(sl);
-    m_fsScannedFiles = nl;
-    fsUpdateFileList();
+    const QModelIndexList list = ui->fsResults->selectionModel()->selectedRows();
+    if (!list.isEmpty())
+        Q_EMIT dbAddIgnoredFiles(m_fsModel->ignoreFiles(list));
 }
 
 void ZMainWindow::pageNumEdited()
 {
     if (ui->spinPosition->value()!=ui->mangaView->getCurrentPage())
         ui->mangaView->setPage(ui->spinPosition->value()-1);
-}
-
-ZFSFile::ZFSFile(const ZFSFile &other)
-{
-    name = other.name;
-    fileName = other.fileName;
-    album = other.album;
-}
-
-ZFSFile::ZFSFile(const QString &aName, const QString &aFileName, const QString &aAlbum)
-{
-    name = aName;
-    fileName = aFileName;
-    album = aAlbum;
-}
-
-bool ZFSFile::operator==(const ZFSFile &ref) const
-{
-    return ((name == ref.name) &&
-            (fileName == ref.fileName) &&
-            (album == ref.album));
-}
-
-bool ZFSFile::operator!=(const ZFSFile &ref) const
-{
-    return !operator==(ref);
 }

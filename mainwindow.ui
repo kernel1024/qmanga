@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>797</width>
+    <width>863</width>
     <height>554</height>
    </rect>
   </property>
@@ -691,8 +691,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>756</width>
-                <height>451</height>
+                <width>823</width>
+                <height>452</height>
                </rect>
               </property>
               <property name="focusPolicy">
@@ -769,17 +769,28 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>&amp;Recently added files</string>
-          </property>
-          <property name="buddy">
-           <cstring>fsResults</cstring>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Recently added files</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>(Hold Alt to change album for entire selection)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QTableWidget" name="fsResults">
+         <widget class="QTableView" name="fsResults">
           <property name="selectionBehavior">
            <enum>QAbstractItemView::SelectRows</enum>
           </property>
@@ -866,6 +877,26 @@
             </property>
            </widget>
           </item>
+          <item>
+           <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnFSIgnore">
+            <property name="text">
+             <string>Ignore</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
@@ -879,8 +910,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>797</width>
-     <height>22</height>
+     <width>863</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1074,12 +1105,12 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Hide toolbar</string>
+    <string>&amp;Hide toolbar</string>
    </property>
   </action>
   <action name="actionAboutQt">
    <property name="text">
-    <string>About Qt...</string>
+    <string>About &amp;Qt...</string>
    </property>
   </action>
   <action name="actionOpenImagesDir">
@@ -1088,7 +1119,7 @@
      <normaloff>:/16/document-open-folder</normaloff>:/16/document-open-folder</iconset>
    </property>
    <property name="text">
-    <string>Open as Images Directory...</string>
+    <string>Open as &amp;Images Directory...</string>
    </property>
    <property name="statusTip">
     <string>Open directory with images as manga</string>
@@ -1100,7 +1131,7 @@
      <normaloff>:/16/window-new</normaloff>:/16/window-new</iconset>
    </property>
    <property name="text">
-    <string>New window</string>
+    <string>&amp;New window</string>
    </property>
   </action>
  </widget>
@@ -1155,6 +1186,7 @@
   <tabstop>btnFSCheck</tabstop>
   <tabstop>btnFSFind</tabstop>
   <tabstop>btnFSDelete</tabstop>
+  <tabstop>btnFSIgnore</tabstop>
  </tabstops>
  <resources>
   <include location="qmanga.qrc"/>

@@ -7,7 +7,13 @@ Checks:          '-*,bugprone-*,cppcoreguidelines-*,misc-*,performance-*,readabi
 -misc-no-recursion,
 -modernize-return-braced-init-list,
 -modernize-use-trailing-return-type,
--readability-convert-member-functions-to-static'
+-modernize-use-nodiscard,
+-readability-convert-member-functions-to-static,
+-readability-function-cognitive-complexity,
+-readability-identifier-length,
+-readability-redundant-access-specifiers,
+-bugprone-easily-swappable-parameters,
+-misc-include-cleaner'
 
 CheckOptions:    
   - key:             cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic

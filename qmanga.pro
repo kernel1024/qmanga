@@ -30,6 +30,7 @@ SOURCES += main.cpp\
     readers/textdoc/zfb2document.cpp \
     readers/textdoc/ztxtdocument.cpp \
     readers/ztextreader.cpp \
+    zfilesystemscannermodel.cpp \
     zglobalprivate.cpp \
     zmangaview.cpp \
     zglobal.cpp \
@@ -65,6 +66,7 @@ HEADERS  += mainwindow.h \
     readers/textdoc/zfb2document.h \
     readers/textdoc/ztxtdocument.h \
     readers/ztextreader.h \
+    zfilesystemscannermodel.h \
     zglobalprivate.h \
     zmangaview.h \
     zglobal.h \

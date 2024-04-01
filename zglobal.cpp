@@ -339,6 +339,7 @@ void ZGlobal::fsCheckFilesAvailability()
 {
     Q_D(ZGlobal);
     int i = 0;
+    d->m_newlyAddedFiles.removeDuplicates();
     while (i<d->m_newlyAddedFiles.count() && !d->m_newlyAddedFiles.isEmpty()) {
         QFileInfo fi(d->m_newlyAddedFiles.at(i));
         if (!(fi.isReadable() && fi.isFile())) {
