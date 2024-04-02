@@ -634,6 +634,8 @@ void ZMainWindow::fsAddFiles()
     for (auto it = fl.constKeyValueBegin(), end = fl.constKeyValueEnd(); it != end; ++it)
         Q_EMIT dbAddFiles((*it).second,(*it).first);
 
+    m_fsModel->removeAllFiles();
+
     zF->global()->fsCheckFilesAvailability();
 }
 

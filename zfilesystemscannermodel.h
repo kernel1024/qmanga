@@ -32,7 +32,7 @@ private:
 public:
     explicit ZAlbumListDelegate(QObject *parent = nullptr);
 
-    void linkWidgets(ZSearchTab *ptr);
+    void linkWidgets(ZSearchTab *tab);
 
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                           const QModelIndex &index) const override;

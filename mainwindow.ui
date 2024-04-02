@@ -780,7 +780,7 @@
           <item>
            <widget class="QLabel" name="label_2">
             <property name="text">
-             <string>(Hold Alt to change album for entire selection)</string>
+             <string>(Hold Ctrl to change album for all files from same directory)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

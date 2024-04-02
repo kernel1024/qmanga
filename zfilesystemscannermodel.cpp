@@ -107,9 +107,19 @@ bool ZFilesystemScannerModel::setData(const QModelIndex &idx, const QVariant &va
         return false;
     }
 
-    m_fsScannedFiles[row].album = album;
-
-    Q_EMIT dataChanged(index(row, 0), index(row, 1));
+    const QPointer<QGuiApplication> app = qobject_cast<QGuiApplication *>(qApp);
+    if ((!app.isNull()) && ((app->keyboardModifiers() & Qt::ControlModifier) > 0)) {
+        const QString oldAlbum = m_fsScannedFiles[row].album;
+        for (int i = 0; i < m_fsScannedFiles.count(); i++) {
+            if (m_fsScannedFiles.at(i).album == oldAlbum) {
+                m_fsScannedFiles[i].album = album;
+                Q_EMIT dataChanged(index(i, 0), index(i, 1));
+            }
+        }
+    } else {
+        m_fsScannedFiles[row].album = album;
+        Q_EMIT dataChanged(index(row, 0), index(row, 1));
+    }
 
     return true;
 }
@@ -129,6 +139,7 @@ void ZFilesystemScannerModel::removeAllFiles()
 {
     if (m_fsScannedFiles.isEmpty())
         return;
+
     beginRemoveRows(QModelIndex(), 0, m_fsScannedFiles.count() - 1);
     m_fsScannedFiles.clear();
     endRemoveRows();
@@ -160,7 +171,7 @@ void ZFilesystemScannerModel::addFiles(const QList<ZFSFile> &files)
 {
     QList<ZFSFile> list;
     for (const auto &item : files) {
-        if (m_fsScannedFiles.contains(item))
+        if (!list.contains(item) && !m_fsScannedFiles.contains(item))
             list.append(item);
     }
     if (list.isEmpty())
@@ -221,7 +232,7 @@ void ZAlbumListDelegate::setEditorData(QWidget *editor, const QModelIndex &index
 {
     const QString album = index.model()->data(index, Qt::EditRole).toString();
 
-    auto *list = static_cast<QComboBox*>(editor);
+    auto *list = qobject_cast<QComboBox*>(editor);
     list->setCurrentText(album);
 }
 
@@ -229,7 +240,7 @@ void ZAlbumListDelegate::setModelData(QWidget *editor,
                                       QAbstractItemModel *model,
                                       const QModelIndex &index) const
 {
-    auto *list = static_cast<QComboBox *>(editor);
+    auto *list = qobject_cast<QComboBox *>(editor);
     model->setData(index, list->currentText(), Qt::EditRole);
 }
 
