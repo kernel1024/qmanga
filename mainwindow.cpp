@@ -60,6 +60,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     auto *albumDelegate = new ZAlbumListDelegate(this);
     albumDelegate->linkWidgets(ui->searchTab);
     ui->fsResults->setItemDelegateForColumn(1, albumDelegate);
+    ui->fsResults->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     m_zoomGroup = new QButtonGroup(this);
     m_zoomGroup->addButton(ui->btnZoomFit, ZMangaView::zmFit);
@@ -726,7 +727,6 @@ void ZMainWindow::fsAddFilesWorker(const QStringList &auxList)
             this,
             [this, scannedFiles, auxList]() {
                 m_fsModel->addFiles(scannedFiles);
-                ui->fsResults->resizeColumnsToContents();
                 if (!auxList.isEmpty())
                     ui->searchTab->dbShowProgressDialog(false);
             },

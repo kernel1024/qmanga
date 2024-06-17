@@ -12,10 +12,12 @@ QT       += core gui widgets sql xml network
 
 TEMPLATE = app
 
+!versionAtLeast(QT_VERSION, 6.2.0):error("Use at least Qt version 6.2.0")
+
 # warn on *any* usage of deprecated APIs
 DEFINES += QT_DEPRECATED_WARNINGS
-# ... and just fail to compile if APIs deprecated in Qt <= 5.15 are used
-DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x050F00
+# ... and just fail to compile if APIs deprecated in Qt <= 6.2 are used
+DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060200
 
 DEFINES += QT_NO_KEYWORDS
 DEFINES += QT_NO_CAST_FROM_ASCII
@@ -106,7 +108,7 @@ FORMS    += \
 RESOURCES += \
     qmanga.qrc
 
-CONFIG += warn_on link_pkgconfig c++17
+CONFIG += warn_on link_pkgconfig c++20
 
 LIBS += -lz -ltbb
 

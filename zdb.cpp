@@ -1037,39 +1037,39 @@ void ZDB::sqlGetTablesDescription()
     int nl = 0; int tl = 0;
     for (int i=0; i < rec.count(); i++)
     {
-        names << rec.field(i).name();
-        switch (rec.field(i).type()) {
-            case QVariant::Int:
-            case QVariant::UInt:
-            case QVariant::ULongLong:
-            case QVariant::LongLong:
-                types << QSL("NUMERIC");
+        names.append(rec.field(i).name());
+        switch (rec.field(i).metaType().id()) {
+            case QMetaType::Int:
+            case QMetaType::UInt:
+            case QMetaType::ULongLong:
+            case QMetaType::LongLong:
+                types.append(QSL("NUMERIC"));
                 break;
-            case QVariant::String:
-            case QVariant::StringList:
-                types << QSL("STRING");
+            case QMetaType::QString:
+            case QMetaType::QStringList:
+                types.append(QSL("STRING"));
                 break;
-            case QVariant::Icon:
-            case QVariant::Image:
-            case QVariant::Bitmap:
-            case QVariant::Pixmap:
-            case QVariant::ByteArray:
-                types << QSL("BLOB");
+            case QMetaType::QIcon:
+            case QMetaType::QImage:
+            case QMetaType::QBitmap:
+            case QMetaType::QPixmap:
+            case QMetaType::QByteArray:
+                types.append(QSL("BLOB"));
                 break;
-            case QVariant::Date:
-                types << QSL("DATE");
+            case QMetaType::QDate:
+                types.append(QSL("DATE"));
                 break;
-            case QVariant::DateTime:
-                types << QSL("DATETIME");
+            case QMetaType::QDateTime:
+                types.append(QSL("DATETIME"));
                 break;
-            case QVariant::Time:
-                types << QSL("TIME");
+            case QMetaType::QTime:
+                types.append(QSL("TIME"));
                 break;
-            case QVariant::Double:
-                types << QSL("DOUBLE");
+            case QMetaType::Double:
+                types.append(QSL("DOUBLE"));
                 break;
             default:
-                types << QSL("unknown");
+                types.append(QSL("unknown"));
                 break;
         }
         if (names.last().length()>nl)
@@ -1084,17 +1084,17 @@ void ZDB::sqlGetTablesDescription()
     QStringList res;
     QString s1(QSL("Field"));
     QString s2(QSL("Type"));
-    res << QSL("Fields description:");
-    res << QSL("| ")+s1.leftJustified(nl,u' ')+QSL(" | ")
-           +s2.leftJustified(tl,u' ')+QSL(" |");
+    res.append(QSL("Fields description:"));
+    res.append(QSL("| ")+s1.leftJustified(nl,u' ')+QSL(" | ")
+               +s2.leftJustified(tl,u' ')+QSL(" |"));
     s1.fill(u'-',nl); s2.fill(u'-',tl);
-    res << QSL("+-")+s1+QSL("-+-")+s2+QSL("-+");
+    res.append(QSL("+-")+s1+QSL("-+-")+s2+QSL("-+"));
     res.reserve(names.count());
     for (int i=0;i<names.count();i++) {
         s1 = names.at(i);
         s2 = types.at(i);
-        res << QSL("| ")+s1.leftJustified(nl,u' ')
-               +QSL(" | ")+s2.leftJustified(tl,u' ')+QSL(" |");
+        res.append(QSL("| ")+s1.leftJustified(nl,u' ')
+                   +QSL(" | ")+s2.leftJustified(tl,u' ')+QSL(" |"));
     }
     Q_EMIT gotTablesDescription(res.join(u'\n'));
 }

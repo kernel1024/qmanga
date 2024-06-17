@@ -387,7 +387,7 @@ void ZAlbumsTreeWidget::dragEnterEvent(QDragEnterEvent *event)
 
 void ZAlbumsTreeWidget::dropEvent(QDropEvent *event)
 {
-    QModelIndex droppedIndex = indexAt(event->pos());
+    QModelIndex droppedIndex = indexAt(event->position().toPoint());
     if( !droppedIndex.isValid() || !m_draggingItem.isValid()) {
         event->ignore();
         return;

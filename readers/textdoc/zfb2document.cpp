@@ -824,7 +824,7 @@ bool ZFB2Document::convertCode(const QDomElement &element)
     QTextCharFormat origFormat = mCursor->charFormat();
 
     QTextCharFormat codeFormat(origFormat);
-    codeFormat.setFontFamily(QSL("monospace"));
+    codeFormat.setFontFamilies({QSL("monospace")});
     mCursor->setCharFormat(codeFormat);
 
     if (!convertParagraph(element))
