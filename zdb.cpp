@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <execution>
+
 #include <QApplication>
 #include <QTemporaryFile>
 #include <QTextStream>
@@ -780,89 +783,45 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
 
 void ZDB::sqlSearchMissingManga()
 {
-    QStringList foundFiles;
-
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
 
-    QStringList filenames;
+    QStringList ignoredFiles;
+    QSqlQuery qr(QSL("SELECT filename FROM ignored_files"),db);
+    while (qr.next())
+        ignoredFiles.append(qr.value(0).toString());
 
+    QStringList filenames;
     for (const QString& d : qAsConst(m_indexedDirs)) {
         QDir dir(d);
         const QFileInfoList fl = dir.entryInfoList(
                                      QStringList(QSL("*")), QDir::Files | QDir::Readable);
-        for (const QFileInfo &fi : fl)
-            filenames << fi.absoluteFilePath();
-    }
-
-    QSqlQuery qr(db);
-
-    qr.prepare(QSL("DROP TABLE IF EXISTS `tmp_exfiles`"));
-    if (!qr.exec()) {
-        Q_EMIT errorMsg(tr("Unable to drop table `tmp_exfiles`\n\n%1\n%2")
-                      .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-        m_problems[tr("Drop tables - tmp_exfiles")] = tr("Unable to drop temporary table `tmp_exfiles`.\n"
-                                                       "DROP TABLE query failed.");
-        sqlCloseBase(db);
-        return;
-    }
-
-    qr.clear();
-    if (sqlDbEngine(db)==Z::dbmsMySQL) {
-        qr.prepare(QSL("CREATE TEMPORARY TABLE IF NOT EXISTS `tmp_exfiles` ("
-                   "`filename` varchar(16383), INDEX ifilename (filename)"
-                   ") ENGINE=MyISAM DEFAULT CHARSET=utf8"));
-    } else if (sqlDbEngine(db)==Z::dbmsSQLite) {
-        qr.prepare(QSL("CREATE TEMPORARY TABLE IF NOT EXISTS "
-                                  "`tmp_exfiles` (`filename` TEXT)"));
-    }
-    if (!qr.exec()) {
-        Q_EMIT errorMsg(tr("Unable to create temporary table `tmp_exfiles`\n\n%1\n%2")
-                      .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-        m_problems[tr("Create tables - tmp_exfiles")] =
-                tr("Unable to create temporary table `tmp_exfiles`.\n"
-                   "CREATE TABLE query failed.");
-        sqlCloseBase(db);
-        return;
-    }
-
-    QVariantList sl;
-    while (!filenames.isEmpty()) {
-        sl.clear();
-        sl.reserve(ZDefaults::maxSQLUpdateStringListSize);
-        while (sl.count()<ZDefaults::maxSQLUpdateStringListSize && !filenames.isEmpty())
-            sl << filenames.takeFirst();
-        if (!sl.isEmpty()) {
-            qr.prepare(QSL("INSERT INTO `tmp_exfiles` VALUES (?)"));
-            qr.addBindValue(sl);
-            if (!qr.execBatch()) {
-                Q_EMIT errorMsg(tr("Unable to load data to table `tmp_exfiles`\n\n%1\n%2")
-                              .arg(qr.lastError().databaseText(),qr.lastError().driverText()));
-                m_problems[tr("Load data infile - tmp_exfiles")] =
-                        tr("Unable to load data to temporary table `tmp_exfiles`.\n"
-                           "INSERT INTO query failed.");
-                sqlCloseBase(db);
-                return;
-            }
+        for (const QFileInfo &fi : fl) {
+            const QString fname = fi.absoluteFilePath();
+            if (!ignoredFiles.contains(fname))
+                filenames.append(fname);
         }
     }
 
-    qr.prepare(QSL("SELECT tmp_exfiles.filename FROM tmp_exfiles "
-               "LEFT JOIN files ON tmp_exfiles.filename=files.filename "
-               "LEFT JOIN ignored_files ON tmp_exfiles.filename=ignored_files.filename "
-               "WHERE (files.filename IS NULL) AND (ignored_files.filename IS NULL)"));
-    if (qr.exec()) {
-        while (qr.next())
-            foundFiles << qr.value(0).toString();
-    } else {
-        qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
-    }
-
-    qr.prepare(QSL("DROP TABLE `tmp_exfiles`"));
-    if (!qr.exec())
-        qWarning() << qr.lastError().databaseText() << qr.lastError().driverText();
+    QStringList indexedFiles;
+    QSqlQuery qr2(QSL("SELECT filename "
+                     "FROM files "
+                     "WHERE NOT(fileMagic='DYN')"),
+                 db);
+    while (qr2.next())
+        indexedFiles.append(qr2.value(0).toString());
 
     sqlCloseBase(db);
+
+    std::sort(std::execution::par, filenames.begin(), filenames.end());
+    std::sort(std::execution::par, indexedFiles.begin(), indexedFiles.end());
+
+    QStringList foundFiles;
+    std::set_difference(filenames.constBegin(),
+                        filenames.constEnd(),
+                        indexedFiles.constBegin(),
+                        indexedFiles.constEnd(),
+                        std::inserter(foundFiles, foundFiles.begin()));
 
     Q_EMIT foundNewFiles(foundFiles);
 }
