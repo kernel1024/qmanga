@@ -1,3 +1,4 @@
+#include <utility>
 #include <QMenu>
 #include <QToolTip>
 #include <QUrl>
@@ -189,7 +190,7 @@ void ZOCREditor::contextMenu(const QPoint &pos)
 
             QStringList searchNames = zF->global()->getCtxSearchEngines().keys();
             searchNames.sort(Qt::CaseInsensitive);
-            for (const QString& name : qAsConst(searchNames)) {
+            for (const QString& name : std::as_const(searchNames)) {
                 QUrl url = zF->global()->createSearchUrl(sText,name);
                 if (!url.isEmpty() && url.isValid()) {
                     ac = new QAction(name,nullptr);

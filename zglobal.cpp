@@ -1,3 +1,4 @@
+#include <utility>
 #include <QMessageBox>
 #include <QWindow>
 #include <QScreen>
@@ -300,7 +301,7 @@ void ZGlobal::addFineRenderTime(qint64 msec)
         d->m_fineRenderTimes.removeFirst();
 
     qint64 sum = 0;
-    for (const qint64 a : qAsConst(d->m_fineRenderTimes))
+    for (const qint64 a : std::as_const(d->m_fineRenderTimes))
         sum += a;
     d->m_avgFineRenderTime = static_cast<int>(sum) / d->m_fineRenderTimes.count();
 

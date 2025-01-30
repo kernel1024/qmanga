@@ -11,6 +11,7 @@
 #include <QThreadPool>
 #include <QElapsedTimer>
 #include <QComboBox>
+#include <utility>
 #include <algorithm>
 #include <execution>
 #include <functional>
@@ -80,7 +81,7 @@ ZMangaView::ZMangaView(QWidget *parent) :
 
 ZMangaView::~ZMangaView()
 {
-    for (const auto &i : qAsConst(m_cacheLoaders))
+    for (const auto &i : std::as_const(m_cacheLoaders))
         i.thread->quit();
     m_cacheLoaders.clear();
 }
@@ -192,12 +193,12 @@ void ZMangaView::displayCurrentPage()
 
         if (m_lastFileSizes.count()>0 && m_lastSizes.count()>0) {
             qint64 sum = 0;
-            for (const auto &i : qAsConst(m_lastFileSizes))
+            for (const auto &i : std::as_const(m_lastFileSizes))
                 sum += i;
             sum = sum / m_lastFileSizes.count();
             qint64 sumx = 0;
             qint64 sumy = 0;
-            for (const auto &i : qAsConst(m_lastSizes)) {
+            for (const auto &i : std::as_const(m_lastSizes)) {
                 sumx += i.width();
                 sumy += i.height();
             }

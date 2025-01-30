@@ -1,3 +1,4 @@
+#include <utility>
 #include <QMenu>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -615,7 +616,7 @@ QFileInfoList ZSearchTab::getSelectedMangaEntries(bool includeDirs) const
             li << i;
     }
 
-    for (const auto &i : qAsConst(li)) {
+    for (const auto &i : std::as_const(li)) {
         if (i.row()>=0 && i.row()<m_model->getItemsCount()) {
             QString fname = m_model->getItem(i.row()).filename;
             QFileInfo fi(fname);
@@ -822,7 +823,7 @@ void ZSearchTab::mangaDel()
 
     setDescText();
 
-    for (const auto &i : qAsConst(li)) {
+    for (const auto &i : std::as_const(li)) {
         if (i.row()>=0 && i.row()<m_model->getItemsCount())
             dl << m_model->getItem(i.row()).dbid;
     }

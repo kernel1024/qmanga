@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <QImage>
 #include <QSettings>
 #include <QDir>
@@ -49,7 +51,7 @@ void ZTesseractOCR::processImage(const QImage &image)
     // vertical block transpose check
     QStringList sl = s.split(u'\n', Qt::SkipEmptyParts);
     int maxlen = 0;
-    for (const auto &i : qAsConst(sl)) {
+    for (const auto &i : std::as_const(sl)) {
         if (i.length() > maxlen)
             maxlen = i.length();
     }

@@ -10,6 +10,7 @@
  *   (at your option) any later version.                                   *
  ***************************************************************************/
 
+#include <utility>
 #include <QTextCursor>
 #include <QTextBlock>
 #include <QRegularExpression>
@@ -102,7 +103,7 @@ bool ZEpubDocument::epubConvert()
                         newDoc.setContent(QSL("<img src=\"%1\" height=\"%2\" width=\"%3\" />").arg(lnk).arg(ht).arg(wd));
                         imgNodes.append(newDoc.documentElement());
                     }
-                    for (const QDomNode &nd : qAsConst(imgNodes)) {
+                    for (const QDomNode &nd : std::as_const(imgNodes)) {
                         svgs.at(i).parentNode().replaceChild(nd, svgs.at(i));
                     }
                 }

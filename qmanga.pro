@@ -12,12 +12,12 @@ QT       += core gui widgets sql xml network
 
 TEMPLATE = app
 
-!versionAtLeast(QT_VERSION, 6.2.0):error("Use at least Qt version 6.2.0")
+!versionAtLeast(QT_VERSION, 6.5.0):error("Use at least Qt version 6.5.0")
 
 # warn on *any* usage of deprecated APIs
 DEFINES += QT_DEPRECATED_WARNINGS
-# ... and just fail to compile if APIs deprecated in Qt <= 6.2 are used
-DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060200
+# ... and just fail to compile if APIs deprecated in Qt <= 6.5 are used
+DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060500
 
 DEFINES += QT_NO_KEYWORDS
 DEFINES += QT_NO_CAST_FROM_ASCII

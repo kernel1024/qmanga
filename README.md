@@ -4,7 +4,7 @@ Manga and book reader written with Qt.
 Multithreaded manga viewer with fast bookshelf support. ZIP, RAR, PDF, DJVU packed files with original images or scanned pages supported. Text book formats also supported: TXT, EPUB, FB2. Supported office documents: RTF, DOC, DOCX, XLS, XLSX, PPT, PPTX, WPS, ODT, ODS, ODP via LibreOffice converter to PDF format.
 
 ### Requirements:
-* Qt 6.2+ (gui, widgets, dbus (for linux), sql, xml, network) with C++20 support
+* Qt 6.5+ (gui, widgets, dbus (for linux), sql, xml, network) with C++20 support
 * libzip
 * zlib
 * ICU

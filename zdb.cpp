@@ -1,3 +1,4 @@
+#include <utility>
 #include <algorithm>
 #include <execution>
 
@@ -792,7 +793,7 @@ void ZDB::sqlSearchMissingManga()
         ignoredFiles.append(qr.value(0).toString());
 
     QStringList filenames;
-    for (const QString& d : qAsConst(m_indexedDirs)) {
+    for (const QString& d : std::as_const(m_indexedDirs)) {
         QDir dir(d);
         const QFileInfoList fl = dir.entryInfoList(
                                      QStringList(QSL("*")), QDir::Files | QDir::Readable);
@@ -1096,7 +1097,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
 
     const int totalCount = files.count();
 
-    for (const auto& filename : qAsConst(files)) {
+    for (const auto& filename : std::as_const(files)) {
         const QFileInfo fi(filename);
         if (!fi.isReadable()) {
             qWarning() << "Skipping " << filename << " as unreadable ";
@@ -1262,7 +1263,7 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 
     // get album preview image
     QImage p;
-    for (const QString& fname : qAsConst(files)) {
+    for (const QString& fname : std::as_const(files)) {
         if (p.load(fname))
             break;
     }

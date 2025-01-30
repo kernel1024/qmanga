@@ -119,9 +119,9 @@ bool ZFB2Document::fb2Convert(const QByteArray &data)
     mSectionCounter = 0;
 
     QDomDocument document;
-    QString errorMsg;
-    if (!document.setContent(ZGenericFuncs::detectDecodeToUnicode(data),true,&errorMsg)) {
-        qCritical() << "Invalid XML FB2 structure, unable to load XML. " << errorMsg;
+    auto parseResult = document.setContent(ZGenericFuncs::detectDecodeToUnicode(data));
+    if (!parseResult) {
+        qCritical() << "Invalid XML FB2 structure, unable to load XML. " << parseResult.errorMessage;
         return false;
     }
 

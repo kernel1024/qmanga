@@ -1,3 +1,4 @@
+#include <utility>
 #include <algorithm>
 #include <QByteArray>
 #include <QApplication>
@@ -41,7 +42,7 @@ void ZFileCopier::start()
     addFilesCount(ZFileCopier::fileInfoGetCount(m_srcList,QDir::Files));
 
     QThread *th = QThread::create([this](){
-        for (const QFileInfo& fi : qAsConst(m_srcList)) {
+        for (const QFileInfo& fi : std::as_const(m_srcList)) {
             if (!ZFileCopier::copyFileByInfo(fi,m_dstDir,this)) {
                 m_errors.append(fi.fileName());
             }
