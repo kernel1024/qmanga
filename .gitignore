@@ -23,6 +23,7 @@ build-*
 .*.stash
 moc_*.h
 *_interface.*
+.qtc_clangd
 
 # QtCreator project files
 *.pro.user

@@ -55,7 +55,7 @@ void ZFileCopier::start()
             Q_EMIT progressClose();
 
             if (m_abort) {
-                Q_EMIT errorMsg(tr("Copying aborted, %1 files was copied.").arg(m_filesCopied));
+                Q_EMIT errorMsg(tr("Copying aborted, %1 files was copied.").arg(m_filesCopied.loadRelaxed()));
             } else if (!m_errors.empty()) {
                 Q_EMIT errorMsg(tr("Failed to copy %1 entries:\n%2")
                                 .arg(m_errors.count())
