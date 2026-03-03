@@ -93,7 +93,11 @@ bool ZPdfReader::openFile()
         return false;
     }
 
+#ifdef ZPDF_PRE2602_API
     GooString fname(fileName.toUtf8());
+#else
+    GooString fname(fileName.toUtf8().toStdString());
+#endif
     m_doc = PDFDocFactory().createPDFDoc(fname);
 
     if (m_doc==nullptr || !m_doc->isOk())
@@ -263,7 +267,13 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
         const quint8 cBlue = 0xff;
         const quint8 cAlpha = 0;
         SplashColor bgColor { cRed, cGreen, cBlue, cAlpha };
+#ifdef ZPDF_PRE2602_API
         SplashOutputDev splashOutputDev(splashModeXBGR8, 4, false, bgColor, true);
+#else
+        // removed reverseVideo parameter, unused
+        SplashOutputDev splashOutputDev(splashModeXBGR8, 4, bgColor, true);
+#endif
+
         splashOutputDev.setFontAntialias(true);
         splashOutputDev.setVectorAntialias(true);
         splashOutputDev.setFreeTypeHinting(true, false);

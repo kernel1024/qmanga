@@ -5,10 +5,14 @@
 #include <poppler/PDFDoc.h>
 
 #include <poppler/cpp/poppler-version.h>
-#if POPPLER_VERSION_MAJOR==21
-    #if POPPLER_VERSION_MINOR<3
-        #define ZPDF_PRE2103_API 1
-    #endif
+#if (POPPLER_VERSION_MAJOR < 21) || \
+(POPPLER_VERSION_MAJOR == 21 && POPPLER_VERSION_MINOR < 3)
+    #define ZPDF_PRE2103_API 1
+#endif
+
+#if (POPPLER_VERSION_MAJOR < 26) || \
+(POPPLER_VERSION_MAJOR == 26 && POPPLER_VERSION_MINOR < 2)
+#define ZPDF_PRE2602_API 1
 #endif
 
 #endif // WITH_POPPLER
@@ -79,7 +83,7 @@ private:
     void cleanTmpFiles();
 
 public:
-    ZPdfController(QObject *parent = nullptr);
+    explicit ZPdfController(QObject *parent = nullptr);
     ~ZPdfController() override;
 
     QString getConvertedDocumentPDF(const QString& sourceFilename) const;
