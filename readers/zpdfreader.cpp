@@ -128,7 +128,7 @@ bool ZPdfReader::openFile()
                     Object stype;
                     Object xitem = xolist->getVal(xo_idx);
                     if (!xitem.isStream()) continue;
-#ifdef ZPDF_PRE2602_API
+#ifdef ZPDF_PRE2607_API
                     if (!xitem.streamGetDict()->lookup("Subtype").isName("Image")) continue;
 #else
                     if (!xitem.getStream()->getDict()->lookup("Subtype").isName("Image")) continue;
@@ -138,7 +138,7 @@ bool ZPdfReader::openFile()
                     int size = static_cast<int>(data->getLength());
 
                     StreamKind kind = xitem.getStream()->getKind();
-#ifdef ZPDF_PRE2602_API
+#ifdef ZPDF_PRE2607_API
                     if (kind==StreamKind::strFlate && // zlib stream
                             xitem.streamGetDict()->lookup("Width").isInt() &&
                             xitem.streamGetDict()->lookup("Height").isInt() &&
