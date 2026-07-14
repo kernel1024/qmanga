@@ -128,13 +128,17 @@ bool ZPdfReader::openFile()
                     Object stype;
                     Object xitem = xolist->getVal(xo_idx);
                     if (!xitem.isStream()) continue;
+#ifdef ZPDF_PRE2602_API
                     if (!xitem.streamGetDict()->lookup("Subtype").isName("Image")) continue;
-
+#else
+                    if (!xitem.getStream()->getDict()->lookup("Subtype").isName("Image")) continue;
+#endif
                     BaseStream* data = xitem.getStream()->getBaseStream();
                     int pos = static_cast<int>(data->getStart());
                     int size = static_cast<int>(data->getLength());
 
                     StreamKind kind = xitem.getStream()->getKind();
+#ifdef ZPDF_PRE2602_API
                     if (kind==StreamKind::strFlate && // zlib stream
                             xitem.streamGetDict()->lookup("Width").isInt() &&
                             xitem.streamGetDict()->lookup("Height").isInt() &&
@@ -152,6 +156,25 @@ bool ZPdfReader::openFile()
                         m_images << ZPDFImg(pos,size,0,0,Z::imgDCT);
 
                     }
+#else
+                    if (kind==StreamKind::strFlate && // zlib stream
+                        xitem.getStream()->getDict()->lookup("Width").isInt() &&
+                        xitem.getStream()->getDict()->lookup("Height").isInt() &&
+                        xitem.getStream()->getDict()->lookup("BitsPerComponent").isInt()) {
+                        int dwidth = xitem.getStream()->getDict()->lookup("Width").getInt();
+                        int dheight = xitem.getStream()->getDict()->lookup("Height").getInt();
+                        int dBPP = xitem.getStream()->getDict()->lookup("BitsPerComponent").getInt();
+
+                        const int oneBytePerComponent = 8;
+                        if (dBPP == oneBytePerComponent) {
+                            m_images << ZPDFImg(pos,size,dwidth,dheight,Z::imgFlate);
+                        }
+
+                    } else if (kind==StreamKind::strDCT) { // JPEG stream
+                        m_images << ZPDFImg(pos,size,0,0,Z::imgDCT);
+
+                    }
+#endif
                 }
             }
         }
