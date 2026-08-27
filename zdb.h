@@ -94,9 +94,9 @@ public Q_SLOTS:
     void sqlAddFiles(const QStringList& aFiles, const QString& album);
     void sqlCancelAdding();
     void sqlGetFiles(const QString& album, const QString& search, const QSize &preferredCoverSize);
-    void sqlChangeFilePreview(const QString& fileName, int pageNum);
+    void sqlChangeFilePreview(const QString& fileName, const QString &password, int pageNum);
     void sqlRescanIndexedDirs();
-    void sqlUpdateFileStats(const QString& fileName);
+    void sqlUpdateFileStats(const QString& fileName, const QString &password);
     void sqlSearchMissingManga();
     void sqlAddIgnoredFiles(const QStringList& files);
     void sqlSetIgnoredFiles(const QStringList &files);

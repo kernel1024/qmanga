@@ -2,7 +2,7 @@
 #include "zsingleimagereader.h"
 
 ZSingleImageReader::ZSingleImageReader(QObject *parent, const QString &filename) :
-    ZAbstractReader(parent,filename)
+    ZAbstractReader(parent,filename,QString())
 {
 }
 

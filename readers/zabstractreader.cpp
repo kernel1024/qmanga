@@ -2,10 +2,11 @@
 #include "zabstractreader.h"
 #include "zmangaloader.h"
 
-ZAbstractReader::ZAbstractReader(QObject *parent, const QString &filename) :
+ZAbstractReader::ZAbstractReader(QObject *parent, const QString &filename, const QString &password) :
     QObject(parent)
 {
     m_fileName = filename;
+    m_accessPassword = password;
 }
 
 ZAbstractReader::~ZAbstractReader()
@@ -44,6 +45,11 @@ QString ZAbstractReader::getFileName() const
     return m_fileName;
 }
 
+QString ZAbstractReader::getErrorMessage() const
+{
+    return m_errorMessage;
+}
+
 void ZAbstractReader::closeFile()
 {
     if (!isOpened())
@@ -56,6 +62,16 @@ void ZAbstractReader::closeFile()
 bool ZAbstractReader::isPageDataSupported()
 {
     return true;
+}
+
+bool ZAbstractReader::isPasswordProtected()
+{
+    return false;
+}
+
+QString ZAbstractReader::encryptionMethod()
+{
+    return QString();
 }
 
 void ZAbstractReader::postMessage(const QString &msg)
@@ -100,4 +116,15 @@ QString ZAbstractReader::getSortEntryName(int num) const
 void ZAbstractReader::setOpenFileSuccess()
 {
     m_opened = true;
+}
+
+QString ZAbstractReader::accessPassword()
+{
+    return m_accessPassword;
+}
+
+void ZAbstractReader::setErrorMessage(const QString &error)
+{
+    m_errorMessage = error;
+    qCritical() << "Loader error message:" << error;
 }

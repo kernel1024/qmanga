@@ -10,7 +10,7 @@
 #include "textdoc/zfb2document.h"
 
 ZTextReader::ZTextReader(QObject *parent, const QString &filename)
-    : ZAbstractReader(parent,filename)
+    : ZAbstractReader(parent,filename,QString())
 {
 }
 

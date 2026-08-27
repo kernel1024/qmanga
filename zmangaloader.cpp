@@ -23,13 +23,13 @@ bool ZMangaLoader::isTextReader() const
     return m_textReader;
 }
 
-void ZMangaLoader::openFile(const QString &filename, int preferred)
+void ZMangaLoader::openFile(const QString &filename, const QString &password, int preferred)
 {
     if (m_reader!=nullptr)
         closeFile();
 
     bool mimeOk = false;
-    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,filename,&mimeOk,Z::rffAll,
+    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,filename,password,&mimeOk,Z::rffAll,
                                                        Z::rfmCreateReader);
     if ((za == nullptr) && (!mimeOk)) {
         Q_EMIT closeFileRequest();
@@ -56,11 +56,18 @@ void ZMangaLoader::openFile(const QString &filename, int preferred)
 
 void ZMangaLoader::getPage(int num, bool preferImage)
 {
+    if (!(m_reader->getErrorMessage().isEmpty()))
+        return;
+
     QString ipt = m_reader->getSortEntryName(num);
     if (!m_reader->isPageDataSupported() || preferImage) {
         Q_EMIT gotPage(QByteArray(),m_reader->loadPageImage(num),num,ipt,m_threadID);
     } else {
         Q_EMIT gotPage(m_reader->loadPage(num),QImage(),num,ipt,m_threadID);
+    }
+
+    if (!(m_reader->getErrorMessage().isEmpty())) {
+        Q_EMIT gotError(m_reader->getErrorMessage());
     }
 }
 

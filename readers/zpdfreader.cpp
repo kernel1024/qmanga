@@ -30,8 +30,10 @@ extern "C" {
 #include "global.h"
 #include "zdb.h"
 
+// TODO: Add password-protected PDFs support
+
 ZPdfReader::ZPdfReader(QObject *parent, const QString &filename) :
-    ZAbstractReader(parent,filename)
+    ZAbstractReader(parent,filename,QString())
 {
 }
 

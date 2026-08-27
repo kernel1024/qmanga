@@ -11,6 +11,7 @@
 #include <QThreadPool>
 #include <QElapsedTimer>
 #include <QComboBox>
+#include <QInputDialog>
 #include <utility>
 #include <algorithm>
 #include <execution>
@@ -225,6 +226,7 @@ void ZMangaView::openFileEx(const QString &filename, int page)
     m_iCacheImages.clear();
     m_iCacheData.clear();
     m_pathCache.clear();
+    m_filePassword.clear();
     m_currentPage = 0;
     m_curUnscaledPixmap = QImage();
     m_privPageCount = 0;
@@ -232,14 +234,29 @@ void ZMangaView::openFileEx(const QString &filename, int page)
     redrawPage();
     Q_EMIT loadedPage(-1,QString());
 
-    Q_EMIT cacheOpenFile(filename,page);
+    bool mimeOk = false;
+    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,filename,QString(),&mimeOk,Z::rffAll,
+                                                       Z::rfmCreateReader);
+    if (za != nullptr) {
+        if (za->openFile()) {
+            if (za->isPasswordProtected()) {
+                m_filePassword = QInputDialog::getText(this,QSL("File password required"),
+                                                       QSL("Encryption used: %1").arg(za->encryptionMethod()));
+            }
+        }
+        za->setParent(nullptr);
+        delete za;
+    }
+
+
+    Q_EMIT cacheOpenFile(filename,m_filePassword,page);
     if (filename.startsWith(QSL(":CLIP:"))) {
         m_openedFile = QSL("Clipboard image");
     } else {
         m_openedFile = filename;
     }
     m_processingPages.clear();
-    Q_EMIT updateFileStats(filename);
+    Q_EMIT updateFileStats(filename,m_filePassword);
     Q_EMIT cropUpdated(m_cropRect);
 }
 
@@ -698,7 +715,7 @@ void ZMangaView::changeMangaCoverCtx()
     if (m_openedFile.isEmpty()) return;
     if (m_currentPage<0 || m_currentPage>=m_privPageCount) return;
 
-    Q_EMIT changeMangaCover(m_openedFile,m_currentPage);
+    Q_EMIT changeMangaCover(m_openedFile,m_filePassword,m_currentPage);
 }
 
 void ZMangaView::exportPagesCtx()
@@ -730,8 +747,9 @@ void ZMangaView::exportPagesCtx()
     const QString format = m_exportDialog.getImageFormat();
     const QString exportDir = m_exportDialog.getExportDir();
     const QString sourceFile = m_openedFile;
+    const QString currentPassword = m_filePassword;
 
-    QThread *th = QThread::create([cnt,quality,format,filenameLength,currentPage,exportDir,sourceFile,dlg]{
+    QThread *th = QThread::create([cnt,quality,format,filenameLength,currentPage,exportDir,sourceFile,currentPassword,dlg]{
         QAtomicInteger<int> exportFileError(0);
         QAtomicInteger<int> progress(0);
         QVector<int> nums;
@@ -740,7 +758,7 @@ void ZMangaView::exportPagesCtx()
             nums.append(i+currentPage);
 
         std::for_each(std::execution::par,nums.constBegin(),nums.constEnd(),
-                      [&exportFileError,&progress,quality,format,filenameLength,exportDir,sourceFile,dlg]
+                      [&exportFileError,&progress,quality,format,filenameLength,exportDir,sourceFile,currentPassword,dlg]
                       (int pageNum){
             if (exportFileError.loadAcquire()>0 || dlg->wasCanceled()) return;
 
@@ -767,7 +785,7 @@ void ZMangaView::exportPagesCtx()
                     exportFileError.fetchAndAddRelease(1);
             });
 
-            zl->openFile(sourceFile,0);
+            zl->openFile(sourceFile,currentPassword,0);
             if (exportFileError==0)
                 zl->getPage(pageNum,true);
             zl->closeFile();

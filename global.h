@@ -211,8 +211,8 @@ public:
     static const QHash<Z::Ordering, QString> &getSqlColumns();
     static const QHash<Z::Ordering, QString> &getSortMenu();
 
-    static ZAbstractReader *readerFactory(QObject* parent, const QString &filename, bool *mimeOk,
-                                          Z::ReaderFactoryFiltering filter, Z::ReaderFactoryMode mode);
+    static ZAbstractReader *readerFactory(QObject* parent, const QString &filename, const QString &password,
+                                          bool *mimeOk, Z::ReaderFactoryFiltering filter, Z::ReaderFactoryMode mode);
     static QStringList supportedImg();
     static QString formatSize(qint64 size);
     static QString elideString(const QString& text, int maxlen, Qt::TextElideMode mode = Qt::ElideRight);

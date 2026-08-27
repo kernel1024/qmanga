@@ -135,8 +135,8 @@ ZPdfController *ZGenericFuncs::pdfController() const
     return m_pdfController.data();
 }
 
-ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & filename, bool *mimeOk,
-                                              Z::ReaderFactoryFiltering filter, Z::ReaderFactoryMode mode)
+ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & filename, const QString & password,
+                                              bool *mimeOk, Z::ReaderFactoryFiltering filter, Z::ReaderFactoryMode mode)
 {
     *mimeOk = true;
     if (filename.startsWith(QSL(":CLIP:")) && (filter != Z::rffSkipSingleImageReader)) {
@@ -172,7 +172,7 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
 #endif
     } else if (mime.contains(QSL("application/zip"),Qt::CaseInsensitive)) {
         if (mode == Z::rfmCreateReader)
-            return new ZZipReader(parent,filename);
+            return new ZZipReader(parent,filename,password);
 
     } else if (mime.contains(QSL("application/x-rar"),Qt::CaseInsensitive) ||
                mime.contains(QSL("application/rar"),Qt::CaseInsensitive)) {

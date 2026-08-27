@@ -3,7 +3,7 @@
 #include "zimagesdirreader.h"
 
 ZImagesDirReader::ZImagesDirReader(QObject *parent, const QString &filename)
-    : ZAbstractReader(parent,filename)
+    : ZAbstractReader(parent,filename,QString())
 {
 
 }

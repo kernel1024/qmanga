@@ -57,6 +57,7 @@ private:
     QPointer<QScrollArea> m_scroller;
 
     QString m_openedFile;
+    QString m_filePassword;
 
     QThreadPool m_resamplersPool;
     QList<ZLoaderHelper> m_cacheLoaders;
@@ -103,12 +104,12 @@ Q_SIGNALS:
     void addOCRText(const QStringList& text);
 
     // cache signals
-    void cacheOpenFile(const QString &filename, int preferred);
+    void cacheOpenFile(const QString &filename, const QString &password, int preferred);
     void cacheCloseFile();
 
     // DB signals
-    void changeMangaCover(const QString& fileName, int pageNum);
-    void updateFileStats(const QString& fileName);
+    void changeMangaCover(const QString& fileName, const QString& password, int pageNum);
+    void updateFileStats(const QString& fileName, const QString& password);
 
 public Q_SLOTS:
     void setZoomMode(int mode);

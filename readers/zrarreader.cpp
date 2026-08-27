@@ -2,8 +2,10 @@
 #include <QDebug>
 #include "zrarreader.h"
 
+// TODO: Add password-protected files support
+
 ZRarReader::ZRarReader(QObject *parent, const QString &filename) :
-    ZAbstractReader(parent,filename)
+    ZAbstractReader(parent,filename,QString())
 {
     m_rarExec = QString();
 }

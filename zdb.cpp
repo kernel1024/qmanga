@@ -625,7 +625,7 @@ void ZDB::sqlGetFiles(const QString &album, const QString &search, const QSize& 
     Q_EMIT filesLoaded(idx,tmr.elapsed());
 }
 
-void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
+void ZDB::sqlChangeFilePreview(const QString &fileName, const QString& password, int pageNum)
 {
     QSqlDatabase db = sqlOpenBase();
     if (!db.isValid()) return;
@@ -658,7 +658,7 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, int pageNum)
     }
 
     bool mimeOk = false;
-    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
+    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,fileName,password,&mimeOk,Z::rffSkipSingleImageReader,
                                                        Z::rfmCreateReader);
     if (za == nullptr) {
         qWarning() << fname << "File format not supported";
@@ -723,7 +723,7 @@ void ZDB::sqlRescanIndexedDirs()
     Q_EMIT albumsListUpdated();
 }
 
-void ZDB::sqlUpdateFileStats(const QString &fileName)
+void ZDB::sqlUpdateFileStats(const QString &fileName, const QString& password)
 {
     bool dynManga = false;
     QString fname = fileName;
@@ -739,7 +739,7 @@ void ZDB::sqlUpdateFileStats(const QString &fileName)
     }
 
     bool mimeOk = false;
-    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,fileName,&mimeOk,Z::rffSkipSingleImageReader,
+    ZAbstractReader* za = ZGenericFuncs::readerFactory(this,fileName,password,&mimeOk,Z::rffSkipSingleImageReader,
                                                        Z::rfmCreateReader);
     if (za == nullptr) {
         qWarning() << fname << "File format not supported.";
@@ -1110,7 +1110,9 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
         m_sourceResamplersPool.start([this,fi,&addedCount,&stopAdding,totalCount,ialbum](){
             bool mimeOk = false;
 
-            QScopedPointer<ZAbstractReader> za(ZGenericFuncs::readerFactory(nullptr,fi.filePath(),&mimeOk,
+            // No password here, should read the file index, but not the manga preview image.
+
+            QScopedPointer<ZAbstractReader> za(ZGenericFuncs::readerFactory(nullptr,fi.filePath(),QString(),&mimeOk,
                                                                             Z::rffSkipSingleImageReader,
                                                                             Z::rfmCreateReader));
             if (za.isNull()) {

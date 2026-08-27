@@ -24,7 +24,7 @@ Q_SIGNALS:
     void auxMessage(const QString& msg);
     
 public Q_SLOTS:
-    void openFile(const QString &filename, int preferred);
+    void openFile(const QString &filename, const QString &password, int preferred);
     void getPage(int num, bool preferImage);
     void closeFile();
 

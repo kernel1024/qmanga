@@ -699,6 +699,7 @@ void ZMainWindow::fsAddFilesWorker(const QStringList &auxList)
                               bool mimeOk = false;
                               ZGenericFuncs::readerFactory(nullptr,
                                                            fi.absoluteFilePath(),
+                                                           QString(),
                                                            &mimeOk,
                                                            Z::rffSkipSingleImageReader,
                                                            Z::rfmMIMECheckOnly);

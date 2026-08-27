@@ -6,7 +6,7 @@
 #include "zdjvureader.h"
 
 ZDjVuReader::ZDjVuReader(QObject *parent, const QString &filename)
-    : ZAbstractReader(parent, filename)
+    : ZAbstractReader(parent, filename, QString())
 {
 }
 
