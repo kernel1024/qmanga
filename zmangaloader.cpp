@@ -44,6 +44,9 @@ void ZMangaLoader::openFile(const QString &filename, const QString &password, in
     if (!za->openFile()) {
         Q_EMIT closeFileRequest();
         Q_EMIT gotError(tr("Unable to open file."));
+        if (!(za->getErrorMessage().isEmpty())) {
+            Q_EMIT gotError(za->getErrorMessage());
+        }
         za->setParent(nullptr);
         delete za;
         return;

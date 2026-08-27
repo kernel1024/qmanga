@@ -238,11 +238,13 @@ void ZMangaView::openFileEx(const QString &filename, int page)
     ZAbstractReader* za = ZGenericFuncs::readerFactory(this,filename,QString(),&mimeOk,Z::rffAll,
                                                        Z::rfmCreateReader);
     if (za != nullptr) {
-        if (za->openFile()) {
-            if (za->isPasswordProtected()) {
-                m_filePassword = QInputDialog::getText(this,QSL("File password required"),
-                                                       QSL("Encryption used: %1").arg(za->encryptionMethod()));
-            }
+        bool isOpen = za->openFile();
+        if ((isOpen && (za->isPasswordProtected())) ||
+            ((za->getMagic() == QSL("PDF")) && (za->isPasswordProtected()))) {
+            // PDFDoc object is lost without the password, file is not opened, but checked.
+
+            m_filePassword = QInputDialog::getText(this,QSL("File password required"),
+                                                   QSL("Encryption used: %1").arg(za->encryptionMethod()));
         }
         za->setParent(nullptr);
         delete za;

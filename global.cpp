@@ -168,7 +168,7 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
     } else if (mime.contains(QSL("application/pdf"),Qt::CaseInsensitive) ||
                ZPdfReader::preloadFile(filename,(mode == Z::rfmCreateReader))) {
         if (mode == Z::rfmCreateReader)
-            return new ZPdfReader(parent,filename);
+            return new ZPdfReader(parent,filename,password);
 
 #endif
     } else if (mime.contains(QSL("application/zip"),Qt::CaseInsensitive)) {

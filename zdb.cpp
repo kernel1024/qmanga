@@ -1122,7 +1122,7 @@ void ZDB::sqlAddFiles(const QStringList& aFiles, const QString& album)
                 return;
             }
 
-            if (!za->openFile()) {
+            if (!za->openFile() && (za->getMagic() != QSL("PDF"))) {
                 qWarning() << "Unable to open file: " << fi.filePath();
                 return;
             }

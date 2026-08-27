@@ -5,13 +5,13 @@
 #include <poppler/GlobalParams.h>
 #include <poppler/SplashOutputDev.h>
 #include <poppler/splash/SplashBitmap.h>
-#include <poppler/GlobalParams.h>
 #include <poppler/Object.h>
 #include <poppler/Dict.h>
 #include <poppler/Catalog.h>
 #include <poppler/Page.h>
 #include <poppler/PDFDoc.h>
 #include <poppler/Error.h>
+#include <poppler/ErrorCodes.h>
 
 #endif
 
@@ -20,6 +20,7 @@ extern "C" {
 }
 
 #include <memory>
+#include <optional>
 #include <algorithm>
 #include <execution>
 #include <QBuffer>
@@ -30,10 +31,8 @@ extern "C" {
 #include "global.h"
 #include "zdb.h"
 
-// TODO: Add password-protected PDFs support
-
-ZPdfReader::ZPdfReader(QObject *parent, const QString &filename) :
-    ZAbstractReader(parent,filename,QString())
+ZPdfReader::ZPdfReader(QObject *parent, const QString &filename, const QString &password) :
+    ZAbstractReader(parent,filename,password)
 {
 }
 
@@ -76,6 +75,7 @@ bool ZPdfReader::openFile()
     QMutexLocker locker(&m_indexerMutex);
 
     m_useImageCatalog = false;
+    m_passwordProtected = false;
     m_officeDoc = false;
     m_images.clear();
 
@@ -95,19 +95,52 @@ bool ZPdfReader::openFile()
         return false;
     }
 
+    QString filePassword = accessPassword();
+    std::optional<GooString> optUserPassword = std::nullopt;
+    GooString userPassword;
 #ifdef ZPDF_PRE2602_API
     GooString fname(fileName.toUtf8());
+    if (!filePassword.isEmpty())
+        optUserPassword.emplace(GooString(filePassword.toUtf8()));
 #else
     GooString fname(fileName.toUtf8().toStdString());
+    if (!filePassword.isEmpty())
+        optUserPassword.emplace(GooString(filePassword.toUtf8().toStdString()));
 #endif
-    m_doc = PDFDocFactory().createPDFDoc(fname);
 
-    if (m_doc==nullptr || !m_doc->isOk())
+    m_doc = PDFDocFactory().createPDFDoc(fname,{},optUserPassword);
+
+    if (m_doc==nullptr)
         return false;
+
+    if (!(m_doc->isOk())) {
+        switch (m_doc->getErrorCode()) {
+            case errNone: setErrorMessage(QSL("No error. But the PDFDoc is not ok.")); break;
+            case errOpenFile: setErrorMessage(QSL("Couldn't open the PDF file.")); break;
+            case errBadCatalog: setErrorMessage(QSL("Couldn't read the page catalog.")); break;
+            case errDamaged: setErrorMessage(QSL("PDF file was damaged and couldn't be repaired.")); break;
+            case errEncrypted:
+                m_passwordProtected = true;
+                setErrorMessage(QSL("File was encrypted and password was incorrect or not supplied."));
+                break;
+            case errHighlightFile: setErrorMessage(QSL("Nonexistent or invalid highlight file.")); break;
+            case errBadPrinter: setErrorMessage(QSL("Invalid printer.")); break;
+            case errPrinting: setErrorMessage(QSL("Error during printing.")); break;
+            case errPermission: setErrorMessage(QSL("PDF file doesn't allow that operation.")); break;
+            case errBadPageNum: setErrorMessage(QSL("Invalid page number.")); break;
+            case errFileIO: setErrorMessage(QSL("File I/O error.")); break;
+            case errFileChangedSinceOpen: setErrorMessage(QSL("File has changed since opening and save can't be done.")); break;
+            default: setErrorMessage(QSL("Unknown Poppler error. PDFDoc is not ok.")); break;
+        }
+        return false;
+    }
 
     Z::PDFRendering mode = zF->global()->db()->getPreferredRendering(fileName);
     if (mode==Z::pdfAutodetect)
         mode = zF->global()->getPdfRendering();
+
+    if (!accessPassword().isEmpty()) // Force rendering mode on protected files
+        mode = Z::pdfPageRenderer;
 
     if (mode==Z::pdfAutodetect || mode==Z::pdfImageCatalog) {
 
@@ -213,13 +246,6 @@ void ZPdfReader::closeFile()
     if (!isOpened())
         return;
 
-#ifdef WITH_POPPLER
-#ifdef ZPDF_PRE2103_API
-    delete m_doc;
-    m_doc = nullptr;
-#endif
-#endif
-
     m_images.clear();
     m_useImageCatalog = false;
     m_officeDoc = false;
@@ -302,11 +328,8 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
         splashOutputDev.setFontAntialias(true);
         splashOutputDev.setVectorAntialias(true);
         splashOutputDev.setFreeTypeHinting(true, false);
-#ifdef ZPDF_PRE2103_API
-        splashOutputDev.startDoc(m_doc);
-#else
         splashOutputDev.startDoc(m_doc.get());
-#endif
+
         m_doc->displayPageSlice(&splashOutputDev, idx + 1,
                               xdpi, ydpi, 0,
                               false, true, false,
@@ -323,8 +346,9 @@ void ZPdfReader::loadPagePrivate(int num, QByteArray *buf, QImage *img, bool pre
             if (b.open(QIODevice::WriteOnly))
                 qimg.save(&b,"BMP");
             qimg = QImage();
-        } else
+        } else {
             *img = qimg;
+        }
     }
 }
 #endif
@@ -408,6 +432,19 @@ bool ZPdfReader::preloadFile(const QString &filename, bool preserveDocument)
 
     zF->pdfController()->addConvertedDocumentPDF(filename,destFilename);
     return true;
+}
+
+QString ZPdfReader::encryptionMethod()
+{
+    if (isPasswordProtected())
+        return QSL("PDF");
+
+    return QString();
+}
+
+bool ZPdfReader::isPasswordProtected()
+{
+    return m_passwordProtected;
 }
 
 ZPDFImg::ZPDFImg(const ZPDFImg &other)

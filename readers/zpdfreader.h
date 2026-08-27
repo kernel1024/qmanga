@@ -5,10 +5,6 @@
 #include <poppler/PDFDoc.h>
 
 #include <poppler/cpp/poppler-version.h>
-#if (POPPLER_VERSION_MAJOR < 21) || \
-(POPPLER_VERSION_MAJOR == 21 && POPPLER_VERSION_MINOR < 3)
-    #define ZPDF_PRE2103_API 1
-#endif
 
 #if (POPPLER_VERSION_MAJOR < 26) || \
 (POPPLER_VERSION_MAJOR == 26 && POPPLER_VERSION_MINOR < 2)
@@ -50,7 +46,7 @@ class ZPdfReader : public ZAbstractReader
     Q_OBJECT
     Q_DISABLE_COPY(ZPdfReader)
 public:
-    ZPdfReader(QObject *parent, const QString &filename);
+    ZPdfReader(QObject *parent, const QString &filename, const QString &password);
     ~ZPdfReader() override;
     bool openFile() override;
     void closeFile() override;
@@ -60,20 +56,20 @@ public:
 
     static bool preloadFile(const QString &filename, bool preserveDocument);
 
+    bool isPasswordProtected() override;
+    QString encryptionMethod() override;
+
 private:
     bool m_useImageCatalog { false };
     QMutex m_indexerMutex;
     QList<ZPDFImg> m_images;
     bool m_officeDoc { false };
+    bool m_passwordProtected { false };
     int zlibInflate(const char *src, int srcSize, uchar *dst, int dstSize);
 
 #ifdef WITH_POPPLER
 
-#ifdef ZPDF_PRE2103_API
-    PDFDoc* m_doc { nullptr };
-#else
     std::unique_ptr<PDFDoc> m_doc;
-#endif
 
     void loadPagePrivate(int num, QByteArray *buf, QImage *img, bool preferImage);
 #endif
