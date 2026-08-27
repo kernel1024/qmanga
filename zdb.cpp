@@ -54,7 +54,7 @@ Z::Ordering ZDB::getDynAlbumOrdering(const QString& album, Qt::SortOrder &order)
     order = Qt::AscendingOrder;
     const QString qr = m_dynAlbums.value(name,QString());
     if (!qr.isEmpty()) {
-        QRegularExpression rx(QSL(R"(ORDER\sBY\s(\S+)\s(ASC|DESC)?)"));
+        static const QRegularExpression rx(QSL(R"(ORDER\sBY\s(\S+)\s(ASC|DESC)?)"));
         QRegularExpressionMatch mrx = rx.match(qr);
         if (mrx.hasMatch()) {
             QString col = mrx.captured(1).trimmed();
@@ -631,9 +631,10 @@ void ZDB::sqlChangeFilePreview(const QString &fileName, const QString& password,
     if (!db.isValid()) return;
 
     QString fname(fileName);
+    static const QRegularExpression reDyn(QSL("^#DYN#"));
     bool dynManga = fname.startsWith(QSL("#DYN#"));
     if (dynManga)
-        fname.remove(QRegularExpression(QSL("^#DYN#")));
+        fname.remove(reDyn);
 
     QSqlQuery qr(db);
     qr.prepare(QSL("SELECT name FROM files WHERE (filename=?)"));
@@ -727,8 +728,9 @@ void ZDB::sqlUpdateFileStats(const QString &fileName, const QString& password)
 {
     bool dynManga = false;
     QString fname = fileName;
+    static const QRegularExpression reDyn(QSL("^#DYN#"));
     if (fname.startsWith(QSL("#DYN#"))) {
-        fname.remove(QRegularExpression(QSL("^#DYN#")));
+        fname.remove(reDyn);
         dynManga = true;
     }
 
@@ -1320,8 +1322,11 @@ void ZDB::fsAddImagesDir(const QString &dir, const QString &album)
 QString ZDB::prepareSearchQuery(const QString &search)
 {
     static const QStringList operators({QSL(" +"), QSL(" ~"), QSL(" -"), QSL("* "), QSL("\"")});
+    static const QRegularExpression reSpace(QSL("\\s"));
+    static const QRegularExpression reMoreSpaces(QSL("\\s+"));
+
     QString msearch = search;
-    if (search.contains(QRegularExpression(QSL("\\s")))) {
+    if (search.contains(reSpace)) {
         bool haveops = false;
         for (const auto &i : operators) {
             if (msearch.contains(i)) {
@@ -1330,7 +1335,7 @@ QString ZDB::prepareSearchQuery(const QString &search)
             }
         }
         if (!haveops) {
-            msearch.replace(QRegularExpression(QSL("\\s+")),QSL("* +"));
+            msearch.replace(reMoreSpaces,QSL("* +"));
             msearch.prepend(QChar(u'+'));
             msearch.append(QChar(u'*'));
         }

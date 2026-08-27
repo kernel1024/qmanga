@@ -71,8 +71,10 @@ bool ZEpubDocument::epubConvert()
         QString htmlContent = QString::fromUtf8(epub_it_get_curr(it));
 
         // as QTextCharFormat::anchorNames() ignores sections, replace it with <p>
-        htmlContent.replace(QRegularExpression(QSL("< *section")), QSL("<p"));
-        htmlContent.replace(QRegularExpression(QSL("< */ *section")), QSL("</p"));
+        static const QRegularExpression reSectionStart(QSL("< *section"));
+        static const QRegularExpression reSectionEnd(QSL("< */ *section"));
+        htmlContent.replace(reSectionStart, QSL("<p"));
+        htmlContent.replace(reSectionEnd, QSL("</p"));
 
         // convert svg tags to img
         const int maxHeight = maxContentHeight();
@@ -160,15 +162,17 @@ QString ZEpubDocument::checkCSS(const QString &c)
 {
     QString css = c;
     // remove paragraph line-heights
-    css.remove(QRegularExpression(QSL("line-height\\s*:\\s*[\\w\\.]*;")));
+    static const QRegularExpression reLineHeight(QSL("line-height\\s*:\\s*[\\w\\.]*;"));
+    css.remove(reLineHeight);
 
     // HACK transform em and rem notation to px, because QTextDocument doesn't support
     // em and rem.
-    const QStringList cssArray = css.split(QRegularExpression(QSL("\\s+")));
+    static const QRegularExpression reArraySplit(QSL("\\s+"));
+    const QStringList cssArray = css.split(reArraySplit);
     QStringList cssArrayReplaced;
     std::size_t cssArrayCount = cssArray.count();
     std::size_t i = 0;
-    const QRegularExpression re(QSL("(([0-9]+)(\\.[0-9]+)?)r?em(.*)"));
+    static const QRegularExpression re(QSL("(([0-9]+)(\\.[0-9]+)?)r?em(.*)"));
     while (i < cssArrayCount) {
         auto item = cssArray[i];
         QRegularExpressionMatch match = re.match(item);

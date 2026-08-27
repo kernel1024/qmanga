@@ -853,7 +853,9 @@ void ZMangaView::setZoomAny(int comboIdx)
     if (cb==nullptr) return;
     QString s = cb->itemText(comboIdx);
     m_zoomAny = -1; // original zoom
-    s.remove(QRegularExpression(QSL("[^0123456789]")));
+
+    static const QRegularExpression re(QSL("[^0123456789]"));
+    s.remove(re);
     bool okconv = false;
     if (!s.isEmpty()) {
         m_zoomAny = s.toInt(&okconv);

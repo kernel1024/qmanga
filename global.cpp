@@ -148,7 +148,8 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
 
     if (filename.startsWith(QSL("#DYN#"))) {
         QString fname(filename);
-        fname.remove(QRegularExpression(QSL("^#DYN#")));
+        static const QRegularExpression re(QSL("^#DYN#"));
+        fname.remove(re);
         if (mode == Z::rfmCreateReader)
             return new ZImagesDirReader(parent,fname);
 
