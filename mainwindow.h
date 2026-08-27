@@ -40,6 +40,7 @@ private:
     bool m_savedMaximized { false };
     QRect m_savedGeometry;
     QMessageBox m_indexerMsgBox;
+    QStringList m_messageBoxLog;
 
     QPointer<QLabel> m_lblSearchStatus;
     QPointer<QLabel> m_lblAverageSizes;

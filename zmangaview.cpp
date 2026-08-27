@@ -56,7 +56,6 @@ ZMangaView::ZMangaView(QWidget *parent) :
         auto *ld = new ZMangaLoader();
 
         connect(ld,&ZMangaLoader::gotPage,this,&ZMangaView::cacheGotPage,Qt::QueuedConnection);
-        connect(ld,&ZMangaLoader::gotError,this,&ZMangaView::cacheGotError,Qt::QueuedConnection);
         connect(ld,&ZMangaLoader::closeFileRequest,this,&ZMangaView::closeFile,Qt::QueuedConnection);
         connect(ld,&ZMangaLoader::auxMessage,this,&ZMangaView::loaderMsg,Qt::QueuedConnection);
 
@@ -769,10 +768,6 @@ void ZMangaView::exportPagesCtx()
                                          .arg(pageNum+1,filenameLength,ZDefaults::exportFilenameNumWidth,QChar(u'0'))
                                          .arg(format.toLower()));
             QScopedPointer<ZMangaLoader> zl(new ZMangaLoader());
-            connect(zl.data(),&ZMangaLoader::gotError,[&exportFileError](const QString&msg){
-                Q_UNUSED(msg)
-                exportFileError.fetchAndAddRelease(1);
-            });
 
             connect(zl.data(),&ZMangaLoader::gotPage,[&exportFileError,fname,quality,format]
                     (const QByteArray& page, const QImage& image, int num,
@@ -917,11 +912,6 @@ void ZMangaView::cacheGotPageCount(int num, int preferred)
         m_privPageCount = num;
         setPage(preferred);
     }
-}
-
-void ZMangaView::cacheGotError(const QString &msg)
-{
-    QMessageBox::critical(this,QGuiApplication::applicationDisplayName(),msg);
 }
 
 void ZMangaView::cacheDropUnusable()

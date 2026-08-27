@@ -19,7 +19,6 @@ Q_SIGNALS:
     void gotPage(const QByteArray& page, const QImage& pageImage, int num,
                  const QString& internalPath, const QUuid& aThreadID);
     void gotPageCount(int num, int preferred);
-    void gotError(const QString& msg);
     void closeFileRequest();
     void auxMessage(const QString& msg);
     

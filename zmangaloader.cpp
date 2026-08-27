@@ -33,19 +33,19 @@ void ZMangaLoader::openFile(const QString &filename, const QString &password, in
                                                        Z::rfmCreateReader);
     if ((za == nullptr) && (!mimeOk)) {
         Q_EMIT closeFileRequest();
-        Q_EMIT gotError(tr("File format not supported."));
+        postMessage(tr("MBOX#ERR#File format not supported."));
         return;
     }
     if ((za == nullptr) && (mimeOk)) {
         Q_EMIT closeFileRequest();
-        Q_EMIT gotError(tr("File not found. Update database or restore file."));
+        postMessage(tr("MBOX#ERR#File not found. Update database or restore file."));
         return;
     }
     if (!za->openFile()) {
         Q_EMIT closeFileRequest();
-        Q_EMIT gotError(tr("Unable to open file."));
+        postMessage(tr("MBOX#ERR#Unable to open file."));
         if (!(za->getErrorMessage().isEmpty())) {
-            Q_EMIT gotError(za->getErrorMessage());
+            postMessage(QSL("MBOX#ERR#%1").arg(za->getErrorMessage()));
         }
         za->setParent(nullptr);
         delete za;
@@ -59,9 +59,6 @@ void ZMangaLoader::openFile(const QString &filename, const QString &password, in
 
 void ZMangaLoader::getPage(int num, bool preferImage)
 {
-    if (!(m_reader->getErrorMessage().isEmpty()))
-        return;
-
     QString ipt = m_reader->getSortEntryName(num);
     if (!m_reader->isPageDataSupported() || preferImage) {
         Q_EMIT gotPage(QByteArray(),m_reader->loadPageImage(num),num,ipt,m_threadID);
@@ -70,7 +67,7 @@ void ZMangaLoader::getPage(int num, bool preferImage)
     }
 
     if (!(m_reader->getErrorMessage().isEmpty())) {
-        Q_EMIT gotError(m_reader->getErrorMessage());
+        postMessage(QSL("MBOX#ERR#%1").arg(m_reader->getErrorMessage()));
     }
 }
 

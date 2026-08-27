@@ -126,6 +126,14 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->mangaView,&ZMangaView::backgroundUpdated,this,&ZMainWindow::viewerBackgroundUpdated);
 
     connect(zF->global(),&ZGlobal::auxMessage,this,&ZMainWindow::auxMessage);
+    connect(&m_indexerMsgBox,&QMessageBox::buttonClicked,[this](QAbstractButton *button){
+        Q_UNUSED(button)
+        m_messageBoxLog.clear();
+        m_indexerMsgBox.setText(QString());
+        QApplication::processEvents();
+    });
+    m_indexerMsgBox.setModal(false);
+
     // Explicitly use DirectConnection for synchronous call
     connect(zF->global(),&ZGlobal::loadSearchTabSettings,ui->searchTab,&ZSearchTab::loadSettings,Qt::DirectConnection);
     connect(zF->global(),&ZGlobal::saveSearchTabSettings,ui->searchTab,&ZSearchTab::saveSettings,Qt::DirectConnection);
@@ -597,17 +605,31 @@ void ZMainWindow::helpAbout()
 void ZMainWindow::auxMessage(const QString &msg)
 {
     QString s = msg;
+
     bool showMsgBox = s.startsWith(QSL("MBOX#"));
     if (showMsgBox)
         s.remove(QSL("MBOX#"));
+
+    bool isError = s.startsWith(QSL("ERR#"));
+    if (isError)
+        s.remove(QSL("ERR#"));
+
     m_lblSearchStatus->setText(s);
     if (showMsgBox) {
-        if (m_indexerMsgBox.isVisible()) {
-            m_indexerMsgBox.setText(m_indexerMsgBox.text()+QSL("\n")+s);
+        m_messageBoxLog.append(s);
+        m_indexerMsgBox.setText(m_messageBoxLog.join(QSL("\n")));
+        QApplication::processEvents();
+
+        if (isError) {
+            m_indexerMsgBox.setIcon(QMessageBox::Critical);
         } else {
-            m_indexerMsgBox.setText(s);
+            m_indexerMsgBox.setIcon(QMessageBox::Information);
         }
-        m_indexerMsgBox.exec();
+
+        if (!m_indexerMsgBox.isVisible()) {
+            m_indexerMsgBox.show();
+        }
+        QApplication::processEvents();
     }
 }
 

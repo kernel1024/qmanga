@@ -142,7 +142,6 @@ public Q_SLOTS:
     void cacheGotPage(const QByteArray& page, const QImage &pageImage, int num,
                       const QString& internalPath, const QUuid& threadID);
     void cacheGotPageCount(int num, int preferred);
-    void cacheGotError(const QString& msg);
 
 protected:
     void wheelEvent(QWheelEvent *event) override;
