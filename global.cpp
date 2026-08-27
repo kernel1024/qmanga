@@ -178,7 +178,7 @@ ZAbstractReader* ZGenericFuncs::readerFactory(QObject* parent, const QString & f
     } else if (mime.contains(QSL("application/x-rar"),Qt::CaseInsensitive) ||
                mime.contains(QSL("application/rar"),Qt::CaseInsensitive)) {
         if (mode == Z::rfmCreateReader)
-            return new ZRarReader(parent,filename);
+            return new ZRarReader(parent,filename,password);
 
 #ifdef WITH_DJVU
     } else if (mime.contains(QSL("image/vnd.djvu"),Qt::CaseInsensitive)) {
