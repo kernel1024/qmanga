@@ -497,6 +497,11 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
     m_cropSelection->setGeometry(QRect());
 }
 
+void ZMangaView::fullPageOCR()
+{
+    handleOCRRequest(QImage());
+}
+
 void ZMangaView::handleOCRRequest(const QImage &image)
 {
     auto *ocr = zF->ocr(this);
@@ -512,15 +517,41 @@ void ZMangaView::handleOCRRequest(const QImage &image)
 
     if (ocr != m_previousOCR) {
         connect(ocr, &ZAbstractOCR::gotOCRResult, this, &ZMangaView::ocrFinished);
+        connect(ocr, &ZAbstractOCR::gotOCRPageResult, this, &ZMangaView::ocrPageFinished);
         m_previousOCR = ocr;
     }
 
-    ocr->processImage(image);
+    if (image.isNull()) {
+        ocr->processPage(m_curUnscaledPixmap, m_currentPage);
+    } else {
+        ocr->processImage(image);
+    }
 }
 
 void ZMangaView::ocrFinished(const QString& text)
 {
     Q_EMIT addOCRText(text.split(QChar(u'\n'),Qt::SkipEmptyParts));
+}
+
+void ZMangaView::ocrPageFinished(const Z::ZOCRPageResult &result, int pageNumber)
+{
+    qDebug() << "Page number:"
+             << pageNumber;
+
+    qDebug() << "OCR page size:"
+             << result.imageSize;
+
+    qDebug() << "Detected text regions:"
+             << result.regions.size();
+
+    for (const auto &region :
+         result.regions) {
+
+        qDebug()
+        << "Text:" << region.text
+        << "Rect:" << region.boundingRect()
+        << "Confidence:" << region.confidence;
+    }
 }
 
 void ZMangaView::keyPressEvent(QKeyEvent *event)

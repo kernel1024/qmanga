@@ -5,6 +5,8 @@
 #include <QImage>
 #include <QString>
 
+#include "ocrresult.h"
+
 class ZAbstractOCR : public QObject
 {
     Q_OBJECT
@@ -13,11 +15,14 @@ public:
 
     virtual bool isReady() const = 0;
     virtual void processImage(const QImage &image) = 0;
+    virtual bool supportsFullPage() const { return false; }
+    virtual void processPage(const QImage &image, int pageNumber) { Q_UNUSED(image); Q_UNUSED(pageNumber); }
 
     QString lastError() const { return m_error; }
 
 Q_SIGNALS:
     void gotOCRResult(const QString &text);
+    void gotOCRPageResult(const Z::ZOCRPageResult &result, int pageNumber);
 
 protected:
     void setError(const QString &text);

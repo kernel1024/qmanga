@@ -19,6 +19,7 @@
         <file alias="zoom-fit-width">img/22x22/zoom-fit-width.png</file>
         <file alias="zoom-original">img/22x22/zoom-original.png</file>
         <file alias="go-first">img/22x22/go-first.png</file>
+        <file alias="visible-on">img/22x22/layer-visible-on.png</file>
     </qresource>
     <qresource prefix="/16">
         <file alias="accessories-dictionary">img/16x16/accessories-dictionary.png</file>

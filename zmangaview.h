@@ -10,6 +10,7 @@
 #include "global.h"
 #include "readers/zabstractreader.h"
 #include "ocr/abstractocr.h"
+#include "ocr/ocrresult.h"
 #include "zmangaloader.h"
 #include "zexportdialog.h"
 
@@ -134,7 +135,9 @@ public Q_SLOTS:
     void viewRotateCCW();
     void viewRotateCW();
 
+    void fullPageOCR();
     void ocrFinished(const QString &text);
+    void ocrPageFinished(const Z::ZOCRPageResult &result, int pageNumber);
 
     void loaderMsg(const QString& msg);
 

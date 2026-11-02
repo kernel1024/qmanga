@@ -108,6 +108,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
         ui->comboZoom->setEnabled(mode==ZMangaView::zmOriginal);
         ui->mangaView->setZoomMode(mode);
     });
+    connect(ui->btnOCRVision,&QPushButton::clicked,ui->mangaView,&ZMangaView::fullPageOCR);
 
     connect(ui->scrollArea,&ZScrollArea::sizeChanged,ui->mangaView,&ZMangaView::ownerResized);
     connect(ui->comboZoom,&QComboBox::currentIndexChanged,ui->mangaView,&ZMangaView::setZoomAny);

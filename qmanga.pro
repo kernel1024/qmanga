@@ -62,6 +62,7 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     ocr/abstractocr.h \
     ocr/googlevision.h \
+    ocr/ocrresult.h \
     ocr/tesseractocr.h \
     readers/textdoc/zabstracttextdocument.h \
     readers/textdoc/zepubdocument.h \

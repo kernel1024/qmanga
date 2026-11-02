@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QString>
 #include <QNetworkAccessManager>
+#include <QSize>
+#include <QJsonObject>
 #include "abstractocr.h"
 
 class ZGoogleVision : public ZAbstractOCR
@@ -14,6 +16,8 @@ public:
 
     bool isReady() const override;
     void processImage(const QImage& image) override;
+    void processPage(const QImage &image, int pageNumber) override;
+    bool supportsFullPage() const override;
 
 private:
     QString m_gcpProject;
@@ -24,9 +28,18 @@ private:
     QByteArray m_preparedImage;
     QNetworkAccessManager m_nam;
 
+    bool m_pageMode = false;
+    int m_pageNumber = -1;
+    QSize m_originalImageSize;
+    QSize m_uploadedImageSize;
+
     bool parseJsonKey(const QString &jsonKeyFile);
     void gcpAuth();
     void startVision();
+
+    bool prepareImage(const QImage &image);
+    Z::ZOCRPageResult parsePageResult(
+        const QJsonObject &response) const;
 
 };
 
