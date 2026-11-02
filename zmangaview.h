@@ -14,6 +14,10 @@
 #include "zmangaloader.h"
 #include "zexportdialog.h"
 
+#ifdef QT_DBUS_LIB
+#include "auxtranslator_interface.h"
+#endif
+
 class ZMangaView : public QWidget
 {
     Q_OBJECT
@@ -72,6 +76,35 @@ private:
     QList<int> m_lastFileSizes;
 
     ZExportDialog m_exportDialog;
+
+    // OCR overlay
+    Z::ZOCRPageResult m_ocrPageResult;
+
+    int m_ocrPageNumber { -1 };
+    int m_ocrHoveredRegion { -1 };
+
+    bool m_showOCROverlay { false };
+
+    QHash<quint64, int> m_pendingTranslations;
+    quint64 m_nextTranslationId = 0;
+    quint64 m_pageGeneration = 0;
+
+    void updateOCRTooltip();
+
+    // Convert an image-space polygon into widget coordinates.
+    QPolygonF mapOCRPolygon(const QPolygonF &polygon) const;
+
+    // Find a region under a widget-space point.
+    int ocrRegionAt(const QPoint &pos) const;
+
+    // Invalidate the current OCR overlay.
+    void clearOCROverlay();
+
+#ifdef QT_DBUS_LIB
+    OrgKernel1024JpreaderAuxtranslatorInterface
+        *m_pageTranslator { nullptr };
+    void startPageTranslation();
+#endif
 
     void cacheDropUnusable();
     void cacheFillNearest();
@@ -140,6 +173,10 @@ public Q_SLOTS:
     void ocrPageFinished(const Z::ZOCRPageResult &result, int pageNumber);
 
     void loaderMsg(const QString& msg);
+
+#ifdef QT_DBUS_LIB
+    void pageTranslationReceived(qulonglong requestId, const QString &text);
+#endif
 
     // cache slots
     void cacheGotPage(const QByteArray& page, const QImage &pageImage, int num,

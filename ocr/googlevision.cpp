@@ -345,6 +345,7 @@ void ZGoogleVision::startVision()
 
     // Remember the type of this specific request.
     const bool pageMode = m_pageMode;
+    const int pageNumber = m_pageNumber;
 
     QNetworkReply *rpl = m_nam.post(rq, body);
 
@@ -352,7 +353,7 @@ void ZGoogleVision::startVision()
         rpl,
         &QNetworkReply::finished,
         this,
-        [this, rpl, pageMode]()
+        [this, rpl, pageMode, pageNumber]()
         {
             const QByteArray ra = rpl->readAll();
 
@@ -473,7 +474,7 @@ void ZGoogleVision::startVision()
                     result.regions.append(page.regions);
                 }
 
-                Q_EMIT gotOCRPageResult(result, m_pageNumber);
+                Q_EMIT gotOCRPageResult(result, pageNumber);
 
             } else {
 

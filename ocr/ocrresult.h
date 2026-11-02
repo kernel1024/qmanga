@@ -12,6 +12,8 @@ namespace Z {
 struct ZOCRTextRegion
 {
     QString text;
+    QString translation;
+
     QPolygonF polygon;
     float confidence = -1.0F;
 

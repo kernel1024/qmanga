@@ -12,6 +12,9 @@
 #include <QElapsedTimer>
 #include <QComboBox>
 #include <QInputDialog>
+#include <QTransform>
+#include <QToolTip>
+#include <QRandomGenerator>
 #include <utility>
 #include <algorithm>
 #include <execution>
@@ -34,6 +37,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
     m_cropSelection->hide();
     m_cropSelection->setGeometry(QRect());
 
+    m_nextTranslationId = QRandomGenerator::global()->generate64();
+
     setMouseTracking(true);
 
     setBackgroundRole(QPalette::Dark);
@@ -47,6 +52,24 @@ ZMangaView::ZMangaView(QWidget *parent) :
     connect(this,&ZMangaView::requestRedrawPageEx,this,&ZMangaView::redrawPageEx,Qt::QueuedConnection);
 
     connect(this,&ZMangaView::addOCRText,zF->global()->ocrEditor(),&ZOCREditor::addOCRText);
+
+#ifdef QT_DBUS_LIB
+    m_pageTranslator =
+        new OrgKernel1024JpreaderAuxtranslatorInterface(
+            QSL("org.kernel1024.jpreader"),
+            QSL("/auxTranslator"),
+            QDBusConnection::sessionBus(),
+            this
+            );
+
+    connect(
+        m_pageTranslator,
+        &OrgKernel1024JpreaderAuxtranslatorInterface::
+        translationRequestFinished,
+        this,
+        &ZMangaView::pageTranslationReceived
+        );
+#endif
 
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
@@ -121,6 +144,10 @@ int ZMangaView::getPageCount() const
 void ZMangaView::getPage(int num)
 {
     if (!m_scroller) return;
+
+    if (num != m_currentPage)
+        clearOCROverlay();
+
     m_currentPage = num;
 
     if (m_scroller->verticalScrollBar()->isVisible())
@@ -226,6 +253,7 @@ void ZMangaView::openFileEx(const QString &filename, int page)
     m_iCacheData.clear();
     m_pathCache.clear();
     m_filePassword.clear();
+    clearOCROverlay();
     m_currentPage = 0;
     m_curUnscaledPixmap = QImage();
     m_privPageCount = 0;
@@ -264,6 +292,7 @@ void ZMangaView::openFileEx(const QString &filename, int page)
 void ZMangaView::closeFile()
 {
     Q_EMIT cacheCloseFile();
+    clearOCROverlay();
     m_cropRect = QRect();
     m_curPixmap = QImage();
     m_openedFile = QString();
@@ -276,7 +305,13 @@ void ZMangaView::closeFile()
 void ZMangaView::setPage(int page)
 {
     m_scrollAccumulator = 0;
-    if (page<0 || page>=m_privPageCount) return;
+
+    if (page < 0 || page >= m_privPageCount)
+        return;
+
+    if (page != m_currentPage)
+        clearOCROverlay();
+
     getPage(page);
 }
 
@@ -326,6 +361,40 @@ void ZMangaView::paintEvent(QPaintEvent *event)
             y = (m_scroller->viewport()->height() - m_curPixmap.height()) / 2;
         w.drawImage(x,y,m_curPixmap);
         m_drawPos = QPoint(x,y);
+
+        // Draw full-page OCR results.
+        if (m_showOCROverlay &&
+            m_ocrPageNumber == m_currentPage &&
+            m_ocrPageResult.imageSize == m_curUnscaledPixmap.size()) {
+
+            w.save();
+            w.setRenderHint(QPainter::Antialiasing, true);
+
+            for (qsizetype i = 0; i < m_ocrPageResult.regions.size(); ++i) {
+
+                const auto &region = m_ocrPageResult.regions.at(i);
+                const QPolygonF polygon =
+                    mapOCRPolygon(region.polygon);
+
+                if (polygon.size() < 3)
+                    continue;
+
+                const bool hovered =
+                    (i == m_ocrHoveredRegion);
+
+                if (hovered) {
+                    // Highlight the active OCR region.
+                    w.setPen(QPen(QColor(255, 170, 0, 240), 2.5));
+                    w.setBrush(QColor(255, 200, 0, 65));
+                } else {
+                    // Normal OCR region.
+                    w.setPen(QPen(QColor(0, 220, 100, 200), 1.5));
+                    w.setBrush(QColor(0, 220, 100, 20));
+                }
+                w.drawPolygon(polygon);
+            }
+            w.restore();
+        }
 
         if (m_zoomDynamic) {
             QPoint mp(m_zoomPos.x()-x,m_zoomPos.y()-y);
@@ -416,6 +485,17 @@ void ZMangaView::mouseMoveEvent(QMouseEvent *event)
                 m_zoomPos = QPoint();
         }
     }
+
+    // Interactive OCR overlay.
+    if (m_showOCROverlay && event->buttons() == Qt::NoButton) {
+        const int regionIndex =
+            ocrRegionAt(event->pos());
+        if (regionIndex != m_ocrHoveredRegion) {
+            m_ocrHoveredRegion = regionIndex;
+            updateOCRTooltip();
+            update();
+        }
+    }
 }
 
 void ZMangaView::mousePressEvent(QMouseEvent *event)
@@ -453,20 +533,34 @@ void ZMangaView::mouseDoubleClickEvent(QMouseEvent *event)
 void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button()==Qt::LeftButton &&
-            !m_copyPos.isNull() &&
-            m_mouseMode == mmOCR) {
-        // OCR move completion
-        if (!m_curPixmap.isNull()) {
-            QRect cp = QRect(event->pos(),m_copyPos).normalized();
-            cp.moveTo(cp.x()-m_drawPos.x(),cp.y()-m_drawPos.y());
-            cp.moveTo(cp.left()*m_curUnscaledPixmap.width()/m_curPixmap.width(),
-                      cp.top()*m_curUnscaledPixmap.height()/m_curPixmap.height());
-            cp.setWidth(cp.width()*m_curUnscaledPixmap.width()/m_curPixmap.width());
-            cp.setHeight(cp.height()*m_curUnscaledPixmap.height()/m_curPixmap.height());
-            cp = cp.intersected(m_curUnscaledPixmap.rect());
-            if (cp.width() > ZDefaults::ocrSquareMinimumSize
-                && cp.height() > ZDefaults::ocrSquareMinimumSize) {
-                handleOCRRequest(m_curUnscaledPixmap.copy(cp));
+        !m_copyPos.isNull() &&
+        m_mouseMode == mmOCR) {
+        const bool isClick =
+            (event->pos() - m_copyPos).manhattanLength() <
+            QApplication::startDragDistance();
+
+        if (isClick && m_showOCROverlay) {
+            const int regionIndex = ocrRegionAt(event->pos());
+            if (regionIndex >= 0) {
+                const QString text =
+                    m_ocrPageResult.regions.at(regionIndex).text;
+                if (!text.isEmpty())
+                    Q_EMIT addOCRText(QStringList{text});
+            }
+        } else {
+            // OCR move completion
+            if (!m_curPixmap.isNull()) {
+                QRect cp = QRect(event->pos(),m_copyPos).normalized();
+                cp.moveTo(cp.x()-m_drawPos.x(),cp.y()-m_drawPos.y());
+                cp.moveTo(cp.left()*m_curUnscaledPixmap.width()/m_curPixmap.width(),
+                          cp.top()*m_curUnscaledPixmap.height()/m_curPixmap.height());
+                cp.setWidth(cp.width()*m_curUnscaledPixmap.width()/m_curPixmap.width());
+                cp.setHeight(cp.height()*m_curUnscaledPixmap.height()/m_curPixmap.height());
+                cp = cp.intersected(m_curUnscaledPixmap.rect());
+                if (cp.width() > ZDefaults::ocrSquareMinimumSize
+                    && cp.height() > ZDefaults::ocrSquareMinimumSize) {
+                    handleOCRRequest(m_curUnscaledPixmap.copy(cp));
+                }
             }
         }
     } else if (event->button()==Qt::LeftButton &&
@@ -499,6 +593,24 @@ void ZMangaView::mouseReleaseEvent(QMouseEvent *event)
 
 void ZMangaView::fullPageOCR()
 {
+    if (m_curUnscaledPixmap.isNull())
+        return;
+
+    // Existing OCR results for the current page?
+    if (m_ocrPageNumber == m_currentPage &&
+        m_ocrPageResult.imageSize ==
+            m_curUnscaledPixmap.size()) {
+
+        m_showOCROverlay = !m_showOCROverlay;
+
+        m_ocrHoveredRegion = -1;
+        QToolTip::hideText();
+
+        update();
+        return;
+    }
+
+    // Otherwise perform recognition.
     handleOCRRequest(QImage());
 }
 
@@ -533,25 +645,224 @@ void ZMangaView::ocrFinished(const QString& text)
     Q_EMIT addOCRText(text.split(QChar(u'\n'),Qt::SkipEmptyParts));
 }
 
-void ZMangaView::ocrPageFinished(const Z::ZOCRPageResult &result, int pageNumber)
+void ZMangaView::ocrPageFinished(
+    const Z::ZOCRPageResult &result,
+    int pageNumber)
 {
-    qDebug() << "Page number:"
-             << pageNumber;
+    if (pageNumber != m_currentPage)
+        return;
 
-    qDebug() << "OCR page size:"
-             << result.imageSize;
-
-    qDebug() << "Detected text regions:"
-             << result.regions.size();
-
-    for (const auto &region :
-         result.regions) {
-
-        qDebug()
-        << "Text:" << region.text
-        << "Rect:" << region.boundingRect()
-        << "Confidence:" << region.confidence;
+    if (m_curUnscaledPixmap.isNull() ||
+        result.imageSize != m_curUnscaledPixmap.size()) {
+        return;
     }
+
+    m_pendingTranslations.clear();
+
+    m_ocrPageResult = result;
+    m_ocrPageNumber = pageNumber;
+
+    m_ocrHoveredRegion = -1;
+    m_showOCROverlay = true;
+
+    update();
+
+#ifdef QT_DBUS_LIB
+// TODO: add some check here
+//    startPageTranslation();
+#endif
+}
+
+QPolygonF ZMangaView::mapOCRPolygon(const QPolygonF &polygon) const
+{
+    if (m_curPixmap.isNull() ||
+        m_curUnscaledPixmap.isNull()) {
+        return {};
+    }
+
+    const qreal sx =
+        qreal(m_curPixmap.width()) /
+        m_curUnscaledPixmap.width();
+
+    const qreal sy =
+        qreal(m_curPixmap.height()) /
+        m_curUnscaledPixmap.height();
+
+    QTransform transform;
+
+    transform.translate(
+        m_drawPos.x(),
+        m_drawPos.y()
+        );
+
+    transform.scale(sx, sy);
+
+    return transform.map(polygon);
+}
+
+int ZMangaView::ocrRegionAt(const QPoint &pos) const
+{
+    if (!m_showOCROverlay ||
+        m_ocrPageNumber != m_currentPage ||
+        m_curPixmap.isNull()) {
+        return -1;
+    }
+
+    for (qsizetype i = 0;
+         i < m_ocrPageResult.regions.size();
+         ++i) {
+
+        const auto &region =
+            m_ocrPageResult.regions.at(i);
+
+        const QPolygonF polygon =
+            mapOCRPolygon(region.polygon);
+
+        if (polygon.containsPoint(
+                QPointF(pos),
+                Qt::OddEvenFill)) {
+            return int(i);
+        }
+    }
+
+    return -1;
+}
+
+void ZMangaView::clearOCROverlay()
+{
+    ++m_pageGeneration;
+    m_pendingTranslations.clear();
+
+    m_ocrPageResult = Z::ZOCRPageResult{};
+
+    m_ocrPageNumber = -1;
+    m_ocrHoveredRegion = -1;
+    m_showOCROverlay = false;
+
+    QToolTip::hideText();
+
+    update();
+}
+
+#ifdef QT_DBUS_LIB
+
+void ZMangaView::startPageTranslation()
+{
+    if (!m_pageTranslator ||
+        !m_pageTranslator->isValid()) {
+        return;
+    }
+
+    if (m_ocrPageResult.regions.isEmpty())
+        return;
+
+    const QString sourceLang =
+        zF->global()->getTranSourceLang();
+
+    const QString targetLang =
+        zF->global()->getTranDestLang();
+
+    // Forget any translations from the previous OCR session.
+    m_pendingTranslations.clear();
+
+    for (qsizetype i = 0;
+         i < m_ocrPageResult.regions.size();
+         ++i) {
+
+        const QString text =
+            m_ocrPageResult.regions.at(i).text.trimmed();
+
+        if (text.isEmpty())
+            continue;
+
+        const quint64 requestId =
+            ++m_nextTranslationId;
+
+        m_pendingTranslations.insert(
+            requestId,
+            static_cast<int>(i)
+            );
+
+        m_pageTranslator->startTranslationRequest(
+            requestId,
+            text,
+            sourceLang,
+            targetLang
+            );
+    }
+}
+
+void ZMangaView::pageTranslationReceived(qulonglong requestId, const QString &translation)
+{
+    auto it = m_pendingTranslations.find(requestId);
+
+    if (it == m_pendingTranslations.end())
+        return;
+
+    const int regionIndex = it.value();
+
+    m_pendingTranslations.erase(it);
+
+    if (regionIndex < 0 ||
+        regionIndex >= m_ocrPageResult.regions.size()) {
+        return;
+    }
+
+    auto &region =
+        m_ocrPageResult.regions[regionIndex];
+
+    region.translation = translation.trimmed();
+
+    qDebug()
+        << "Translation for region" << regionIndex
+        << ":" << region.translation;
+
+    // Refresh tooltip if currently hovering
+    // over the translated region.
+    if (m_showOCROverlay &&
+        m_ocrHoveredRegion == regionIndex) {
+
+        updateOCRTooltip();
+    }
+}
+
+#endif
+
+void ZMangaView::updateOCRTooltip()
+{
+    if (!m_showOCROverlay ||
+        m_ocrHoveredRegion < 0 ||
+        m_ocrHoveredRegion >=
+            m_ocrPageResult.regions.size()) {
+
+        QToolTip::hideText();
+        return;
+    }
+
+    const auto &region =
+        m_ocrPageResult.regions.at(m_ocrHoveredRegion);
+
+    QString html =
+        QSL("<div style=\"max-width:400px;\">");
+
+    html += region.text.toHtmlEscaped()
+                .replace(QChar(u'\n'), QSL("<br>"));
+
+    if (!region.translation.isEmpty()) {
+
+        html += QSL("<hr>");
+
+        html += region.translation.toHtmlEscaped()
+                    .replace(QChar(u'\n'), QSL("<br>"));
+    }
+
+    html += QSL("</div>");
+
+    QToolTip::showText(
+        QCursor::pos(),
+        html,
+        this
+        );
 }
 
 void ZMangaView::keyPressEvent(QKeyEvent *event)
@@ -895,6 +1206,7 @@ void ZMangaView::setZoomAny(int comboIdx)
 
 void ZMangaView::viewRotateCCW()
 {
+    clearOCROverlay();
     m_rotation--;
     if (m_rotation<0) m_rotation = 3;
     displayCurrentPage();
@@ -903,6 +1215,7 @@ void ZMangaView::viewRotateCCW()
 
 void ZMangaView::viewRotateCW()
 {
+    clearOCROverlay();
     m_rotation++;
     if (m_rotation>3) m_rotation = 0;
     displayCurrentPage();
