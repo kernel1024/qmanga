@@ -62,12 +62,8 @@ ZMangaView::ZMangaView(QWidget *parent) :
             this
             );
 
-    connect(
-        m_pageTranslator,
-        &OrgKernel1024JpreaderAuxtranslatorInterface::
-        translationRequestFinished,
-        this,
-        &ZMangaView::pageTranslationReceived
+    connect(m_pageTranslator,&OrgKernel1024JpreaderAuxtranslatorInterface::translationRequestFinished,
+        this,&ZMangaView::pageTranslationReceived
         );
 #endif
 
@@ -668,8 +664,8 @@ void ZMangaView::ocrPageFinished(
     update();
 
 #ifdef QT_DBUS_LIB
-// TODO: add some check here
-//    startPageTranslation();
+    if (zF->global()->ocrEditor()->isImmediateTranslationActive())
+        startPageTranslation();
 #endif
 }
 
@@ -812,10 +808,6 @@ void ZMangaView::pageTranslationReceived(qulonglong requestId, const QString &tr
         m_ocrPageResult.regions[regionIndex];
 
     region.translation = translation.trimmed();
-
-    qDebug()
-        << "Translation for region" << regionIndex
-        << ":" << region.translation;
 
     // Refresh tooltip if currently hovering
     // over the translated region.

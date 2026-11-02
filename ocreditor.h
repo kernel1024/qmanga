@@ -36,6 +36,7 @@ public:
     explicit ZOCREditor(QWidget *parent = nullptr);
     ~ZOCREditor() override;
     void setEditorFont(const QFont& font);
+    bool isImmediateTranslationActive();
 
 public Q_SLOTS:
     void addOCRText(const QStringList& text);

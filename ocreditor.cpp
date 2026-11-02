@@ -77,6 +77,11 @@ void ZOCREditor::setEditorFont(const QFont &font)
     ui->translatedEditor->setFont(font);
 }
 
+bool ZOCREditor::isImmediateTranslationActive()
+{
+    return ui->checkImmediateTranslation->isChecked();
+}
+
 void ZOCREditor::findWordTranslation(const QString &text)
 {
     if (text.isEmpty()) return;
@@ -227,7 +232,6 @@ void ZOCREditor::selectionShow()
 
 void ZOCREditor::showDictToolTip(const QString &html)
 {
-    qDebug() << html;
     ui->status->setText(tr("Ready"));
 
     auto *t = new QLabel(html);
