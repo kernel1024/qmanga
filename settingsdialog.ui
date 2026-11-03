@@ -27,7 +27,7 @@
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -117,7 +117,7 @@
               <item row="3" column="1">
                <widget class="QLineEdit" name="editMySqlPassword">
                 <property name="echoMode">
-                 <enum>QLineEdit::Password</enum>
+                 <enum>QLineEdit::EchoMode::Password</enum>
                 </property>
                </widget>
               </item>
@@ -145,10 +145,10 @@
                <bool>true</bool>
               </property>
               <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+               <enum>QFrame::Shape::StyledPanel</enum>
               </property>
               <property name="frameShadow">
-               <enum>QFrame::Sunken</enum>
+               <enum>QFrame::Shadow::Sunken</enum>
               </property>
              </widget>
             </item>
@@ -172,10 +172,10 @@
                <bool>true</bool>
               </property>
               <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+               <enum>QFrame::Shape::StyledPanel</enum>
               </property>
               <property name="frameShadow">
-               <enum>QFrame::Sunken</enum>
+               <enum>QFrame::Shadow::Sunken</enum>
               </property>
              </widget>
             </item>
@@ -199,10 +199,10 @@
                <bool>true</bool>
               </property>
               <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+               <enum>QFrame::Shape::StyledPanel</enum>
               </property>
               <property name="frameShadow">
-               <enum>QFrame::Sunken</enum>
+               <enum>QFrame::Shadow::Sunken</enum>
               </property>
              </widget>
             </item>
@@ -243,7 +243,7 @@
                  <string>TextLabel</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -270,7 +270,7 @@
                  <string>TextLabel</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -297,7 +297,7 @@
                  <string>TextLabel</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -473,7 +473,7 @@
        <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -493,7 +493,7 @@
        <item>
         <spacer name="verticalSpacer_3">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -995,7 +995,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
             <item>
              <widget class="Line" name="line">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
              </widget>
             </item>
@@ -1140,7 +1140,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
                <number>32768</number>
               </property>
               <property name="stepType">
-               <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+               <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
               </property>
               <property name="value">
                <number>16</number>
@@ -1155,7 +1155,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
        <item>
         <spacer name="verticalSpacer_4">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -1194,13 +1194,20 @@ one per page, with supported format. Use rendering mode as fallback.</string>
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QRadioButton" name="rbPaddleOCR">
+              <property name="text">
+               <string>PaddleOCR</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
          <item>
           <spacer name="verticalSpacer_6">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1314,6 +1321,32 @@ one per page, with supported format. Use rendering mode as fallback.</string>
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="groupBox_11">
+           <property name="title">
+            <string>Paddle OCR</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_16">
+            <item>
+             <widget class="QLabel" name="label_28">
+              <property name="text">
+               <string>PaddleX TCP server URL</string>
+              </property>
+              <property name="buddy">
+               <cstring>editPaddleXUrl</cstring>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="editPaddleXUrl">
+              <property name="placeholderText">
+               <string>http://localhost:8080/ocr</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="QGroupBox" name="groupTranslator">
            <property name="title">
             <string>Translator</string>
@@ -1365,7 +1398,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
          <item>
           <spacer name="verticalSpacer_5">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1387,7 +1420,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
        <item>
         <widget class="QListWidget" name="listBookmarks">
          <property name="selectionMode">
-          <enum>QAbstractItemView::ExtendedSelection</enum>
+          <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
          </property>
         </widget>
        </item>
@@ -1403,7 +1436,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
          <item>
           <spacer name="horizontalSpacer_2">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1425,7 +1458,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
        <item>
         <widget class="QListWidget" name="listDynAlbums">
          <property name="selectionMode">
-          <enum>QAbstractItemView::ExtendedSelection</enum>
+          <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
          </property>
         </widget>
        </item>
@@ -1455,7 +1488,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
          <item>
           <spacer name="horizontalSpacer_3">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1477,7 +1510,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
        <item>
         <widget class="QListWidget" name="listIgnoredFiles">
          <property name="selectionMode">
-          <enum>QAbstractItemView::ExtendedSelection</enum>
+          <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
          </property>
         </widget>
        </item>
@@ -1486,7 +1519,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
          <item>
           <spacer name="horizontalSpacer_4">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1522,7 +1555,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
        <item>
         <widget class="QListWidget" name="listSearch">
          <property name="selectionMode">
-          <enum>QAbstractItemView::ExtendedSelection</enum>
+          <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
          </property>
         </widget>
        </item>
@@ -1538,7 +1571,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
          <item>
           <spacer name="horizontalSpacer_8">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1558,7 +1591,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
          <item>
           <spacer name="horizontalSpacer_5">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1586,7 +1619,7 @@ one per page, with supported format. Use rendering mode as fallback.</string>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -1658,12 +1691,14 @@ one per page, with supported format. Use rendering mode as fallback.</string>
   <tabstop>spinCoverCacheSize</tabstop>
   <tabstop>rbTesseract</tabstop>
   <tabstop>rbGoogleVision</tabstop>
+  <tabstop>rbPaddleOCR</tabstop>
   <tabstop>editOCRDatapath</tabstop>
   <tabstop>btnOCRDatapath</tabstop>
   <tabstop>comboOCRLanguage</tabstop>
   <tabstop>editGCPKeyFile</tabstop>
   <tabstop>btnGCPKeyFile</tabstop>
   <tabstop>editGCPApiKey</tabstop>
+  <tabstop>editPaddleXUrl</tabstop>
   <tabstop>comboLangSource</tabstop>
   <tabstop>comboLangDest</tabstop>
   <tabstop>listBookmarks</tabstop>

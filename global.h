@@ -118,7 +118,8 @@ Q_ENUM_NS(ReaderFactoryMode)
 
 enum OCREngine {
     ocrTesseract = 0,
-    ocrGoogleVision = 1
+    ocrGoogleVision = 1,
+    ocrPaddleOCR = 2
 };
 Q_ENUM_NS(OCREngine)
 

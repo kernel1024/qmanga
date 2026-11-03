@@ -617,8 +617,8 @@ void ZMangaView::handleOCRRequest(const QImage &image)
         QMessageBox::critical(
             nullptr,
             QGuiApplication::applicationDisplayName(),
-            tr("Could not initialize any OCR backend. \n"
-               "Maybe language training data is not installed, or the credentials "
+            tr("Could not initialize OCR backend. \n"
+               "Maybe language training data is not installed, or the URL/credentials "
                "for onlince serivces is invalid."));
         return;
     }

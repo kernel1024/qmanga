@@ -131,6 +131,7 @@ void ZGlobal::loadSettings()
     d->m_OCREngine = settings.value(QSL("OCREngine"), Z::ocrGoogleVision).value<Z::OCREngine>();
     d->m_gcpKeyFile = settings.value(QSL("gcpKeyFile")).toString();
     d->m_gcpApiKey = settings.value(QSL("gcpApiKey")).toString();
+    d->m_paddleXUrl = settings.value(QSL("paddleXUrl")).toString();
 
     if (!d->m_idxFont.fromString(settings.value(QSL("idxFont"),QString()).toString()))
         d->m_idxFont = QApplication::font("QListView");
@@ -240,6 +241,7 @@ void ZGlobal::saveSettings()
     settings.setValue(QSL("OCREngine"),d->m_OCREngine);
     settings.setValue(QSL("gcpKeyFile"),d->m_gcpKeyFile);
     settings.setValue(QSL("gcpApiKey"),d->m_gcpApiKey);
+    settings.setValue(QSL("paddleXUrl"),d->m_paddleXUrl);
 
     if (d->m_mainWindow)
         settings.setValue(QSL("maximized"),d->m_mainWindow->isMaximized());
@@ -448,9 +450,13 @@ void ZGlobal::settingsDlg()
         case Z::ocrGoogleVision:
             dlg.ui->rbGoogleVision->setChecked(true);
             break;
+        case Z::ocrPaddleOCR:
+            dlg.ui->rbPaddleOCR->setChecked(true);
+            break;
     }
     dlg.ui->editGCPKeyFile->setText(d->m_gcpKeyFile);
     dlg.ui->editGCPApiKey->setText(d->m_gcpApiKey);
+    dlg.ui->editPaddleXUrl->setText(d->m_paddleXUrl);
     dlg.ui->editOCRDatapath->setText(ZTesseractOCR::tesseractDatapath());
     dlg.updateOCRLanguages();
 
@@ -526,9 +532,12 @@ void ZGlobal::settingsDlg()
             d->m_OCREngine = Z::ocrTesseract;
         } else if (dlg.ui->rbGoogleVision->isChecked()) {
             d->m_OCREngine = Z::ocrGoogleVision;
+        } else if (dlg.ui->rbPaddleOCR->isChecked()) {
+            d->m_OCREngine = Z::ocrPaddleOCR;
         }
         d->m_gcpKeyFile = dlg.ui->editGCPKeyFile->text();
         d->m_gcpApiKey = dlg.ui->editGCPApiKey->text();
+        d->m_paddleXUrl = dlg.ui->editPaddleXUrl->text();
 
 #ifdef WITH_TESSERACT
         bool needRestart = (dlg.ui->editOCRDatapath->text() != ZTesseractOCR::tesseractDatapath());
@@ -869,6 +878,12 @@ QString ZGlobal::getGCPApiKey() const
 {
     Q_D(const ZGlobal);
     return d->m_gcpApiKey;
+}
+
+QString ZGlobal::getPaddleXUrl() const
+{
+    Q_D(const ZGlobal);
+    return d->m_paddleXUrl;
 }
 
 ZDB *ZGlobal::db() const

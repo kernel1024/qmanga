@@ -12,9 +12,11 @@ Multithreaded manga viewer with fast bookshelf support. ZIP, RAR, PDF, DJVU pack
 * intel-tbb
 
 ### Additional requirements (optional for linux build):
-* Poppler 0.83+ - PDF files support
-* Tesseract (with japanese recognition data) - OCR functionality
+* Poppler 21.3+ - PDF files support
+* Tesseract (with recognition data) - offline OCR functionality
 * Djvulibre - DJVU files support
 * ebook-tools (libepub) - EPUB files support
+
+Google Vision and PaddleX OCR ML engines is supported via TCP connection, https with OAuth for GCP services, and plain http for PaddleX on LAN or localhost.
 
 Running MySQL server is preferred for collection management and search features at top speed. Also SQLite local database is supported.

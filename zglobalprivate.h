@@ -60,6 +60,7 @@ public:
     QString m_officeCmd;
     QString m_gcpKeyFile;
     QString m_gcpApiKey;
+    QString m_paddleXUrl;
 
     QColor m_backgroundColor;
     QColor m_frameColor;

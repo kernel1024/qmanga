@@ -90,6 +90,7 @@ public:
     Z::OCREngine getOCREngine() const;
     QString getGCPKeyFile() const;
     QString getGCPApiKey() const;
+    QString getPaddleXUrl() const;
 
 public Q_SLOTS:
     void settingsDlg();

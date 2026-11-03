@@ -47,6 +47,7 @@ extern "C" {
 #include "ocr/abstractocr.h"
 #include "ocr/tesseractocr.h"
 #include "ocr/googlevision.h"
+#include "ocr/paddleocr.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -556,6 +557,8 @@ ZAbstractOCR *ZGenericFuncs::ocr(QObject *parent)
         ocr = new ZTesseractOCR(parent);
     } else if ((zF->global()->getOCREngine() == Z::ocrGoogleVision) && (qobject_cast<ZGoogleVision *>(m_ocr) == nullptr)) {
         ocr = new ZGoogleVision(parent);
+    } else if ((zF->global()->getOCREngine() == Z::ocrPaddleOCR) && (qobject_cast<ZPaddleOCR *>(m_ocr) == nullptr)) {
+        ocr = new ZPaddleOCR(parent);
     }
 
     if (ocr)
