@@ -113,7 +113,7 @@ RESOURCES += \
 
 CONFIG += warn_on link_pkgconfig c++20
 
-LIBS += -lz -ltbb
+LIBS += -lz
 
 # for deprecations in GCC 11-12 without oneTBB
 DEFINES += TBB_SUPPRESS_DEPRECATED_MESSAGES
@@ -122,6 +122,7 @@ message("Using Qt:            " $$QT_VERSION)
 
 !win32 {
     PKGCONFIG += openssl
+    LIBS += -ltbb
 
     packagesExist(libzip) {
         PKGCONFIG += libzip
@@ -197,7 +198,7 @@ message("Using Qt:            " $$QT_VERSION)
 }
 
 win32 {
-    PKGCONFIG += libzip icu-uc icu-i18n openssl
+    PKGCONFIG += libzip icu-uc icu-i18n openssl lept tbb
 
     DEFINES += WITH_POPPLER=1
     PKGCONFIG += poppler
@@ -205,7 +206,6 @@ win32 {
     DEFINES += WITH_TESSERACT=1
     QMAKE_CXXFLAGS += -Wno-ignored-qualifiers
     PKGCONFIG += tesseract
-    LIBS += -llept
 
     DEFINES += WITH_DJVU=1
     PKGCONFIG += ddjvuapi

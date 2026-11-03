@@ -1,6 +1,8 @@
 #include <QJsonValue>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QPolygonF>
+#include <QBuffer>
 #include <QNetworkReply>
 
 #include "paddleocr.h"

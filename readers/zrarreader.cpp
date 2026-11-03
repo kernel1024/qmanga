@@ -1,4 +1,5 @@
 #include <QProcess>
+#include <QRegularExpression>
 #include <QDebug>
 #include "zrarreader.h"
 

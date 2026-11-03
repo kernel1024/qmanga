@@ -112,7 +112,7 @@ QString ZTesseractOCR::tesseractDatapath()
     QSettings settings(QSL("kernel1024"), QSL("qmanga-ocr"));
     settings.beginGroup(QSL("Main"));
 #ifdef Q_OS_WIN
-    QDir appDir(getApplicationDirPath());
+    QDir appDir(zF->getApplicationDirPath());
     QString res = settings.value(QStringLiteral("datapath"),
                                  appDir.absoluteFilePath(QStringLiteral("tessdata"))).toString();
 #else

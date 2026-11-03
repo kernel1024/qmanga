@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QBuffer>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
