@@ -62,6 +62,7 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
 #else
     ui->groupTranslation->hide();
     ui->translateButton->setEnabled(false);
+    ui->checkImmediateTranslation->hide();
 #endif
     ui->status->clear();
 }
@@ -107,6 +108,10 @@ void ZOCREditor::showWnd()
     if (!isVisible())
         move(QCursor::pos());
     show();
+    if (!isActiveWindow()) {
+        activateWindow();
+        raise();
+    }
 }
 
 void ZOCREditor::translate()

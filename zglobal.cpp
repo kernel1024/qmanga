@@ -124,7 +124,7 @@ void ZGlobal::loadSettings()
                                             QColor(Qt::lightGray).name()).toString());
     d->m_cachePixmaps = settings.value(QSL("cachePixmaps"),false).toBool();
     d->m_useFineRendering = settings.value(QSL("fineRendering"),true).toBool();
-    d->m_filesystemWatcher = settings.value(QSL("filesystemWatcher"),false).toBool();
+    d->m_filesystemWatcher = settings.value(QSL("filesystemWatcher"),true).toBool();
     d->m_defaultSearchEngine = settings.value(QSL("defaultSearchEngine"),QString()).toString();
     d->m_ctxSearchEngines = settings.value(QSL("ctxSearchEngines")).value<ZStrMap>();
 

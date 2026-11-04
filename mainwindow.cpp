@@ -83,7 +83,7 @@ ZMainWindow::ZMainWindow(QWidget *parent) :
     connect(ui->actionMinimize,&QAction::triggered,this,&ZMainWindow::showMinimized);
     connect(ui->actionHideToolbar,&QAction::triggered,this,&ZMainWindow::updateControlsVisibility);
     connect(ui->actionSaveSettings,&QAction::triggered,zF->global(),&ZGlobal::saveSettings);
-    connect(ui->actionShowOCR,&QAction::triggered,zF->global()->ocrEditor(),&ZOCREditor::show);
+    connect(ui->actionShowOCR,&QAction::triggered,zF->global()->ocrEditor(),&ZOCREditor::showWnd);
 
     connect(ui->searchTab,&ZSearchTab::mangaDblClick,this,&ZMainWindow::openFromIndex);
     connect(ui->searchTab,&ZSearchTab::statusBarMsg,this,&ZMainWindow::auxMessage);
@@ -751,8 +751,7 @@ void ZMainWindow::fsAddFilesWorker(const QStringList &auxList)
             this,
             [this, scannedFiles, auxList]() {
                 m_fsModel->addFiles(scannedFiles);
-                if (!auxList.isEmpty())
-                    ui->searchTab->dbShowProgressDialog(false);
+                ui->searchTab->dbShowProgressDialog(false);
             },
             Qt::QueuedConnection);
     });
