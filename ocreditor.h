@@ -6,7 +6,6 @@
 #include <QTimer>
 
 #ifdef QT_DBUS_LIB
-#include "auxtranslator_interface.h"
 #include "browsercontroller_interface.h"
 #include "dictionary_interface.h"
 #endif
@@ -23,7 +22,6 @@ private:
 
     Ui::ZOCREditor *ui;
 #ifdef QT_DBUS_LIB
-    OrgKernel1024JpreaderAuxtranslatorInterface* translator;
     OrgKernel1024JpreaderBrowsercontrollerInterface* browser;
     OrgQjradDictionaryInterface* dictionary;
 #endif
@@ -42,7 +40,6 @@ public Q_SLOTS:
     void addOCRText(const QStringList& text);
     void showWnd();
     void translate();
-    void gotTranslation(const QString& text);
     void contextMenu(const QPoint& pos);
     void selectionChanged();
     void selectionShow();

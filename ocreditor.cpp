@@ -5,6 +5,7 @@
 #include <QUrlQuery>
 #include <QDesktopServices>
 #include <QToolButton>
+#include <QMessageBox>
 #include <QDebug>
 #include "zglobal.h"
 #include "qxttooltip.h"
@@ -18,11 +19,6 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
     ui->setupUi(this);
 
 #ifdef QT_DBUS_LIB
-    translator = new OrgKernel1024JpreaderAuxtranslatorInterface(
-                     QSL("org.kernel1024.jpreader"),
-                     QSL("/auxTranslator"),
-                     QDBusConnection::sessionBus(),this);
-
     browser = new OrgKernel1024JpreaderBrowsercontrollerInterface(
                   QSL("org.kernel1024.jpreader"),
                   QSL("/browserController"),
@@ -53,17 +49,14 @@ ZOCREditor::ZOCREditor(QWidget *parent) :
 
     connect(ui->translateButton,&QToolButton::clicked,
             this,&ZOCREditor::translate);
-#ifdef QT_DBUS_LIB
-    connect(translator,&OrgKernel1024JpreaderAuxtranslatorInterface::gotTranslation,
-            this,&ZOCREditor::gotTranslation);
 
+#ifdef QT_DBUS_LIB
     connect(dictionary,&OrgQjradDictionaryInterface::gotWordTranslation,
             this,&ZOCREditor::showDictToolTip);
 #else
-    ui->groupTranslation->hide();
-    ui->translateButton->setEnabled(false);
-    ui->checkImmediateTranslation->hide();
+    ui->dictSearchButton->setEnabled(false);
 #endif
+
     ui->status->clear();
 }
 
@@ -116,28 +109,40 @@ void ZOCREditor::showWnd()
 
 void ZOCREditor::translate()
 {
-    ui->status->clear();
-#ifdef QT_DBUS_LIB
-    if (translator!=nullptr) {
-        if (!translator->isValid()) {
-            ui->status->setText(tr("Aux translator not ready."));
-        } else {
-            QString s = ui->editor->toPlainText();
-            if (!ui->editor->textCursor().selectedText().isEmpty())
-                s = ui->editor->textCursor().selectedText();
-            translator->setSrcLang(zF->global()->getTranSourceLang());
-            translator->setDestLang(zF->global()->getTranDestLang());
-            translator->startAuxTranslation(s);
-            ui->status->setText(tr("Translation in progress..."));
-        }
-    }
-#endif
-}
+    auto *translator = zF->global()->translator();
 
-void ZOCREditor::gotTranslation(const QString &text)
-{
-    ui->translatedEditor->appendPlainText(text);
-    ui->status->setText(tr("Ready"));
+    if (!translator || !translator->isReady()) {
+        ui->status->setText(tr("Translator not ready."));
+        return;
+    }
+
+    const QString text = ui->editor->toPlainText();
+
+    if (text.trimmed().isEmpty())
+        return;
+
+    ui->status->setText(tr("Translation in progress..."));
+    translator->translate(
+        text,
+        zF->global()->getTranSourceLang(),
+        zF->global()->getTranDestLang(),
+        this,
+        [this](const QString &translation,
+               const QString &error)
+        {
+            if (!error.isEmpty()) {
+                qWarning() << error;
+                ui->status->setText(tr("Translator error:%1").arg(error));
+                QMessageBox::warning(this,QApplication::applicationDisplayName(),error);
+                return;
+            }
+
+            // Insert the translation into the
+            // editor's existing translation output.
+            ui->translatedEditor->appendPlainText(translation);
+            ui->status->setText(tr("Ready"));
+        }
+        );
 }
 
 void ZOCREditor::contextMenu(const QPoint &pos)

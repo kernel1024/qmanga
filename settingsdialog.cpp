@@ -62,11 +62,11 @@ ZSettingsDialog::ZSettingsDialog(QWidget *parent) :
     updateOCRLanguages();
 #endif
 
-#ifdef Q_OS_WIN
-    ui->groupTranslator->setEnabled(false);
-#else
-    updateTranslatorLanguages();
+#ifndef QT_DBUS_LIB
+    ui->rbTranslatorJPReader->setEnabled(false);
 #endif
+    updateTranslatorLanguages();
+
     updateSQLFields(false);
 
     updateBkColor(QApplication::palette("QWidget").dark().color());

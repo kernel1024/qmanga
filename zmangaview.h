@@ -8,15 +8,10 @@
 #include <QThreadPool>
 
 #include "global.h"
-#include "readers/zabstractreader.h"
 #include "ocr/abstractocr.h"
 #include "ocr/ocrresult.h"
 #include "zmangaloader.h"
 #include "zexportdialog.h"
-
-#ifdef QT_DBUS_LIB
-#include "auxtranslator_interface.h"
-#endif
 
 class ZMangaView : public QWidget
 {
@@ -82,11 +77,10 @@ private:
 
     int m_ocrPageNumber { -1 };
     int m_ocrHoveredRegion { -1 };
+    quint64 m_ocrGeneration { 0 };
 
     bool m_showOCROverlay { false };
 
-    QHash<quint64, int> m_pendingTranslations;
-    quint64 m_nextTranslationId = 0;
     quint64 m_pageGeneration = 0;
 
     void updateOCRTooltip();
@@ -100,11 +94,8 @@ private:
     // Invalidate the current OCR overlay.
     void clearOCROverlay();
 
-#ifdef QT_DBUS_LIB
-    OrgKernel1024JpreaderAuxtranslatorInterface
-        *m_pageTranslator { nullptr };
+    // Translate all OCRed text regions.
     void startPageTranslation();
-#endif
 
     void cacheDropUnusable();
     void cacheFillNearest();
@@ -173,10 +164,6 @@ public Q_SLOTS:
     void ocrPageFinished(const Z::ZOCRPageResult &result, int pageNumber);
 
     void loaderMsg(const QString& msg);
-
-#ifdef QT_DBUS_LIB
-    void pageTranslationReceived(qulonglong requestId, const QString &text);
-#endif
 
     // cache slots
     void cacheGotPage(const QByteArray& page, const QImage &pageImage, int num,

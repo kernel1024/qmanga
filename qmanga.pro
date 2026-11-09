@@ -33,6 +33,9 @@ SOURCES += main.cpp\
     readers/textdoc/zfb2document.cpp \
     readers/textdoc/ztxtdocument.cpp \
     readers/ztextreader.cpp \
+    translation/abstracttranslator.cpp \
+    translation/jpreadertranslator.cpp \
+    translation/ollamatranslator.cpp \
     zfilesystemscannermodel.cpp \
     zglobalprivate.cpp \
     zmangaview.cpp \
@@ -71,6 +74,9 @@ HEADERS  += mainwindow.h \
     readers/textdoc/zfb2document.h \
     readers/textdoc/ztxtdocument.h \
     readers/ztextreader.h \
+    translation/abstracttranslator.h \
+    translation/jpreadertranslator.h \
+    translation/ollamatranslator.h \
     zfilesystemscannermodel.h \
     zglobalprivate.h \
     zmangaview.h \

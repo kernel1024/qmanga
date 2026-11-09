@@ -37,8 +37,6 @@ ZMangaView::ZMangaView(QWidget *parent) :
     m_cropSelection->hide();
     m_cropSelection->setGeometry(QRect());
 
-    m_nextTranslationId = QRandomGenerator::global()->generate64();
-
     setMouseTracking(true);
 
     setBackgroundRole(QPalette::Dark);
@@ -53,19 +51,6 @@ ZMangaView::ZMangaView(QWidget *parent) :
 
     connect(this,&ZMangaView::addOCRText,zF->global()->ocrEditor(),&ZOCREditor::addOCRText);
 
-#ifdef QT_DBUS_LIB
-    m_pageTranslator =
-        new OrgKernel1024JpreaderAuxtranslatorInterface(
-            QSL("org.kernel1024.jpreader"),
-            QSL("/auxTranslator"),
-            QDBusConnection::sessionBus(),
-            this
-            );
-
-    connect(m_pageTranslator,&OrgKernel1024JpreaderAuxtranslatorInterface::translationRequestFinished,
-        this,&ZMangaView::pageTranslationReceived
-        );
-#endif
 
     int cnt = QThreadPool::globalInstance()->maxThreadCount()+1;
     if (cnt<2) cnt=2;
@@ -653,8 +638,6 @@ void ZMangaView::ocrPageFinished(
         return;
     }
 
-    m_pendingTranslations.clear();
-
     m_ocrPageResult = result;
     m_ocrPageNumber = pageNumber;
 
@@ -663,10 +646,8 @@ void ZMangaView::ocrPageFinished(
 
     update();
 
-#ifdef QT_DBUS_LIB
     if (zF->global()->ocrEditor()->isImmediateTranslationActive())
         startPageTranslation();
-#endif
 }
 
 QPolygonF ZMangaView::mapOCRPolygon(const QPolygonF &polygon) const
@@ -727,27 +708,23 @@ int ZMangaView::ocrRegionAt(const QPoint &pos) const
 void ZMangaView::clearOCROverlay()
 {
     ++m_pageGeneration;
-    m_pendingTranslations.clear();
 
     m_ocrPageResult = Z::ZOCRPageResult{};
 
     m_ocrPageNumber = -1;
     m_ocrHoveredRegion = -1;
     m_showOCROverlay = false;
+    m_ocrGeneration++;
 
     QToolTip::hideText();
 
     update();
 }
 
-#ifdef QT_DBUS_LIB
-
 void ZMangaView::startPageTranslation()
 {
-    if (!m_pageTranslator ||
-        !m_pageTranslator->isValid()) {
+    if (!zF->global()->translator()->isReady())
         return;
-    }
 
     if (m_ocrPageResult.regions.isEmpty())
         return;
@@ -758,8 +735,8 @@ void ZMangaView::startPageTranslation()
     const QString targetLang =
         zF->global()->getTranDestLang();
 
-    // Forget any translations from the previous OCR session.
-    m_pendingTranslations.clear();
+    const quint64 generation = m_ocrGeneration;
+    const int pageNumber = m_currentPage;
 
     for (qsizetype i = 0;
          i < m_ocrPageResult.regions.size();
@@ -771,54 +748,40 @@ void ZMangaView::startPageTranslation()
         if (text.isEmpty())
             continue;
 
-        const quint64 requestId =
-            ++m_nextTranslationId;
-
-        m_pendingTranslations.insert(
-            requestId,
-            static_cast<int>(i)
-            );
-
-        m_pageTranslator->startTranslationRequest(
-            requestId,
+        zF->global()->translator()->translate(
             text,
             sourceLang,
-            targetLang
+            targetLang,
+            this,
+            [this, generation, pageNumber, i](
+                const QString &translation,
+                const QString &error)
+            {
+                if (generation != m_ocrGeneration ||
+                    pageNumber != m_currentPage) {
+                    return;
+                }
+
+                if (!error.isEmpty()) {
+                    qWarning()
+                    << "Translation failed:" << error;
+                    return;
+                }
+
+                if (i >= m_ocrPageResult.regions.size())
+                    return;
+
+                m_ocrPageResult.regions[i].translation =
+                    translation.trimmed();
+
+                if (m_showOCROverlay &&
+                    m_ocrHoveredRegion == i) {
+                    updateOCRTooltip();
+                }
+            }
             );
     }
 }
-
-void ZMangaView::pageTranslationReceived(qulonglong requestId, const QString &translation)
-{
-    auto it = m_pendingTranslations.find(requestId);
-
-    if (it == m_pendingTranslations.end())
-        return;
-
-    const int regionIndex = it.value();
-
-    m_pendingTranslations.erase(it);
-
-    if (regionIndex < 0 ||
-        regionIndex >= m_ocrPageResult.regions.size()) {
-        return;
-    }
-
-    auto &region =
-        m_ocrPageResult.regions[regionIndex];
-
-    region.translation = translation.trimmed();
-
-    // Refresh tooltip if currently hovering
-    // over the translated region.
-    if (m_showOCROverlay &&
-        m_ocrHoveredRegion == regionIndex) {
-
-        updateOCRTooltip();
-    }
-}
-
-#endif
 
 void ZMangaView::updateOCRTooltip()
 {

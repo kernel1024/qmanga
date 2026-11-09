@@ -13,6 +13,7 @@
 #include "imagescale/scalefilter.h"
 #include "zglobal.h"
 #include "ztextdocumentcontroller.h"
+#include "translation/abstracttranslator.h"
 
 class ZMainWindow;
 
@@ -28,7 +29,8 @@ public:
     Blitz::ScaleFilterType m_downscaleSearchTabFilter { Blitz::ScaleFilterType::UndefinedFilter };
     Z::PDFRendering m_pdfRendering { Z::pdfAutodetect };
     Z::DBMS m_dbEngine { Z::dbmsSQLite };
-    Z::OCREngine m_OCREngine{ Z::ocrGoogleVision };
+    Z::OCREngine m_OCREngine { Z::ocrGoogleVision };
+    Z::TranslationEngine m_translationEngine { Z::tranJPReader };
     bool m_cachePixmaps { false };
     bool m_useFineRendering { true };
     bool m_filesystemWatcher { false };
@@ -61,6 +63,8 @@ public:
     QString m_gcpKeyFile;
     QString m_gcpApiKey;
     QString m_paddleXUrl;
+    QString m_ollamaBaseUrl;
+    QString m_ollamaModel;
 
     QColor m_backgroundColor;
     QColor m_frameColor;
@@ -83,6 +87,7 @@ public:
     QScopedPointer<ZDB, QScopedPointerDeleteLater> m_db;
     QScopedPointer<QFileSystemWatcher, QScopedPointerDeleteLater> fsWatcher;
     QScopedPointer<ZOCREditor, QScopedPointerDeleteLater> m_ocrEditor;
+    QScopedPointer<ZAbstractTranslator, QScopedPointerDeleteLater> m_translator;
     QScopedPointer<QThread, QScopedPointerDeleteLater> m_threadDB;
     QScopedPointer<ZTextDocumentController, QScopedPointerDeleteLater> m_txtController;
 

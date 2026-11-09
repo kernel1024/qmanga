@@ -129,9 +129,12 @@ void ZGlobal::loadSettings()
     d->m_ctxSearchEngines = settings.value(QSL("ctxSearchEngines")).value<ZStrMap>();
 
     d->m_OCREngine = settings.value(QSL("OCREngine"), Z::ocrGoogleVision).value<Z::OCREngine>();
+    d->m_translationEngine = settings.value(QSL("translationEngine"), Z::tranJPReader).value<Z::TranslationEngine>();
     d->m_gcpKeyFile = settings.value(QSL("gcpKeyFile")).toString();
     d->m_gcpApiKey = settings.value(QSL("gcpApiKey")).toString();
     d->m_paddleXUrl = settings.value(QSL("paddleXUrl")).toString();
+    d->m_ollamaBaseUrl = settings.value(QSL("ollamaBaseUrl")).toString();
+    d->m_ollamaModel = settings.value(QSL("ollamaModel")).toString();
 
     if (!d->m_idxFont.fromString(settings.value(QSL("idxFont"),QString()).toString()))
         d->m_idxFont = QApplication::font("QListView");
@@ -239,9 +242,12 @@ void ZGlobal::saveSettings()
     settings.setValue(QSL("textDocPageSize_width"),d->m_textDocPageSize.sizePoints().width());
     settings.setValue(QSL("textDocPageSize_height"),d->m_textDocPageSize.sizePoints().height());
     settings.setValue(QSL("OCREngine"),d->m_OCREngine);
+    settings.setValue(QSL("translationEngine"),d->m_translationEngine);
     settings.setValue(QSL("gcpKeyFile"),d->m_gcpKeyFile);
     settings.setValue(QSL("gcpApiKey"),d->m_gcpApiKey);
     settings.setValue(QSL("paddleXUrl"),d->m_paddleXUrl);
+    settings.setValue(QSL("ollamaBaseUrl"),d->m_ollamaBaseUrl);
+    settings.setValue(QSL("ollamaModel"),d->m_ollamaModel);
 
     if (d->m_mainWindow)
         settings.setValue(QSL("maximized"),d->m_mainWindow->isMaximized());
@@ -454,9 +460,19 @@ void ZGlobal::settingsDlg()
             dlg.ui->rbPaddleOCR->setChecked(true);
             break;
     }
+    switch (d->m_translationEngine) {
+        case Z::tranJPReader:
+            dlg.ui->rbTranslatorJPReader->setChecked(true);
+            break;
+        case Z::tranOllama:
+            dlg.ui->rbTranslatorOllama->setChecked(true);
+            break;
+    }
     dlg.ui->editGCPKeyFile->setText(d->m_gcpKeyFile);
     dlg.ui->editGCPApiKey->setText(d->m_gcpApiKey);
     dlg.ui->editPaddleXUrl->setText(d->m_paddleXUrl);
+    dlg.ui->editOllamaBaseUrl->setText(d->m_ollamaBaseUrl);
+    dlg.ui->editOllamaModel->setText(d->m_ollamaModel);
     dlg.ui->editOCRDatapath->setText(ZTesseractOCR::tesseractDatapath());
     dlg.updateOCRLanguages();
 
@@ -535,9 +551,16 @@ void ZGlobal::settingsDlg()
         } else if (dlg.ui->rbPaddleOCR->isChecked()) {
             d->m_OCREngine = Z::ocrPaddleOCR;
         }
+        if (dlg.ui->rbTranslatorJPReader->isChecked()) {
+            d->m_translationEngine = Z::tranJPReader;
+        } else if (dlg.ui->rbTranslatorOllama->isChecked()) {
+            d->m_translationEngine = Z::tranOllama;
+        }
         d->m_gcpKeyFile = dlg.ui->editGCPKeyFile->text();
         d->m_gcpApiKey = dlg.ui->editGCPApiKey->text();
         d->m_paddleXUrl = dlg.ui->editPaddleXUrl->text();
+        d->m_ollamaBaseUrl = dlg.ui->editOllamaBaseUrl->text();
+        d->m_ollamaModel = dlg.ui->editOllamaModel->text();
 
 #ifdef WITH_TESSERACT
         bool needRestart = (dlg.ui->editOCRDatapath->text() != ZTesseractOCR::tesseractDatapath());
@@ -886,6 +909,24 @@ QString ZGlobal::getPaddleXUrl() const
     return d->m_paddleXUrl;
 }
 
+Z::TranslationEngine ZGlobal::getTranslationEngine() const
+{
+    Q_D(const ZGlobal);
+    return d->m_translationEngine;
+}
+
+QString ZGlobal::getOllamaBaseUrl() const
+{
+    Q_D(const ZGlobal);
+    return d->m_ollamaBaseUrl;
+}
+
+QString ZGlobal::getOllamaModel() const
+{
+    Q_D(const ZGlobal);
+    return d->m_ollamaModel;
+}
+
 ZDB *ZGlobal::db() const
 {
     Q_D(const ZGlobal);
@@ -905,6 +946,26 @@ ZTextDocumentController *ZGlobal::txtController()
 {
     Q_D(ZGlobal);
     return d->m_txtController.data();
+}
+
+ZAbstractTranslator *ZGlobal::translator()
+{
+    Q_D(ZGlobal);
+    auto *translator = ZAbstractTranslator::factory(this);
+
+    if (!translator) {
+        d->m_translator.reset(nullptr);
+    } else {
+        if (!d->m_translator) {
+            d->m_translator.reset(translator);
+        } else {
+            if (!translator->isSame(d->m_translator.data())) {
+                d->m_translator.reset(translator);
+            }
+        }
+    }
+
+    return d->m_translator.data();
 }
 
 void ZGlobal::setDPI(qreal x, qreal y)

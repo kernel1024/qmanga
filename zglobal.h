@@ -7,6 +7,7 @@
 #include <QPageSize>
 #include "global.h"
 #include "ocreditor.h"
+#include "translation/abstracttranslator.h"
 
 class ZMangaModel;
 class ZMainWindow;
@@ -39,6 +40,7 @@ public:
     ZDB *db() const;
     ZOCREditor *ocrEditor();
     ZTextDocumentController *txtController();
+    ZAbstractTranslator *translator();
 
     // settings management
     Blitz::ScaleFilterType getUpscaleFilter() const;
@@ -88,9 +90,12 @@ public:
     ZStrMap getCtxSearchEngines() const;
     QPageSize getTextDocPageSize() const;
     Z::OCREngine getOCREngine() const;
+    Z::TranslationEngine getTranslationEngine() const;
     QString getGCPKeyFile() const;
     QString getGCPApiKey() const;
     QString getPaddleXUrl() const;
+    QString getOllamaBaseUrl() const;
+    QString getOllamaModel() const;
 
 public Q_SLOTS:
     void settingsDlg();

@@ -123,6 +123,12 @@ enum OCREngine {
 };
 Q_ENUM_NS(OCREngine)
 
+enum TranslationEngine {
+    tranJPReader = 0,
+    tranOllama = 1
+};
+Q_ENUM_NS(TranslationEngine)
+
 }
 
 Q_DECLARE_METATYPE(Z::Ordering)
