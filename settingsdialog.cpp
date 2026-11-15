@@ -257,7 +257,6 @@ void ZSettingsDialog::setTextDocPageSize(const QPageSize &size) const
 
 void ZSettingsDialog::updateTranslatorLanguages() const
 {
-#ifndef Q_OS_WIN
     ui->comboLangSource->clear();
     ui->comboLangDest->clear();
     const QStringList sl = zF->global()->getLanguageCodes();
@@ -273,7 +272,6 @@ void ZSettingsDialog::updateTranslatorLanguages() const
     else if (ui->comboLangSource->count()>0) ui->comboLangSource->setCurrentIndex(0);
     if (idx2>=0) ui->comboLangDest->setCurrentIndex(idx2);
     else if (ui->comboLangDest->count()>0) ui->comboLangDest->setCurrentIndex(0);
-#endif
 }
 
 void ZSettingsDialog::addSearchEngine()

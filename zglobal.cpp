@@ -507,10 +507,8 @@ void ZGlobal::settingsDlg()
         d->m_ctxSearchEngines=dlg.getSearchEngines();
         d->m_maxCoverCacheSize = dlg.ui->spinCoverCacheSize->value() * ZDefaults::oneMegabyte;
 
-#ifndef Q_OS_WIN
         d->m_tranSourceLang=dlg.getTranSourceLanguage();
         d->m_tranDestLang=dlg.getTranDestLanguage();
-#endif
 
         if (dlg.ui->checkPDFDPI->isChecked()) {
             d->m_forceDPI = dlg.ui->spinPDFDPI->value();
