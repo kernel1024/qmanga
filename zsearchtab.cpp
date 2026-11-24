@@ -976,7 +976,7 @@ void ZSearchTab::dbShowProgressDialogEx(bool visible, const QString& title)
         progressDlg->setValue(0);
         progressDlg->setLabelText(QString());
         progressDlg->show();
-    } else {
+    } else if (progressDlg!=nullptr){
         progressDlg->hide();
     }
 }
